@@ -185,6 +185,10 @@ void DiagonalSolve
   bool checkIfSingular )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+#if 0
     DEBUG_ONLY(
       if( d.Width() != 1 )
           LogicError("d must be a column vector");
@@ -225,12 +229,19 @@ void DiagonalSolve
             vBuf[k] /= F(delta);
         }
     }
+#endif
 }
 
 template<typename F>
 void SymmetricDiagonalSolve( const Matrix<Base<F>>& d, SparseMatrix<F>& A )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+    
+#if 0
     DEBUG_ONLY(
       if( d.Width() != 1 )
           LogicError("d must be a column vector");
@@ -258,6 +269,7 @@ void SymmetricDiagonalSolve( const Matrix<Base<F>>& d, SparseMatrix<F>& A )
         )
         vBuf[k] /= deltaRow*deltaCol;
     }
+#endif
 }
 
 template<typename FDiag,typename F>

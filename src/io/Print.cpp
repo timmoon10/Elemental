@@ -113,6 +113,10 @@ template<typename T>
 void Print( const SparseMatrix<T>& A, string msg, ostream& os )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+#if 0
     A.AssertConsistent();
     if( msg != "" )
         os << msg << endl;
@@ -126,6 +130,7 @@ void Print( const SparseMatrix<T>& A, string msg, ostream& os )
     for( Int s=0; s<numEntries; ++s )
         os << srcBuf[s] << " " << tgtBuf[s] << " " << valBuf[s] << "\n";
     os << endl;
+#endif
 }
 
 template<typename T>

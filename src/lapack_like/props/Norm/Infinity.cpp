@@ -112,6 +112,10 @@ template<typename T>
 Base<T> InfinityNorm( const SparseMatrix<T>& A )
 {
     DEBUG_CSE
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return Base<T>(0);
+#if 0
     typedef Base<T> Real;
     const Int height = A.Height();
     const T* valBuf = A.LockedValueBuffer();
@@ -133,6 +137,7 @@ Base<T> InfinityNorm( const SparseMatrix<T>& A )
     }
 
     return maxRowSum;
+#endif
 }
 
 template<typename T> 

@@ -55,6 +55,11 @@ void AxpyTrapezoid
         SparseMatrix<T>& Y, Int offset )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+#if 0
     if( X.Height() != Y.Height() || X.Width() != Y.Width() )
         LogicError("X and Y must have the same dimensions");
     const T alpha = T(alphaS);
@@ -72,6 +77,7 @@ void AxpyTrapezoid
             Y.QueueUpdate( i, j, alpha*XValBuf[k] );
     }
     Y.ProcessQueues();
+#endif
 }
 
 // This version assumes that the alignments are equal

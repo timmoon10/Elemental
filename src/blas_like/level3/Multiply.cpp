@@ -530,6 +530,11 @@ void Multiply
   T beta,                                  Matrix<T>& Y )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+
+#if 0
     DEBUG_ONLY(
       if( X.Width() != Y.Width() )
           LogicError("X and Y must have the same width");
@@ -541,6 +546,7 @@ void Multiply
              A.LockedValueBuffer(),
              X.LockedBuffer(), X.LDim(),
       beta,  Y.Buffer(),       Y.LDim() );
+#endif
 }
 
 template<typename T>

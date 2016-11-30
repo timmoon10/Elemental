@@ -72,6 +72,10 @@ template<typename T>
 Base<T> HermitianMaxNorm( UpperOrLower uplo, const SparseMatrix<T>& A )
 {
     DEBUG_CSE
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return Base<T>(0);
+#if 0
     if( A.Height() != A.Width() )
         LogicError("Hermitian matrices must be square.");
 
@@ -90,6 +94,7 @@ Base<T> HermitianMaxNorm( UpperOrLower uplo, const SparseMatrix<T>& A )
             maxAbs = Max( maxAbs, Abs(AValBuf[k]) );
     }
     return maxAbs;
+#endif
 }
 
 template<typename T>

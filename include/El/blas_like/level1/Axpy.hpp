@@ -60,6 +60,9 @@ template<typename T,typename S>
 void Axpy( S alphaS, const SparseMatrix<T>& X, SparseMatrix<T>& Y )
 {
     DEBUG_CSE
+    // TODO: implement
+    LogicError("Not yet implemented");
+#if 0
     if( X.Height() != Y.Height() || X.Width() != Y.Width() )
         LogicError("X and Y must have the same dimensions");
     const T alpha = T(alphaS);
@@ -72,6 +75,7 @@ void Axpy( S alphaS, const SparseMatrix<T>& X, SparseMatrix<T>& Y )
     for( Int k=0; k<numEntries; ++k ) 
         Y.QueueUpdate( XRowBuf[k], XColBuf[k], alpha*XValBuf[k] );
     Y.ProcessQueues();
+#endif
 }
 
 template<typename T,typename S>

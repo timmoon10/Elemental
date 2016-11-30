@@ -104,6 +104,12 @@ template<typename F>
 void ColumnMinAbs( const SparseMatrix<F>& A, Matrix<Base<F>>& mins )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+
+#if 0
     // Explicitly forming the transpose is overkill...
     // The following would be correct but is best avoided.
     /*
@@ -129,6 +135,7 @@ void ColumnMinAbs( const SparseMatrix<F>& A, Matrix<Base<F>>& mins )
         for( Int e=offsetBuf[i]; e<offsetBuf[i+1]; ++e )
             minBuf[colBuf[e]] =
               Min(minBuf[colBuf[e]],Abs(values[e]));
+#endif
 }
 
 template<typename F>
@@ -138,6 +145,12 @@ void ColumnMinAbsNonzero
         Matrix<Base<F>>& mins )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+
+#if 0      
     // Explicitly forming the transpose is overkill...
     // The following would be correct but is best avoided.
     /*
@@ -166,6 +179,7 @@ void ColumnMinAbsNonzero
                 minBuf[colBuf[e]] = Min(minBuf[colBuf[e]],absVal);
         }
     }
+#endif
 }
 
 template<typename F>

@@ -119,6 +119,12 @@ template<typename F>
 void RowTwoNorms( const SparseMatrix<F>& A, Matrix<Base<F>>& norms )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+
+#if 0
     typedef Base<F> Real;
     const Int m = A.Height();
     const F* valBuf = A.LockedValueBuffer();
@@ -135,12 +141,18 @@ void RowTwoNorms( const SparseMatrix<F>& A, Matrix<Base<F>>& norms )
             UpdateScaledSquare( valBuf[e], scale, scaledSquare );
         norms(i) = scale*Sqrt(scaledSquare);
     }
+#endif
 }
 
 template<typename F>
 void RowMaxNorms( const SparseMatrix<F>& A, Matrix<Base<F>>& norms )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+#if 0
     typedef Base<F> Real;
     const Int m = A.Height();
     const F* valBuf = A.LockedValueBuffer();
@@ -156,6 +168,7 @@ void RowMaxNorms( const SparseMatrix<F>& A, Matrix<Base<F>>& norms )
             rowMax = Max(rowMax,Abs(valBuf[e]));
         norms(i) = rowMax;
     }
+#endif
 }
 
 template<typename F>

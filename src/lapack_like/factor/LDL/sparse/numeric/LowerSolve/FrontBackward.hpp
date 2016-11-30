@@ -659,6 +659,11 @@ void FrontLowerBackwardSolve
   bool conjugate )
 {
     DEBUG_CSE
+      
+    // TODO: convert SparseMatrix to CSR
+    LogicError("Not yet implemented");
+    return;
+#if 0
     LDLFrontType type = front.type;
     DEBUG_ONLY(
       if( Unfactored(type) )
@@ -694,6 +699,7 @@ void FrontLowerBackwardSolve
         else
             FrontVanillaLowerBackwardSolve( front.LDense, W, conjugate );
     }
+#endif
 }
 
 template<typename F>

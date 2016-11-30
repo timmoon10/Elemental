@@ -242,6 +242,11 @@ template<typename S,typename T,typename>
 void Copy( const SparseMatrix<S>& A, Matrix<T>& B )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+
+    #if 0
     const Int m = A.Height();
     const Int n = A.Width();
     const Int numEntries = A.NumEntries();
@@ -256,6 +261,7 @@ void Copy( const SparseMatrix<S>& A, Matrix<T>& B )
     Zero( B );
     for( Int e=0; e<numEntries; ++e )
         BBuf[ARowBuf[e]+AColBuf[e]*BLDim] = Caster<S,T>::Cast(AValBuf[e]);
+#endif
 }
 
 template<typename T>
@@ -291,6 +297,11 @@ template<typename T>
 void CopyFromRoot( const DistSparseMatrix<T>& ADist, SparseMatrix<T>& A )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+#if 0
     const mpi::Comm comm = ADist.Comm();
     const int commSize = mpi::Size( comm );
     const int commRank = mpi::Rank( comm );
@@ -319,6 +330,7 @@ void CopyFromRoot( const DistSparseMatrix<T>& ADist, SparseMatrix<T>& A )
       A.ValueBuffer(), entrySizes.data(), entryOffs.data(),
       commRank, comm );
     A.ProcessQueues();
+#endif
 }
 
 template<typename T>

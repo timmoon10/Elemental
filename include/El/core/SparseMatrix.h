@@ -310,57 +310,57 @@ EL_EXPORT ElError ElSparseMatrixNumConnections_c
 EL_EXPORT ElError ElSparseMatrixNumConnections_z
 ( ElConstSparseMatrix_z A, ElInt row, ElInt* numConnections );
 
-/* Int* SparseMatrix<T>::SourceBuffer()
+/* Int* SparseMatrix<T>::RowBuffer()
    ------------------------------------ */
-EL_EXPORT ElError ElSparseMatrixSourceBuffer_i
-( ElSparseMatrix_i A, ElInt** sourceBuffer );
-EL_EXPORT ElError ElSparseMatrixSourceBuffer_s
-( ElSparseMatrix_s A, ElInt** sourceBuffer );
-EL_EXPORT ElError ElSparseMatrixSourceBuffer_d
-( ElSparseMatrix_d A, ElInt** sourceBuffer );
-EL_EXPORT ElError ElSparseMatrixSourceBuffer_c
-( ElSparseMatrix_c A, ElInt** sourceBuffer );
-EL_EXPORT ElError ElSparseMatrixSourceBuffer_z
-( ElSparseMatrix_z A, ElInt** sourceBuffer );
+EL_EXPORT ElError ElSparseMatrixRowBuffer_i
+( ElSparseMatrix_i A, ElInt** rowBuffer );
+EL_EXPORT ElError ElSparseMatrixRowBuffer_s
+( ElSparseMatrix_s A, ElInt** rowBuffer );
+EL_EXPORT ElError ElSparseMatrixRowBuffer_d
+( ElSparseMatrix_d A, ElInt** rowBuffer );
+EL_EXPORT ElError ElSparseMatrixRowBuffer_c
+( ElSparseMatrix_c A, ElInt** rowBuffer );
+EL_EXPORT ElError ElSparseMatrixRowBuffer_z
+( ElSparseMatrix_z A, ElInt** rowBuffer );
 
-/* const Int* SparseMatrix<T>::LockedSourceBuffer() const
+/* const Int* SparseMatrix<T>::LockedRowBuffer() const
    ------------------------------------------------------ */
-EL_EXPORT ElError ElSparseMatrixLockedSourceBuffer_i
-( ElConstSparseMatrix_i A, const ElInt** sourceBuffer );
-EL_EXPORT ElError ElSparseMatrixLockedSourceBuffer_s
-( ElConstSparseMatrix_s A, const ElInt** sourceBuffer );
-EL_EXPORT ElError ElSparseMatrixLockedSourceBuffer_d
-( ElConstSparseMatrix_d A, const ElInt** sourceBuffer );
-EL_EXPORT ElError ElSparseMatrixLockedSourceBuffer_c
-( ElConstSparseMatrix_c A, const ElInt** sourceBuffer );
-EL_EXPORT ElError ElSparseMatrixLockedSourceBuffer_z
-( ElConstSparseMatrix_z A, const ElInt** sourceBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedRowBuffer_i
+( ElConstSparseMatrix_i A, const ElInt** rowBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedRowBuffer_s
+( ElConstSparseMatrix_s A, const ElInt** rowBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedRowBuffer_d
+( ElConstSparseMatrix_d A, const ElInt** rowBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedRowBuffer_c
+( ElConstSparseMatrix_c A, const ElInt** rowBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedRowBuffer_z
+( ElConstSparseMatrix_z A, const ElInt** rowBuffer );
 
-/* Int* SparseMatrix<T>::TargetBuffer()
+/* Int* SparseMatrix<T>::ColumnBuffer()
    ------------------------------------ */
-EL_EXPORT ElError ElSparseMatrixTargetBuffer_i
-( ElSparseMatrix_i A, ElInt** targetBuffer );
-EL_EXPORT ElError ElSparseMatrixTargetBuffer_s
-( ElSparseMatrix_s A, ElInt** targetBuffer );
-EL_EXPORT ElError ElSparseMatrixTargetBuffer_d
-( ElSparseMatrix_d A, ElInt** targetBuffer );
-EL_EXPORT ElError ElSparseMatrixTargetBuffer_c
-( ElSparseMatrix_c A, ElInt** targetBuffer );
-EL_EXPORT ElError ElSparseMatrixTargetBuffer_z
-( ElSparseMatrix_z A, ElInt** targetBuffer );
+EL_EXPORT ElError ElSparseMatrixColumnBuffer_i
+( ElSparseMatrix_i A, ElInt** colBuffer );
+EL_EXPORT ElError ElSparseMatrixColumnBuffer_s
+( ElSparseMatrix_s A, ElInt** colBuffer );
+EL_EXPORT ElError ElSparseMatrixColumnBuffer_d
+( ElSparseMatrix_d A, ElInt** colBuffer );
+EL_EXPORT ElError ElSparseMatrixColumnBuffer_c
+( ElSparseMatrix_c A, ElInt** colBuffer );
+EL_EXPORT ElError ElSparseMatrixColumnBuffer_z
+( ElSparseMatrix_z A, ElInt** colBuffer );
 
-/* const Int* SparseMatrix<T>::LockedTargetBuffer() const
+/* const Int* SparseMatrix<T>::LockedColumnBuffer() const
    ------------------------------------------------------ */
-EL_EXPORT ElError ElSparseMatrixLockedTargetBuffer_i
-( ElConstSparseMatrix_i A, const ElInt** targetBuffer );
-EL_EXPORT ElError ElSparseMatrixLockedTargetBuffer_s
-( ElConstSparseMatrix_s A, const ElInt** targetBuffer );
-EL_EXPORT ElError ElSparseMatrixLockedTargetBuffer_d
-( ElConstSparseMatrix_d A, const ElInt** targetBuffer );
-EL_EXPORT ElError ElSparseMatrixLockedTargetBuffer_c
-( ElConstSparseMatrix_c A, const ElInt** targetBuffer );
-EL_EXPORT ElError ElSparseMatrixLockedTargetBuffer_z
-( ElConstSparseMatrix_z A, const ElInt** targetBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedColumnBuffer_i
+( ElConstSparseMatrix_i A, const ElInt** colBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedColumnBuffer_s
+( ElConstSparseMatrix_s A, const ElInt** colBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedColumnBuffer_d
+( ElConstSparseMatrix_d A, const ElInt** colBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedColumnBuffer_c
+( ElConstSparseMatrix_c A, const ElInt** colBuffer );
+EL_EXPORT ElError ElSparseMatrixLockedColumnBuffer_z
+( ElConstSparseMatrix_z A, const ElInt** colBuffer );
 
 /* T* SparseMatrix<T>::ValueBuffer()
    --------------------------------- */

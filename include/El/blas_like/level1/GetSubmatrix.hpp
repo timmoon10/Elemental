@@ -47,6 +47,12 @@ void GetSubmatrix
         SparseMatrix<T>& ASub )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+
+#if 0
     if( I.end == END ) I.end = A.Height();
     if( J.end == END ) J.end = A.Width();
     const Int mSub = I.end-I.beg;
@@ -86,6 +92,7 @@ void GetSubmatrix
         }
     }
     ASub.ProcessQueues();
+#endif
 }
 
 template<typename T>

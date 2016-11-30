@@ -96,6 +96,11 @@ void
 ScaleTrapezoid( S alpha, UpperOrLower uplo, SparseMatrix<T>& A, Int offset )
 {
     DEBUG_CSE
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+
+#if 0
     if( alpha == S(1) )
         return; 
     const Int numEntries = A.NumEntries();
@@ -109,6 +114,7 @@ ScaleTrapezoid( S alpha, UpperOrLower uplo, SparseMatrix<T>& A, Int offset )
         if( (uplo==LOWER && j-i <= offset) || (uplo==UPPER && j-i >= offset) )
             vBuf[k] *= alpha;    
     }
+#endif
 }
 
 template<typename T,typename S>

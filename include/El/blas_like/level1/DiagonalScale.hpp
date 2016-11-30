@@ -145,6 +145,11 @@ void DiagonalScale
         SparseMatrix<T>& A )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+
+#if 0
     if( d.Width() != 1 )
         LogicError("d must be a column vector");
     const bool conjugate = ( orientation == ADJOINT );
@@ -179,6 +184,7 @@ void DiagonalScale
             vBuf[k] *= delta;
         }
     }
+#endif
 }
 
 template<typename TDiag,typename T>

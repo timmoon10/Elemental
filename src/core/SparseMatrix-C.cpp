@@ -78,18 +78,18 @@ extern "C" {
   ElError ElSparseMatrixNumConnections_ ## SIG \
   ( ElConstSparseMatrix_ ## SIG A, ElInt row, ElInt* numConnections ) \
   { EL_TRY( *numConnections = CReflect(A)->NumConnections(row) ) } \
-  ElError ElSparseMatrixSourceBuffer_ ## SIG \
-  ( ElSparseMatrix_ ## SIG A, ElInt** sourceBuffer ) \
-  { EL_TRY( *sourceBuffer = CReflect(A)->SourceBuffer() ) } \
-  ElError ElSparseMatrixLockedSourceBuffer_ ## SIG \
-  ( ElConstSparseMatrix_ ## SIG A, const ElInt** sourceBuffer ) \
-  { EL_TRY( *sourceBuffer = CReflect(A)->LockedSourceBuffer() ) } \
-  ElError ElSparseMatrixTargetBuffer_ ## SIG \
-  ( ElSparseMatrix_ ## SIG A, ElInt** targetBuffer ) \
-  { EL_TRY( *targetBuffer = CReflect(A)->TargetBuffer() ) } \
-  ElError ElSparseMatrixLockedTargetBuffer_ ## SIG \
-  ( ElConstSparseMatrix_ ## SIG A, const ElInt** targetBuffer ) \
-  { EL_TRY( *targetBuffer = CReflect(A)->LockedTargetBuffer() ) } \
+  ElError ElSparseMatrixRowBuffer_ ## SIG \
+  ( ElSparseMatrix_ ## SIG A, ElInt** rowBuffer ) \
+  { EL_TRY( *rowBuffer = CReflect(A)->RowBuffer() ) } \
+  ElError ElSparseMatrixLockedrowBuffer_ ## SIG \
+  ( ElConstSparseMatrix_ ## SIG A, const ElInt** rowBuffer ) \
+  { EL_TRY( *rowBuffer = CReflect(A)->LockedRowBuffer() ) } \
+  ElError ElSparseMatrixColumnBuffer_ ## SIG \
+  ( ElSparseMatrix_ ## SIG A, ElInt** colBuffer ) \
+  { EL_TRY( *colBuffer = CReflect(A)->ColumnBuffer() ) } \
+  ElError ElSparseMatrixLockedColumnBuffer_ ## SIG \
+  ( ElConstSparseMatrix_ ## SIG A, const ElInt** colBuffer ) \
+  { EL_TRY( *colBuffer = CReflect(A)->LockedColumnBuffer() ) } \
   ElError ElSparseMatrixValueBuffer_ ## SIG \
   ( ElSparseMatrix_ ## SIG A, CREFLECT(T)** valueBuffer ) \
   { EL_TRY( *valueBuffer = CReflect(CReflect(A)->ValueBuffer()) ) } \

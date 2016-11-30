@@ -31,7 +31,8 @@ public:
     // Constructors and destructors
     // ============================
     SparseMatrix();
-    SparseMatrix( Int height, Int width );
+    SparseMatrix
+    ( Int height, Int width, Int numBlockRows=1, Int numBlockCols=1 );
     SparseMatrix( const SparseMatrix<T>& A );
     // NOTE: This requires A to be distributed over a single process
     SparseMatrix( const DistSparseMatrix<T>& A );
@@ -44,7 +45,8 @@ public:
     // Change the size of the matrix
     // -----------------------------
     void Empty( bool clearMemory=true );
-    void Resize( Int height, Int width );
+    void Resize
+    ( Int height, Int width, Int numBlockRows=1, Int numBlockCols=1 );
 
     // Assembly
     // --------
@@ -101,13 +103,15 @@ public:
     // For manually modifying data
     void ForceNumEntries( Int numEntries );
     void ForceConsistency( bool consistent=true ) EL_NO_EXCEPT;
-    Int* SourceBuffer() EL_NO_EXCEPT;
-    Int* TargetBuffer() EL_NO_EXCEPT;
-    Int* OffsetBuffer() EL_NO_EXCEPT;
+    Int* RowBuffer() EL_NO_EXCEPT;
+    Int* ColumnBuffer() EL_NO_EXCEPT;
+    Int* RowOffsetBuffer() EL_NO_EXCEPT;
+    Int* BlockOffsetBuffer() EL_NO_EXCEPT;
     T* ValueBuffer() EL_NO_EXCEPT;
-    const Int* LockedSourceBuffer() const EL_NO_EXCEPT;
-    const Int* LockedTargetBuffer() const EL_NO_EXCEPT;
-    const Int* LockedOffsetBuffer() const EL_NO_EXCEPT;
+    const Int* LockedRowBuffer() const EL_NO_EXCEPT;
+    const Int* LockedColumnBuffer() const EL_NO_EXCEPT;
+    const Int* LockedRowOffsetBuffer() const EL_NO_EXCEPT;
+    const Int* LockedBlockOffsetBuffer() const EL_NO_EXCEPT;
     const T* LockedValueBuffer() const EL_NO_EXCEPT;
 
     // Queries
@@ -130,15 +134,29 @@ public:
     T Value( Int index ) const EL_NO_RELEASE_EXCEPT;
     T Get( Int row, Int col ) const EL_NO_RELEASE_EXCEPT;
     void Set( Int row, Int col, T val ) EL_NO_RELEASE_EXCEPT;
-    Int RowOffset( Int row ) const EL_NO_RELEASE_EXCEPT;
+    Int RowOffset( Int row, Int blockCol=0 ) const EL_NO_RELEASE_EXCEPT;
     Int Offset( Int row, Int col ) const EL_NO_RELEASE_EXCEPT;
     Int NumConnections( Int row ) const EL_NO_RELEASE_EXCEPT;
 
     void AssertConsistent() const;
 
 private:
-    El::Graph graph_;
+
+    // Data for COO format
+    Int numRows_, numCols_;
+    bool frozenSparsity_ = false;
+    vector<Int> rows_, cols_;
     vector<T> vals_;
+    set<pair<Int,Int>> markedForRemoval_;
+
+    // Data for CSB format
+    bool consistent_ = true;
+    Int numBlockRows_ = 1;
+    Int numBlockCols_ = 1;
+    Int blockHeight_, blockWidth_;
+    vector<Int> blocks_;
+    vector<Int> blockOffsets_;
+    vector<Int> rowOffsets_;
 
     struct CompareEntriesFunctor
     {

@@ -121,6 +121,10 @@ void GetMappedDiagonal
         Int offset )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+#if 0
     const Int m = A.Height();
     const Int n = A.Width();
     const T* valBuf = A.LockedValueBuffer();
@@ -149,6 +153,7 @@ void GetMappedDiagonal
         else
             dBuf[Min(i,j)] = func(0);
     }
+#endif
 }
 
 template<typename T,typename S>

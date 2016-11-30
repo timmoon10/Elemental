@@ -28,12 +28,27 @@ namespace El {
 // ============================
 
 template<typename T>
-SparseMatrix<T>::SparseMatrix() { }
+SparseMatrix<T>::SparseMatrix()
+: numRows_(0), numCols_(0),
+  blockHeight_(0), blockWidth_(0)
+{
+    DEBUG_CSE
+    blockOffsets_.resize( 1, 0 );
+    rowOffsets_.resize( 1, 0 );
+}
 
 template<typename T>
-SparseMatrix<T>::SparseMatrix( Int height, Int width )
-: graph_(height,width)
-{ }
+SparseMatrix<T>::SparseMatrix
+( Int height, Int width, Int numBlockRows, Int numBlockCols )
+: numRows_(height), numCols_(width),
+  numBlockRows_(numBlockRows), numBlockCols_(numBlockCols),
+  blockHeight_((height+numBlockRows_-1)/numBlockRows_),
+  blockWidth_((width+numBlockCols_-1)/numBlockCols_)
+{
+    DEBUG_CSE
+    blockOffsets_.resize( numBlockRows_*numBlockCols_+1, 0 );
+    rowOffsets_.resize( numBlockRows_*numBlockCols_*blockHeight_+1, 0 );
+}
 
 template<typename T>
 SparseMatrix<T>::SparseMatrix( const SparseMatrix<T>& A )
@@ -48,8 +63,10 @@ SparseMatrix<T>::SparseMatrix( const SparseMatrix<T>& A )
 template<typename T>
 SparseMatrix<T>::SparseMatrix( const DistSparseMatrix<T>& A )
 {
-    DEBUG_CSE
-    *this = A;
+    // DEBUG_CSE
+    // *this = A;
+    // TODO: implement
+    LogicError("Not yet implemented");
 }
 
 template<typename T>
@@ -63,21 +80,63 @@ SparseMatrix<T>::~SparseMatrix() { }
 template<typename T>
 void SparseMatrix<T>::Empty( bool clearMemory )
 {
-    graph_.Empty( clearMemory );
+    DEBUG_CSE
+
+    // Empty matrix has no rows, columns, or blocks
+    numRows_ = 0;
+    numCols_ = 0;    
+    frozenSparsity_ = false;
+    consistent_ = true;
+    numBlockRows_ = 0;
+    numBlockCols_ = 0;
+    blockHeight_ = 0;
+    blockWidth_ = 0;
+    
+    // Clear arrays
     if( clearMemory )
+    {
+        SwapClear( rows_ );
+        SwapClear( cols_ );
         SwapClear( vals_ );
+        SwapClear( blocks_ );
+        SwapClear( blockOffsets_ );
+        SwapClear( rowOffsets_ );
+        SwapClear( markedForRemoval_ );
+    }
     else
-        vals_.resize( 0 );
+    {
+        rows_.clear();
+        cols_.clear();
+        vals_.clear();
+        blocks_.clear();
+        markedForRemoval_.clear();
+    }
+    blockOffsets_.resize( 1, 0 );
+    rowOffsets_.resize( 1, 0 );
 }
 
 template<typename T>
-void SparseMatrix<T>::Resize( Int height, Int width )
+void SparseMatrix<T>::Resize
+( Int height, Int width, Int numBlockRows, Int numBlockCols )
 {
     DEBUG_CSE
     if( Height() == height && Width() == width )
         return;
-    graph_.Resize( height, width );
-    vals_.resize( 0 );
+    numRows_ = height;
+    numCols_ = width;
+    frozenSparsity_ = false;
+    consistent_ = true;
+    numBlockRows_ = numBlockRows;
+    numBlockCols_ = numBlockCols;
+    blockHeight_ = (height+numBlockRows_-1)/numBlockRows_;
+    blockWidth_ = (width+numBlockCols_-1)/numBlockCols_;
+    rows_.clear();
+    cols_.clear();
+    vals_.clear();
+    blocks_.clear();
+    blockOffsets_.resize( numBlockRows_*numBlockCols_+1, 0 );
+    rowOffsets_.resize( numBlockRows_*numBlockCols_*blockHeight_+1, 0 );
+    markedForRemoval_.clear();
 }
 
 // Assembly
@@ -86,19 +145,21 @@ template<typename T>
 void SparseMatrix<T>::Reserve( Int numEntries )
 {
     const Int currSize = vals_.size();
-    graph_.Reserve( numEntries );
+    rows_.reserve( currSize+numEntries );
+    cols_.reserve( currSize+numEntries );
     vals_.reserve( currSize+numEntries );
+    blocks_.reserve( currSize+numEntries );
 }
 
 template<typename T>
 void SparseMatrix<T>::FreezeSparsity() EL_NO_EXCEPT
-{ graph_.frozenSparsity_ = true; }
+{ frozenSparsity_ = true; }
 template<typename T>
 void SparseMatrix<T>::UnfreezeSparsity() EL_NO_EXCEPT
-{ graph_.frozenSparsity_ = false; }
+{ frozenSparsity_ = false; }
 template<typename T>
 bool SparseMatrix<T>::FrozenSparsity() const EL_NO_EXCEPT
-{ return graph_.frozenSparsity_; }
+{ return frozenSparsity_; }
 
 template<typename T>
 void SparseMatrix<T>::Update( Int row, Int col, T value )
@@ -125,15 +186,45 @@ void SparseMatrix<T>::QueueUpdate( Int row, Int col, T value )
 EL_NO_RELEASE_EXCEPT
 {
     DEBUG_CSE
+    if( row == END ) row = numRows_ - 1;
+    if( col == END ) col = numCols_ - 1;
+
+    // Check if entry is valid (debug)
+    DEBUG_ONLY(
+      if( row < 0 || row >= numRows_ )
+          LogicError
+          ("Row out of bounds: ",row," not in [0,",numRows_,")");
+      if( col < 0 || col >= numCols_ )
+          LogicError
+          ("Column out of bounds: ",col," not in [0,",numCols_,")");
+    )
+
+    // Update entry if sparsity is frozen
     if( FrozenSparsity() )
     {
         const Int offset = Offset( row, col );
+        DEBUG_ONLY(
+          if( rows_[offset] != row || cols_[offset] != col )
+              LogicError
+              ("Cannot update entry: (",row,",",col,") is not in sparsity pattern");
+        )
         vals_[offset] += value;
     }
+
+    // Add entry to end of COO list if sparsity is not frozen
     else
     {
-        graph_.QueueConnection( row, col );
+        DEBUG_ONLY(
+          if( NumEdges() == Capacity() )
+              cerr << "WARNING: Pushing back without first reserving space" << endl;
+        )
+        rows_.push_back( row );
+        cols_.push_back( col );
         vals_.push_back( value );
+        const Int blockIndex
+          = (row/blockHeight_) + (col/blockWidth_)*numBlockRows_;
+        blocks_.push_back( blockIndex );
+        consistent_ = false;
     }
 }
 
@@ -147,14 +238,36 @@ void SparseMatrix<T>::QueueZero( Int row, Int col )
 EL_NO_RELEASE_EXCEPT
 {
     DEBUG_CSE
+    if( row == END ) row = numRows_ - 1;
+    if( col == END ) col = numCols_ - 1;
+
+    // Check if entry is valid (debug)
+    DEBUG_ONLY(
+      if( row < 0 || row >= numRows_ )
+          LogicError
+          ("Row out of bounds: ",row," not in [0,",numRows_,")");
+      if( col < 0 || col >= numCols_ )
+          LogicError
+          ("Column out of bounds: ",col," not in [0,",numCols_,")");
+    )
+
+    // Zero out entry if sparsity is frozen
     if( FrozenSparsity() )
     {
         const Int offset = Offset( row, col );
+        DEBUG_ONLY(
+          if( rows_[offset] != row || cols_[offset] != col )
+              LogicError
+              ("Cannot update entry: (",row,",",col,") is not in sparsity pattern");
+        )
         vals_[offset] = 0;
     }
+
+    // Mark entry for removal if sparsity is not frozen
     else
     {
-        graph_.QueueDisconnection( row, col );
+        markedForRemoval_.insert( pair<Int,Int>(row,col) );
+        consistent_ = false;
     }
 }
 
@@ -167,8 +280,10 @@ template<typename T>
 const SparseMatrix<T>& SparseMatrix<T>::operator=( const SparseMatrix<T>& A )
 {
     DEBUG_CSE
-    graph_ = A.graph_;
-    vals_ = A.vals_;
+    // graph_ = A.graph_;
+    // vals_ = A.vals_;
+    // TODO: implement
+    LogicError("Not yet implemented");
     return *this;
 }
 
@@ -182,8 +297,10 @@ SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
     if( commSize != 1 )
         LogicError("Can not yet construct from distributed sparse matrix");
 
-    graph_ = A.distGraph_;
-    vals_ = A.vals_;
+    // graph_ = A.distGraph_;
+    // vals_ = A.vals_;
+    // TODO: implement
+    LogicError("Not yet implemented");
     return *this;
 }
 
@@ -263,36 +380,49 @@ const SparseMatrix<T>& SparseMatrix<T>::operator-=( const SparseMatrix<T>& A )
 // High-level information
 // ----------------------
 template<typename T>
-Int SparseMatrix<T>::Height() const EL_NO_EXCEPT
-{ return graph_.NumSources(); }
+Int SparseMatrix<T>::Height() const EL_NO_EXCEPT { return numRows_; }
 template<typename T>
-Int SparseMatrix<T>::Width() const EL_NO_EXCEPT
-{ return graph_.NumTargets(); }
+Int SparseMatrix<T>::Width() const EL_NO_EXCEPT { return numCols_; }
 
 template<typename T>
-Int SparseMatrix<T>::NumEntries() const EL_NO_EXCEPT
+Int SparseMatrix<T>::NumEntries() const EL_NO_EXCEPT 
 {
     DEBUG_CSE
-    return graph_.NumEdges();
+    return vals_.size();
 }
 
 template<typename T>
 Int SparseMatrix<T>::Capacity() const EL_NO_EXCEPT
 {
     DEBUG_CSE
-    return graph_.Capacity();
+
+    // Get smallest capacity out of rows_, cols_, vals_, and blocks_
+    Int capacity = Min( rows_.capacity(), cols_.capacity() );
+    capacity = Min( capacity, vals_.capacity() );
+    capacity = Min( capacity, blocks_.capacity() );
+    return capacity;
 }
 
 template<typename T>
 bool SparseMatrix<T>::Consistent() const EL_NO_EXCEPT
-{ return graph_.Consistent(); }
+{ return consistent_; }
 
 template<typename T>
 El::Graph& SparseMatrix<T>::Graph() EL_NO_EXCEPT
-{ return graph_; }
+{
+    // TODO: implement
+    LogicError("Not yet implemented");
+    El::Graph g;
+    return g;
+}
 template<typename T>
 const El::Graph& SparseMatrix<T>::LockedGraph() const EL_NO_EXCEPT
-{ return graph_; }
+{
+    // TODO: implement
+    LogicError("Not yet implemented");
+    const El::Graph g;
+    return g;
+}
 
 // Entrywise information
 // ---------------------
@@ -300,35 +430,53 @@ template<typename T>
 Int SparseMatrix<T>::Row( Int index ) const EL_NO_RELEASE_EXCEPT
 {
     DEBUG_CSE
-    return graph_.Source( index );
+    DEBUG_ONLY(
+      if( index < 0 || index >= (Int)rows_.size() )
+          LogicError("Index number ",index," out of bounds");
+    )
+    return rows_[index];
 }
 
 template<typename T>
 Int SparseMatrix<T>::Col( Int index ) const EL_NO_RELEASE_EXCEPT
 {
     DEBUG_CSE
-    return graph_.Target( index );
+    DEBUG_ONLY(
+      if( index < 0 || index >= (Int)cols_.size() )
+          LogicError("Index number ",index," out of bounds");
+    )
+    return cols_[index];
 }
 
 template<typename T>
-Int SparseMatrix<T>::RowOffset( Int row ) const EL_NO_RELEASE_EXCEPT
+Int SparseMatrix<T>::RowOffset( Int row, Int blockCol ) const
+EL_NO_RELEASE_EXCEPT
 {
-    DEBUG_CSE
-    return graph_.SourceOffset( row );
+    DEBUG_CSE    
+    // return graph_.SourceOffset( row );
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return 0;
 }
 
 template<typename T>
 Int SparseMatrix<T>::Offset( Int row, Int col ) const EL_NO_RELEASE_EXCEPT
 {
     DEBUG_CSE
-    return graph_.Offset( row, col );
+    // return graph_.Offset( row, col );
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return 0;
 }
 
 template<typename T>
 Int SparseMatrix<T>::NumConnections( Int row ) const EL_NO_RELEASE_EXCEPT
 {
     DEBUG_CSE
-    return graph_.NumConnections( row );
+    // return graph_.NumConnections( row );
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return 0;
 }
 
 template<typename T>
@@ -337,7 +485,7 @@ T SparseMatrix<T>::Value( Int index ) const EL_NO_RELEASE_EXCEPT
     DEBUG_CSE
     DEBUG_ONLY(
       if( index < 0 || index >= Int(vals_.size()) )
-          LogicError("Entry number out of bounds");
+          LogicError("Index number ",index," out of bounds");
     )
     return vals_[index];
 }
@@ -345,8 +493,8 @@ T SparseMatrix<T>::Value( Int index ) const EL_NO_RELEASE_EXCEPT
 template< typename T>
 T SparseMatrix<T>::Get( Int row, Int col) const EL_NO_RELEASE_EXCEPT
 {
-    if( row == END ) row = graph_.numSources_ - 1;
-    if( col == END ) col = graph_.numTargets_ - 1;
+    if( row == END ) row = numRows_ - 1;
+    if( col == END ) col = numCols_ - 1;
     Int index = Offset( row, col );
     if( Row(index) != row || Col(index) != col )
         return T(0);
@@ -357,8 +505,8 @@ T SparseMatrix<T>::Get( Int row, Int col) const EL_NO_RELEASE_EXCEPT
 template< typename T>
 void SparseMatrix<T>::Set( Int row, Int col, T val) EL_NO_RELEASE_EXCEPT
 {
-    if( row == END ) row = graph_.numSources_ - 1;
-    if( col == END ) col = graph_.numTargets_ - 1;
+    if( row == END ) row = numRows_ - 1;
+    if( col == END ) col = numCols_ - 1;
     Int index = Offset( row, col );
     if( Row(index) == row && Col(index) == col )
     {
@@ -372,27 +520,33 @@ void SparseMatrix<T>::Set( Int row, Int col, T val) EL_NO_RELEASE_EXCEPT
 }
 
 template<typename T>
-Int* SparseMatrix<T>::SourceBuffer() EL_NO_EXCEPT
-{ return graph_.SourceBuffer(); }
+Int* SparseMatrix<T>::RowBuffer() EL_NO_EXCEPT
+{ return rows_.data(); }
 template<typename T>
-Int* SparseMatrix<T>::TargetBuffer() EL_NO_EXCEPT
-{ return graph_.TargetBuffer(); }
+Int* SparseMatrix<T>::ColumnBuffer() EL_NO_EXCEPT
+{ return cols_.data(); }
 template<typename T>
-Int* SparseMatrix<T>::OffsetBuffer() EL_NO_EXCEPT
-{ return graph_.OffsetBuffer(); }
+Int* SparseMatrix<T>::RowOffsetBuffer() EL_NO_EXCEPT
+{ return rowOffsets_.data(); }
+template<typename T>
+Int* SparseMatrix<T>::BlockOffsetBuffer() EL_NO_EXCEPT
+{ return blockOffsets_.data(); }
 template<typename T>
 T* SparseMatrix<T>::ValueBuffer() EL_NO_EXCEPT
 { return vals_.data(); }
 
 template<typename T>
-const Int* SparseMatrix<T>::LockedSourceBuffer() const EL_NO_EXCEPT
-{ return graph_.LockedSourceBuffer(); }
+const Int* SparseMatrix<T>::LockedRowBuffer() const EL_NO_EXCEPT
+{ return rows_.data(); }
 template<typename T>
-const Int* SparseMatrix<T>::LockedTargetBuffer() const EL_NO_EXCEPT
-{ return graph_.LockedTargetBuffer(); }
+const Int* SparseMatrix<T>::LockedColumnBuffer() const EL_NO_EXCEPT
+{ return cols_.data(); }
 template<typename T>
-const Int* SparseMatrix<T>::LockedOffsetBuffer() const EL_NO_EXCEPT
-{ return graph_.LockedOffsetBuffer(); }
+const Int* SparseMatrix<T>::LockedRowOffsetBuffer() const EL_NO_EXCEPT
+{ return rowOffsets_.data(); }
+template<typename T>
+const Int* SparseMatrix<T>::LockedBlockOffsetBuffer() const EL_NO_EXCEPT
+{ return blockOffsets_.data(); }
 template<typename T>
 const T* SparseMatrix<T>::LockedValueBuffer() const EL_NO_EXCEPT
 { return vals_.data(); }
@@ -401,13 +555,15 @@ template<typename T>
 void SparseMatrix<T>::ForceNumEntries( Int numEntries )
 {
     DEBUG_CSE
-    graph_.ForceNumEdges( numEntries );
-    vals_.resize( numEntries );
+    // graph_.ForceNumEdges( numEntries );
+    // vals_.resize( numEntries );
+    // TODO: implement
+    LogicError("Not yet implemented");
 }
 
 template<typename T>
 void SparseMatrix<T>::ForceConsistency( bool consistent ) EL_NO_EXCEPT
-{ graph_.ForceConsistency( consistent ); }
+{ consistent_ = consistent; }
 
 // Auxiliary routines
 // ==================
@@ -416,6 +572,11 @@ template<typename T>
 void SparseMatrix<T>::ProcessQueues()
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+
+#if 0
     DEBUG_ONLY(
       if( graph_.sources_.size() != graph_.targets_.size() ||
           graph_.targets_.size() != vals_.size() )
@@ -482,11 +643,15 @@ void SparseMatrix<T>::ProcessQueues()
 
     graph_.ComputeSourceOffsets();
     graph_.consistent_ = true;
+#endif
 }
 
 template<typename T>
 void SparseMatrix<T>::AssertConsistent() const
-{ graph_.AssertConsistent(); }
+{
+    if( !consistent_ )
+        LogicError("Sparse matrix was not consistent; run ProcessQueues()");
+}
 
 #ifdef EL_INSTANTIATE_CORE
 # define EL_EXTERN

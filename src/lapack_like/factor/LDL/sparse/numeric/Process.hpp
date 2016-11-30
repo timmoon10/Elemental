@@ -30,6 +30,10 @@ inline void
 Process( const NodeInfo& info, Front<F>& front, LDLFrontType factorType )
 {
     DEBUG_CSE
+
+    // TODO: convert SparseMatrix to CSR
+    LogicError("Not yet implemented");
+#if 0
     const int updateSize = info.lowerStruct.size();
     auto& FBR = front.workDense;
     FBR.Empty();
@@ -141,6 +145,7 @@ Process( const NodeInfo& info, Front<F>& front, LDLFrontType factorType )
         }
         ProcessFront( front, factorType );
     }
+#endif
 }
 
 template<typename F>

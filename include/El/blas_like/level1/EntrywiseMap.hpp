@@ -76,6 +76,12 @@ void EntrywiseMap
         function<T(S)> func )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+    return;
+
+#if 0
     const Int numEntries = A.NumEntries();
 
     B.graph_ = A.graph_;
@@ -83,6 +89,7 @@ void EntrywiseMap
     for( Int k=0; k<numEntries; ++k )
         B.vals_[k] = func(A.vals_[k]);
     B.ProcessQueues();
+#endif
 }
 
 template<typename S,typename T>

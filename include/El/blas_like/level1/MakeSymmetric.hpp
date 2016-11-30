@@ -76,6 +76,10 @@ template<typename T>
 void MakeSymmetric( UpperOrLower uplo, SparseMatrix<T>& A, bool conjugate )
 {
     DEBUG_CSE
+
+    // TODO: implement
+    LogicError("Not yet implemented");
+#if 0
     if( A.Height() != A.Width() )
         LogicError("Cannot make non-square matrix symmetric");
 
@@ -121,6 +125,7 @@ void MakeSymmetric( UpperOrLower uplo, SparseMatrix<T>& A, bool conjugate )
         }
     }
     A.ProcessQueues();
+#endif
 }
 
 template<typename T>

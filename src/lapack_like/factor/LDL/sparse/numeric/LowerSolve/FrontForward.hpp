@@ -90,6 +90,12 @@ template<typename F>
 void FrontLowerForwardSolve( const Front<F>& front, Matrix<F>& W )
 {
     DEBUG_CSE
+
+    // TODO: convert SparseMatrix to CSR
+    LogicError("Not yet implemented");
+    return;  
+
+#if 0
     const LDLFrontType type = front.type;
     DEBUG_ONLY(
       if( Unfactored(type) )
@@ -122,6 +128,7 @@ void FrontLowerForwardSolve( const Front<F>& front, Matrix<F>& W )
         else
             FrontVanillaLowerForwardSolve( front.LDense, W );
     }
+#endif
 }
 
 namespace internal {

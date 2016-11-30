@@ -68,6 +68,12 @@ void Front<F>::Pull
   bool conjugate )
 {
     DEBUG_CSE
+
+    // TODO: convert SparseMatrix to CSR
+    LogicError("Not yet implemented");
+    return;
+
+#if 0
     DEBUG_ONLY(
       if( A.Height() != (Int)reordering.size() )
           LogicError("Mapping was not the right size");
@@ -88,6 +94,7 @@ void Front<F>::Pull
     function<void(const NodeInfo&,Front<F>&)> pull = 
       [&]( const NodeInfo& node, Front<F>& front )
       {
+        
         // Delete any existing children
         for( auto* child : front.children )
             delete child;
@@ -207,6 +214,7 @@ void Front<F>::Pull
         }
       };
     pull( rootInfo, *this );
+#endif
 }
 
 template<typename F>
@@ -216,6 +224,11 @@ void Front<F>::PullUpdate
   const NodeInfo& rootInfo )
 {
     DEBUG_CSE
+
+    // TODO: convert SparseMatrix to CSR
+    LogicError("Not yet implemented");
+    return;      
+#if 0      
     DEBUG_ONLY(
       if( A.Height() != (Int)reordering.size() )
           LogicError("Mapping was not the right size");
@@ -282,6 +295,7 @@ void Front<F>::PullUpdate
         }
       };
     pull( rootInfo, *this );
+#endif
 }
 
 // TODO: Use lower-level access
@@ -658,6 +672,12 @@ template<typename F>
 double Front<F>::FactorGFlops() const
 {
     DEBUG_CSE
+
+    // TODO: convert SparseMatrix to CSR
+    LogicError("Not yet implemented");
+    return double(0);
+
+#if 0
     double gflops = 0.;
     function<void(const Front<F>&)> count =
       [&]( const Front<F>& front )
@@ -693,6 +713,7 @@ double Front<F>::FactorGFlops() const
       };
     count( *this );
     return gflops;
+#endif
 }
 
 template<typename F>
