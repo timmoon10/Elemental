@@ -624,24 +624,6 @@ install(FILES
 # ==================
 include(CTest)
 
-# Sandbox test
-# ------------
-install(FILES "${PROJECT_SOURCE_DIR}/sandbox/Makefile"
-  DESTINATION ${CMAKE_INSTALL_DOCDIR}/sandbox)
-install(FILES "${PROJECT_SOURCE_DIR}/sandbox/test.cpp"
-  DESTINATION ${CMAKE_INSTALL_DOCDIR}/sandbox)
-add_executable(sandbox-test "${PROJECT_SOURCE_DIR}/sandbox/test.cpp")
-set_source_files_properties("${PROJECT_SOURCE_DIR}/sandbox/test.cpp"
-  PROPERTIES OBJECT_DEPENDS "${PREPARED_HEADERS}")
-target_link_libraries(sandbox-test El)
-set_target_properties(sandbox-test PROPERTIES
-  OUTPUT_NAME sandbox-test
-  SUFFIX "${CMAKE_EXECUTABLE_SUFFIX_CXX}"
-  RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
-if(EL_LINK_FLAGS)
-  set_target_properties(sandbox-test PROPERTIES LINK_FLAGS ${EL_LINK_FLAGS})
-endif()
-
 # Test drivers
 # ------------
 if(EL_TESTS)
