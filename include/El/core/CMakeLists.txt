@@ -1,0 +1,42 @@
+set_full_path(THIS_DIR_HEADERS
+  CReflect.hpp
+  DistGraph.hpp
+  DistMap.hpp
+  DistMatrix.hpp
+  DistMultiVec.hpp
+  DistPermutation.hpp
+  DistSparseMatrix.hpp
+  Element.hpp
+  FlamePart.hpp
+  Graph.hpp
+  Grid.hpp
+  limits.hpp
+  Matrix.hpp
+  Memory.hpp
+  Permutation.hpp
+  Proxy.hpp
+  Serialize.hpp
+  SparseMatrix.hpp
+  Timer.hpp
+  types.hpp
+  View.hpp
+  )
+
+add_subdirectory(DistGraph)
+add_subdirectory(DistMap)
+add_subdirectory(DistMatrix)
+add_subdirectory(DistMultiVec)
+add_subdirectory(DistSparseMatrix)
+add_subdirectory(Element)
+add_subdirectory(environment)
+add_subdirectory(FlamePart)
+add_subdirectory(Graph)
+add_subdirectory(imports)
+add_subdirectory(indexing)
+add_subdirectory(Matrix)
+add_subdirectory(Memory)
+add_subdirectory(random)
+add_subdirectory(SparseMatrix)
+add_subdirectory(View)
+
+set(HEADERS "${HEADERS}" "${THIS_DIR_HEADERS}" PARENT_SCOPE)

@@ -1,0 +1,69 @@
+set_full_path(THIS_DIR_HEADERS
+  AllReduce.hpp
+  AxpyContract.hpp
+  Axpy.hpp
+  AxpyTrapezoid.hpp
+  Broadcast.hpp
+  Concatenate.hpp
+  ConjugateDiagonal.hpp
+  Conjugate.hpp
+  ConjugateSubmatrix.hpp
+  Contract.hpp
+  Copy.hpp
+  decl.hpp
+  DiagonalScale.hpp
+  DiagonalScaleTrapezoid.hpp
+  DiagonalSolve.hpp
+  Dot.hpp
+  EntrywiseFill.hpp
+  EntrywiseMap.hpp
+  FillDiagonal.hpp
+  Fill.hpp
+  Full.hpp
+  GetDiagonal.hpp
+  GetMappedDiagonal.hpp
+  GetSubmatrix.hpp
+  Givens.hpp
+  Hadamard.hpp
+  ImagPart.hpp
+  impl.hpp
+  IndexDependentFill.hpp
+  IndexDependentMap.hpp
+  Kronecker.hpp
+  MakeDiagonalReal.hpp
+  MakeReal.hpp
+  MakeSubmatrixReal.hpp
+  MakeSymmetric.hpp
+  MakeTrapezoidal.hpp
+  Nrm2.hpp
+  QuasiDiagonalScale.hpp
+  QuasiDiagonalSolve.hpp
+  RealPart.hpp
+  Recv.hpp
+  Reshape.hpp
+  Rotate.hpp
+  Round.hpp
+  SafeScale.hpp
+  Scale.hpp
+  ScaleTrapezoid.hpp
+  Send.hpp
+  SendRecv.hpp
+  SetDiagonal.hpp
+  SetSubmatrix.hpp
+  ShiftDiagonal.hpp
+  Shift.hpp
+  TransposeAxpyContract.hpp
+  TransposeAxpy.hpp
+  TransposeContract.hpp
+  Transpose.hpp
+  UpdateDiagonal.hpp
+  UpdateMappedDiagonal.hpp
+  UpdateSubmatrix.hpp
+  Zero.hpp
+  )
+
+add_subdirectory(Axpy)
+add_subdirectory(Copy)
+add_subdirectory(Transpose)
+
+set(HEADERS "${HEADERS}" "${THIS_DIR_HEADERS}" PARENT_SCOPE)

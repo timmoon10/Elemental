@@ -70,7 +70,7 @@ if(NOT DISABLE_PTHREADS AND NOT CMAKE_THREAD_LIBS_INIT)
     message(FATAL_ERROR "Could not find a pthreads library, cannot build PMRRR")
   endif()
 endif()
-set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} PARENT_SCOPE)
+set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} ${THIS_DIR_HEADERS} PARENT_SCOPE)
 
 # Define the main library and its link libraries
 # ----------------------------------------------

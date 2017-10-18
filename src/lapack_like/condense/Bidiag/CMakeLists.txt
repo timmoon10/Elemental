@@ -1,0 +1,11 @@
+set_full_path(THIS_DIR_SOURCES
+  Apply.hpp
+  LowerBlocked.hpp
+  LowerPanel.hpp
+  LowerUnblocked.hpp
+  UpperBlocked.hpp
+  UpperPanel.hpp
+  UpperUnblocked.hpp
+  )
+
+set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)
