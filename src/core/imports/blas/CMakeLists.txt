@@ -1,3 +1,4 @@
+# Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
   Axpy.hpp
   Copy.hpp
@@ -12,9 +13,9 @@ set_full_path(THIS_DIR_SOURCES
   Swap.hpp
   Symm.hpp
   Symv.hpp
+  Syr.hpp
   Syr2.hpp
   Syr2k.hpp
-  Syr.hpp
   Syrk.hpp
   Trmm.hpp
   Trmv.hpp
@@ -22,4 +23,5 @@ set_full_path(THIS_DIR_SOURCES
   Trsv.hpp
   )
 
+# Propagate the files up the tree
 set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)

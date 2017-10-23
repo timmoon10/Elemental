@@ -1,23 +1,26 @@
+# Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
-  callStack.cpp
   DistGraph.cpp
   DistMap.cpp
   Element.cpp
-  environment.cpp
   Graph.cpp
   Grid.cpp
-  indent.cpp
   Instantiate.cpp
+  Serialize.cpp
+  Timer.cpp
+  callStack.cpp
+  environment.cpp
+  indent.cpp
   logging.cpp
   mpi_register.cpp
   random.cpp
-  Serialize.cpp
-  Timer.cpp
   types.cpp
   )
 
+# Add the subdirectories
 add_subdirectory(DistMatrix)
 add_subdirectory(FlamePart)
 add_subdirectory(imports)
 
+# Propagate the files up the tree
 set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)

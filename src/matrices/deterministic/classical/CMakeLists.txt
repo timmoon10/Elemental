@@ -1,3 +1,4 @@
+# Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
   Cauchy.cpp
   CauchyLike.cpp
@@ -16,4 +17,5 @@ set_full_path(THIS_DIR_SOURCES
   Zeros.cpp
   )
 
+# Propagate the files up the tree
 set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)

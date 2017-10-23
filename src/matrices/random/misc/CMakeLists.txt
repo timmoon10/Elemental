@@ -1,3 +1,4 @@
+# Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
   Haar.cpp
   HatanoNelson.cpp
@@ -7,4 +8,5 @@ set_full_path(THIS_DIR_SOURCES
   Wigner.cpp
   )
 
+# Propagate the files up the tree
 set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)

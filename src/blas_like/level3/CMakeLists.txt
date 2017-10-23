@@ -1,12 +1,13 @@
+# Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
   Gemm.cpp
   Hemm.cpp
   Her2k.cpp
   Herk.cpp
   HermitianFromEVD.cpp
-  Multiply.cpp
   MultiShiftQuasiTrsm.cpp
   MultiShiftTrsm.cpp
+  Multiply.cpp
   NormalFromEVD.cpp
   QuasiTrsm.cpp
   SafeMultiShiftTrsm.cpp
@@ -24,6 +25,7 @@ set_full_path(THIS_DIR_SOURCES
   TwoSidedTrsm.cpp
   )
 
+# Add the subdirectories
 add_subdirectory(Gemm)
 add_subdirectory(MultiShiftQuasiTrsm)
 add_subdirectory(MultiShiftTrsm)
@@ -42,4 +44,5 @@ add_subdirectory(Trtrmm)
 add_subdirectory(TwoSidedTrmm)
 add_subdirectory(TwoSidedTrsm)
 
+# Propagate the files up the tree
 set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)

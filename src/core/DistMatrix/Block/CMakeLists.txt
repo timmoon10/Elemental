@@ -1,3 +1,4 @@
+# Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
   CIRC_CIRC.cpp
   MC_MR.cpp
@@ -5,7 +6,6 @@ set_full_path(THIS_DIR_SOURCES
   MD_STAR.cpp
   MR_MC.cpp
   MR_STAR.cpp
-  setup.hpp
   STAR_MC.cpp
   STAR_MD.cpp
   STAR_MR.cpp
@@ -14,6 +14,8 @@ set_full_path(THIS_DIR_SOURCES
   STAR_VR.cpp
   VC_STAR.cpp
   VR_STAR.cpp
+  setup.hpp
   )
 
+# Propagate the files up the tree
 set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)
