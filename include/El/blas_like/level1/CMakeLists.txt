@@ -1,24 +1,24 @@
+# Add the headers for this directory
 set_full_path(THIS_DIR_HEADERS
   AllReduce.hpp
-  AxpyContract.hpp
   Axpy.hpp
+  AxpyContract.hpp
   AxpyTrapezoid.hpp
   Broadcast.hpp
   Concatenate.hpp
-  ConjugateDiagonal.hpp
   Conjugate.hpp
+  ConjugateDiagonal.hpp
   ConjugateSubmatrix.hpp
   Contract.hpp
   Copy.hpp
-  decl.hpp
   DiagonalScale.hpp
   DiagonalScaleTrapezoid.hpp
   DiagonalSolve.hpp
   Dot.hpp
   EntrywiseFill.hpp
   EntrywiseMap.hpp
-  FillDiagonal.hpp
   Fill.hpp
+  FillDiagonal.hpp
   Full.hpp
   GetDiagonal.hpp
   GetMappedDiagonal.hpp
@@ -26,7 +26,6 @@ set_full_path(THIS_DIR_HEADERS
   Givens.hpp
   Hadamard.hpp
   ImagPart.hpp
-  impl.hpp
   IndexDependentFill.hpp
   IndexDependentMap.hpp
   Kronecker.hpp
@@ -50,20 +49,24 @@ set_full_path(THIS_DIR_HEADERS
   SendRecv.hpp
   SetDiagonal.hpp
   SetSubmatrix.hpp
-  ShiftDiagonal.hpp
   Shift.hpp
-  TransposeAxpyContract.hpp
-  TransposeAxpy.hpp
-  TransposeContract.hpp
+  ShiftDiagonal.hpp
   Transpose.hpp
+  TransposeAxpy.hpp
+  TransposeAxpyContract.hpp
+  TransposeContract.hpp
   UpdateDiagonal.hpp
   UpdateMappedDiagonal.hpp
   UpdateSubmatrix.hpp
   Zero.hpp
+  decl.hpp
+  impl.hpp
   )
 
+# Add the subdirectories
 add_subdirectory(Axpy)
 add_subdirectory(Copy)
 add_subdirectory(Transpose)
 
+# Propagate the files up the tree
 set(HEADERS "${HEADERS}" "${THIS_DIR_HEADERS}" PARENT_SCOPE)

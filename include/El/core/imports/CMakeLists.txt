@@ -1,3 +1,4 @@
+# Add the headers for this directory
 set_full_path(THIS_DIR_HEADERS
   blas.hpp
   choice.hpp
@@ -5,8 +6,8 @@ set_full_path(THIS_DIR_HEADERS
   lapack.hpp
   mkl.hpp
   mpfr.hpp
-  mpi_choice.hpp
   mpi.hpp
+  mpi_choice.hpp
   omp.hpp
   openblas.hpp
   pmrrr.hpp
@@ -17,6 +18,8 @@ set_full_path(THIS_DIR_HEADERS
   valgrind.hpp
   )
 
+# Add the subdirectories
 add_subdirectory(scalapack)
 
+# Propagate the files up the tree
 set(HEADERS "${HEADERS}" "${THIS_DIR_HEADERS}" PARENT_SCOPE)
