@@ -89,38 +89,6 @@ void Diagonal( AbstractDistMatrix<S>& D, const AbstractDistMatrix<T>& d )
     D.ProcessQueues();
 }
 
-template<typename S,typename T>
-void Diagonal( SparseMatrix<S>& D, const Matrix<T>& d )
-{
-    EL_DEBUG_CSE
-    if( d.Width() != 1 )
-        LogicError("d must be a column vector");
-    const Int n = d.Height();
-    Zeros( D, n, n );
-    D.Reserve( n );
-    for( Int j=0; j<n; ++j )
-        D.QueueUpdate( j, j, d(j) );
-    D.ProcessQueues();
-}
-
-template<typename S,typename T>
-void Diagonal( DistSparseMatrix<S>& D, const DistMultiVec<T>& d )
-{
-    EL_DEBUG_CSE
-    if( d.Width() != 1 )
-        LogicError("d must be a column vector");
-    const Int n = d.Height();
-    D.SetGrid( d.Grid() );
-    Zeros( D, n, n );
-    const Int localHeight = d.LocalHeight();
-    D.Reserve( localHeight );
-    for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-    {
-        const Int i = d.GlobalRow(iLoc);
-        D.QueueUpdate( i, i, d.GetLocal(iLoc,0) );
-    }
-    D.ProcessQueues();
-}
 
 #define PROTO_TYPES(S,T) \
   template void Diagonal( Matrix<S>& D, const vector<T>& d ); \
@@ -128,9 +96,7 @@ void Diagonal( DistSparseMatrix<S>& D, const DistMultiVec<T>& d )
   template void Diagonal( AbstractDistMatrix<S>& D, const vector<T>& d ); \
   template void Diagonal( AbstractDistMatrix<S>& D, const Matrix<T>& d ); \
   template void Diagonal \
-  ( AbstractDistMatrix<S>& D, const AbstractDistMatrix<T>& d ); \
-  template void Diagonal( SparseMatrix<S>& A, const Matrix<T>& d ); \
-  template void Diagonal( DistSparseMatrix<S>& A, const DistMultiVec<T>& d );
+  ( AbstractDistMatrix<S>& D, const AbstractDistMatrix<T>& d );
 
 #define PROTO_INT(S) PROTO_TYPES(S,S)
 

@@ -95,86 +95,6 @@ DistMatrix<T> Reshape( Int mNew, Int nNew, const AbstractDistMatrix<T>& A )
     return B;
 }
 
-template<typename T>
-void Reshape
-(       Int mNew,
-        Int nNew,
-  const SparseMatrix<T>& A,
-        SparseMatrix<T>& B )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    const Int numEntries = A.NumEntries();
-    if( m*n != mNew*nNew )
-        LogicError
-        ("Reshape from ",m," x ",n," to ",mNew," x ",nNew,
-         " did not preserve the total number of entries");
-
-    B.Resize( mNew, nNew );
-    Zero( B );
-    B.Reserve( numEntries );
-
-    // Insert the nonzeros
-    for( Int e=0; e<numEntries; ++e )
-    {
-        const Int i = A.Row(e);
-        const Int j = A.Col(e);
-        const Int iNew = (i+j*m) % mNew;
-        const Int jNew = (i+j*m) / mNew;
-        B.QueueUpdate( iNew, jNew, A.Value(e) );
-    }
-    B.ProcessQueues();
-}
-
-template<typename T>
-SparseMatrix<T> Reshape( Int mNew, Int nNew, const SparseMatrix<T>& A )
-{
-    SparseMatrix<T> B;
-    Reshape( mNew, nNew, A, B );
-    return B;
-}
-
-template<typename T>
-void Reshape
-(       Int mNew,
-        Int nNew,
-  const DistSparseMatrix<T>& A,
-        DistSparseMatrix<T>& B )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    const Int numEntries = A.NumLocalEntries();
-    if( m*n != mNew*nNew )
-        LogicError
-        ("Reshape from ",m," x ",n," to ",mNew," x ",nNew,
-         " did not preserve the total number of entries");
-
-    B.SetGrid( A.Grid() );
-    B.Resize( mNew, nNew );
-    Zero( B );
-
-    B.Reserve( numEntries );
-    for( Int e=0; e<numEntries; ++e )
-    {
-        const Int i = A.Row(e);
-        const Int j = A.Col(e);
-        const Int iNew = (i+j*m) % mNew;
-        const Int jNew = (i+j*m) / mNew;
-        B.QueueUpdate( iNew, jNew, A.Value(e) );
-    }
-    B.ProcessQueues();
-}
-
-template<typename T>
-DistSparseMatrix<T> Reshape( Int mNew, Int nNew, const DistSparseMatrix<T>& A )
-{
-    DistSparseMatrix<T> B(A.Grid());
-    Reshape( mNew, nNew, A, B );
-    return B;
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -195,21 +115,7 @@ DistSparseMatrix<T> Reshape( Int mNew, Int nNew, const DistSparseMatrix<T>& A )
     const AbstractDistMatrix<T>& A, \
           AbstractDistMatrix<T>& B ); \
   EL_EXTERN template DistMatrix<T> Reshape \
-  ( Int mNew, Int nNew, const AbstractDistMatrix<T>& A ); \
-  EL_EXTERN template void Reshape \
-  (       Int mNew, \
-          Int nNew, \
-    const SparseMatrix<T>& A, \
-          SparseMatrix<T>& B ); \
-  EL_EXTERN template SparseMatrix<T> Reshape \
-  ( Int mNew, Int nNew, const SparseMatrix<T>& A ); \
-  EL_EXTERN template void Reshape \
-  (       Int mNew, \
-          Int nNew, \
-    const DistSparseMatrix<T>& A, \
-          DistSparseMatrix<T>& B ); \
-  EL_EXTERN template DistSparseMatrix<T> Reshape \
-  ( Int mNew, Int nNew, const DistSparseMatrix<T>& A );
+  ( Int mNew, Int nNew, const AbstractDistMatrix<T>& A );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

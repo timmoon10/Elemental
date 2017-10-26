@@ -26,10 +26,6 @@ template<typename T>
 void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func )
 { EntrywiseFill( A.Matrix(), func ); }
 
-template<typename T>
-void EntrywiseFill( DistMultiVec<T>& A, function<T(void)> func )
-{ EntrywiseFill( A.Matrix(), func ); }
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -40,9 +36,7 @@ void EntrywiseFill( DistMultiVec<T>& A, function<T(void)> func )
   EL_EXTERN template void EntrywiseFill \
   ( Matrix<T>& A, function<T(void)> func ); \
   EL_EXTERN template void EntrywiseFill \
-  ( AbstractDistMatrix<T>& A, function<T(void)> func ); \
-  EL_EXTERN template void EntrywiseFill \
-  ( DistMultiVec<T>& A, function<T(void)> func );
+  ( AbstractDistMatrix<T>& A, function<T(void)> func );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

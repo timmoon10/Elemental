@@ -446,15 +446,6 @@ ElementalMatrix<T>::operator=( const AbstractDistMatrix<T>& A )
     return *this;
 }
 
-template<typename T>
-const ElementalMatrix<T>&
-ElementalMatrix<T>::operator=( const DistMultiVec<T>& A )
-{
-    EL_DEBUG_CSE
-    El::Copy( A, *this );
-    return *this;
-}
-
 // Rescaling
 // ---------
 template<typename T>

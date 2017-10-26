@@ -86,39 +86,6 @@ MakeTrapezoidal( UpperOrLower uplo, AbstractDistMatrix<T>& A, Int offset )
     }
 }
 
-template<typename T>
-void MakeTrapezoidal( UpperOrLower uplo, SparseMatrix<T>& A, Int offset )
-{
-    EL_DEBUG_CSE
-    const Int numEntries = A.NumEntries();
-    for( Int k=0; k<numEntries; ++k )
-    {
-        const Int i = A.Row(k);
-        const Int j = A.Col(k);
-        if( (uplo == LOWER && j-i > offset) ||
-            (uplo == UPPER && j-i < offset) )
-            A.QueueZero( i, j );
-    }
-    A.ProcessQueues();
-}
-
-template<typename T>
-void MakeTrapezoidal( UpperOrLower uplo, DistSparseMatrix<T>& A, Int offset )
-{
-    EL_DEBUG_CSE
-    const Int firstLocalRow = A.FirstLocalRow();
-    const Int numLocalEntries = A.NumLocalEntries();
-    for( Int k=0; k<numLocalEntries; ++k )
-    {
-        const Int i = A.Row(k);
-        const Int j = A.Col(k);
-        if( (uplo == LOWER && j-i > offset) ||
-            (uplo == UPPER && j-i < offset) )
-            A.QueueLocalZero( i-firstLocalRow, j );
-    }
-    A.ProcessLocalQueues();
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -129,11 +96,7 @@ void MakeTrapezoidal( UpperOrLower uplo, DistSparseMatrix<T>& A, Int offset )
   EL_EXTERN template void MakeTrapezoidal \
   ( UpperOrLower uplo, Matrix<T>& A, Int offset ); \
   EL_EXTERN template void MakeTrapezoidal \
-  ( UpperOrLower uplo, AbstractDistMatrix<T>& A, Int offset ); \
-  EL_EXTERN template void MakeTrapezoidal \
-  ( UpperOrLower uplo, SparseMatrix<T>& A, Int offset ); \
-  EL_EXTERN template void MakeTrapezoidal \
-  ( UpperOrLower uplo, DistSparseMatrix<T>& A, Int offset );
+  ( UpperOrLower uplo, AbstractDistMatrix<T>& A, Int offset );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

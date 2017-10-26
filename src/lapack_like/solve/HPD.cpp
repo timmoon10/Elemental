@@ -68,43 +68,6 @@ void HPDSolve
     hpd_solve::Overwrite( uplo, orientation, ACopy, B );
 }
 
-// TODO(poulson): Add iterative refinement parameter
-template<typename Field>
-void HPDSolve
-( const SparseMatrix<Field>& A,
-        Matrix<Field>& B,
-  const BisectCtrl& ctrl )
-{
-    EL_DEBUG_CSE
-    SparseLDLFactorization<Field> sparseLDLFact;
-    const bool hermitian = true;
-    sparseLDLFact.Initialize( A, hermitian, ctrl );
-    sparseLDLFact.Factor();
-    /*
-    sparseLDLFact.SolveWithIterativeRefinement
-    ( A, B, relTolRefine, maxRefineIts );
-    */
-    sparseLDLFact.Solve( B );
-}
-
-// TODO(poulson): Add iterative refinement parameter
-template<typename Field>
-void HPDSolve
-( const DistSparseMatrix<Field>& A,
-        DistMultiVec<Field>& B,
-  const BisectCtrl& ctrl )
-{
-    EL_DEBUG_CSE
-    DistSparseLDLFactorization<Field> sparseLDLFact;
-    const bool hermitian = true;
-    sparseLDLFact.Initialize( A, hermitian, ctrl );
-    sparseLDLFact.Factor();
-    /*
-    sparseLDLFact.SolveWithIterativeRefinement
-    ( A, B, relTolRefine, maxRefineIts );
-    */
-    sparseLDLFact.Solve( B );
-}
 
 #define PROTO(Field) \
   template void hpd_solve::Overwrite \
@@ -118,12 +81,7 @@ void HPDSolve
     const Matrix<Field>& A, Matrix<Field>& B ); \
   template void HPDSolve \
   ( UpperOrLower uplo, Orientation orientation, \
-    const AbstractDistMatrix<Field>& A, AbstractDistMatrix<Field>& B ); \
-  template void HPDSolve \
-  ( const SparseMatrix<Field>& A, Matrix<Field>& B, const BisectCtrl& ctrl ); \
-  template void HPDSolve \
-  ( const DistSparseMatrix<Field>& A, DistMultiVec<Field>& B, \
-    const BisectCtrl& ctrl );
+    const AbstractDistMatrix<Field>& A, AbstractDistMatrix<Field>& B );
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

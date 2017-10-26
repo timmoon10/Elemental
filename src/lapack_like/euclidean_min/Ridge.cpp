@@ -196,51 +196,6 @@ void Ridge
     }
 }
 
-template<typename Field>
-void Ridge
-( Orientation orientation,
-  const SparseMatrix<Field>& A,
-  const Matrix<Field>& B,
-        Base<Field> gamma,
-        Matrix<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl )
-{
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      if( A.Height() != B.Height() )
-          LogicError("Heights of A and B must match");
-    )
-
-    const Int n = A.Width();
-    SparseMatrix<Field> G;
-    Zeros( G, n, n );
-    ShiftDiagonal( G, gamma );
-
-    Tikhonov( orientation, A, B, G, X, ctrl );
-}
-
-template<typename Field>
-void Ridge
-( Orientation orientation,
-  const DistSparseMatrix<Field>& A,
-  const DistMultiVec<Field>& B,
-        Base<Field> gamma,
-        DistMultiVec<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl )
-{
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      if( A.Height() != B.Height() )
-          LogicError("Heights of A and B must match");
-    )
-
-    const Int n = A.Width();
-    DistSparseMatrix<Field> G(A.Grid());
-    Zeros( G, n, n );
-    ShiftDiagonal( G, gamma );
-
-    Tikhonov( orientation, A, B, G, X, ctrl );
-}
 
 #define PROTO(Field) \
   template void Ridge \
@@ -256,21 +211,7 @@ void Ridge
     const AbstractDistMatrix<Field>& B, \
           Base<Field> gamma, \
           AbstractDistMatrix<Field>& X, \
-          RidgeAlg alg ); \
-  template void Ridge \
-  ( Orientation orientation, \
-    const SparseMatrix<Field>& A, \
-    const Matrix<Field>& B, \
-          Base<Field> gamma, \
-          Matrix<Field>& X, \
-    const LeastSquaresCtrl<Base<Field>>& ctrl ); \
-  template void Ridge \
-  ( Orientation orientation, \
-    const DistSparseMatrix<Field>& A, \
-    const DistMultiVec<Field>& B, \
-          Base<Field> gamma, \
-          DistMultiVec<Field>& X, \
-    const LeastSquaresCtrl<Base<Field>>& ctrl );
+          RidgeAlg alg );
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

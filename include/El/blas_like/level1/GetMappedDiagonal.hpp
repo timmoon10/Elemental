@@ -113,83 +113,6 @@ void GetMappedDiagonal
     d.ProcessQueues();
 }
 
-template<typename T,typename S>
-void GetMappedDiagonal
-( const SparseMatrix<T>& A,
-        Matrix<S>& d,
-        function<S(const T&)> func,
-        Int offset )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    const T* valBuf = A.LockedValueBuffer();
-    const Int* colBuf = A.LockedTargetBuffer();
-
-    const Int iStart = Max(-offset,0);
-    const Int jStart = Max( offset,0);
-
-    const Int diagLength = El::DiagonalLength(m,n,offset);
-    d.Resize( diagLength, 1 );
-    Zero( d );
-    S* dBuf = d.Buffer();
-
-    for( Int k=0; k<diagLength; ++k )
-    {
-        const Int i = iStart + k;
-        const Int j = jStart + k;
-        const Int thisOff = A.RowOffset(i);
-        const Int nextOff = A.RowOffset(i+1);
-        auto it = std::lower_bound( colBuf+thisOff, colBuf+nextOff, j );
-        if( *it == j )
-        {
-            const Int e = it-colBuf;
-            dBuf[Min(i,j)] = func(valBuf[e]);
-        }
-        else
-            dBuf[Min(i,j)] = func(0);
-    }
-}
-
-template<typename T,typename S>
-void GetMappedDiagonal
-( const DistSparseMatrix<T>& A,
-        DistMultiVec<S>& d,
-        function<S(const T&)> func,
-        Int offset )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    const T* valBuf = A.LockedValueBuffer();
-    const Int* colBuf = A.LockedTargetBuffer();
-
-    if( m != n )
-        LogicError("DistSparseMatrix GetMappedDiagonal assumes square matrix");
-    if( offset != 0 )
-        LogicError("DistSparseMatrix GetMappedDiagonal assumes offset=0");
-
-    d.SetGrid( A.Grid() );
-    d.Resize( El::DiagonalLength(m,n,offset), 1 );
-    Fill( d, S(1) );
-
-    S* dBuf = d.Matrix().Buffer();
-    const Int dLocalHeight = d.LocalHeight();
-    for( Int iLoc=0; iLoc<dLocalHeight; ++iLoc )
-    {
-        const Int i = d.GlobalRow(iLoc);
-        const Int thisOff = A.RowOffset(iLoc);
-        const Int nextOff = A.RowOffset(iLoc+1);
-        auto it = std::lower_bound( colBuf+thisOff, colBuf+nextOff, i );
-        if( *it == i )
-        {
-            const Int e = it-colBuf;
-            dBuf[iLoc] = func(valBuf[e]);
-        }
-        else
-            dBuf[iLoc] = func(0);
-    }
-}
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
@@ -201,16 +124,6 @@ void GetMappedDiagonal
   EL_EXTERN template void GetMappedDiagonal \
   ( const Matrix<T>& A, \
           Matrix<T>& d, \
-          function<T(const T&)> func, \
-          Int offset ); \
-  EL_EXTERN template void GetMappedDiagonal \
-  ( const SparseMatrix<T>& A, \
-          Matrix<T>& d, \
-          function<T(const T&)> func, \
-          Int offset ); \
-  EL_EXTERN template void GetMappedDiagonal \
-  ( const DistSparseMatrix<T>& A, \
-          DistMultiVec<T>& d, \
           function<T(const T&)> func, \
           Int offset );
 

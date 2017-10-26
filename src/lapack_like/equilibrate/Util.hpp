@@ -32,23 +32,6 @@ Base<Field> MinAbsNonzero( const Matrix<Field>& A, Base<Field> upperBound )
 }
 
 template<typename Field>
-Base<Field>
-MinAbsNonzero( const SparseMatrix<Field>& A, Base<Field> upperBound )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Int numEntries = A.NumEntries();
-    Real minAbs = upperBound;
-    for( Int e=0; e<numEntries; ++e )
-    {
-        const Real absVal = Abs(A.Value(e));
-        if( absVal > Real(0) )
-            minAbs = Min(minAbs,absVal);
-    }
-    return minAbs;
-}
-
-template<typename Field>
 Base<Field> MinAbsNonzero
 ( const AbstractDistMatrix<Field>& A, Base<Field> upperBound )
 {
@@ -62,23 +45,6 @@ Base<Field> MinAbsNonzero
     }
     mpi::Broadcast( minAbs, A.Root(), A.CrossComm() );
     return minAbs;
-}
-
-template<typename Field>
-Base<Field>
-MinAbsNonzero( const DistSparseMatrix<Field>& A, Base<Field> upperBound )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Int numEntries = A.NumLocalEntries();
-    Real minLocAbs = upperBound;
-    for( Int e=0; e<numEntries; ++e )
-    {
-        const Real absVal = Abs(A.Value(e));
-        if( absVal > Real(0) )
-            minLocAbs = Min(minLocAbs,absVal);
-    }
-    return mpi::AllReduce( minLocAbs, mpi::MIN, A.Grid().Comm() );
 }
 
 template<typename Field,Dist U,Dist V>

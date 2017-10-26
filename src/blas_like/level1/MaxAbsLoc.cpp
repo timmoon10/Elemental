@@ -215,75 +215,6 @@ Entry<Base<Ring>> MaxAbsLoc( const AbstractDistMatrix<Ring>& A )
 }
 
 template<typename Ring>
-Entry<Base<Ring>> MaxAbsLoc( const SparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Ring> RealRing;
-
-    Entry<RealRing> pivot;
-    if( A.Height() == 0 || A.Width() == 0 )
-    {
-        pivot.i = -1;
-        pivot.j = -1;
-        pivot.value = 0;
-        return pivot;
-    }
-
-    pivot.i = 0;
-    pivot.j = 0;
-    pivot.value = 0;
-    const Int numEntries = A.NumEntries();
-    for( Int e=0; e<numEntries; ++e )
-    {
-        const Int i = A.Row(e);
-        const Int j = A.Col(e);
-        const RealRing absVal = Abs(A.Value(e));
-        if( absVal > pivot.value )
-        {
-            pivot.i = i;
-            pivot.j = j;
-            pivot.value = absVal;
-        }
-    }
-    return pivot;
-}
-
-template<typename Ring>
-Entry<Base<Ring>> MaxAbsLoc( const DistSparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Ring> RealRing;
-
-    Entry<RealRing> pivot;
-    if( A.Height() == 0 || A.Width() == 0 )
-    {
-        pivot.i = -1;
-        pivot.j = -1;
-        pivot.value = 0;
-        return pivot;
-    }
-
-    pivot.i = 0;
-    pivot.j = 0;
-    pivot.value = 0;
-    const Int numLocalEntries = A.NumLocalEntries();
-    for( Int e=0; e<numLocalEntries; ++e )
-    {
-        const Int i = A.Row( e );
-        const Int j = A.Col( e );
-        const RealRing absVal = Abs(A.Value( e ));
-        if( absVal > pivot.value )
-        {
-            pivot.i = i;
-            pivot.j = j;
-            pivot.value = absVal;
-        }
-    }
-    return mpi::AllReduce
-      ( pivot, mpi::MaxLocPairOp<RealRing>(), A.Grid().Comm() );
-}
-
-template<typename Ring>
 Entry<Base<Ring>> SymmetricMaxAbsLoc( UpperOrLower uplo, const Matrix<Ring>& A )
 {
     EL_DEBUG_CSE
@@ -412,79 +343,6 @@ Entry<Base<Ring>> SymmetricMaxAbsLoc
     return pivot;
 }
 
-template<typename Ring>
-Entry<Base<Ring>> SymmetricMaxAbsLoc
-( UpperOrLower uplo, const SparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Ring> RealRing;
-
-    Entry<RealRing> pivot;
-    if( A.Height() == 0 || A.Width() == 0 )
-    {
-        pivot.i = -1;
-        pivot.j = -1;
-        pivot.value = 0;
-        return pivot;
-    }
-
-    pivot.i = 0;
-    pivot.j = 0;
-    pivot.value = 0;
-    const Int numEntries = A.NumEntries();
-    for( Int e=0; e<numEntries; ++e )
-    {
-        const Int i = A.Row( e );
-        const Int j = A.Col( e );
-        const RealRing absVal = Abs(A.Value( e ));
-        const bool valid = ( uplo==LOWER ? i>=j : i<=j );
-        if( valid && absVal > pivot.value )
-        {
-            pivot.i = i;
-            pivot.j = j;
-            pivot.value = absVal;
-        }
-    }
-    return pivot;
-}
-
-template<typename Ring>
-Entry<Base<Ring>> SymmetricMaxAbsLoc
-( UpperOrLower uplo, const DistSparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Ring> RealRing;
-
-    Entry<RealRing> pivot;
-    if( A.Height() == 0 || A.Width() == 0 )
-    {
-        pivot.i = -1;
-        pivot.j = -1;
-        pivot.value = 0;
-        return pivot;
-    }
-
-    pivot.i = 0;
-    pivot.j = 0;
-    pivot.value = 0;
-    const Int numLocalEntries = A.NumLocalEntries();
-    for( Int e=0; e<numLocalEntries; ++e )
-    {
-        const Int i = A.Row( e );
-        const Int j = A.Col( e );
-        const RealRing absVal = Abs(A.Value( e ));
-        const bool valid = ( uplo==LOWER ? i>=j : i<=j );
-        if( valid && absVal > pivot.value )
-        {
-            pivot.i = i;
-            pivot.j = j;
-            pivot.value = absVal;
-        }
-    }
-    return mpi::AllReduce
-      ( pivot, mpi::MaxLocPairOp<RealRing>(), A.Grid().Comm() );
-}
-
 #define PROTO(Ring) \
   template ValueInt<Base<Ring>> VectorMaxAbsLoc \
   ( const Matrix<Ring>& x ); \
@@ -492,16 +350,10 @@ Entry<Base<Ring>> SymmetricMaxAbsLoc
   ( const AbstractDistMatrix<Ring>& x ); \
   template Entry<Base<Ring>> MaxAbsLoc( const Matrix<Ring>& x ); \
   template Entry<Base<Ring>> MaxAbsLoc( const AbstractDistMatrix<Ring>& x ); \
-  template Entry<Base<Ring>> MaxAbsLoc( const SparseMatrix<Ring>& x ); \
-  template Entry<Base<Ring>> MaxAbsLoc( const DistSparseMatrix<Ring>& x ); \
   template Entry<Base<Ring>> SymmetricMaxAbsLoc \
   ( UpperOrLower uplo, const Matrix<Ring>& A ); \
   template Entry<Base<Ring>> SymmetricMaxAbsLoc \
-  ( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A ); \
-  template Entry<Base<Ring>> SymmetricMaxAbsLoc \
-  ( UpperOrLower uplo, const SparseMatrix<Ring>& x ); \
-  template Entry<Base<Ring>> SymmetricMaxAbsLoc \
-  ( UpperOrLower uplo, const DistSparseMatrix<Ring>& x );
+  ( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

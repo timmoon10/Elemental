@@ -48,48 +48,6 @@ void Fill( AbstractDistMatrix<T>& A, T alpha )
     Fill( A.Matrix(), alpha );
 }
 
-template<typename T>
-void Fill( DistMultiVec<T>& A, T alpha )
-{
-    EL_DEBUG_CSE
-    Fill( A.Matrix(), alpha );
-}
-
-template<typename T>
-void Fill( SparseMatrix<T>& A, T alpha )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    Zero( A );
-    if( alpha != T(0) )
-    {
-        A.Reserve( m*n );
-        for( Int i=0; i<m; ++i )
-            for( Int j=0; j<n; ++j )
-                A.QueueUpdate( i, j, alpha );
-        A.ProcessQueues();
-    }
-}
-
-template<typename T>
-void Fill( DistSparseMatrix<T>& A, T alpha )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    Zero( A );
-    if( alpha != T(0) )
-    {
-        const Int localHeight = A.LocalHeight();
-        A.Reserve( localHeight*n );
-        for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-            for( Int j=0; j<n; ++j )
-                A.QueueLocalUpdate( iLoc, j, alpha );
-        A.ProcessLocalQueues();
-    }
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -98,10 +56,7 @@ void Fill( DistSparseMatrix<T>& A, T alpha )
 
 #define PROTO(T) \
   EL_EXTERN template void Fill( Matrix<T>& A, T alpha ); \
-  EL_EXTERN template void Fill( AbstractDistMatrix<T>& A, T alpha ); \
-  EL_EXTERN template void Fill( DistMultiVec<T>& A, T alpha ); \
-  EL_EXTERN template void Fill( SparseMatrix<T>& A, T alpha ); \
-  EL_EXTERN template void Fill( DistSparseMatrix<T>& A, T alpha );
+  EL_EXTERN template void Fill( AbstractDistMatrix<T>& A, T alpha );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

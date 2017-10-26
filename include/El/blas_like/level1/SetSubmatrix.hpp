@@ -51,8 +51,6 @@ void SetSubmatrix
     UpdateSubmatrix( A, I, J, T(1), ASub );
 }
 
-// TODO: DistMultiVec version similar to GetSubmatrix implementation
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else

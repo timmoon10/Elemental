@@ -65,11 +65,6 @@ void Diagonal( AbstractDistMatrix<S>& D, const Matrix<T>& d );
 template<typename S,typename T>
 void Diagonal( AbstractDistMatrix<S>& D, const AbstractDistMatrix<T>& d );
 
-template<typename S,typename T>
-void Diagonal( SparseMatrix<S>& D, const Matrix<T>& d );
-template<typename S,typename T>
-void Diagonal( DistSparseMatrix<S>& D, const DistMultiVec<T>& d );
-
 // Egorov
 // ------
 template<typename Real>
@@ -126,10 +121,6 @@ template<typename T>
 void Identity( Matrix<T>& I, Int m, Int n );
 template<typename T>
 void Identity( AbstractDistMatrix<T>& I, Int m, Int n );
-template<typename T>
-void Identity( SparseMatrix<T>& I, Int m, Int n );
-template<typename T>
-void Identity( DistSparseMatrix<T>& I, Int m, Int n );
 
 // Jordan
 // ------
@@ -144,12 +135,6 @@ template<typename T>
 void Ones( Matrix<T>& A, Int m, Int n );
 template<typename T>
 void Ones( AbstractDistMatrix<T>& A, Int m, Int n );
-template<typename T>
-void Ones( DistMultiVec<T>& A, Int m, Int n );
-template<typename T>
-void Ones( SparseMatrix<T>& A, Int m, Int n );
-template<typename T>
-void Ones( DistSparseMatrix<T>& A, Int m, Int n );
 
 // Toeplitz
 // --------
@@ -173,12 +158,6 @@ template<typename T>
 void Zeros( Matrix<T>& A, Int m, Int n );
 template<typename T>
 void Zeros( AbstractDistMatrix<T>& A, Int m, Int n );
-template<typename T>
-void Zeros( SparseMatrix<T>& A, Int m, Int n );
-template<typename T>
-void Zeros( DistSparseMatrix<T>& A, Int m, Int n );
-template<typename T>
-void Zeros( DistMultiVec<T>& A, Int m, Int n );
 
 // Integral equations
 // ==================
@@ -199,19 +178,11 @@ template<typename Field>
 void Helmholtz( Matrix<Field>& H, Int nx, Field shift );
 template<typename Field>
 void Helmholtz( AbstractDistMatrix<Field>& H, Int nx, Field shift );
-template<typename Field>
-void Helmholtz( SparseMatrix<Field>& H, Int nx, Field shift );
-template<typename Field>
-void Helmholtz( DistSparseMatrix<Field>& H, Int nx, Field shift );
 
 template<typename Field>
 void Helmholtz( Matrix<Field>& H, Int nx, Int ny, Field shift );
 template<typename Field>
 void Helmholtz( AbstractDistMatrix<Field>& H, Int nx, Int ny, Field shift );
-template<typename Field>
-void Helmholtz( SparseMatrix<Field>& H, Int nx, Int ny, Field shift );
-template<typename Field>
-void Helmholtz( DistSparseMatrix<Field>& H, Int nx, Int ny, Field shift );
 
 template<typename Field>
 void Helmholtz
@@ -219,12 +190,6 @@ void Helmholtz
 template<typename Field>
 void Helmholtz
 ( AbstractDistMatrix<Field>& H, Int nx, Int ny, Int nz, Field shift );
-template<typename Field>
-void Helmholtz
-( SparseMatrix<Field>& H, Int nx, Int ny, Int nz, Field shift );
-template<typename Field>
-void Helmholtz
-( DistSparseMatrix<Field>& H, Int nx, Int ny, Int nz, Field shift );
 
 // Helmholtz PML
 // -------------
@@ -236,14 +201,6 @@ template<typename Real>
 void HelmholtzPML
 ( AbstractDistMatrix<Complex<Real>>& H, Int nx,
   Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
-template<typename Real>
-void HelmholtzPML
-( SparseMatrix<Complex<Real>>& H, Int nx,
-  Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
-template<typename Real>
-void HelmholtzPML
-( DistSparseMatrix<Complex<Real>>& H, Int nx,
-  Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
 
 template<typename Real>
 void HelmholtzPML
@@ -252,14 +209,6 @@ void HelmholtzPML
 template<typename Real>
 void HelmholtzPML
 ( AbstractDistMatrix<Complex<Real>>& H, Int nx, Int ny,
-  Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
-template<typename Real>
-void HelmholtzPML
-( SparseMatrix<Complex<Real>>& H, Int nx, Int ny,
-  Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
-template<typename Real>
-void HelmholtzPML
-( DistSparseMatrix<Complex<Real>>& H, Int nx, Int ny,
   Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
 
 template<typename Real>
@@ -270,14 +219,6 @@ template<typename Real>
 void HelmholtzPML
 ( AbstractDistMatrix<Complex<Real>>& H, Int nx, Int ny, Int nz,
   Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
-template<typename Real>
-void HelmholtzPML
-( SparseMatrix<Complex<Real>>& H, Int nx, Int ny, Int nz,
-  Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
-template<typename Real>
-void HelmholtzPML
-( DistSparseMatrix<Complex<Real>>& H, Int nx, Int ny, Int nz,
-  Complex<Real> omega, Int numPmlPoints=5, Real sigma=1.5, Real pmlExp=3 );
 
 // Laplacian
 // ---------
@@ -285,28 +226,16 @@ template<typename Field>
 void Laplacian( Matrix<Field>& L, Int nx );
 template<typename Field>
 void Laplacian( AbstractDistMatrix<Field>& L, Int nx );
-template<typename Field>
-void Laplacian( SparseMatrix<Field>& L, Int nx );
-template<typename Field>
-void Laplacian( DistSparseMatrix<Field>& L, Int nx );
 
 template<typename Field>
 void Laplacian( Matrix<Field>& L, Int nx, Int ny );
 template<typename Field>
 void Laplacian( AbstractDistMatrix<Field>& L, Int nx, Int ny );
-template<typename Field>
-void Laplacian( SparseMatrix<Field>& L, Int nx, Int ny );
-template<typename Field>
-void Laplacian( DistSparseMatrix<Field>& L, Int nx, Int ny );
 
 template<typename Field>
 void Laplacian( Matrix<Field>& L, Int nx, Int ny, Int nz );
 template<typename Field>
 void Laplacian( AbstractDistMatrix<Field>& L, Int nx, Int ny, Int nz );
-template<typename Field>
-void Laplacian( SparseMatrix<Field>& L, Int nx, Int ny, Int nz );
-template<typename Field>
-void Laplacian( DistSparseMatrix<Field>& L, Int nx, Int ny, Int nz );
 
 // Miscellaneous (to be categorized)
 // =================================
@@ -350,10 +279,6 @@ template<typename T>
 void DynamicRegCounter( Matrix<T>& A, Int n );
 template<typename T>
 void DynamicRegCounter( ElementalMatrix<T>& A, Int n );
-template<typename T>
-void DynamicRegCounter( SparseMatrix<T>& A, Int n );
-template<typename T>
-void DynamicRegCounter( DistSparseMatrix<T>& A, Int n );
 
 // Ehrenfest
 // ---------
@@ -424,10 +349,6 @@ template<typename T>
 void JordanCholesky( Matrix<T>& A, Int n );
 template<typename T>
 void JordanCholesky( AbstractDistMatrix<T>& A, Int n );
-template<typename T>
-void JordanCholesky( SparseMatrix<T>& A, Int n );
-template<typename T>
-void JordanCholesky( DistSparseMatrix<T>& A, Int n );
 
 // Kahan
 // -----
@@ -630,9 +551,6 @@ void MakeGaussian
 template<typename Field>
 void MakeGaussian
 ( AbstractDistMatrix<Field>& A, Field mean=0, Base<Field> stddev=1 );
-template<typename Field>
-void MakeGaussian
-( DistMultiVec<Field>& A, Field mean=0, Base<Field> stddev=1 );
 
 template<typename Field>
 void Gaussian
@@ -641,10 +559,6 @@ void Gaussian
 template<typename Field>
 void Gaussian
 ( AbstractDistMatrix<Field>& A, Int m, Int n,
-  Field mean=0, Base<Field> stddev=1 );
-template<typename Field>
-void Gaussian
-( DistMultiVec<Field>& A, Int m, Int n,
   Field mean=0, Base<Field> stddev=1 );
 
 // Rademacher
@@ -668,16 +582,12 @@ template<typename T>
 void MakeUniform( Matrix<T>& A, T center=0, Base<T> radius=1 );
 template<typename T>
 void MakeUniform( AbstractDistMatrix<T>& A, T center=0, Base<T> radius=1 );
-template<typename T>
-void MakeUniform( DistMultiVec<T>& X, T center=0, Base<T> radius=1 );
 
 template<typename T>
 void Uniform( Matrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
 template<typename T>
 void Uniform
 ( AbstractDistMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
-template<typename T>
-void Uniform( DistMultiVec<T>& X, Int m, Int n, T center=0, Base<T> radius=1 );
 
 // Lattice bases
 // =============

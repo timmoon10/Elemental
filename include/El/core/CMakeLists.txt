@@ -1,22 +1,17 @@
 # Add the headers for this directory
 set_full_path(THIS_DIR_HEADERS
   CReflect.hpp
-  DistGraph.hpp
   DistMap.hpp
   DistMatrix.hpp
-  DistMultiVec.hpp
   DistPermutation.hpp
-  DistSparseMatrix.hpp
   Element.hpp
   FlamePart.hpp
-  Graph.hpp
   Grid.hpp
   Matrix.hpp
   Memory.hpp
   Permutation.hpp
   Proxy.hpp
   Serialize.hpp
-  SparseMatrix.hpp
   Timer.hpp
   View.hpp
   limits.hpp
@@ -24,17 +19,12 @@ set_full_path(THIS_DIR_HEADERS
   )
 
 # Add the subdirectories
-add_subdirectory(DistGraph)
 add_subdirectory(DistMap)
 add_subdirectory(DistMatrix)
-add_subdirectory(DistMultiVec)
-add_subdirectory(DistSparseMatrix)
 add_subdirectory(Element)
 add_subdirectory(FlamePart)
-add_subdirectory(Graph)
 add_subdirectory(Matrix)
 add_subdirectory(Memory)
-add_subdirectory(SparseMatrix)
 add_subdirectory(View)
 add_subdirectory(environment)
 add_subdirectory(imports)

@@ -273,12 +273,7 @@ class DistMatrix;
 } // namespace El
 
 #include <El/core/Matrix/decl.hpp>
-#include <El/core/Graph/decl.hpp>
 #include <El/core/DistMap/decl.hpp>
-#include <El/core/DistGraph/decl.hpp>
-#include <El/core/SparseMatrix/decl.hpp>
-#include <El/core/DistSparseMatrix/decl.hpp>
-#include <El/core/DistMultiVec/decl.hpp>
 #include <El/core/View/decl.hpp>
 #include <El/blas_like/level1/decl.hpp>
 
@@ -301,11 +296,8 @@ class DistMatrix;
 
 // TODO: Sequential map
 //#include <El/core/Map.hpp>
-#include <El/core/SparseMatrix/impl.hpp>
 
 #include <El/core/DistMap.hpp>
-#include <El/core/DistMultiVec/impl.hpp>
-#include <El/core/DistSparseMatrix/impl.hpp>
 
 #include <El/core/Permutation.hpp>
 #include <El/core/DistPermutation.hpp>

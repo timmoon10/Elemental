@@ -83,7 +83,7 @@ void Transpose( const Matrix<T>& A, Matrix<T>& B, bool conjugate )
 #else
     // OpenBLAS's {i,o}matcopy routines where disabled for the reasons detailed
     // in src/core/imports/openblas.cpp
-    
+
     // Blocked matrix transpose
     // Note: block size should be a multiple of cache line size and
     // should be small enough to fit in L1 cache. On recent Intel
@@ -298,27 +298,6 @@ void Transpose
 }
 
 template<typename T>
-void Transpose
-( const SparseMatrix<T>& A, SparseMatrix<T>& B, bool conjugate )
-{
-    EL_DEBUG_CSE
-    B.Resize( A.Width(), A.Height() );
-    Zero( B, false );
-    TransposeAxpy( T(1), A, B, conjugate );
-}
-
-template<typename T>
-void Transpose
-( const DistSparseMatrix<T>& A, DistSparseMatrix<T>& B, bool conjugate )
-{
-    EL_DEBUG_CSE
-    B.SetGrid( A.Grid() );
-    B.Resize( A.Width(), A.Height() );
-    Zero( B, false );
-    TransposeAxpy( T(1), A, B, conjugate );
-}
-
-template<typename T>
 void Adjoint( const Matrix<T>& A, Matrix<T>& B )
 {
     EL_DEBUG_CSE
@@ -348,20 +327,6 @@ void Adjoint
     Transpose( A, B, true );
 }
 
-template<typename T>
-void Adjoint( const SparseMatrix<T>& A, SparseMatrix<T>& B )
-{
-    EL_DEBUG_CSE
-    Transpose( A, B, true );
-}
-
-template<typename T>
-void Adjoint( const DistSparseMatrix<T>& A, DistSparseMatrix<T>& B )
-{
-    EL_DEBUG_CSE
-    Transpose( A, B, true );
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -378,10 +343,6 @@ void Adjoint( const DistSparseMatrix<T>& A, DistSparseMatrix<T>& B )
   EL_EXTERN template void Transpose \
   ( const AbstractDistMatrix<T>& A, \
           AbstractDistMatrix<T>& B, bool conjugate ); \
-  EL_EXTERN template void Transpose \
-  ( const SparseMatrix<T>& A, SparseMatrix<T>& B, bool conjugate ); \
-  EL_EXTERN template void Transpose \
-  ( const DistSparseMatrix<T>& A, DistSparseMatrix<T>& B, bool conjugate ); \
   EL_EXTERN template void Adjoint \
   ( const Matrix<T>& A, Matrix<T>& B ); \
   EL_EXTERN template void Adjoint \
@@ -390,11 +351,7 @@ void Adjoint( const DistSparseMatrix<T>& A, DistSparseMatrix<T>& B )
   ( const BlockMatrix<T>& A, BlockMatrix<T>& B ); \
   EL_EXTERN template void Adjoint \
   ( const AbstractDistMatrix<T>& A, \
-          AbstractDistMatrix<T>& B ); \
-  EL_EXTERN template void Adjoint \
-  ( const SparseMatrix<T>& A, SparseMatrix<T>& B ); \
-  EL_EXTERN template void Adjoint \
-  ( const DistSparseMatrix<T>& A, DistSparseMatrix<T>& B );
+          AbstractDistMatrix<T>& B );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

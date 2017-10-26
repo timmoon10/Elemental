@@ -293,29 +293,6 @@ void LinearSolve
     lin_solve::Overwrite( ACopy, B );
 }
 
-template<typename Field>
-void LinearSolve
-( const SparseMatrix<Field>& A,
-        Matrix<Field>& B,
-  const LeastSquaresCtrl<Base<Field>>& ctrl )
-{
-    EL_DEBUG_CSE
-    Matrix<Field> X;
-    LeastSquares( NORMAL, A, B, X, ctrl );
-    B = X;
-}
-
-template<typename Field>
-void LinearSolve
-( const DistSparseMatrix<Field>& A,
-        DistMultiVec<Field>& B,
-  const LeastSquaresCtrl<Base<Field>>& ctrl )
-{
-    EL_DEBUG_CSE
-    DistMultiVec<Field> X(B.Grid());
-    LeastSquares( NORMAL, A, B, X, ctrl );
-    B = X;
-}
 
 #define PROTO(Field) \
   template void lin_solve::Overwrite( Matrix<Field>& A, Matrix<Field>& B ); \
@@ -325,15 +302,7 @@ void LinearSolve
   template void LinearSolve \
   ( const AbstractDistMatrix<Field>& A, \
           AbstractDistMatrix<Field>& B, \
-    bool scalapack ); \
-  template void LinearSolve \
-  ( const SparseMatrix<Field>& A, \
-          Matrix<Field>& B, \
-    const LeastSquaresCtrl<Base<Field>>& ctrl ); \
-  template void LinearSolve \
-  ( const DistSparseMatrix<Field>& A, \
-          DistMultiVec<Field>& B, \
-    const LeastSquaresCtrl<Base<Field>>& ctrl );
+    bool scalapack );
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

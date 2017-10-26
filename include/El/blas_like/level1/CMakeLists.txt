@@ -19,7 +19,6 @@ set_full_path(THIS_DIR_HEADERS
   EntrywiseMap.hpp
   Fill.hpp
   FillDiagonal.hpp
-  Full.hpp
   GetDiagonal.hpp
   GetMappedDiagonal.hpp
   GetSubmatrix.hpp

@@ -86,36 +86,6 @@ Base<Field> TwoNormEstimate
 }
 
 template<typename Field>
-Base<Field> TwoNormEstimate( const SparseMatrix<Field>& A, Int basisSize )
-{
-    auto extremal = ExtremalSingValEst( A, basisSize );
-    return extremal.second;
-}
-
-template<typename Field>
-Base<Field> TwoNormEstimate( const DistSparseMatrix<Field>& A, Int basisSize )
-{
-    auto extremal = ExtremalSingValEst( A, basisSize );
-    return extremal.second;
-}
-
-template<typename Field>
-Base<Field>
-HermitianTwoNormEstimate( const SparseMatrix<Field>& A, Int basisSize )
-{
-    auto extremal = HermitianExtremalSingValEst( A, basisSize );
-    return extremal.second;
-}
-
-template<typename Field>
-Base<Field>
-HermitianTwoNormEstimate( const DistSparseMatrix<Field>& A, Int basisSize )
-{
-    auto extremal = HermitianExtremalSingValEst( A, basisSize );
-    return extremal.second;
-}
-
-template<typename Field>
 Base<Field> HermitianTwoNormEstimate
 ( UpperOrLower uplo,
   const Matrix<Field>& A,
@@ -283,14 +253,6 @@ Base<Field> SymmetricTwoNormEstimate
   ( const Matrix<Field>& A, Base<Field> tol, Int maxIts ); \
   template Base<Field> TwoNormEstimate \
   ( const AbstractDistMatrix<Field>& A, Base<Field> tol, Int maxIts ); \
-  template Base<Field> TwoNormEstimate \
-  ( const SparseMatrix<Field>& A, Int basisSize ); \
-  template Base<Field> TwoNormEstimate \
-  ( const DistSparseMatrix<Field>& A, Int basisSize ); \
-  template Base<Field> HermitianTwoNormEstimate \
-  ( const SparseMatrix<Field>& A, Int basisSize ); \
-  template Base<Field> HermitianTwoNormEstimate \
-  ( const DistSparseMatrix<Field>& A, Int basisSize ); \
   template Base<Field> HermitianTwoNormEstimate \
   ( UpperOrLower uplo, const Matrix<Field>& A, Base<Field> tol, Int maxIts ); \
   template Base<Field> HermitianTwoNormEstimate \

@@ -100,28 +100,6 @@ void Herk
 ( UpperOrLower uplo, Orientation orientation,
   Base<T> alpha, const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& C );
 
-template<typename T>
-void Herk
-( UpperOrLower uplo, Orientation orientation,
-  Base<T> alpha, const SparseMatrix<T>& A,
-  Base<T> beta,        SparseMatrix<T>& C );
-template<typename T>
-void Herk
-( UpperOrLower uplo, Orientation orientation,
-  Base<T> alpha, const SparseMatrix<T>& A,
-                       SparseMatrix<T>& C );
-
-template<typename T>
-void Herk
-( UpperOrLower uplo, Orientation orientation,
-  Base<T> alpha, const DistSparseMatrix<T>& A,
-  Base<T> beta,        DistSparseMatrix<T>& C );
-template<typename T>
-void Herk
-( UpperOrLower uplo, Orientation orientation,
-  Base<T> alpha, const DistSparseMatrix<T>& A,
-                       DistSparseMatrix<T>& C );
-
 // Her2k
 // =====
 template<typename T>
@@ -146,41 +124,6 @@ void Her2k
 ( UpperOrLower uplo, Orientation orientation,
   T alpha, const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B,
                  AbstractDistMatrix<T>& C );
-
-// Multiply
-// ========
-// NOTE: The following routine multiplies a sparse matrix by a set of vectors
-//       and is obviously not a BLAS routine. However, it is a basic linear
-//       algebra routine making use of Elemental's core data structures, and
-//       so this is the natural placement
-template<typename T>
-void Multiply
-( Orientation orientation,
-  T alpha, const SparseMatrix<T>& A, const Matrix<T>& X,
-  T beta,                                  Matrix<T>& Y );
-
-template<typename T>
-void Multiply
-( Orientation orientation,
-  T alpha, const Graph& A, const Matrix<T>& X,
-  T beta,                        Matrix<T>& Y );
-
-template<typename T>
-void Multiply
-( Orientation orientation,
-  T alpha,
-  const DistSparseMatrix<T>& A,
-  const DistMultiVec<T>& X,
-  T beta,
-        DistMultiVec<T>& Y );
-template<typename T>
-void Multiply
-( Orientation orientation,
-  T alpha,
-  const DistSparseMatrix<T>& A,
-  const AbstractDistMatrix<T>& X,
-  T beta,
-        AbstractDistMatrix<T>& Y );
 
 // MultiShiftQuasiTrsm
 // ===================
@@ -343,28 +286,6 @@ void Syrk
 ( UpperOrLower uplo, Orientation orientation,
   T alpha, const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& C,
   bool conjugate=false );
-
-template<typename T>
-void Syrk
-( UpperOrLower uplo, Orientation orientation,
-  T alpha, const SparseMatrix<T>& A,
-  T beta,        SparseMatrix<T>& C, bool conjugate=false );
-template<typename T>
-void Syrk
-( UpperOrLower uplo, Orientation orientation,
-  T alpha, const SparseMatrix<T>& A,
-                 SparseMatrix<T>& C, bool conjugate=false );
-
-template<typename T>
-void Syrk
-( UpperOrLower uplo, Orientation orientation,
-  T alpha, const DistSparseMatrix<T>& A,
-  T beta,        DistSparseMatrix<T>& C, bool conjugate=false );
-template<typename T>
-void Syrk
-( UpperOrLower uplo, Orientation orientation,
-  T alpha, const DistSparseMatrix<T>& A,
-                 DistSparseMatrix<T>& C, bool conjugate=false );
 
 // Syr2k
 // =====

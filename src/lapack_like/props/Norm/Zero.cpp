@@ -28,18 +28,6 @@ Int ZeroNorm( const Matrix<T>& A, Base<T> tol )
 }
 
 template<typename T>
-Int ZeroNorm( const SparseMatrix<T>& A, Base<T> tol )
-{
-    EL_DEBUG_CSE
-    Int numNonzeros = 0;
-    const Int numEntries = A.NumEntries();
-    for( Int k=0; k<numEntries; ++k )
-        if( Abs(A.Value(k)) > tol )
-            ++numNonzeros;
-    return numNonzeros;
-}
-
-template<typename T>
 Int ZeroNorm( const AbstractDistMatrix<T>& A, Base<T> tol )
 {
     EL_DEBUG_CSE
@@ -53,23 +41,9 @@ Int ZeroNorm( const AbstractDistMatrix<T>& A, Base<T> tol )
     return numNonzeros;
 }
 
-template<typename T>
-Int ZeroNorm( const DistSparseMatrix<T>& A, Base<T> tol )
-{
-    EL_DEBUG_CSE
-    Int numNonzeros = 0;
-    const Int numLocalEntries = A.NumLocalEntries();
-    for( Int k=0; k<numLocalEntries; ++k )
-        if( Abs(A.Value(k)) > tol )
-            ++numNonzeros;
-    return mpi::AllReduce( numNonzeros, A.Grid().Comm() );
-}
-
 #define PROTO(T) \
   template Int ZeroNorm( const Matrix<T>& A, Base<T> tol ); \
-  template Int ZeroNorm( const AbstractDistMatrix<T>& A, Base<T> tol ); \
-  template Int ZeroNorm( const SparseMatrix<T>& A, Base<T> tol ); \
-  template Int ZeroNorm( const DistSparseMatrix<T>& A, Base<T> tol );
+  template Int ZeroNorm( const AbstractDistMatrix<T>& A, Base<T> tol );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

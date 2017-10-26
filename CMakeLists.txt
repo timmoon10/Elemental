@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.5)
 
-project(Hydrogen CXX)
+project(Hydrogen C CXX)
 set(HYDROGEN_VERSION_MAJOR 0)
 set(HYDROGEN_VERSION_MINOR 1)
 
@@ -20,6 +20,12 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 # Legacy options, with EL_ prefix intact
 option(BINARY_SUBDIRECTORIES "Install binaries into tree based on type" ON)
 
+
+
+#
+# MEMORY-RELATED OPTIONS
+#
+
 option(EL_USE_64BIT_INTS "Use 64-bit integers for El indexing" OFF)
 option(EL_USE_64BIT_BLAS_INTS "Use 64-bit integers for BLAS/LAPACK" OFF)
 if(EL_USE_64BIT_BLAS_INTS)
@@ -32,6 +38,20 @@ mark_as_advanced(EL_ZERO_INIT)
 option(EL_DISABLE_VALGRIND "Prevent Elemental from looking for valgrind?" OFF)
 mark_as_advanced(EL_DISABLE_VALGRIND)
 
+#
+# OpenMP
+#
+
+# At one point, a bug was found in IBM's C++ compiler for Blue Gene/P,
+# where OpenMP statements of the form a[i] += alpha b[i], with complex data,
+# would segfault and/or return incorrect results
+option(EL_AVOID_OMP_FMA "Avoid a bug in the IBM compilers." OFF)
+mark_as_advanced(EL_AVOID_OMP_FMA)
+
+#
+# MPI
+#
+
 option(EL_USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 mark_as_advanced(EL_USE_CUSTOM_ALLTOALLV)
 
@@ -40,12 +60,6 @@ mark_as_advanced(EL_USE_CUSTOM_ALLTOALLV)
 # all possible MPI communications in terms of twice as many real units of data.
 option(EL_AVOID_COMPLEX_MPI "Avoid potentially buggy complex MPI routines" ON)
 mark_as_advanced(EL_AVOID_COMPLEX_MPI)
-
-# At one point, a bug was found in IBM's C++ compiler for Blue Gene/P,
-# where OpenMP statements of the form a[i] += alpha b[i], with complex data,
-# would segfault and/or return incorrect results
-option(EL_AVOID_OMP_FMA "Avoid a bug in the IBM compilers." OFF)
-mark_as_advanced(EL_AVOID_OMP_FMA)
 
 # Due to a subtle flaw in the Blue Gene/P extensions for MPICH2, treating
 # floating-point data as a collection of byte-sized objects results in a
@@ -59,6 +73,10 @@ mark_as_advanced(EL_USE_BYTE_ALLGATHERS)
 option(EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
        "AllReduce based block MPI_Reduce_scatter" OFF)
 mark_as_advanced(EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE)
+
+#
+# Runtime warnings
+#
 
 # Print a warning any time a redistribution is performed which unpacks a
 # large amount of data with a non-unit stride
@@ -77,6 +95,22 @@ option(EL_VECTOR_WARNINGS
        "Warn when vector redistribution chances are missed" OFF)
 mark_as_advanced(EL_VECTOR_WARNINGS)
 
+#
+# Find third-party libraries
+#
+
+include(FindAndVerifyMPI)
+
+# FIXME: GET RID OF FORTRAN
+include(detect/Fortran)
+
+# External projects build internally
+# TODO Investigate why
+add_subdirectory(external/pmrrr)
+
+# Add SuiteSparse (TODO: Why bundled here?)
+add_subdirectory(external/suite_sparse)
+include_directories(external/suite_sparse/include)
 
 # Macro for setting up full paths
 macro(set_full_path VAR)
@@ -94,6 +128,19 @@ set(HYDROGEN_SOURCES)
 add_subdirectory(include)
 add_subdirectory(src)
 
+configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/config.h.in"
+  "${PROJECT_BINARY_DIR}/include/El/config.h")
+
 add_library(hydrogen "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
+target_include_directories(hydrogen PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+  $<INSTALL_INTERFACE:include/El>)
+target_link_libraries(hydrogen PUBLIC pmrrr)
+target_link_libraries(hydrogen PUBLIC MPI::MPI_CXX)
+target_link_libraries(hydrogen PUBLIC lapack blas)
 
-
+if (BUILD_SHARED_LIBS)
+  target_link_libraries(hydrogen PUBLIC "-Wl,-no-undefined")
+endif()

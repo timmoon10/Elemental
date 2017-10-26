@@ -90,21 +90,6 @@ struct LeastSquaresCtrl
     }
 };
 
-template<typename Field>
-void LeastSquares
-( Orientation orientation,
-  const SparseMatrix<Field>& A,
-  const Matrix<Field>& Y,
-        Matrix<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-template<typename Field>
-void LeastSquares
-( Orientation orientation,
-  const DistSparseMatrix<Field>& A,
-  const DistMultiVec<Field>& Y,
-        DistMultiVec<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-
 // Dense versions which overwrite their input
 // ------------------------------------------
 namespace ls {
@@ -155,23 +140,6 @@ void Ridge
         AbstractDistMatrix<Field>& X,
   RidgeAlg alg=RIDGE_CHOLESKY );
 
-template<typename Field>
-void Ridge
-( Orientation orientation,
-  const SparseMatrix<Field>& A,
-  const Matrix<Field>& B,
-        Base<Field> gamma,
-        Matrix<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-template<typename Field>
-void Ridge
-( Orientation orientation,
-  const DistSparseMatrix<Field>& A,
-  const DistMultiVec<Field>& B,
-        Base<Field> gamma,
-        DistMultiVec<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-
 // Tikhonov regularization
 // =======================
 
@@ -211,23 +179,6 @@ void Tikhonov
         AbstractDistMatrix<Field>& X,
   TikhonovAlg alg=TIKHONOV_CHOLESKY );
 
-template<typename Field>
-void Tikhonov
-( Orientation orientation,
-  const SparseMatrix<Field>& A,
-  const Matrix<Field>& B,
-  const SparseMatrix<Field>& G,
-        Matrix<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-template<typename Field>
-void Tikhonov
-( Orientation orientation,
-  const DistSparseMatrix<Field>& A,
-  const DistMultiVec<Field>& B,
-  const DistSparseMatrix<Field>& G,
-        DistMultiVec<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-
 // Equality-constrained Least Squarees
 // ===================================
 // Solve
@@ -246,23 +197,6 @@ void LSE
   const AbstractDistMatrix<Field>& C,
   const AbstractDistMatrix<Field>& D,
         AbstractDistMatrix<Field>& X );
-
-template<typename Field>
-void LSE
-( const SparseMatrix<Field>& A,
-  const SparseMatrix<Field>& B,
-  const Matrix<Field>& C,
-  const Matrix<Field>& D,
-        Matrix<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-template<typename Field>
-void LSE
-( const DistSparseMatrix<Field>& A,
-  const DistSparseMatrix<Field>& B,
-  const DistMultiVec<Field>& C,
-  const DistMultiVec<Field>& D,
-        DistMultiVec<Field>& X,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
 
 // Dense versions which overwrite inputs where possible
 // ----------------------------------------------------
@@ -308,23 +242,6 @@ void GLM
   const AbstractDistMatrix<Field>& D,
         AbstractDistMatrix<Field>& X,
         AbstractDistMatrix<Field>& Y );
-
-template<typename Field>
-void GLM
-( const SparseMatrix<Field>& A,
-  const SparseMatrix<Field>& B,
-  const Matrix<Field>& D,
-        Matrix<Field>& X,
-        Matrix<Field>& Y,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-template<typename Field>
-void GLM
-( const DistSparseMatrix<Field>& A,
-  const DistSparseMatrix<Field>& B,
-  const DistMultiVec<Field>& D,
-        DistMultiVec<Field>& X,
-        DistMultiVec<Field>& Y,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
 
 // Dense versions which overwrite the input where possible
 // -------------------------------------------------------

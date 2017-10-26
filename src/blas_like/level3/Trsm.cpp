@@ -2,11 +2,12 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
+#include <El/blas_like/level1.hpp>
 #include <El/blas_like/level2.hpp>
 #include <El/blas_like/level3.hpp>
 
@@ -67,7 +68,7 @@ void Trsm
 template<typename F>
 void Trsm
 ( LeftOrRight side,
-  UpperOrLower uplo, 
+  UpperOrLower uplo,
   Orientation orientation,
   UnitOrNonUnit diag,
   F alpha,
@@ -135,7 +136,7 @@ void Trsm
                     ElementalProxyCtrl ctrl;
                     ctrl.colConstrain = true;
                     ctrl.colAlign = APost.ColAlign();
-    
+
                     DistMatrixReadWriteProxy<F,F,VR,STAR> BProx( B, ctrl );
                     auto& BPost = BProx.Get();
 
@@ -234,7 +235,7 @@ void Trsm
                     trsm::LLTSmall
                     ( orientation, diag, APost, BPost, checkIfSingular );
                 }
-            } 
+            }
             else
                 LogicError("Unsupported TRSM algorithm");
         }
@@ -286,7 +287,7 @@ void Trsm
                 }
             }
             else
-                LogicError("Unsupported TRSM algorithm"); 
+                LogicError("Unsupported TRSM algorithm");
         }
         else
         {

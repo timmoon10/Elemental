@@ -9,15 +9,16 @@
 
 # Include the header directory
 # ----------------------------
+enable_language(C)
 message(STATUS 
   "Prepending ${CMAKE_CURRENT_SOURCE_DIR}/include for ElSuiteSparse headers")
 include_directories(BEFORE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Define the header files installation rules
 # ------------------------------------------
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+#	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+#  FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
     
 set(CMAKE_C_FLAGS_${UPPER_BUILD_TYPE} "${C_FLAGS}")
 
@@ -34,4 +35,4 @@ if(EL_LINK_FLAGS)
   set_target_properties(ElSuiteSparse PROPERTIES LINK_FLAGS ${EL_LINK_FLAGS})
   set_target_properties(ElSuiteSparse PROPERTIES VERSION ${EL_VERSION_MINOR} SOVERSION ${EL_VERSION_MAJOR})
 endif()
-install(TARGETS ElSuiteSparse EXPORT ElementalTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+#install(TARGETS ElSuiteSparse EXPORT ElementalTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})

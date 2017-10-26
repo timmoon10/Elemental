@@ -110,32 +110,6 @@ ValueInt<Real> VectorMinLoc( const AbstractDistMatrix<Real>& x )
 
 template<typename Real,
          typename/*=EnableIf<IsReal<Real>>*/>
-ValueInt<Real> VectorMinLoc( const DistMultiVec<Real>& x )
-{
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      if( x.Width() != 1 )
-          LogicError("Input should have been a vector");
-    )
-    ValueInt<Real> pivot;
-    pivot.index = -1;
-    pivot.value = limits::Max<Real>();
-    const Int mLocal = x.LocalHeight();
-    for( Int iLoc=0; iLoc<mLocal; ++iLoc )
-    {
-        const Real value = x.GetLocal(iLoc,0);
-        if( value < pivot.value )
-        {
-            pivot.value = value;
-            pivot.index = x.GlobalRow(iLoc);
-        }
-    }
-    pivot = mpi::AllReduce( pivot, mpi::MinLocOp<Real>(), x.Grid().Comm() );
-    return pivot;
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsReal<Real>>*/>
 Entry<Real> MinLoc( const Matrix<Real>& A )
 {
     EL_DEBUG_CSE
@@ -329,7 +303,6 @@ SymmetricMinLoc( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
 #define PROTO(Real) \
   template ValueInt<Real> VectorMinLoc( const Matrix<Real>& x ); \
   template ValueInt<Real> VectorMinLoc( const AbstractDistMatrix<Real>& x ); \
-  template ValueInt<Real> VectorMinLoc( const DistMultiVec<Real>& x ); \
   template Entry<Real> MinLoc( const Matrix<Real>& x ); \
   template Entry<Real> MinLoc( const AbstractDistMatrix<Real>& x ); \
   template Entry<Real> SymmetricMinLoc \

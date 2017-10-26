@@ -28,7 +28,6 @@
 #include <El/blas_like/level1/EntrywiseMap.hpp>
 #include <El/blas_like/level1/Fill.hpp>
 #include <El/blas_like/level1/FillDiagonal.hpp>
-#include <El/blas_like/level1/Full.hpp>
 #include <El/blas_like/level1/GetDiagonal.hpp>
 #include <El/blas_like/level1/GetMappedDiagonal.hpp>
 #include <El/blas_like/level1/GetSubmatrix.hpp>

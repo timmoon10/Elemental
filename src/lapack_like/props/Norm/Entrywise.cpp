@@ -26,19 +26,6 @@ Base<Field> EntrywiseNorm( const Matrix<Field>& A, Base<Field> p )
 }
 
 template<typename Field>
-Base<Field> EntrywiseNorm( const SparseMatrix<Field>& A, Base<Field> p )
-{
-    EL_DEBUG_CSE
-    // TODO(poulson): Make this more numerically stable
-    typedef Base<Field> Real;
-    Real sum = 0;
-    const Int numEntries = A.NumEntries();
-    for( Int k=0; k<numEntries; ++k )
-        sum += Pow( Abs(A.Value(k)), p );
-    return Pow( sum, 1/p );
-}
-
-template<typename Field>
 Base<Field> HermitianEntrywiseNorm
 ( UpperOrLower uplo, const Matrix<Field>& A, Base<Field> p )
 {
@@ -83,37 +70,8 @@ Base<Field> HermitianEntrywiseNorm
 }
 
 template<typename Field>
-Base<Field> HermitianEntrywiseNorm
-( UpperOrLower uplo, const SparseMatrix<Field>& A, Base<Field> p )
-{
-    EL_DEBUG_CSE
-    // TODO(poulson): Make this more numerically stable
-    typedef Base<Field> Real;
-    Real sum = 0;
-    const Int numEntries = A.NumEntries();
-    for( Int k=0; k<numEntries; ++k )
-    {
-        const Int i = A.Row(k);
-        const Int j = A.Col(k);
-        if( (uplo==UPPER && i<j) || (uplo==LOWER && i>j) )
-            sum += 2*Pow( Abs(A.Value(k)), p );
-        else if( i == j )
-            sum += Pow( Abs(A.Value(k)), p );
-    }
-    return Pow( sum, 1/p );
-}
-
-template<typename Field>
 Base<Field> SymmetricEntrywiseNorm
 ( UpperOrLower uplo, const Matrix<Field>& A, Base<Field> p )
-{
-    EL_DEBUG_CSE
-    return HermitianEntrywiseNorm( uplo, A, p );
-}
-
-template<typename Field>
-Base<Field> SymmetricEntrywiseNorm
-( UpperOrLower uplo, const SparseMatrix<Field>& A, Base<Field> p )
 {
     EL_DEBUG_CSE
     return HermitianEntrywiseNorm( uplo, A, p );
@@ -139,37 +97,6 @@ Base<Field> EntrywiseNorm( const AbstractDistMatrix<Field>& A, Base<Field> p )
     }
     mpi::Broadcast( norm, A.Root(), A.CrossComm() );
     return norm;
-}
-
-template<typename Field>
-Base<Field> EntrywiseNorm( const DistSparseMatrix<Field>& A, Base<Field> p )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-
-    Real localSum = 0;
-    const Int numLocalEntries = A.NumLocalEntries();
-    for( Int k=0; k<numLocalEntries; ++k )
-        localSum += Pow( Abs(A.Value(k)), p );
-
-    const Real sum = mpi::AllReduce( localSum, A.Grid().Comm() );
-    return Pow( sum, Real(1)/p );
-}
-
-template<typename Field>
-Base<Field> EntrywiseNorm( const DistMultiVec<Field>& A, Base<Field> p )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Matrix<Field>& ALoc = A.LockedMatrix();
-
-    Real localSum = 0;
-    for( Int j=0; j<A.Width(); ++j )
-        for( Int iLoc=0; iLoc<A.LocalHeight(); ++iLoc )
-            localSum += Pow( Abs(ALoc(iLoc,j)), p );
-
-    const Real sum = mpi::AllReduce( localSum, A.Grid().Comm() );
-    return Pow( sum, Real(1)/p );
 }
 
 template<typename Field>
@@ -229,39 +156,8 @@ Base<Field> HermitianEntrywiseNorm
 }
 
 template<typename Field>
-Base<Field> HermitianEntrywiseNorm
-( UpperOrLower uplo, const DistSparseMatrix<Field>& A, Base<Field> p )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-
-    Real localSum = 0;
-    const Int numLocalEntries = A.NumLocalEntries();
-    for( Int k=0; k<numLocalEntries; ++k )
-    {
-        const Int i = A.Row(k);
-        const Int j = A.Col(k);
-        if( (uplo==UPPER && i<j) || (uplo==LOWER && i>j) )
-            localSum += 2*Pow( Abs(A.Value(k)), p );
-        else if( i == j )
-            localSum += Pow( Abs(A.Value(k)), p );
-    }
-
-    const Real sum = mpi::AllReduce( localSum, A.Grid().Comm() );
-    return Pow( sum, Real(1)/p );
-}
-
-template<typename Field>
 Base<Field> SymmetricEntrywiseNorm
 ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A, Base<Field> p )
-{
-    EL_DEBUG_CSE
-    return HermitianEntrywiseNorm( uplo, A, p );
-}
-
-template<typename Field>
-Base<Field> SymmetricEntrywiseNorm
-( UpperOrLower uplo, const DistSparseMatrix<Field>& A, Base<Field> p )
 {
     EL_DEBUG_CSE
     return HermitianEntrywiseNorm( uplo, A, p );
@@ -271,28 +167,14 @@ Base<Field> SymmetricEntrywiseNorm
   template Base<Field> EntrywiseNorm( const Matrix<Field>& A, Base<Field> p ); \
   template Base<Field> \
   EntrywiseNorm( const AbstractDistMatrix<Field>& A, Base<Field> p ); \
-  template Base<Field> \
-  EntrywiseNorm( const SparseMatrix<Field>& A, Base<Field> p ); \
-  template Base<Field> \
-  EntrywiseNorm( const DistSparseMatrix<Field>& A, Base<Field> p ); \
-  template Base<Field> \
-  EntrywiseNorm( const DistMultiVec<Field>& A, Base<Field> p ); \
   template Base<Field> HermitianEntrywiseNorm \
   ( UpperOrLower uplo, const Matrix<Field>& A, Base<Field> p ); \
   template Base<Field> HermitianEntrywiseNorm \
   ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A, Base<Field> p ); \
-  template Base<Field> HermitianEntrywiseNorm \
-  ( UpperOrLower uplo, const SparseMatrix<Field>& A, Base<Field> p ); \
-  template Base<Field> HermitianEntrywiseNorm \
-  ( UpperOrLower uplo, const DistSparseMatrix<Field>& A, Base<Field> p ); \
   template Base<Field> SymmetricEntrywiseNorm \
   ( UpperOrLower uplo, const Matrix<Field>& A, Base<Field> p ); \
   template Base<Field> SymmetricEntrywiseNorm \
-  ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A, Base<Field> p ); \
-  template Base<Field> SymmetricEntrywiseNorm \
-  ( UpperOrLower uplo, const SparseMatrix<Field>& A, Base<Field> p ); \
-  template Base<Field> SymmetricEntrywiseNorm \
-  ( UpperOrLower uplo, const DistSparseMatrix<Field>& A, Base<Field> p );
+  ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A, Base<Field> p );
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

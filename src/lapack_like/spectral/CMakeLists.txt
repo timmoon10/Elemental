@@ -3,16 +3,13 @@ set_full_path(THIS_DIR_SOURCES
   BidiagSVD.cpp
   CubicSecular.cpp
   Eig.cpp
-  ExtremalSingValEst.cpp
   HermitianEig.cpp
   HermitianGenDefEig.cpp
   HermitianSVD.cpp
   HermitianTridiagEig.cpp
   HessenbergSchur.cpp
   ImageAndKernel.cpp
-  Lanczos.cpp
   Polar.cpp
-  ProductLanczos.cpp
   Pseudospectra.cpp
   SVD.cpp
   Schur.cpp

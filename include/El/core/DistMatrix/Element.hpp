@@ -94,8 +94,6 @@ public:
     // ----
     const type& operator=( const type& A );
     const type& operator=( const absType& A );
-    // TODO(poulson): Eliminate this routine
-    const type& operator=( const DistMultiVec<Ring>& A );
 
     // Rescaling
     // ---------

@@ -47,64 +47,6 @@ void ShiftDiagonal( AbstractDistMatrix<T>& A, S alpha, Int offset )
     }
 }
 
-template<typename T,typename S>
-void ShiftDiagonal
-( SparseMatrix<T>& A, S alphaPre, Int offset, bool existingDiag )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    const T alpha = T(alphaPre);
-    if( existingDiag )
-    {
-        T* valBuf = A.ValueBuffer();
-        for( Int i=Max(0,-offset); i<Min(m,n-offset); ++i )
-        {
-            const Int e = A.Offset( i, i+offset );
-            valBuf[e] += alpha;
-        }
-    }
-    else
-    {
-        const Int diagLength = Min(m,n-offset) - Max(0,-offset);
-        A.Reserve( diagLength );
-        for( Int i=Max(0,-offset); i<Min(m,n-offset); ++i )
-            A.QueueUpdate( i, i+offset, alpha );
-        A.ProcessQueues();
-    }
-}
-
-template<typename T,typename S>
-void ShiftDiagonal
-( DistSparseMatrix<T>& A, S alphaPre, Int offset, bool existingDiag )
-{
-    EL_DEBUG_CSE
-    const Int mLocal = A.LocalHeight();
-    const Int n = A.Width();
-    const T alpha = T(alphaPre);
-    if( existingDiag )
-    {
-        T* valBuf = A.ValueBuffer();
-        for( Int iLoc=0; iLoc<mLocal; ++iLoc )
-        {
-            const Int i = A.GlobalRow(iLoc);
-            const Int e = A.Offset( iLoc, i+offset );
-            valBuf[e] += alpha;
-        }
-    }
-    else
-    {
-        A.Reserve( mLocal );
-        for( Int iLoc=0; iLoc<mLocal; ++iLoc )
-        {
-            const Int i = A.GlobalRow(iLoc);
-            if( i+offset >= 0 && i+offset < n )
-                A.QueueLocalUpdate( iLoc, i+offset, alpha );
-        }
-        A.ProcessLocalQueues();
-    }
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -115,11 +57,7 @@ void ShiftDiagonal
   EL_EXTERN template void ShiftDiagonal \
   ( Matrix<T>& A, T alpha, Int offset ); \
   EL_EXTERN template void ShiftDiagonal \
-  ( AbstractDistMatrix<T>& A, T alpha, Int offset ); \
-  EL_EXTERN template void ShiftDiagonal \
-  ( SparseMatrix<T>& A, T alpha, Int offset, bool existingDiag ); \
-  EL_EXTERN template void ShiftDiagonal \
-  ( DistSparseMatrix<T>& A, T alpha, Int offset, bool existingDiag );
+  ( AbstractDistMatrix<T>& A, T alpha, Int offset );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

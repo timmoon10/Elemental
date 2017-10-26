@@ -96,61 +96,6 @@ void SymmetricSolve
     symm_solve::Overwrite( uplo, orientation, ACopy, B, hermitian, ctrl );
 }
 
-// TODO(poulson): Add iterative refinement parameter
-template<typename Field>
-void SymmetricSolve
-( const SparseMatrix<Field>& A,
-        Matrix<Field>& B,
-  bool hermitian,
-  bool tryLDL,
-  const BisectCtrl& ctrl )
-{
-    EL_DEBUG_CSE
-    if( tryLDL )
-    {
-        const BisectCtrl ctrl;
-        SparseLDLFactorization<Field> sparseLDLFact;
-        sparseLDLFact.Initialize( A, hermitian, ctrl );
-        sparseLDLFact.Factor();
-        /*
-        sparseLDLFact.SolveWithIterativeRefinement
-        ( A, B, relTolRefine, maxRefineIts );
-        */
-        sparseLDLFact.Solve( B );
-    }
-    else
-    {
-        LinearSolve( A, B );
-    }
-}
-
-// TODO(poulson): Add iterative refinement parameter
-template<typename Field>
-void SymmetricSolve
-( const DistSparseMatrix<Field>& A,
-        DistMultiVec<Field>& B,
-  bool hermitian,
-  bool tryLDL,
-  const BisectCtrl& ctrl )
-{
-    EL_DEBUG_CSE
-    if( tryLDL )
-    {
-        const BisectCtrl ctrl;
-        DistSparseLDLFactorization<Field> sparseLDLFact;
-        sparseLDLFact.Initialize( A, hermitian, ctrl );
-        sparseLDLFact.Factor( LDL_INTRAPIV_1D );
-        /*
-        sparseLDLFact.SolveWithIterativeRefinement
-        ( A, B, relTolRefine, maxRefineIts );
-        */
-        sparseLDLFact.Solve( B );
-    }
-    else
-    {
-        LinearSolve( A, B );
-    }
-}
 
 #define PROTO(Field) \
   template void symm_solve::Overwrite \
@@ -180,19 +125,7 @@ void SymmetricSolve
     const AbstractDistMatrix<Field>& A, \
           AbstractDistMatrix<Field>& B, \
     bool hermitian, \
-    const LDLPivotCtrl<Base<Field>>& ctrl ); \
-  template void SymmetricSolve \
-  ( const SparseMatrix<Field>& A, \
-          Matrix<Field>& B, \
-    bool hermitian, \
-    bool tryLDL, \
-    const BisectCtrl& ctrl ); \
-  template void SymmetricSolve \
-  ( const DistSparseMatrix<Field>& A, \
-          DistMultiVec<Field>& B, \
-    bool hermitian, \
-    bool tryLDL, \
-    const BisectCtrl& ctrl );
+    const LDLPivotCtrl<Base<Field>>& ctrl );
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

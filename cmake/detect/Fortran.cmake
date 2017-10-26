@@ -30,6 +30,7 @@ endif()
 # argument for enable_language is still completely broken as of 3.0.2
 workaround_9220(Fortran FORTRAN_WORKS)
 if(FORTRAN_WORKS)
+  enable_language(C OPTIONAL)
   enable_language(Fortran OPTIONAL)
   set(EL_HAVE_F90_INTERFACE FALSE)
   if(CMAKE_Fortran_COMPILER_SUPPORTS_F90)

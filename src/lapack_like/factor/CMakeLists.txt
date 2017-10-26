@@ -14,12 +14,12 @@ set_full_path(THIS_DIR_SOURCES
 
 # Add the subdirectories
 add_subdirectory(Cholesky)
-add_subdirectory(LDL)
+#add_subdirectory(LDL)
 add_subdirectory(LQ)
 add_subdirectory(LU)
 add_subdirectory(QR)
 add_subdirectory(RQ)
-add_subdirectory(RegularizedLDL)
+#add_subdirectory(RegularizedLDL)
 
 # Propagate the files up the tree
 set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)

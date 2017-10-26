@@ -69,24 +69,6 @@ void Axpy( S alphaS, const Matrix<T>& X, Matrix<T>& Y )
 }
 
 template<typename T,typename S>
-void Axpy( S alphaS, const SparseMatrix<T>& X, SparseMatrix<T>& Y )
-{
-    EL_DEBUG_CSE
-    if( X.Height() != Y.Height() || X.Width() != Y.Width() )
-        LogicError("X and Y must have the same dimensions");
-    const T alpha = T(alphaS);
-    const Int numEntries = X.NumEntries();
-    const T* XValBuf = X.LockedValueBuffer();
-    const Int* XRowBuf = X.LockedSourceBuffer();
-    const Int* XColBuf = X.LockedTargetBuffer();
-    if( !Y.FrozenSparsity() )
-        Y.Reserve( numEntries );
-    for( Int k=0; k<numEntries; ++k )
-        Y.QueueUpdate( XRowBuf[k], XColBuf[k], alpha*XValBuf[k] );
-    Y.ProcessQueues();
-}
-
-template<typename T,typename S>
 void Axpy( S alphaS, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y )
 {
     EL_DEBUG_CSE
@@ -177,43 +159,6 @@ void Axpy( S alphaS, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y )
     }
 }
 
-template<typename T,typename S>
-void Axpy( S alphaS, const DistSparseMatrix<T>& X, DistSparseMatrix<T>& Y )
-{
-    EL_DEBUG_CSE
-    if( X.Height() != Y.Height() || X.Width() != Y.Width() )
-        LogicError("X and Y must have the same dimensions");
-    if( X.Grid().Comm() != Y.Grid().Comm() )
-        LogicError("X and Y must have the same communicator");
-    const T alpha = T(alphaS);
-    const Int numLocalEntries = X.NumLocalEntries();
-    const Int firstLocalRow = X.FirstLocalRow();
-    const T* XValBuf = X.LockedValueBuffer();
-    const Int* XRowBuf = X.LockedSourceBuffer();
-    const Int* XColBuf = X.LockedTargetBuffer();
-    if( !Y.FrozenSparsity() )
-        Y.Reserve( numLocalEntries );
-    for( Int k=0; k<numLocalEntries; ++k )
-        Y.QueueLocalUpdate
-        ( XRowBuf[k]-firstLocalRow, XColBuf[k], alpha*XValBuf[k] );
-    Y.ProcessLocalQueues();
-}
-
-template<typename T,typename S>
-void Axpy( S alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y )
-{
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      if( !mpi::Congruent( X.Grid().Comm(), Y.Grid().Comm() ) )
-          LogicError("X and Y must have congruent communicators");
-      if( X.Height() != Y.Height() )
-          LogicError("X and Y must be the same height");
-      if( X.Width() != Y.Width() )
-          LogicError("X and Y must be the same width");
-    )
-    Axpy( alpha, X.LockedMatrix(), Y.Matrix() );
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -224,17 +169,11 @@ void Axpy( S alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y )
   EL_EXTERN template void Axpy \
   ( T alpha, const Matrix<T>& X, Matrix<T>& Y ); \
   EL_EXTERN template void Axpy \
-  ( T alpha, const SparseMatrix<T>& X, SparseMatrix<T>& Y ); \
-  EL_EXTERN template void Axpy \
   ( T alpha, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y ); \
   EL_EXTERN template void Axpy \
   ( T alpha, const BlockMatrix<T>& X, BlockMatrix<T>& Y ); \
   EL_EXTERN template void Axpy \
-  ( T alpha, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y ); \
-  EL_EXTERN template void Axpy \
-  ( T alpha, const DistSparseMatrix<T>& X, DistSparseMatrix<T>& Y ); \
-  EL_EXTERN template void Axpy \
-  ( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y );
+  ( T alpha, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

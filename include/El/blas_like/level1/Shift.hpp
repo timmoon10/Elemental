@@ -49,13 +49,6 @@ void Shift( AbstractDistMatrix<T>& A, S alpha )
     Shift( A.Matrix(), alpha );
 }
 
-template<typename T,typename S>
-void Shift( DistMultiVec<T>& A, S alpha )
-{
-    EL_DEBUG_CSE
-    Shift( A.Matrix(), alpha );
-}
-
 } // namespace El
 
 #endif // ifndef EL_BLAS_SHIFT_HPP

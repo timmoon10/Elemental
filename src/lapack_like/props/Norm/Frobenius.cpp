@@ -26,20 +26,6 @@ Base<Field> FrobeniusNorm( const Matrix<Field>& A )
 }
 
 template<typename Field>
-Base<Field> FrobeniusNorm( const SparseMatrix<Field>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    Real scale = 0;
-    Real scaledSquare = 1;
-    const Int numEntries = A.NumEntries();
-    const Field* valBuf = A.LockedValueBuffer();
-    for( Int k=0; k<numEntries; ++k )
-        UpdateScaledSquare( valBuf[k], scale, scaledSquare );
-    return scale*Sqrt(scaledSquare);
-}
-
-template<typename Field>
 Base<Field> HermitianFrobeniusNorm( UpperOrLower uplo, const Matrix<Field>& A )
 {
     EL_DEBUG_CSE
@@ -79,42 +65,7 @@ Base<Field> HermitianFrobeniusNorm( UpperOrLower uplo, const Matrix<Field>& A )
 }
 
 template<typename Field>
-Base<Field>
-HermitianFrobeniusNorm( UpperOrLower uplo, const SparseMatrix<Field>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    Real scale = 0;
-    Real scaledSquare = 1;
-    const Int numEntries = A.NumEntries();
-    const Field* valBuf = A.LockedValueBuffer();
-    for( Int k=0; k<numEntries; ++k )
-    {
-        const Int i = A.Row(k);
-        const Int j = A.Col(k);
-        if( (uplo==LOWER && i>j) || (uplo==UPPER && i<j) )
-        {
-            UpdateScaledSquare( valBuf[k], scale, scaledSquare );
-            UpdateScaledSquare( valBuf[k], scale, scaledSquare );
-        }
-        else if( i == j )
-        {
-            UpdateScaledSquare( valBuf[k], scale, scaledSquare );
-        }
-    }
-    return scale*Sqrt(scaledSquare);
-}
-
-template<typename Field>
 Base<Field> SymmetricFrobeniusNorm( UpperOrLower uplo, const Matrix<Field>& A )
-{
-    EL_DEBUG_CSE
-    return HermitianFrobeniusNorm( uplo, A );
-}
-
-template<typename Field>
-Base<Field>
-SymmetricFrobeniusNorm( UpperOrLower uplo, const SparseMatrix<Field>& A )
 {
     EL_DEBUG_CSE
     return HermitianFrobeniusNorm( uplo, A );
@@ -163,21 +114,6 @@ Base<Field> FrobeniusNorm( const AbstractDistMatrix<Field>& A )
     }
     mpi::Broadcast( norm, A.Root(), A.CrossComm() );
     return norm;
-}
-
-template<typename Field>
-Base<Field> FrobeniusNorm( const DistSparseMatrix<Field>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    Real localScale=0, localScaledSquare=1;
-    const Int numLocalEntries = A.NumLocalEntries();
-    const Field* valBuf = A.LockedValueBuffer();
-    for( Int k=0; k<numLocalEntries; ++k )
-        UpdateScaledSquare( valBuf[k], localScale, localScaledSquare );
-
-    return NormFromScaledSquare
-      ( localScale, localScaledSquare, A.Grid().Comm() );
 }
 
 template<typename Field>
@@ -240,36 +176,6 @@ Base<Field> HermitianFrobeniusNorm
 }
 
 template<typename Field>
-Base<Field> HermitianFrobeniusNorm
-( UpperOrLower uplo, const DistSparseMatrix<Field>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-
-    Real localScale=0, localScaledSquare=1;
-    const Int numLocalEntries = A.NumLocalEntries();
-    const Int* rowBuf = A.LockedSourceBuffer();
-    const Int* colBuf = A.LockedTargetBuffer();
-    const Field* valBuf = A.LockedValueBuffer();
-    for( Int k=0; k<numLocalEntries; ++k )
-    {
-        const Int i = rowBuf[k];
-        const Int j = colBuf[k];
-        const Field value = valBuf[k];
-        if( (uplo==UPPER && i<j) || (uplo==LOWER && i>j) )
-        {
-            UpdateScaledSquare( value, localScale, localScaledSquare );
-            UpdateScaledSquare( value, localScale, localScaledSquare );
-        }
-        else if( i ==j )
-            UpdateScaledSquare( value, localScale, localScaledSquare );
-    }
-
-    return NormFromScaledSquare
-      ( localScale, localScaledSquare, A.Grid().Comm() );
-}
-
-template<typename Field>
 Base<Field> SymmetricFrobeniusNorm
 ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A )
 {
@@ -277,53 +183,17 @@ Base<Field> SymmetricFrobeniusNorm
     return HermitianFrobeniusNorm( uplo, A );
 }
 
-template<typename Field>
-Base<Field> SymmetricFrobeniusNorm
-( UpperOrLower uplo, const DistSparseMatrix<Field>& A )
-{
-    EL_DEBUG_CSE
-    return HermitianFrobeniusNorm( uplo, A );
-}
-
-template<typename Field>
-Base<Field> FrobeniusNorm( const DistMultiVec<Field>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    Real localScale=0, localScaledSquare=1;
-    const Int localHeight = A.LocalHeight();
-    const Int width = A.Width();
-    const Matrix<Field>& ALoc = A.LockedMatrix();
-    for( Int j=0; j<width; ++j )
-        for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-            UpdateScaledSquare( ALoc(iLoc,j), localScale, localScaledSquare );
-
-    return NormFromScaledSquare
-      ( localScale, localScaledSquare, A.Grid().Comm() );
-}
-
 #define PROTO(Field) \
   template Base<Field> FrobeniusNorm( const Matrix<Field>& A ); \
   template Base<Field> FrobeniusNorm ( const AbstractDistMatrix<Field>& A ); \
-  template Base<Field> FrobeniusNorm( const SparseMatrix<Field>& A ); \
-  template Base<Field> FrobeniusNorm( const DistSparseMatrix<Field>& A ); \
-  template Base<Field> FrobeniusNorm ( const DistMultiVec<Field>& A ); \
   template Base<Field> HermitianFrobeniusNorm \
   ( UpperOrLower uplo, const Matrix<Field>& A ); \
   template Base<Field> HermitianFrobeniusNorm \
   ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A ); \
-  template Base<Field> HermitianFrobeniusNorm \
-  ( UpperOrLower uplo, const SparseMatrix<Field>& A ); \
-  template Base<Field> HermitianFrobeniusNorm \
-  ( UpperOrLower uplo, const DistSparseMatrix<Field>& A ); \
   template Base<Field> SymmetricFrobeniusNorm \
   ( UpperOrLower uplo, const Matrix<Field>& A ); \
   template Base<Field> SymmetricFrobeniusNorm \
-  ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A ); \
-  template Base<Field> SymmetricFrobeniusNorm \
-  ( UpperOrLower uplo, const SparseMatrix<Field>& A ); \
-  template Base<Field> SymmetricFrobeniusNorm \
-  ( UpperOrLower uplo, const DistSparseMatrix<Field>& A );
+  ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A );
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

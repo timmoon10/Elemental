@@ -31,46 +31,6 @@ void UpdateMappedDiagonal
     }
 }
 
-template<typename T,typename S>
-void UpdateMappedDiagonal
-(       SparseMatrix<T>& A,
-  const Matrix<S>& d,
-        function<void(T&,const S&)> func,
-        Int offset,
-        bool diagExists )
-{
-    EL_DEBUG_CSE
-    const Int iStart = Max(-offset,0);
-    const Int jStart = Max( offset,0);
-    const Int diagLength = d.Height();
-    const S* dBuf = d.LockedBuffer();
-    if( diagExists || A.FrozenSparsity() )
-    {
-        T* valBuf = A.ValueBuffer();
-        for( Int k=0; k<diagLength; ++k )
-        {
-            const Int i = iStart + k;
-            const Int j = jStart + k;
-            const Int e = A.Offset( i, j );
-            func( valBuf[e], dBuf[Min(i,j)]);
-        }
-    }
-    else
-    {
-        A.Reserve( A.NumEntries() + diagLength );
-        for( Int k=0; k<diagLength; ++k )
-        {
-            const Int i = iStart + k;
-            const Int j = jStart + k;
-
-            T alpha = 0;
-            func( alpha, dBuf[Min(i,j)] );
-            A.QueueUpdate( i, j, alpha );
-        }
-        A.ProcessQueues();
-    }
-}
-
 template<typename T,typename S,Dist U,Dist V>
 void UpdateMappedDiagonal
 (       DistMatrix<T,U,V>& A,
@@ -140,44 +100,6 @@ void UpdateMappedDiagonal
     A.ProcessQueues();
 }
 
-template<typename T,typename S>
-void UpdateMappedDiagonal
-(       DistSparseMatrix<T>& A,
-  const DistMultiVec<S>& d,
-        function<void(T&,const S&)> func,
-        Int offset,
-        bool diagExists )
-{
-    EL_DEBUG_CSE
-    if( offset != 0 )
-        LogicError("Offset assumed to be zero for distributed sparse matrices");
-
-    const Int localHeight = A.LocalHeight();
-    const S* dBuf = d.LockedMatrix().LockedBuffer();
-    if( diagExists || A.FrozenSparsity() )
-    {
-        T* valBuf = A.ValueBuffer();
-        for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-        {
-            const Int i = A.GlobalRow(iLoc);
-            const Int e = A.Offset( iLoc, i );
-            func( valBuf[e], dBuf[iLoc] );
-        }
-    }
-    else
-    {
-        A.Reserve( A.NumLocalEntries() + localHeight );
-        for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-        {
-            const Int i = A.GlobalRow(iLoc);
-            T updateValue(0);
-            func( updateValue, dBuf[iLoc] );
-            A.QueueLocalUpdate( iLoc, i, updateValue );
-        }
-        A.ProcessLocalQueues();
-    }
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -190,12 +112,6 @@ void UpdateMappedDiagonal
     const Matrix<T>& d, \
           function<void(T&,const T&)> func, \
           Int offset ); \
-  EL_EXTERN template void UpdateMappedDiagonal \
-  (       SparseMatrix<T>& A, \
-    const Matrix<T>& d, \
-          function<void(T&,const T&)> func, \
-          Int offset, \
-          bool diagExists );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

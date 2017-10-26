@@ -96,18 +96,6 @@ void Hadamard
     Hadamard( A.LockedMatrix(), B.LockedMatrix(), C.Matrix() );
 }
 
-template<typename T>
-void Hadamard
-( const DistMultiVec<T>& A, const DistMultiVec<T>& B, DistMultiVec<T>& C )
-{
-    EL_DEBUG_CSE
-    if( A.Height() != B.Height() || A.Width() != B.Width() )
-        LogicError("Hadamard product requires equal dimensions");
-    C.SetGrid( A.Grid() );
-    C.Resize( A.Height(), A.Width() );
-    Hadamard( A.LockedMatrix(), B.LockedMatrix(), C.Matrix() );
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -120,11 +108,7 @@ void Hadamard
   EL_EXTERN template void Hadamard \
   ( const AbstractDistMatrix<T>& A, \
     const AbstractDistMatrix<T>& B, \
-          AbstractDistMatrix<T>& C ); \
-  EL_EXTERN template void Hadamard \
-  ( const DistMultiVec<T>& A, \
-    const DistMultiVec<T>& B, \
-          DistMultiVec<T>& C );
+          AbstractDistMatrix<T>& C );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

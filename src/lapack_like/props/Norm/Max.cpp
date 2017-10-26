@@ -27,21 +27,6 @@ Base<Ring> MaxNorm( const Matrix<Ring>& A )
 }
 
 template<typename Ring>
-Base<Ring> MaxNorm( const SparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Ring> Real;
-    const Int numEntries = A.NumEntries();
-    const Ring* AValBuf = A.LockedValueBuffer();
-
-    Real maxAbs = 0;
-    for( Int k=0; k<numEntries; ++k )
-        maxAbs = Max( maxAbs, Abs(AValBuf[k]) );
-
-    return maxAbs;
-}
-
-template<typename Ring>
 Base<Ring> HermitianMaxNorm( UpperOrLower uplo, const Matrix<Ring>& A )
 {
     EL_DEBUG_CSE
@@ -69,38 +54,7 @@ Base<Ring> HermitianMaxNorm( UpperOrLower uplo, const Matrix<Ring>& A )
 }
 
 template<typename Ring>
-Base<Ring> HermitianMaxNorm( UpperOrLower uplo, const SparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    if( A.Height() != A.Width() )
-        LogicError("Hermitian matrices must be square.");
-
-    typedef Base<Ring> Real;
-    const Int numEntries = A.NumEntries();
-    const Int* ARowBuf = A.LockedSourceBuffer();
-    const Int* AColBuf = A.LockedTargetBuffer();
-    const Ring* AValBuf = A.LockedValueBuffer();
-
-    Real maxAbs = 0;
-    for( Int k=0; k<numEntries; ++k )
-    {
-        const Int i = ARowBuf[k];
-        const Int j = AColBuf[k];
-        if( (uplo==UPPER && i<=j) || (uplo==LOWER && i>=j) )
-            maxAbs = Max( maxAbs, Abs(AValBuf[k]) );
-    }
-    return maxAbs;
-}
-
-template<typename Ring>
 Base<Ring> SymmetricMaxNorm( UpperOrLower uplo, const Matrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    return HermitianMaxNorm( uplo, A );
-}
-
-template<typename Ring>
-Base<Ring> SymmetricMaxNorm( UpperOrLower uplo, const SparseMatrix<Ring>& A )
 {
     EL_DEBUG_CSE
     return HermitianMaxNorm( uplo, A );
@@ -118,28 +72,6 @@ Base<Ring> MaxNorm( const AbstractDistMatrix<Ring>& A )
     }
     mpi::Broadcast( norm, A.Root(), A.CrossComm() );
     return norm;
-}
-
-template<typename Ring>
-Base<Ring> MaxNorm( const DistSparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    const Int numLocalEntries = A.NumLocalEntries();
-    const Ring* AValBuf = A.LockedValueBuffer();
-
-    Base<Ring> localNorm = 0;
-    for( Int k=0; k<numLocalEntries; ++k )
-        localNorm = Max( localNorm, Abs(AValBuf[k]) );
-
-    return mpi::AllReduce( localNorm, mpi::MAX, A.Grid().Comm() );
-}
-
-template<typename Ring>
-Base<Ring> MaxNorm( const DistMultiVec<Ring>& A )
-{
-    EL_DEBUG_CSE
-    Base<Ring> localNorm = MaxNorm( A.LockedMatrix() );
-    return mpi::AllReduce( localNorm, mpi::MAX, A.Grid().Comm() );
 }
 
 template<typename Ring>
@@ -187,39 +119,7 @@ HermitianMaxNorm( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A )
 
 template<typename Ring>
 Base<Ring>
-HermitianMaxNorm( UpperOrLower uplo, const DistSparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    if( A.Height() != A.Width() )
-        LogicError("Hermitian matrices must be square.");
-    const Int numLocalEntries = A.NumLocalEntries();
-    const Ring* AValBuf = A.LockedValueBuffer();
-    const Int* ARowBuf = A.LockedSourceBuffer();
-    const Int* AColBuf = A.LockedTargetBuffer();
-
-    Base<Ring> localNorm = 0;
-    for( Int k=0; k<numLocalEntries; ++k )
-    {
-        const Int i = ARowBuf[k];
-        const Int j = AColBuf[k];
-        if( (uplo==UPPER && i<=j) || (uplo==LOWER && i>=j) )
-            localNorm = Max( localNorm, Abs(AValBuf[k]) );
-    }
-
-    return mpi::AllReduce( localNorm, mpi::MAX, A.Grid().Comm() );
-}
-
-template<typename Ring>
-Base<Ring>
 SymmetricMaxNorm( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    return HermitianMaxNorm( uplo, A );
-}
-
-template<typename Ring>
-Base<Ring>
-SymmetricMaxNorm( UpperOrLower uplo, const DistSparseMatrix<Ring>& A )
 {
     EL_DEBUG_CSE
     return HermitianMaxNorm( uplo, A );
@@ -228,25 +128,14 @@ SymmetricMaxNorm( UpperOrLower uplo, const DistSparseMatrix<Ring>& A )
 #define PROTO(Ring) \
   template Base<Ring> MaxNorm( const Matrix<Ring>& A ); \
   template Base<Ring> MaxNorm ( const AbstractDistMatrix<Ring>& A ); \
-  template Base<Ring> MaxNorm( const SparseMatrix<Ring>& A ); \
-  template Base<Ring> MaxNorm( const DistSparseMatrix<Ring>& A ); \
-  template Base<Ring> MaxNorm( const DistMultiVec<Ring>& A ); \
   template Base<Ring> HermitianMaxNorm \
   ( UpperOrLower uplo, const Matrix<Ring>& A ); \
   template Base<Ring> HermitianMaxNorm \
   ( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A ); \
-  template Base<Ring> HermitianMaxNorm \
-  ( UpperOrLower uplo, const SparseMatrix<Ring>& A ); \
-  template Base<Ring> HermitianMaxNorm \
-  ( UpperOrLower uplo, const DistSparseMatrix<Ring>& A ); \
   template Base<Ring> SymmetricMaxNorm \
   ( UpperOrLower uplo, const Matrix<Ring>& A ); \
   template Base<Ring> SymmetricMaxNorm \
-  ( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A ); \
-  template Base<Ring> SymmetricMaxNorm \
-  ( UpperOrLower uplo, const SparseMatrix<Ring>& A ); \
-  template Base<Ring> SymmetricMaxNorm \
-  ( UpperOrLower uplo, const DistSparseMatrix<Ring>& A );
+  ( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

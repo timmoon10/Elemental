@@ -102,50 +102,12 @@ void Read
     }
 }
 
-template<typename T>
-void Read( SparseMatrix<T>& A, const string filename, FileFormat format )
-{
-    EL_DEBUG_CSE
-    if( format == AUTO )
-        format = DetectFormat( filename );
-
-    switch( format )
-    {
-    case MATRIX_MARKET:
-        read::MatrixMarket( A, filename );
-        break;
-    default:
-        LogicError("Format unsupported for reading a SparseMatrix");
-    }
-}
-
-template<typename T>
-void Read( DistSparseMatrix<T>& A, const string filename, FileFormat format )
-{
-    EL_DEBUG_CSE
-    if( format == AUTO )
-        format = DetectFormat( filename );
-
-    switch( format )
-    {
-    case MATRIX_MARKET:
-        read::MatrixMarket( A, filename );
-        break;
-    default:
-        LogicError("Format unsupported for reading a DistSparseMatrix");
-    }
-}
-
 #define PROTO(T) \
   template void Read \
   ( Matrix<T>& A, const string filename, FileFormat format ); \
   template void Read \
   ( AbstractDistMatrix<T>& A, const string filename, \
-    FileFormat format, bool sequential ); \
-  template void Read \
-  ( SparseMatrix<T>& A, const string filename, FileFormat format ); \
-  template void Read \
-  ( DistSparseMatrix<T>& A, const string filename, FileFormat format );
+    FileFormat format, bool sequential );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

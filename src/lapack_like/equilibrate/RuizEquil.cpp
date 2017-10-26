@@ -114,87 +114,6 @@ void RuizEquil
 }
 
 template<typename Field>
-void RuizEquil
-( SparseMatrix<Field>& A,
-  Matrix<Base<Field>>& dRow,
-  Matrix<Base<Field>>& dCol,
-  bool progress )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Int m = A.Height();
-    const Int n = A.Width();
-    Ones( dRow, m, 1 );
-    Ones( dCol, n, 1 );
-
-    // TODO(poulson): Expose these as control parameters
-    // For now, simply hard-code the number of iterations
-    const Int maxIter = 4;
-
-    Matrix<Real> scales;
-    const Int indent = PushIndent();
-    for( Int iter=0; iter<maxIter; ++iter )
-    {
-        // Rescale the columns
-        // -------------------
-        ColumnMaxNorms( A, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dCol );
-        DiagonalSolve( RIGHT, NORMAL, scales, A );
-
-        // Rescale the rows
-        // ----------------
-        RowMaxNorms( A, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dRow );
-        DiagonalSolve( LEFT, NORMAL, scales, A );
-    }
-    SetIndent( indent );
-}
-
-template<typename Field>
-void RuizEquil
-( DistSparseMatrix<Field>& A,
-  DistMultiVec<Base<Field>>& dRow,
-  DistMultiVec<Base<Field>>& dCol,
-  bool progress )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Int m = A.Height();
-    const Int n = A.Width();
-    const Grid& grid = A.Grid();
-    dRow.SetGrid( grid );
-    dCol.SetGrid( grid );
-    Ones( dRow, m, 1 );
-    Ones( dCol, n, 1 );
-
-    // TODO(poulson): Expose to control structure
-    // For, simply hard-code a small number of iterations
-    const Int maxIter = 4;
-
-    DistMultiVec<Real> scales(grid);
-    const Int indent = PushIndent();
-    for( Int iter=0; iter<maxIter; ++iter )
-    {
-        // Rescale the columns
-        // -------------------
-        ColumnMaxNorms( A, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dCol );
-        DiagonalSolve( RIGHT, NORMAL, scales, A );
-
-        // Rescale the rows
-        // ----------------
-        RowMaxNorms( A, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dRow );
-        DiagonalSolve( LEFT, NORMAL, scales, A );
-    }
-    SetIndent( indent );
-}
-
-template<typename Field>
 void StackedRuizEquil
 ( Matrix<Field>& A,
   Matrix<Field>& B,
@@ -321,116 +240,6 @@ void StackedRuizEquil
     SetIndent( indent );
 }
 
-template<typename Field>
-void StackedRuizEquil
-( SparseMatrix<Field>& A,
-  SparseMatrix<Field>& B,
-  Matrix<Base<Field>>& dRowA,
-  Matrix<Base<Field>>& dRowB,
-  Matrix<Base<Field>>& dCol,
-  bool progress )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Int mA = A.Height();
-    const Int mB = B.Height();
-    const Int n = A.Width();
-    Ones( dRowA, mA, 1 );
-    Ones( dRowB, mB, 1 );
-    Ones( dCol, n, 1 );
-
-    // TODO(poulson): Expose these as control parameters
-    // For now, simply hard-code the number of iterations
-    const Int maxIter = 4;
-
-    Matrix<Real> scales, maxAbsValsB;
-    const Int indent = PushIndent();
-    for( Int iter=0; iter<maxIter; ++iter )
-    {
-        // Rescale the columns
-        // -------------------
-        ColumnMaxNorms( A, scales );
-        ColumnMaxNorms( B, maxAbsValsB );
-        for( Int j=0; j<n; ++j )
-            scales(j) = Max(scales(j),maxAbsValsB(j));
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dCol );
-        DiagonalSolve( RIGHT, NORMAL, scales, A );
-        DiagonalSolve( RIGHT, NORMAL, scales, B );
-
-        // Rescale the rows
-        // ----------------
-        RowMaxNorms( A, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dRowA );
-        DiagonalSolve( LEFT, NORMAL, scales, A );
-
-        RowMaxNorms( B, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dRowB );
-        DiagonalSolve( LEFT, NORMAL, scales, B );
-    }
-    SetIndent( indent );
-}
-
-template<typename Field>
-void StackedRuizEquil
-( DistSparseMatrix<Field>& A,
-  DistSparseMatrix<Field>& B,
-  DistMultiVec<Base<Field>>& dRowA,
-  DistMultiVec<Base<Field>>& dRowB,
-  DistMultiVec<Base<Field>>& dCol,
-  bool progress )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Int mA = A.Height();
-    const Int mB = B.Height();
-    const Int n = A.Width();
-    const Grid& grid = A.Grid();
-    dRowA.SetGrid( grid );
-    dRowB.SetGrid( grid );
-    dCol.SetGrid( grid );
-    Ones( dRowA, mA, 1 );
-    Ones( dRowB, mB, 1 );
-    Ones( dCol, n, 1 );
-
-    // TODO(poulson): Expose to control structure
-    // For, simply hard-code a small number of iterations
-    const Int maxIter = 4;
-
-    DistMultiVec<Real> scales(grid), maxAbsValsB(grid);
-    auto& scalesLoc = scales.Matrix();
-    auto& maxAbsValsBLoc = maxAbsValsB.Matrix();
-    const Int localHeight = scalesLoc.Height();
-    const Int indent = PushIndent();
-    for( Int iter=0; iter<maxIter; ++iter )
-    {
-        // Rescale the columns
-        // -------------------
-        ColumnMaxNorms( A, scales );
-        ColumnMaxNorms( B, maxAbsValsB );
-        for( Int jLoc=0; jLoc<localHeight; ++jLoc )
-            scalesLoc(jLoc) = Max(scalesLoc(jLoc),maxAbsValsBLoc(jLoc));
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dCol );
-        DiagonalSolve( RIGHT, NORMAL, scales, A );
-        DiagonalSolve( RIGHT, NORMAL, scales, B );
-
-        // Rescale the rows
-        // ----------------
-        RowMaxNorms( A, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dRowA );
-        DiagonalSolve( LEFT, NORMAL, scales, A );
-
-        RowMaxNorms( B, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, dRowB );
-        DiagonalSolve( LEFT, NORMAL, scales, B );
-    }
-    SetIndent( indent );
-}
 
 #define PROTO(Field) \
   template void RuizEquil \
@@ -442,16 +251,6 @@ void StackedRuizEquil
   ( AbstractDistMatrix<Field>& A, \
     AbstractDistMatrix<Base<Field>>& dRow, \
     AbstractDistMatrix<Base<Field>>& dCol, \
-    bool progress ); \
-  template void RuizEquil \
-  ( SparseMatrix<Field>& A, \
-    Matrix<Base<Field>>& dRow, \
-    Matrix<Base<Field>>& dCol, \
-    bool progress ); \
-  template void RuizEquil \
-  ( DistSparseMatrix<Field>& A, \
-    DistMultiVec<Base<Field>>& dRow, \
-    DistMultiVec<Base<Field>>& dCol, \
     bool progress ); \
   template void StackedRuizEquil \
   ( Matrix<Field>& A, \
@@ -466,20 +265,6 @@ void StackedRuizEquil
     AbstractDistMatrix<Base<Field>>& dRowA, \
     AbstractDistMatrix<Base<Field>>& dRowB, \
     AbstractDistMatrix<Base<Field>>& dCol, \
-    bool progress ); \
-  template void StackedRuizEquil \
-  ( SparseMatrix<Field>& A, \
-    SparseMatrix<Field>& B, \
-    Matrix<Base<Field>>& dRowA, \
-    Matrix<Base<Field>>& dRowB, \
-    Matrix<Base<Field>>& dCol, \
-    bool progress ); \
-  template void StackedRuizEquil \
-  ( DistSparseMatrix<Field>& A, \
-    DistSparseMatrix<Field>& B, \
-    DistMultiVec<Base<Field>>& dRowA, \
-    DistMultiVec<Base<Field>>& dRowB, \
-    DistMultiVec<Base<Field>>& dCol, \
     bool progress );
 
 #define EL_NO_INT_PROTO

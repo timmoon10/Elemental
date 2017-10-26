@@ -4,7 +4,7 @@ set_full_path(THIS_DIR_HEADERS
   )
 
 # Add the subdirectories
-add_subdirectory(ldl)
+#add_subdirectory(ldl)
 add_subdirectory(qr)
 
 # Propagate the files up the tree

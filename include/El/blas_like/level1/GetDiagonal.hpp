@@ -63,8 +63,6 @@ Matrix<Base<T>> GetImagPartOfDiagonal( const Matrix<T>& A, Int offset )
     return d;
 }
 
-// TODO(poulson): SparseMatrix implementation
-
 template<typename T,Dist U,Dist V,DistWrap wrap>
 void GetDiagonal
 ( const DistMatrix<T,U,V,wrap>& A, AbstractDistMatrix<T>& d, Int offset )
@@ -191,8 +189,6 @@ GetImagPartOfDiagonal( const DistMatrix<T,U,V,BLOCK>& A, Int offset )
     GetImagPartOfDiagonal( A, d, offset );
     return d;
 }
-
-// TODO: DistSparseMatrix implementation
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN

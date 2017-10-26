@@ -35,10 +35,6 @@ template<typename T>
 void Round( AbstractDistMatrix<T>& A )
 { Round( A.Matrix() ); }
 
-template<typename T>
-void Round( DistMultiVec<T>& A )
-{ Round( A.Matrix() ); }
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -47,8 +43,7 @@ void Round( DistMultiVec<T>& A )
 
 #define PROTO(T) \
   EL_EXTERN template void Round( Matrix<T>& A ); \
-  EL_EXTERN template void Round( AbstractDistMatrix<T>& A ); \
-  EL_EXTERN template void Round( DistMultiVec<T>& A );
+  EL_EXTERN template void Round( AbstractDistMatrix<T>& A );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

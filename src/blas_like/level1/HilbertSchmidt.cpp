@@ -85,39 +85,11 @@ Ring HilbertSchmidt
     return innerProd;
 }
 
-template<typename Ring>
-Ring HilbertSchmidt( const DistMultiVec<Ring>& A, const DistMultiVec<Ring>& B )
-{
-    EL_DEBUG_CSE
-    if( !mpi::Congruent( A.Grid().Comm(), B.Grid().Comm() ) )
-        LogicError("A and B must be congruent");
-    if( A.Height() != B.Height() || A.Width() != B.Width() )
-        LogicError("A and B must have the same dimensions");
-    if( A.LocalHeight() != B.LocalHeight() )
-        LogicError("A and B must have the same local heights");
-    if( A.FirstLocalRow() != B.FirstLocalRow() )
-        LogicError("A and B must own the same rows");
-
-    Ring localInnerProd = 0;
-    const Int localHeight = A.LocalHeight();
-    const Int width = A.Width();
-    const Ring* ABuf = A.LockedMatrix().LockedBuffer();
-    const Ring* BBuf = B.LockedMatrix().LockedBuffer();
-    const Int ALDim = A.LockedMatrix().LDim();
-    const Int BLDim = B.LockedMatrix().LDim();
-    for( Int j=0; j<width; ++j )
-        for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-            localInnerProd += Conj(ABuf[iLoc+j*ALDim])*BBuf[iLoc+j*BLDim];
-    return mpi::AllReduce( localInnerProd, A.Grid().Comm() );
-}
-
 #define PROTO(Ring) \
   template Ring HilbertSchmidt \
   ( const Matrix<Ring>& A, const Matrix<Ring>& B ); \
   template Ring HilbertSchmidt \
-  ( const AbstractDistMatrix<Ring>& A, const AbstractDistMatrix<Ring>& B ); \
-  template Ring HilbertSchmidt \
-  ( const DistMultiVec<Ring>& A, const DistMultiVec<Ring>& B );
+  ( const AbstractDistMatrix<Ring>& A, const AbstractDistMatrix<Ring>& B );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_CORE_DISTMATRIX_HPP
@@ -17,9 +17,6 @@ inline void AssertSameDist( const DistTypeA& distA, const DistTypeB& distB )
     if( distA.colDist != distB.colDist || distA.rowDist != distB.rowDist )
         RuntimeError("Matrices must have the same distribution");
 }
-
-template<typename scalarType>
-class DistMultiVec;
 
 } // namespace El
 
@@ -61,7 +58,7 @@ namespace El {
 
 #ifdef EL_HAVE_SCALAPACK
 
-namespace blacs { 
+namespace blacs {
 
 template<typename scalarType>
 inline int Context( const AbstractDistMatrix<scalarType>& A )
@@ -116,7 +113,7 @@ inline void AssertSameDists( const AbstractDistMatrix<scalarType>& A ) { }
 template<typename scalarType>
 inline void AssertSameDists
 ( const AbstractDistMatrix<scalarType>& A1,
-  const AbstractDistMatrix<scalarType>& A2 ) 
+  const AbstractDistMatrix<scalarType>& A2 )
 {
     if( A1.ColDist() != A2.ColDist() || A1.RowDist() != A2.RowDist() )
         LogicError("Distributions did not match");
@@ -126,7 +123,7 @@ template<typename scalarType,typename... Args>
 inline void AssertSameDists
 ( const AbstractDistMatrix<scalarType>& A1,
   const AbstractDistMatrix<scalarType>& A2,
-  Args&... args ) 
+  Args&... args )
 {
     if( A1.ColDist() != A2.ColDist() || A1.RowDist() != A2.RowDist() )
         LogicError("Distributions did not match");

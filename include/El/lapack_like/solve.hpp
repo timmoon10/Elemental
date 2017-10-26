@@ -26,16 +26,6 @@ void LinearSolve
         AbstractDistMatrix<Field>& B,
   bool scalapack=false );
 
-template<typename Field>
-void LinearSolve
-( const SparseMatrix<Field>& A,
-        Matrix<Field>& B,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
-template<typename Field>
-void LinearSolve
-( const DistSparseMatrix<Field>& A,
-        DistMultiVec<Field>& B,
-  const LeastSquaresCtrl<Base<Field>>& ctrl=LeastSquaresCtrl<Base<Field>>() );
 
 namespace lin_solve {
 
@@ -61,18 +51,6 @@ void HermitianSolve
         AbstractDistMatrix<Field>& B,
   const LDLPivotCtrl<Base<Field>>& ctrl=LDLPivotCtrl<Base<Field>>() );
 
-template<typename Field>
-void HermitianSolve
-( const SparseMatrix<Field>& A,
-        Matrix<Field>& B,
-  bool tryLDL=false,
-  const BisectCtrl& ctrl=BisectCtrl() );
-template<typename Field>
-void HermitianSolve
-( const DistSparseMatrix<Field>& A,
-        DistMultiVec<Field>& B,
-  bool tryLDL=false,
-  const BisectCtrl& ctrl=BisectCtrl() );
 
 namespace herm_solve {
 
@@ -110,20 +88,6 @@ void SymmetricSolve
   bool conjugate=false,
   const LDLPivotCtrl<Base<Field>>& ctrl=LDLPivotCtrl<Base<Field>>() );
 
-template<typename Field>
-void SymmetricSolve
-( const SparseMatrix<Field>& A,
-        Matrix<Field>& B,
-  bool conjugate=false,
-  bool tryLDL=false,
-  const BisectCtrl& ctrl=BisectCtrl() );
-template<typename Field>
-void SymmetricSolve
-( const DistSparseMatrix<Field>& A,
-        DistMultiVec<Field>& B,
-  bool conjugate=false,
-  bool tryLDL=false,
-  const BisectCtrl& ctrl=BisectCtrl() );
 
 namespace symm_solve {
 
@@ -171,18 +135,6 @@ void SQSDSolve
   const AbstractDistMatrix<Field>& J,
         AbstractDistMatrix<Field>& B );
 
-template<typename Field>
-void SQSDSolve
-( Int n0,
-  const SparseMatrix<Field>& J,
-        Matrix<Field>& B,
-  const SQSDCtrl<Base<Field>>& ctrl=SQSDCtrl<Base<Field>>() );
-template<typename Field>
-void SQSDSolve
-( Int n0,
-  const DistSparseMatrix<Field>& J,
-        DistMultiVec<Field>& B,
-  const SQSDCtrl<Base<Field>>& ctrl=SQSDCtrl<Base<Field>>() );
 
 // Hermitian Positive-Definite
 // ===========================
@@ -199,16 +151,6 @@ void HPDSolve
   const AbstractDistMatrix<Field>& A,
         AbstractDistMatrix<Field>& B );
 
-template<typename Field>
-void HPDSolve
-( const SparseMatrix<Field>& A,
-        Matrix<Field>& B,
-  const BisectCtrl& ctrl=BisectCtrl() );
-template<typename Field>
-void HPDSolve
-( const DistSparseMatrix<Field>& A,
-        DistMultiVec<Field>& B,
-  const BisectCtrl& ctrl=BisectCtrl() );
 
 namespace hpd_solve {
 

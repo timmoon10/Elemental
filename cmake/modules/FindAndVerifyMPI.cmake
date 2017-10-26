@@ -6,11 +6,34 @@
 #  which can be found in the LICENSE file in the root directory, or at
 #  http://opensource.org/licenses/BSD-2-Clause
 #
-include(ElCheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 
 find_package(MPI)
-if(NOT MPI_C_FOUND)
-  message(FATAL_ERROR "MPI C compiler was not found and is required")
+if (MPI_CXX_FOUND)
+  if (NOT TARGET MPI::MPI_CXX)
+    add_library(MPI::MPI_CXX INTERFACE IMPORTED)
+    if (MPI_CXX_COMPILE_FLAGS)
+      separate_arguments(_MPI_CXX_COMPILE_OPTIONS UNIX_COMMAND
+        "${MPI_CXX_COMPILE_FLAGS}")
+      set_property(TARGET MPI::MPI_CXX PROPERTY
+        INTERFACE_COMPILE_OPTIONS "${_MPI_CXX_COMPILE_OPTIONS}")
+    endif()
+    
+    if(MPI_CXX_LINK_FLAGS)
+      separate_arguments(_MPI_CXX_LINK_LINE UNIX_COMMAND
+        "${MPI_CXX_LINK_FLAGS}")
+    endif()
+    list(APPEND _MPI_CXX_LINK_LINE "${MPI_CXX_LIBRARIES}")
+    
+    set_property(TARGET MPI::MPI_CXX PROPERTY
+      INTERFACE_LINK_LIBRARIES "${_MPI_CXX_LINK_LINE}")
+    
+    set_property(TARGET MPI::MPI_CXX PROPERTY
+      INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
+    
+  endif (NOT TARGET MPI::MPI_CXX)
+else()
+  message(FATAL_ERROR "MPI CXX compiler was not found and is required")
 endif()
 
 # NOTE: 
@@ -21,10 +44,10 @@ endif()
 
 # Ensure that we have MPI1 by looking for MPI_Reduce_scatter
 # ==========================================================
-set(CMAKE_REQUIRED_FLAGS "${MPI_C_COMPILE_FLAGS}")
-set(CMAKE_REQUIRED_LINKER_FLAGS "${MPI_C_LINK_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}")
-set(CMAKE_REQUIRED_INCLUDES ${MPI_C_INCLUDE_PATH})
-set(CMAKE_REQUIRED_LIBRARIES ${MPI_C_LIBRARIES})
+set(CMAKE_REQUIRED_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
+set(CMAKE_REQUIRED_LINKER_FLAGS "${MPI_CXX_LINK_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_REQUIRED_INCLUDES ${MPI_CXX_INCLUDE_PATH})
+set(CMAKE_REQUIRED_LIBRARIES ${MPI_CXX_LIBRARIES})
 set(MPI_REDUCE_SCATTER_CODE
   "#include \"mpi.h\"
    int main( int argc, char* argv[] )
@@ -37,7 +60,7 @@ set(MPI_REDUCE_SCATTER_CODE
      MPI_Finalize();
      return 0;
    }")
-El_check_c_source_compiles("${MPI_REDUCE_SCATTER_CODE}" 
+check_cxx_source_compiles("${MPI_REDUCE_SCATTER_CODE}" 
   EL_HAVE_MPI_REDUCE_SCATTER)
 if(NOT EL_HAVE_MPI_REDUCE_SCATTER)
   message(FATAL_ERROR "Could not find MPI_Reduce_scatter")
@@ -51,14 +74,14 @@ endif()
 # lowest stable branch after 1.6.5.
 # (e.g., for academic investigations of behavior)
 #
-# NOTE: MPI_C_INCLUDE_PATH has been observed to be a list containing both
+# NOTE: MPI_CXX_INCLUDE_PATH has been observed to be a list containing both
 #       an item corresponding to the directory containing mpi.h *and* the full
 #       path to mpi.h for Open MPI!
 #
 if(NOT OMPI_MIN_VERSION)
   set(OMPI_MIN_VERSION 1.8.1)
 endif()
-foreach(MPI_PATH ${MPI_C_INCLUDE_PATH})
+foreach(MPI_PATH ${MPI_CXX_INCLUDE_PATH})
   if(EXISTS "${MPI_PATH}/mpi.h")
     set(MPI_HEADER_PATH ${MPI_PATH})
   endif()
@@ -124,7 +147,7 @@ set(MPI_TYPE_CREATE_STRUCT_CODE
          MPI_Finalize();
          return 0;
      }")
-El_check_c_source_compiles("${MPI_TYPE_CREATE_STRUCT_CODE}" 
+check_cxx_source_compiles("${MPI_TYPE_CREATE_STRUCT_CODE}" 
   EL_HAVE_MPI_TYPE_CREATE_STRUCT)
 if(NOT EL_HAVE_MPI_TYPE_CREATE_STRUCT)
   message(FATAL_ERROR "Could not find MPI_Type_create_struct")
@@ -142,7 +165,7 @@ set(MPI_LONG_LONG_CODE
          MPI_Finalize();
          return 0;
      }")
-El_check_c_source_compiles("${MPI_LONG_LONG_CODE}" EL_HAVE_MPI_LONG_LONG)
+check_cxx_source_compiles("${MPI_LONG_LONG_CODE}" EL_HAVE_MPI_LONG_LONG)
 if(EL_USE_64BIT_INTS AND NOT EL_HAVE_MPI_LONG_LONG)
   message(FATAL_ERROR 
     "Did not detect MPI_LONG_LONG_INT and MPI_UNSIGNED_LONG_LONG")
@@ -168,8 +191,8 @@ set(MPI_LONG_DOUBLE_COMPLEX_CODE
          MPI_Finalize();
          return 0;
      }")
-El_check_c_source_compiles("${MPI_LONG_DOUBLE_CODE}" EL_HAVE_MPI_LONG_DOUBLE)
-El_check_c_source_compiles("${MPI_LONG_DOUBLE_COMPLEX_CODE}" 
+check_cxx_source_compiles("${MPI_LONG_DOUBLE_CODE}" EL_HAVE_MPI_LONG_DOUBLE)
+check_cxx_source_compiles("${MPI_LONG_DOUBLE_COMPLEX_CODE}" 
   EL_HAVE_MPI_LONG_DOUBLE_COMPLEX)
 
 # Check if MPI_C_FLOAT_COMPLEX and MPI_C_DOUBLE_COMPLEX exist
@@ -184,7 +207,7 @@ set(MPI_C_COMPLEX_CODE
        MPI_Finalize();
        return 0;
      }")
-El_check_c_source_compiles("${MPI_C_COMPLEX_CODE}" EL_HAVE_MPI_C_COMPLEX)
+check_cxx_source_compiles("${MPI_C_COMPLEX_CODE}" EL_HAVE_MPI_C_COMPLEX)
 
 # Detect support for various optional MPI routines
 # ================================================
@@ -198,7 +221,7 @@ set(MPI_REDUCE_SCATTER_BLOCK_CODE
        MPI_Finalize();
        return 0;
      }")
-El_check_c_source_compiles("${MPI_REDUCE_SCATTER_BLOCK_CODE}" 
+check_cxx_source_compiles("${MPI_REDUCE_SCATTER_BLOCK_CODE}" 
   EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
 set(MPI_IALLGATHER_CODE
     "#include \"mpi.h\"
@@ -213,7 +236,7 @@ set(MPI_IALLGATHER_CODE
        MPI_Finalize();
        return 0;
      }")
-El_check_c_source_compiles("${MPI_IALLGATHER_CODE}" 
+check_cxx_source_compiles("${MPI_IALLGATHER_CODE}" 
   EL_HAVE_MPI3_NONBLOCKING_COLLECTIVES)
 set(MPIX_IALLGATHER_CODE
     "#include \"mpi.h\"
@@ -228,7 +251,7 @@ set(MPIX_IALLGATHER_CODE
        MPI_Finalize();
        return 0;
      }")
-El_check_c_source_compiles("${MPIX_IALLGATHER_CODE}" 
+check_cxx_source_compiles("${MPIX_IALLGATHER_CODE}" 
   EL_HAVE_MPIX_NONBLOCKING_COLLECTIVES)
 set(MPI_INIT_THREAD_CODE
     "#include \"mpi.h\"
@@ -239,7 +262,7 @@ set(MPI_INIT_THREAD_CODE
        MPI_Finalize();
        return 0;
      }")
-El_check_c_source_compiles("${MPI_INIT_THREAD_CODE}" EL_HAVE_MPI_INIT_THREAD)
+check_cxx_source_compiles("${MPI_INIT_THREAD_CODE}" EL_HAVE_MPI_INIT_THREAD)
 set(MPI_QUERY_THREAD_CODE
     "#include \"mpi.h\"
      int main( int argc, char* argv[] )
@@ -250,7 +273,7 @@ set(MPI_QUERY_THREAD_CODE
        MPI_Finalize();
        return 0;
      }")
-El_check_c_source_compiles("${MPI_QUERY_THREAD_CODE}" EL_HAVE_MPI_QUERY_THREAD )
+check_cxx_source_compiles("${MPI_QUERY_THREAD_CODE}" EL_HAVE_MPI_QUERY_THREAD )
 set(MPI_COMM_SET_ERRHANDLER_CODE
     "#include \"mpi.h\"
      int main( int argc, char* argv[] )
@@ -261,7 +284,7 @@ set(MPI_COMM_SET_ERRHANDLER_CODE
        MPI_Finalize();
        return 0;
      }")
-El_check_c_source_compiles("${MPI_COMM_SET_ERRHANDLER_CODE}" 
+check_cxx_source_compiles("${MPI_COMM_SET_ERRHANDLER_CODE}" 
   EL_HAVE_MPI_COMM_SET_ERRHANDLER)
 # Detecting MPI_IN_PLACE and MPI_Comm_f2c requires test compilation
 # -----------------------------------------------------------------
@@ -276,7 +299,7 @@ set(MPI_IN_PLACE_CODE
          MPI_Finalize();
          return 0;
      }")
-El_check_c_source_compiles("${MPI_IN_PLACE_CODE}" EL_HAVE_MPI_IN_PLACE)
+check_cxx_source_compiles("${MPI_IN_PLACE_CODE}" EL_HAVE_MPI_IN_PLACE)
 if(NOT EL_HAVE_MPI_IN_PLACE)
   message(FATAL_ERROR "MPI_IN_PLACE support was not detected")
 endif()
@@ -290,7 +313,7 @@ set(MPI_COMM_F2C_CODE
      MPI_Finalize();
      return 0;
  }")
-El_check_c_source_compiles("${MPI_COMM_F2C_CODE}" EL_HAVE_MPI_COMM_F2C)
+check_cxx_source_compiles("${MPI_COMM_F2C_CODE}" EL_HAVE_MPI_COMM_F2C)
 
 # Detect whether or not MPI_Comm and MPI_Group are implemented as an int
 # ======================================================================
@@ -315,8 +338,8 @@ set(MPI_GROUP_NOT_INT_CODE
          MPI_Finalize();
          return 0;
      }")
-El_check_c_source_compiles("${MPI_COMM_NOT_INT_CODE}" EL_MPI_COMM_NOT_INT)
-El_check_c_source_compiles("${MPI_GROUP_NOT_INT_CODE}" EL_MPI_GROUP_NOT_INT)
+check_cxx_source_compiles("${MPI_COMM_NOT_INT_CODE}" EL_MPI_COMM_NOT_INT)
+check_cxx_source_compiles("${MPI_GROUP_NOT_INT_CODE}" EL_MPI_GROUP_NOT_INT)
 
 set(CMAKE_REQUIRED_FLAGS)
 set(CMAKE_REQUIRED_LINKER_FLAGS)

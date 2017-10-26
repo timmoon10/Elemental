@@ -10,7 +10,7 @@ set_full_path(THIS_DIR_HEADERS
   mpi_choice.hpp
   omp.hpp
   openblas.hpp
-  pmrrr.hpp
+#  pmrrr.hpp
   qd.hpp
   qt5.hpp
   scalapack.hpp

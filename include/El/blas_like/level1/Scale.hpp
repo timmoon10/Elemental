@@ -94,54 +94,6 @@ void Scale( S alpha, AbstractDistMatrix<Real>& AReal,
     Scale( alpha, AReal.Matrix(), AImag.Matrix() );
 }
 
-template<typename T,typename S>
-void Scale( S alpha, SparseMatrix<T>& A )
-{
-    EL_DEBUG_CSE
-    if( alpha == S(0) )
-    {
-        const Int m = A.Height();
-        const Int n = A.Width();
-        A.Empty();
-        A.Resize( m, n );
-    }
-    else if( alpha != S(1) )
-    {
-        T alphaT = alpha;
-        T* valueBuf = A.ValueBuffer();
-        const Int numEntries = A.NumEntries();
-        for( Int k=0; k<numEntries; ++k )
-            valueBuf[k] *= alphaT;
-    }
-}
-
-template<typename T,typename S>
-void Scale( S alpha, DistSparseMatrix<T>& A )
-{
-    EL_DEBUG_CSE
-    if( alpha == S(0) )
-    {
-        const Int m = A.Height();
-        const Int n = A.Width();
-        A.Empty();
-        A.Resize( m, n );
-    }
-    else if( alpha != S(1) )
-    {
-        T alphaT = alpha;
-        T* valueBuf = A.ValueBuffer();
-        const Int numLocalEntries = A.NumLocalEntries();
-        for( Int k=0; k<numLocalEntries; ++k )
-            valueBuf[k] *= alphaT;
-    }
-}
-
-template<typename T,typename S>
-void Scale( S alpha, DistMultiVec<T>& A )
-{
-    EL_DEBUG_CSE
-    Scale( alpha, A.Matrix() );
-}
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
@@ -153,13 +105,7 @@ void Scale( S alpha, DistMultiVec<T>& A )
   EL_EXTERN template void Scale \
   ( T alpha, Matrix<T>& A ); \
   EL_EXTERN template void Scale \
-  ( T alpha, AbstractDistMatrix<T>& A ); \
-  EL_EXTERN template void Scale \
-  ( T alpha, SparseMatrix<T>& A ); \
-  EL_EXTERN template void Scale \
-  ( T alpha, DistSparseMatrix<T>& A ); \
-  EL_EXTERN template void Scale \
-  ( T alpha, DistMultiVec<T>& A );
+  ( T alpha, AbstractDistMatrix<T>& A );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

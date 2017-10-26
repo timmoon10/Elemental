@@ -363,31 +363,6 @@ void DiagonalScaleTrapezoid
     #include <El/macros/GuardAndPayload.h>
 }
 
-template<typename TDiag,typename T>
-void DiagonalScaleTrapezoid
-( LeftOrRight side,
-  UpperOrLower uplo,
-  Orientation orientation,
-  const Matrix<TDiag>& d,
-        SparseMatrix<T>& A,
-  Int offset )
-{
-    EL_DEBUG_CSE
-    LogicError("This routine is not yet written");
-}
-
-template<typename TDiag,typename T>
-void DiagonalScaleTrapezoid
-( LeftOrRight side,
-  UpperOrLower uplo,
-  Orientation orientation,
-  const DistMultiVec<TDiag>& d,
-        DistSparseMatrix<T>& A,
-  Int offset )
-{
-    EL_DEBUG_CSE
-    LogicError("This routine is not yet written");
-}
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
@@ -409,20 +384,6 @@ void DiagonalScaleTrapezoid
     Orientation orientation, \
     const AbstractDistMatrix<T>& d, \
           AbstractDistMatrix<T>& A, \
-    Int offset ); \
-  EL_EXTERN template void DiagonalScaleTrapezoid \
-  ( LeftOrRight side, \
-    UpperOrLower uplo, \
-    Orientation orientation, \
-    const Matrix<T>& d, \
-          SparseMatrix<T>& A, \
-    Int offset ); \
-  EL_EXTERN template void DiagonalScaleTrapezoid \
-  ( LeftOrRight side, \
-    UpperOrLower uplo, \
-    Orientation orientation, \
-    const DistMultiVec<T>& d, \
-          DistSparseMatrix<T>& A, \
     Int offset );
 
 #define EL_ENABLE_DOUBLEDOUBLE

@@ -28,36 +28,10 @@ void Zeros( AbstractDistMatrix<T>& A, Int m, Int n )
     Zero( A );
 }
 
-template<typename T>
-void Zeros( SparseMatrix<T>& A, Int m, Int n )
-{
-    EL_DEBUG_CSE
-    A.Resize( m, n );
-    Zero( A );
-}
-
-template<typename T>
-void Zeros( DistSparseMatrix<T>& A, Int m, Int n )
-{
-    EL_DEBUG_CSE
-    A.Resize( m, n );
-    Zero( A );
-}
-
-template<typename T>
-void Zeros( DistMultiVec<T>& A, Int m, Int n )
-{
-    EL_DEBUG_CSE
-    A.Resize( m, n );
-    Zero( A );
-}
 
 #define PROTO(T) \
   template void Zeros( Matrix<T>& A, Int m, Int n ); \
-  template void Zeros( AbstractDistMatrix<T>& A, Int m, Int n ); \
-  template void Zeros( SparseMatrix<T>& A, Int m, Int n ); \
-  template void Zeros( DistSparseMatrix<T>& A, Int m, Int n ); \
-  template void Zeros( DistMultiVec<T>& A, Int m, Int n );
+  template void Zeros( AbstractDistMatrix<T>& A, Int m, Int n );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

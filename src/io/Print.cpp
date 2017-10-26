@@ -60,99 +60,6 @@ void Print
     }
 }
 
-template<typename T>
-void Print( const DistMultiVec<T>& X, string title, ostream& os )
-{
-    EL_DEBUG_CSE
-    Output("Entered DistMultiVec Print with title=",title);
-    if( X.Grid().Rank() == 0 )
-    {
-        Matrix<T> XLoc;
-        CopyFromRoot( X, XLoc );
-        Print( XLoc, title, os );
-    }
-    else
-    {
-        CopyFromNonRoot( X, 0 );
-    }
-}
-
-void Print( const Graph& graph, string msg, ostream& os )
-{
-    EL_DEBUG_CSE
-    graph.AssertConsistent();
-    if( msg != "" )
-        os << msg << endl;
-    const Int numEdges = graph.NumEdges();
-    const Int* srcBuf = graph.LockedSourceBuffer();
-    const Int* tgtBuf = graph.LockedTargetBuffer();
-    for( Int e=0; e<numEdges; ++e )
-        os << srcBuf[e] << " " << tgtBuf[e] << "\n";
-    os << endl;
-}
-
-void Print( const DistGraph& graph, string msg, ostream& os )
-{
-    EL_DEBUG_CSE
-    graph.AssertLocallyConsistent();
-    if( graph.Grid().Rank() == 0 )
-    {
-        Graph seqGraph;
-        CopyFromRoot( graph, seqGraph );
-        Print( seqGraph, msg, os );
-    }
-    else
-    {
-        CopyFromNonRoot( graph, 0 );
-    }
-}
-
-template<typename T>
-void Print( const SparseMatrix<T>& A, string msg, ostream& os )
-{
-    EL_DEBUG_CSE
-    A.AssertConsistent();
-    if( msg != "" )
-        os << msg << endl;
-
-    ConfigurePrecision<T>( os );
-
-    const Int numEntries = A.NumEntries();
-    const Int* srcBuf = A.LockedSourceBuffer();
-    const Int* tgtBuf = A.LockedTargetBuffer();
-    const T* valBuf = A.LockedValueBuffer();
-    for( Int s=0; s<numEntries; ++s )
-        os << srcBuf[s] << " " << tgtBuf[s] << " " << valBuf[s] << "\n";
-    os << endl;
-}
-
-template<typename T>
-void Print( const DistSparseMatrix<T>& A, string msg, ostream& os )
-{
-    EL_DEBUG_CSE
-    A.AssertLocallyConsistent();
-    if( A.Grid().Rank() == 0 )
-    {
-        SparseMatrix<T> ASeq;
-        CopyFromRoot( A, ASeq );
-        Print( ASeq, msg, os );
-    }
-    else
-    {
-        CopyFromNonRoot( A, 0 );
-    }
-}
-
-// Multifrontal
-// ============
-
-void PrintLocal
-( const ldl::DistNodeInfo& info, string msg, ostream& os )
-{
-    EL_DEBUG_CSE
-    LogicError("This routine needs to be rewritten");
-}
-
 // Utilities
 // =========
 
@@ -177,13 +84,7 @@ void Print( const vector<T>& x, string title, ostream& os )
   template void Print \
   ( const Matrix<T>& A, string title, ostream& os ); \
   template void Print \
-  ( const AbstractDistMatrix<T>& A, string title, ostream& os ); \
-  template void Print \
-  ( const DistMultiVec<T>& X, string title, ostream& os ); \
-  template void Print \
-  ( const SparseMatrix<T>& A, string title, ostream& os ); \
-  template void Print \
-  ( const DistSparseMatrix<T>& A, string title, ostream& os );
+  ( const AbstractDistMatrix<T>& A, string title, ostream& os );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

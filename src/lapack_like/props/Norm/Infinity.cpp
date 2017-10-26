@@ -108,60 +108,6 @@ Base<Ring> SymmetricInfinityNorm
 }
 
 template<typename Ring>
-Base<Ring> InfinityNorm( const SparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Ring> Real;
-    const Int height = A.Height();
-    const Ring* valBuf = A.LockedValueBuffer();
-    const Int* offsetBuf = A.LockedOffsetBuffer();
-
-    Real maxRowSum = 0;
-    for( Int i=0; i<height; ++i )
-    {
-        const Int thisOff = offsetBuf[i];
-        const Int nextOff = offsetBuf[i+1];
-        Real rowSum = 0;
-        for( Int k=thisOff; k<nextOff; ++k )
-            rowSum += Abs(valBuf[k]);
-
-        if( limits::IsFinite(rowSum) )
-            maxRowSum = Max( maxRowSum, rowSum );
-        else
-            maxRowSum = rowSum;
-    }
-
-    return maxRowSum;
-}
-
-template<typename Ring>
-Base<Ring> InfinityNorm( const DistSparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    typedef Base<Ring> Real;
-    const Int localHeight = A.LocalHeight();
-    const Ring* valBuf = A.LockedValueBuffer();
-    const Int* offsetBuf = A.LockedOffsetBuffer();
-
-    Real maxLocRowSum = 0;
-    for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-    {
-        const Int thisOff = offsetBuf[iLoc];
-        const Int nextOff = offsetBuf[iLoc+1];
-        Real rowSum = 0;
-        for( Int k=thisOff; k<nextOff; ++k )
-            rowSum += Abs(valBuf[k]);
-
-        if( limits::IsFinite(rowSum) )
-            maxLocRowSum = Max( maxLocRowSum, rowSum );
-        else
-            maxLocRowSum = rowSum;
-    }
-
-    return mpi::AllReduce( maxLocRowSum, mpi::MAX, A.Grid().Comm() );
-}
-
-template<typename Ring>
 Base<Ring> HermitianTridiagInfinityNorm
 ( const Matrix<Base<Ring>>& d, const Matrix<Ring>& e )
 {
@@ -180,8 +126,6 @@ Base<Ring> HermitianTridiagInfinityNorm
   ( UpperOrLower uplo, const Matrix<Ring>& A ); \
   template Base<Ring> SymmetricInfinityNorm \
   ( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A ); \
-  template Base<Ring> InfinityNorm( const SparseMatrix<Ring>& A ); \
-  template Base<Ring> InfinityNorm( const DistSparseMatrix<Ring>& A ); \
   template Base<Ring> HermitianTridiagInfinityNorm \
   ( const Matrix<Base<Ring>>& d, const Matrix<Ring>& e );
 

@@ -25,13 +25,6 @@ T Dot( const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B )
     return HilbertSchmidt( A, B );
 }
 
-template<typename T>
-T Dot( const DistMultiVec<T>& A, const DistMultiVec<T>& B )
-{
-    EL_DEBUG_CSE
-    return HilbertSchmidt( A, B );
-}
-
 // TODO(poulson): Think about using a more stable accumulation algorithm?
 
 template<typename T>
@@ -80,29 +73,6 @@ T Dotu( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B )
     return innerProd;
 }
 
-template<typename T>
-T Dotu( const DistMultiVec<T>& A, const DistMultiVec<T>& B )
-{
-    EL_DEBUG_CSE
-    if( !mpi::Congruent( A.Grid().Comm(), B.Grid().Comm() ) )
-        LogicError("A and B must be congruent");
-    if( A.Height() != B.Height() || A.Width() != B.Width() )
-        LogicError("A and B must have the same dimensions");
-    if( A.LocalHeight() != B.LocalHeight() )
-        LogicError("A and B must have the same local heights");
-    if( A.FirstLocalRow() != B.FirstLocalRow() )
-        LogicError("A and B must own the same rows");
-
-    T localInnerProd = 0;
-    const Int localHeight = A.LocalHeight();
-    const Int width = A.Width();
-    auto& ALoc = A.LockedMatrix();
-    auto& BLoc = B.LockedMatrix();
-    for( Int j=0; j<width; ++j )
-        for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-            localInnerProd += ALoc(iLoc,j)*BLoc(iLoc,j);
-    return mpi::AllReduce( localInnerProd, A.Grid().Comm() );
-}
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
@@ -115,14 +85,10 @@ T Dotu( const DistMultiVec<T>& A, const DistMultiVec<T>& B )
   ( const Matrix<T>& A, const Matrix<T>& B ); \
   EL_EXTERN template T Dot \
   ( const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B ); \
-  EL_EXTERN template T Dot \
-  ( const DistMultiVec<T>& A, const DistMultiVec<T>& B ); \
   EL_EXTERN template T Dotu \
   ( const Matrix<T>& A, const Matrix<T>& B ); \
   EL_EXTERN template T Dotu \
   ( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B ); \
-  EL_EXTERN template T Dotu \
-  ( const DistMultiVec<T>& A, const DistMultiVec<T>& B );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

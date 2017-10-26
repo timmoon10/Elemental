@@ -14,8 +14,6 @@ namespace El {
 // Forward declarations
 template<typename F>
 Base<F> FrobeniusNorm( const AbstractDistMatrix<F>& A );
-template<typename F>
-Base<F> FrobeniusNorm( const DistMultiVec<F>& A );
 
 template<typename F>
 Base<F> Nrm2( const Matrix<F>& x )
@@ -44,17 +42,6 @@ Base<F> Nrm2( const AbstractDistMatrix<F>& x )
     return FrobeniusNorm( x );
 }
 
-template<typename F>
-Base<F> Nrm2( const DistMultiVec<F>& x )
-{
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      if( x.Height() != 1 && x.Width() != 1 )
-          LogicError("x must be a vector");
-    )
-    return FrobeniusNorm( x );
-}
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -63,8 +50,7 @@ Base<F> Nrm2( const DistMultiVec<F>& x )
 
 #define PROTO(F) \
   EL_EXTERN template Base<F> Nrm2( const Matrix<F>& x ); \
-  EL_EXTERN template Base<F> Nrm2( const AbstractDistMatrix<F>& x ); \
-  EL_EXTERN template Base<F> Nrm2( const DistMultiVec<F>& x );
+  EL_EXTERN template Base<F> Nrm2( const AbstractDistMatrix<F>& x );
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

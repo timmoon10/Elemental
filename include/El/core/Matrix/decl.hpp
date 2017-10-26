@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_MATRIX_DECL_HPP
@@ -17,7 +17,7 @@ namespace El {
 template<typename Ring>
 class Matrix
 {
-public:    
+public:
     // Constructors and destructors
     // ============================
 
@@ -203,7 +203,7 @@ private:
     void AssertValidDimensions
     ( Int height, Int width, Int leadingDimension ) const;
     void AssertValidEntry( Int i, Int j ) const;
-   
+
     // Friend declarations
     // ===================
     template<typename S> friend class Matrix;
@@ -214,7 +214,7 @@ private:
     // For supporting duck typing
     // ==========================
     // The following are provided in order to aid duck-typing over
-    // {Matrix, DistMatrix, DistMultiVec, etc.}.
+    // {Matrix, DistMatrix, etc.}.
 
     // This is equivalent to the trivial constructor in functionality
     // (though an error is thrown if 'grid' is not equal to 'Grid::Trivial()').

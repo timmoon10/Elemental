@@ -44,32 +44,6 @@ void Zero( AbstractDistMatrix<T>& A )
     Zero( A.Matrix() );
 }
 
-template<typename T>
-void Zero( SparseMatrix<T>& A, bool clearMemory )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    A.Empty( clearMemory );
-    A.Resize( m, n );
-}
-
-template<typename T>
-void Zero( DistSparseMatrix<T>& A, bool clearMemory )
-{
-    EL_DEBUG_CSE
-    const Int m = A.Height();
-    const Int n = A.Width();
-    A.Empty( clearMemory );
-    A.Resize( m, n );
-}
-
-template<typename T>
-void Zero( DistMultiVec<T>& X )
-{
-    EL_DEBUG_CSE
-    Zero( X.Matrix() );
-}
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
@@ -79,10 +53,7 @@ void Zero( DistMultiVec<T>& X )
 
 #define PROTO(T) \
   EL_EXTERN template void Zero( Matrix<T>& A ); \
-  EL_EXTERN template void Zero( AbstractDistMatrix<T>& A ); \
-  EL_EXTERN template void Zero( SparseMatrix<T>& A, bool clearMemory ); \
-  EL_EXTERN template void Zero( DistSparseMatrix<T>& A, bool clearMemory ); \
-  EL_EXTERN template void Zero( DistMultiVec<T>& A );
+  EL_EXTERN template void Zero( AbstractDistMatrix<T>& A );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

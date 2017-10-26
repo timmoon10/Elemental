@@ -94,60 +94,6 @@ void SymmetricRuizEquil
     SetIndent( indent );
 }
 
-template<typename Field>
-void SymmetricRuizEquil
-( SparseMatrix<Field>& A,
-  Matrix<Base<Field>>& d,
-  Int maxIter, bool progress )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Int n = A.Height();
-    Ones( d, n, 1 );
-
-    Matrix<Real> scales;
-    const Int indent = PushIndent();
-    for( Int iter=0; iter<maxIter; ++iter )
-    {
-        // Rescale the columns (and rows)
-        // ------------------------------
-        ColumnMaxNorms( A, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        EntrywiseMap( scales, MakeFunction(SquareRootScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, d );
-        SymmetricDiagonalSolve( scales, A );
-    }
-    SetIndent( indent );
-}
-
-template<typename Field>
-void SymmetricRuizEquil
-( DistSparseMatrix<Field>& A,
-  DistMultiVec<Base<Field>>& d,
-  Int maxIter, bool progress )
-{
-    EL_DEBUG_CSE
-    typedef Base<Field> Real;
-    const Int n = A.Height();
-    const Grid& grid = A.Grid();
-    d.SetGrid( grid );
-    Ones( d, n, 1 );
-
-    DistMultiVec<Real> scales(grid);
-    const Int indent = PushIndent();
-    for( Int iter=0; iter<maxIter; ++iter )
-    {
-        // Rescale the columns (and rows)
-        // ------------------------------
-        ColumnMaxNorms( A, scales );
-        EntrywiseMap( scales, MakeFunction(DampScaling<Real>) );
-        EntrywiseMap( scales, MakeFunction(SquareRootScaling<Real>) );
-        DiagonalScale( LEFT, NORMAL, scales, d );
-        SymmetricDiagonalSolve( scales, A );
-    }
-    SetIndent( indent );
-}
-
 #define PROTO(Field) \
   template void SymmetricRuizEquil \
   ( Matrix<Field>& A, \
@@ -156,14 +102,6 @@ void SymmetricRuizEquil
   template void SymmetricRuizEquil \
   ( AbstractDistMatrix<Field>& A, \
     AbstractDistMatrix<Base<Field>>& d, \
-    Int maxIter, bool progress ); \
-  template void SymmetricRuizEquil \
-  ( SparseMatrix<Field>& A, \
-    Matrix<Base<Field>>& d, \
-    Int maxIter, bool progress ); \
-  template void SymmetricRuizEquil \
-  ( DistSparseMatrix<Field>& A, \
-    DistMultiVec<Base<Field>>& d, \
     Int maxIter, bool progress );
 
 #define EL_NO_INT_PROTO

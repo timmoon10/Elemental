@@ -7,7 +7,6 @@ set_full_path(THIS_DIR_SOURCES
   HermitianFromEVD.cpp
   MultiShiftQuasiTrsm.cpp
   MultiShiftTrsm.cpp
-  Multiply.cpp
   NormalFromEVD.cpp
   QuasiTrsm.cpp
   SafeMultiShiftTrsm.cpp

@@ -48,31 +48,6 @@ void AxpyTrapezoid
     }
 }
 
-template<typename T,typename S>
-void AxpyTrapezoid
-( UpperOrLower uplo, S alphaS,
-  const SparseMatrix<T>& X,
-        SparseMatrix<T>& Y, Int offset )
-{
-    EL_DEBUG_CSE
-    if( X.Height() != Y.Height() || X.Width() != Y.Width() )
-        LogicError("X and Y must have the same dimensions");
-    const T alpha = T(alphaS);
-    const Int numEntries = X.NumEntries();
-    const T* XValBuf = X.LockedValueBuffer();
-    const Int* XRowBuf = X.LockedSourceBuffer();
-    const Int* XColBuf = X.LockedTargetBuffer();
-
-    Y.Reserve( Y.NumEntries()+numEntries );
-    for( Int k=0; k<numEntries; ++k )
-    {
-        const Int i = XRowBuf[k];
-        const Int j = XColBuf[k];
-        if( (uplo==UPPER && j-i >= offset) || (uplo==LOWER && j-i <= offset) )
-            Y.QueueUpdate( i, j, alpha*XValBuf[k] );
-    }
-    Y.ProcessQueues();
-}
 
 // This version assumes that the alignments are equal
 template<typename T>
@@ -184,34 +159,6 @@ void AxpyTrapezoid
     }
 }
 
-template<typename T,typename S>
-void AxpyTrapezoid
-( UpperOrLower uplo, S alphaS,
-  const DistSparseMatrix<T>& X,
-        DistSparseMatrix<T>& Y, Int offset )
-{
-    EL_DEBUG_CSE
-    if( X.Height() != Y.Height() || X.Width() != Y.Width() )
-        LogicError("X and Y must have the same dimensions");
-    if( X.Grid().Comm() != Y.Grid().Comm() )
-        LogicError("X and Y must have the same communicator");
-    const T alpha = T(alphaS);
-    const Int numLocalEntries = X.NumLocalEntries();
-    const Int firstLocalRow = X.FirstLocalRow();
-    const T* XValBuf = X.LockedValueBuffer();
-    const Int* XRowBuf = X.LockedSourceBuffer();
-    const Int* XColBuf = X.LockedTargetBuffer();
-
-    Y.Reserve( Y.NumLocalEntries()+numLocalEntries );
-    for( Int k=0; k<numLocalEntries; ++k )
-    {
-        const Int i = XRowBuf[k];
-        const Int j = XColBuf[k];
-        if( (uplo==UPPER && j-i >= offset) || (uplo==LOWER && j-i <= offset) )
-            Y.QueueLocalUpdate( i-firstLocalRow, j, alpha*XValBuf[k] );
-    }
-    Y.ProcessLocalQueues();
-}
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
@@ -224,10 +171,6 @@ void AxpyTrapezoid
   ( UpperOrLower uplo, T alpha, \
     const Matrix<T>& X, \
           Matrix<T>& Y, Int offset ); \
-  EL_EXTERN template void AxpyTrapezoid \
-  ( UpperOrLower uplo, T alpha, \
-    const SparseMatrix<T>& X, \
-          SparseMatrix<T>& Y, Int offset ); \
   EL_EXTERN template void LocalAxpyTrapezoid \
   ( UpperOrLower uplo, T alpha, \
     const AbstractDistMatrix<T>& X, \
@@ -239,11 +182,7 @@ void AxpyTrapezoid
   EL_EXTERN template void AxpyTrapezoid \
   ( UpperOrLower uplo, T alpha, \
     const BlockMatrix<T>& X, \
-          BlockMatrix<T>& Y, Int offset ); \
-  EL_EXTERN template void AxpyTrapezoid \
-  ( UpperOrLower uplo, T alpha, \
-    const DistSparseMatrix<T>& X, \
-          DistSparseMatrix<T>& Y, Int offset );
+          BlockMatrix<T>& Y, Int offset );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

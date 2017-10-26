@@ -2,14 +2,15 @@
 #  Copyright (c) 2009-2015, Jack Poulson
 #  All rights reserved.
 #
-#  Copyright (c) 2013, Jed Brown 
+#  Copyright (c) 2013, Jed Brown
 #  All rights reserved.
 #
-#  This file is part of Elemental and is under the BSD 2-Clause License, 
-#  which can be found in the LICENSE file in the root directory, or at 
+#  This file is part of Elemental and is under the BSD 2-Clause License,
+#  which can be found in the LICENSE file in the root directory, or at
 #  http://opensource.org/licenses/BSD-2-Clause
 #
 
+enable_language(C)
 option(HAVE_SPINLOCKS "Enable if pthread lib supports spinlocks" OFF)
 MARK_AS_ADVANCED(HAVE_SPINLOCKS)
 if(NOT HAVE_SPINLOCKS)
@@ -18,15 +19,15 @@ endif()
 
 # Include the header directory
 # ----------------------------
-message(STATUS 
+message(STATUS
   "Prepending ${CMAKE_CURRENT_SOURCE_DIR}/include for PMRRR's headers")
 include_directories(BEFORE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Define the header files installation rules
 # ------------------------------------------
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} 
-  FILES_MATCHING PATTERN "*.h")
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+#	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+#  FILES_MATCHING PATTERN "*.h")
 if(WIN32 OR APPLE OR NOT EL_HYBRID)
   # Disable for Windows because of lack of POSIX support;
   # disable for Mac OS X because of deprecation of unnamed semaphores
@@ -60,7 +61,7 @@ if(NOT DISABLE_PTHREADS)
   set(CMAKE_REQUIRED_INCLUDES)
   set(CMAKE_REQUIRED_LIBRARIES)
 endif()
-    
+
 set(CMAKE_C_FLAGS_${UPPER_BUILD_TYPE} "${C_FLAGS}")
 
 if(NOT DISABLE_PTHREADS AND NOT CMAKE_THREAD_LIBS_INIT)
@@ -76,14 +77,15 @@ set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} ${THIS_DIR_HEADERS} PARENT_
 # ----------------------------------------------
 file(GLOB_RECURSE PMRRR_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.c" "*.h")
 add_library(pmrrr ${LIBRARY_TYPE} ${PMRRR_SRC})
+target_include_directories(pmrrr SYSTEM PUBLIC ${MPI_C_INCLUDE_PATH})
 if(DISABLE_PTHREADS)
   target_link_libraries(pmrrr ${MPI_C_LIBRARIES} ${MATH_LIBS})
 else()
-  target_link_libraries(pmrrr 
+  target_link_libraries(pmrrr
     ${MPI_C_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${MATH_LIBS})
 endif()
   set_target_properties(pmrrr PROPERTIES VERSION ${EL_VERSION_MINOR} SOVERSION ${EL_VERSION_MAJOR})
 if(EL_LINK_FLAGS)
   set_target_properties(pmrrr PROPERTIES LINK_FLAGS ${EL_LINK_FLAGS})
 endif()
-install(TARGETS pmrrr EXPORT ElementalTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+#install(TARGETS pmrrr EXPORT ElementalTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})

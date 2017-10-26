@@ -233,24 +233,6 @@ SymmetricOneNorm( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A )
 }
 
 template<typename Ring>
-Base<Ring> OneNorm( const SparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    SparseMatrix<Ring> ATrans;
-    Transpose( A, ATrans );
-    return InfinityNorm( ATrans );
-}
-
-template<typename Ring>
-Base<Ring> OneNorm( const DistSparseMatrix<Ring>& A )
-{
-    EL_DEBUG_CSE
-    DistSparseMatrix<Ring> ATrans(A.Grid());
-    Transpose( A, ATrans );
-    return InfinityNorm( ATrans );
-}
-
-template<typename Ring>
 Base<Ring> HermitianTridiagOneNorm
 ( const Matrix<Base<Ring>>& d, const Matrix<Ring>& e )
 {
@@ -288,8 +270,6 @@ Base<Ring> HermitianTridiagOneNorm
   ( UpperOrLower uplo, const Matrix<Ring>& A ); \
   template Base<Ring> SymmetricOneNorm \
   ( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A ); \
-  template Base<Ring> OneNorm( const SparseMatrix<Ring>& A ); \
-  template Base<Ring> OneNorm( const DistSparseMatrix<Ring>& A ); \
   template Base<Ring> HermitianTridiagOneNorm \
   ( const Matrix<Base<Ring>>& d, const Matrix<Ring>& e );
 
