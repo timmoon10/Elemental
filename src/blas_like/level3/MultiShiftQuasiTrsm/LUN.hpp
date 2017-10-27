@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 
@@ -24,12 +24,12 @@ void LUNUnb( const Matrix<F>& U, const Matrix<F>& shifts, Matrix<F>& X )
     const Int m = X.Height();
     const Int n = X.Width();
     typedef Base<F> Real;
-    
+
     const F* UBuf = U.LockedBuffer();
           F* XBuf = X.Buffer();
     const Int ldu = U.LDim();
     const Int ldX = X.LDim();
-    
+
     Int k=m-1;
     while( k >= 0 )
     {
@@ -39,7 +39,7 @@ void LUNUnb( const Matrix<F>& U, const Matrix<F>& shifts, Matrix<F>& X )
             --k;
             // Solve the 2x2 linear systems via 2x2 QR decompositions produced
             // by the Givens rotation
-            //    | c        s | | U(k,  k)-shift | = | gamma11 | 
+            //    | c        s | | U(k,  k)-shift | = | gamma11 |
             //    | -conj(s) c | | U(k+1,k)       |   | 0       |
             //
             // and by also forming the right two entries of the 2x2 resulting
@@ -93,8 +93,8 @@ void LUNUnb( const Matrix<F>& U, const Matrix<F>& shifts, Matrix<F>& X )
 
 template<typename Real>
 void LUNUnb
-( const Matrix<Real>& U, 
-  const Matrix<Complex<Real>>& shifts, 
+( const Matrix<Real>& U,
+  const Matrix<Complex<Real>>& shifts,
         Matrix<Real>& XReal, Matrix<Real>& XImag )
 {
     EL_DEBUG_CSE
@@ -110,14 +110,14 @@ void LUNUnb
     const Int m = XReal.Height();
     const Int n = XReal.Width();
     typedef Complex<Real> C;
-    
+
     const Real* UBuf = U.LockedBuffer();
           Real* XRealBuf = XReal.Buffer();
           Real* XImagBuf = XImag.Buffer();
     const Int ldu = U.LDim();
     const Int ldXReal = XReal.LDim();
     const Int ldXImag = XImag.LDim();
-    
+
     Int k=m-1;
     while( k >= 0 )
     {
@@ -127,7 +127,7 @@ void LUNUnb
             --k;
             // Solve the 2x2 linear systems via 2x2 QR decompositions produced
             // by the Givens rotation
-            //    | c        s | | U(k,  k)-shift | = | gamma11 | 
+            //    | c        s | | U(k,  k)-shift | = | gamma11 |
             //    | -conj(s) c | | U(k+1,k)       |   | 0       |
             //
             // and by also forming the right two entries of the 2x2 resulting
@@ -234,7 +234,7 @@ void LUN( const Matrix<F>& U, const Matrix<F>& shifts, Matrix<F>& X )
 
 template<typename Real>
 void LUN
-( const Matrix<Real>& U, const Matrix<Complex<Real>>& shifts, 
+( const Matrix<Real>& U, const Matrix<Complex<Real>>& shifts,
         Matrix<Real>& XReal, Matrix<Real>& XImag )
 {
     EL_DEBUG_CSE
@@ -275,7 +275,7 @@ void LUN
 template<typename F>
 void LUNLarge
 ( const AbstractDistMatrix<F>& UPre,
-  const AbstractDistMatrix<F>& shiftsPre, 
+  const AbstractDistMatrix<F>& shiftsPre,
         AbstractDistMatrix<F>& XPre )
 {
     EL_DEBUG_CSE
@@ -316,7 +316,7 @@ void LUNLarge
         U11_STAR_STAR = U11; // U11[* ,* ] <- U11[MC,MR]
         X1_STAR_VR.AlignWith( shifts );
         X1_STAR_VR    = X1;  // X1[* ,VR] <- X1[MC,MR]
-        
+
         // X1[* ,VR] := U11^-1[* ,* ] X1[* ,VR]
         LocalMultiShiftQuasiTrsm
         ( LEFT, UPPER, NORMAL, F(1), U11_STAR_STAR, shifts, X1_STAR_VR );
@@ -339,14 +339,14 @@ void LUNLarge
 
 template<typename Real>
 void LUNLarge
-( const AbstractDistMatrix<Real>& UPre, 
-  const AbstractDistMatrix<Complex<Real>>& shiftsPre, 
-        AbstractDistMatrix<Real>& XRealPre, 
+( const AbstractDistMatrix<Real>& UPre,
+  const AbstractDistMatrix<Complex<Real>>& shiftsPre,
+        AbstractDistMatrix<Real>& XRealPre,
         AbstractDistMatrix<Real>& XImagPre )
 {
     EL_DEBUG_CSE
     // TODO: More error checks, especially on alignments?
-    typedef Complex<Real> C; 
+    typedef Complex<Real> C;
     const Int m = XRealPre.Height();
     const Int bsize = Blocksize();
     const Grid& g = UPre.Grid();
@@ -391,27 +391,27 @@ void LUNLarge
         X1Imag_STAR_VR.AlignWith( shifts );
         X1Real_STAR_VR = X1Real;
         X1Imag_STAR_VR = X1Imag;
-        
+
         // X1[* ,VR] := U11^-1[* ,* ] X1[* ,VR]
         LocalMultiShiftQuasiTrsm
-        ( LEFT, UPPER, NORMAL, C(1), 
+        ( LEFT, UPPER, NORMAL, C(1),
           U11_STAR_STAR, shifts, X1Real_STAR_VR, X1Imag_STAR_VR );
 
         X1Real_STAR_MR.AlignWith( X0Real );
         X1Imag_STAR_MR.AlignWith( X0Imag );
-        X1Real_STAR_MR = X1Real_STAR_VR; 
+        X1Real_STAR_MR = X1Real_STAR_VR;
         X1Imag_STAR_MR = X1Imag_STAR_VR;
         X1Real = X1Real_STAR_MR;
         X1Imag = X1Imag_STAR_MR;
         U01_MC_STAR.AlignWith( X0Real );
-        U01_MC_STAR = U01; 
+        U01_MC_STAR = U01;
 
         // X0[MC,MR] -= U01[MC,* ] X1[* ,MR]
         LocalGemm
-        ( NORMAL, NORMAL, 
+        ( NORMAL, NORMAL,
           Real(-1), U01_MC_STAR, X1Real_STAR_MR, Real(1), X0Real );
         LocalGemm
-        ( NORMAL, NORMAL, 
+        ( NORMAL, NORMAL,
           Real(-1), U01_MC_STAR, X1Imag_STAR_MR, Real(1), X0Imag );
 
         if( k == 0 )
@@ -424,7 +424,7 @@ void LUNLarge
 template<typename F>
 void LUNMedium
 ( const AbstractDistMatrix<F>& UPre,
-  const AbstractDistMatrix<F>& shiftsPre, 
+  const AbstractDistMatrix<F>& shiftsPre,
         AbstractDistMatrix<F>& XPre )
 {
     EL_DEBUG_CSE
@@ -467,7 +467,7 @@ void LUNMedium
         U11_STAR_STAR = U11; // U11[* ,* ] <- U11[MC,MR]
         X1Trans_MR_STAR.AlignWith( X0 );
         Transpose( X1, X1Trans_MR_STAR );
-        
+
         // X1^T[MR,* ] := X1^T[MR,* ] U11^-T[* ,* ]
         //              = (U11^-1[* ,* ] X1[* ,MR])^T
         shifts_MR_STAR_Align.AlignWith( X1Trans_MR_STAR );
@@ -493,9 +493,9 @@ void LUNMedium
 
 template<typename Real>
 void LUNMedium
-( const AbstractDistMatrix<Real>& UPre, 
-  const AbstractDistMatrix<Complex<Real>>& shiftsPre, 
-        AbstractDistMatrix<Real>& XRealPre, 
+( const AbstractDistMatrix<Real>& UPre,
+  const AbstractDistMatrix<Complex<Real>>& shiftsPre,
+        AbstractDistMatrix<Real>& XRealPre,
         AbstractDistMatrix<Real>& XImagPre )
 {
     EL_DEBUG_CSE
@@ -548,14 +548,14 @@ void LUNMedium
         X1ImagTrans_MR_STAR.AlignWith( X0Imag );
         Transpose( X1Real, X1RealTrans_MR_STAR );
         Transpose( X1Imag, X1ImagTrans_MR_STAR );
-        
+
         // X1^T[MR,* ] := X1^T[MR,* ] U11^-T[* ,* ]
         //              = (U11^-1[* ,* ] X1[* ,MR])^T
         shifts_MR_STAR_Align.AlignWith( X1RealTrans_MR_STAR );
         shifts_MR_STAR_Align = shifts_MR_STAR;
         LocalMultiShiftQuasiTrsm
         ( RIGHT, UPPER, TRANSPOSE,
-          C(1), U11_STAR_STAR, shifts_MR_STAR_Align, 
+          C(1), U11_STAR_STAR, shifts_MR_STAR_Align,
                 X1RealTrans_MR_STAR, X1ImagTrans_MR_STAR );
         Transpose( X1RealTrans_MR_STAR, X1Real );
         Transpose( X1ImagTrans_MR_STAR, X1Imag );
@@ -565,10 +565,10 @@ void LUNMedium
 
         // X0[MC,MR] -= U01[MC,* ] X1[* ,MR]
         LocalGemm
-        ( NORMAL, TRANSPOSE, 
+        ( NORMAL, TRANSPOSE,
           Real(-1), U01_MC_STAR, X1RealTrans_MR_STAR, Real(1), X0Real );
         LocalGemm
-        ( NORMAL, TRANSPOSE, 
+        ( NORMAL, TRANSPOSE,
           Real(-1), U01_MC_STAR, X1ImagTrans_MR_STAR, Real(1), X0Imag );
 
         if( k == 0 )
@@ -580,7 +580,7 @@ void LUNMedium
 
 template<typename F,Dist colDist,Dist shiftColDist,Dist shiftRowDist>
 void LUNSmall
-( const DistMatrix<F,     colDist,STAR        >& U, 
+( const DistMatrix<F,     colDist,STAR        >& U,
   const DistMatrix<F,shiftColDist,shiftRowDist>& shifts,
         DistMatrix<F,     colDist,STAR        >& X )
 {
@@ -622,10 +622,10 @@ void LUNSmall
 
         U11_STAR_STAR = U11; // U11[* ,* ] <- U11[VC,* ]
         X1_STAR_STAR = X1;   // X1[* ,* ] <- X1[VC,* ]
-        
+
         // X1[* ,* ] := U11^-1[* ,* ] X1[* ,* ]
         LocalMultiShiftQuasiTrsm
-        ( LEFT, UPPER, NORMAL, 
+        ( LEFT, UPPER, NORMAL,
           F(1), U11_STAR_STAR, shifts_STAR_STAR, X1_STAR_STAR );
         X1 = X1_STAR_STAR;
 
@@ -641,7 +641,7 @@ void LUNSmall
 
 template<typename Real,Dist colDist,Dist shiftColDist,Dist shiftRowDist>
 void LUNSmall
-( const DistMatrix<Real,              colDist,STAR        >& U, 
+( const DistMatrix<Real,              colDist,STAR        >& U,
   const DistMatrix<Complex<Real>,shiftColDist,shiftRowDist>& shifts,
         DistMatrix<Real,              colDist,STAR        >& XReal,
         DistMatrix<Real,              colDist,STAR        >& XImag )
@@ -649,7 +649,7 @@ void LUNSmall
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
       AssertSameGrids( U, shifts, XReal, XImag );
-      if( XReal.Height() != XImag.Height() || 
+      if( XReal.Height() != XImag.Height() ||
           XReal.Width() != XImag.Width() )
           LogicError("XReal and XImag must be the same size");
       if( U.Height() != U.Width() || U.Width() != XReal.Height() )
@@ -657,13 +657,12 @@ void LUNSmall
           ("Nonconformal: \n",
            "  U ~ ",U.Height()," x ",U.Width(),"\n",
            "  X ~ ",XReal.Height()," x ",XReal.Width(),"\n");
-      if( U.ColAlign() != XReal.ColAlign() || 
+      if( U.ColAlign() != XReal.ColAlign() ||
           U.ColAlign() != XImag.ColAlign() )
           LogicError("U and X are assumed to be aligned");
     )
     typedef Complex<Real> C;
     const Int m = XReal.Height();
-    const Int n = XReal.Width();
     const Int bsize = Blocksize();
     const Grid& g = U.Grid();
 
@@ -692,13 +691,13 @@ void LUNSmall
         auto X1Imag = XImag( ind1, ALL );
 
         U11_STAR_STAR = U11; // U11[* ,* ] <- U11[VC,* ]
-        X1Real_STAR_STAR = X1Real; 
-        X1Imag_STAR_STAR = X1Imag; 
-        
+        X1Real_STAR_STAR = X1Real;
+        X1Imag_STAR_STAR = X1Imag;
+
         // X1[* ,* ] := U11^-1[* ,* ] X1[* ,* ]
         LocalMultiShiftQuasiTrsm
-        ( LEFT, UPPER, NORMAL, 
-          C(1), U11_STAR_STAR, shifts_STAR_STAR, 
+        ( LEFT, UPPER, NORMAL,
+          C(1), U11_STAR_STAR, shifts_STAR_STAR,
                 X1Real_STAR_STAR, X1Imag_STAR_STAR );
         X1Real = X1Real_STAR_STAR;
         X1Imag = X1Imag_STAR_STAR;

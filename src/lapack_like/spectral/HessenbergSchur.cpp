@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El.hpp>
@@ -143,12 +143,12 @@ ScaLAPACKHelper
 
     DistMatrixReadWriteProxy<F,F,MC,MR,BLOCK> HProx( HPre, proxyCtrl );
     auto& H = HProx.Get();
-    const Int n = H.Height();
 
     DistMatrixWriteProxy<Complex<Real>,Complex<Real>,STAR,STAR> wProx( wPre );
     auto& w = wProx.Get();
 
 #ifdef EL_HAVE_SCALAPACK
+    const Int n = H.Height();
     bool useAED = ( ctrl.alg == HESSENBERG_SCHUR_AED );
 
     auto descH = FillDesc( H );

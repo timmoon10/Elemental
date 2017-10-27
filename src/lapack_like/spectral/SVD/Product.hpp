@@ -1334,7 +1334,6 @@ SVDInfo TallRelativeProduct
           LogicError("negative threshold does not make sense");
     )
     typedef Base<Field> Real;
-    const Int m = A.Height();
     const Int n = A.Width();
     const Grid& g = A.Grid();
     SVDInfo info;
@@ -1364,7 +1363,6 @@ SVDInfo TallRelativeProduct
         else
             sLoc(i) = Sqrt(lambda);
     }
-    const int k = s.Height();
 
     return info;
 }

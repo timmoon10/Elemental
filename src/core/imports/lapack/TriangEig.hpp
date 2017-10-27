@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 
@@ -14,8 +14,8 @@ void EL_LAPACK(strevc)
 ( const char* side,
   const char* howMany,
   const FortranLogical* select,
-  const BlasInt* n,  
-        float* T, const BlasInt* ldT, 
+  const BlasInt* n,
+        float* T, const BlasInt* ldT,
         float* VL, const BlasInt* ldVL,
         float* VR, const BlasInt* ldVR,
   const BlasInt* mm,
@@ -26,8 +26,8 @@ void EL_LAPACK(dtrevc)
 ( const char* side,
   const char* howMany,
   const FortranLogical* select,
-  const BlasInt* n,  
-        double* T, const BlasInt* ldT, 
+  const BlasInt* n,
+        double* T, const BlasInt* ldT,
         double* VL, const BlasInt* ldVL,
         double* VR, const BlasInt* ldVR,
   const BlasInt* mm,
@@ -38,8 +38,8 @@ void EL_LAPACK(ctrevc)
 ( const char* side,
   const char* howMany,
   const FortranLogical* select,
-  const BlasInt* n,  
-        scomplex* T, const BlasInt* ldT, 
+  const BlasInt* n,
+        scomplex* T, const BlasInt* ldT,
         scomplex* VL, const BlasInt* ldVL,
         scomplex* VR, const BlasInt* ldVR,
   const BlasInt* mm,
@@ -51,8 +51,8 @@ void EL_LAPACK(ztrevc)
 ( const char* side,
   const char* howMany,
   const FortranLogical* select,
-  const BlasInt* n,  
-        dcomplex* T, const BlasInt* ldT, 
+  const BlasInt* n,
+        dcomplex* T, const BlasInt* ldT,
         dcomplex* VL, const BlasInt* ldVL,
         dcomplex* VR, const BlasInt* ldVR,
   const BlasInt* mm,
@@ -72,13 +72,13 @@ void QuasiTriangEig
   float* VR, BlasInt ldVR,
   bool accumulate )
 {
-    char side='R'; 
+    char side='R';
     char howMany = ( accumulate ? 'B' : 'A' );
     float* VL=0;
-    BlasInt ldVL=1; 
+    BlasInt ldVL=1;
     FortranLogical* select=0;
     BlasInt mm=n, m=n;
-    BlasInt info;
+    BlasInt info = 0;
 
     vector<float> work(3*n);
     EL_LAPACK(strevc)
@@ -94,7 +94,7 @@ void QuasiTriangEig
 }
 
 void QuasiTriangEig
-( BlasInt n, 
+( BlasInt n,
   double* T, BlasInt ldT,
   double* VR, BlasInt ldVR,
   bool accumulate )
@@ -105,7 +105,7 @@ void QuasiTriangEig
     BlasInt ldVL=1;
     FortranLogical* select=0;
     BlasInt mm=n, m=n;
-    BlasInt info;
+    BlasInt info = 0;
 
     vector<double> work(3*n);
     EL_LAPACK(dtrevc)
@@ -132,7 +132,7 @@ void TriangEig
     BlasInt ldVL=1;
     FortranLogical* select=0;
     BlasInt mm=n, m=n;
-    BlasInt info;
+    BlasInt info = 0;
 
     vector<scomplex> work(2*n);
     vector<float> rWork(n);
@@ -160,7 +160,7 @@ void TriangEig
     BlasInt ldVL=1;
     FortranLogical* select=0;
     BlasInt mm=n, m=n;
-    BlasInt info;
+    BlasInt info = 0;
 
     vector<dcomplex> work(2*n);
     vector<double> rWork(n);

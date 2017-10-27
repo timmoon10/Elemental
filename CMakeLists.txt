@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(Hydrogen C CXX)
+
+if (NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11)
+endif ()
+
 set(HYDROGEN_VERSION_MAJOR 0)
 set(HYDROGEN_VERSION_MINOR 1)
 
@@ -16,6 +21,18 @@ endif()
 # Set the module path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
+
+# Add warning flags
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-pedantic" __has_pedantic)
+check_cxx_compiler_flag("-Wpedantic" __has_wpedantic)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter")
+if (__has_pedantic)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+elseif (__has_wpedantic)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+endif()
 
 # Legacy options, with EL_ prefix intact
 option(BINARY_SUBDIRECTORIES "Install binaries into tree based on type" ON)
@@ -99,6 +116,7 @@ mark_as_advanced(EL_VECTOR_WARNINGS)
 # Find third-party libraries
 #
 
+include(FindAndVerifyLAPACK)
 include(FindAndVerifyMPI)
 
 # FIXME: GET RID OF FORTRAN
@@ -139,8 +157,12 @@ target_include_directories(hydrogen PUBLIC
   $<INSTALL_INTERFACE:include/El>)
 target_link_libraries(hydrogen PUBLIC pmrrr)
 target_link_libraries(hydrogen PUBLIC MPI::MPI_CXX)
-target_link_libraries(hydrogen PUBLIC lapack blas)
+target_link_libraries(hydrogen PUBLIC LAPACK::lapack)
 
 if (BUILD_SHARED_LIBS)
-  target_link_libraries(hydrogen PUBLIC "-Wl,-no-undefined")
+  if (APPLE)
+    target_link_libraries(hydrogen PUBLIC "-Wl,-undefined,error")
+  else ()
+    target_link_libraries(hydrogen PUBLIC "-Wl,-no-undefined")
+  endif()
 endif()

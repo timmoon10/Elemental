@@ -17,7 +17,9 @@
 #
 # In addition to the variables set by the standard FindBLAS and
 # FindLAPACK modules, this module also defines the IMPORTED library
-# "LAPACK::lapack"
+# "LAPACK::lapack" and outputs the variable
+#
+#   LAPACK_SUFFIX -- usually "" or "_".
 #
 # This will prioritize BLA_VENDOR, MKL, OpenBLAS, Apple, Generic, and
 # setting multiple options above will cause a short-circuit if any are
@@ -37,7 +39,7 @@ endif (BLA_VENDOR)
 # Check for MKL
 # TODO (trb 10.26.2017): add LP model support if 64bit indices
 if (${PROJECT_NAME}_USE_MKL AND NOT LAPACK_FOUND)
-  set(BLA_VENDOR "Intel")
+  set(BLA_VENDOR "Intel10_64")
   find_package(LAPACK QUIET)
 endif (${PROJECT_NAME}_USE_MKL AND NOT LAPACK_FOUND)
 
@@ -56,7 +58,7 @@ endif (${PROJECT_NAME}_USE_OpenBLAS AND NOT LAPACK_FOUND)
 if (APPLE AND ${PROJECT_NAME}_USE_ACCELERATE AND NOT LAPACK_FOUND)
   set(BLA_VENDOR "Apple")
   find_package(LAPACK QUIET)
-endif (${PROJECT_NAME}_USE_ACCELERATE AND NOT LAPACK_FOUND)
+endif (APPLE AND ${PROJECT_NAME}_USE_ACCELERATE AND NOT LAPACK_FOUND)
 
 # Check for a generic lapack build
 if (${PROJECT_NAME}_USE_GENERIC_LAPACK AND NOT LAPACK_FOUND)
@@ -78,3 +80,47 @@ find_package_handle_standard_args(HydrogenLAPACK
 
 if (LAPACK_FOUND)
   message(STATUS "Found LAPACK: ${LAPACK_LIBRARIES}")
+else ()
+  message(FATAL_ERROR "No LAPACK library found!")
+endif ()
+
+# Define the imported target
+if (NOT TARGET LAPACK::lapack)
+  add_library(LAPACK::lapack INTERFACE IMPORTED)
+
+  # This only uses the LAPACK_* variables. LAPACK_LIBRARIES _should_
+  # include BLAS_LIBRARIES and LAPACK_LINKER_FLAGS _should_ include
+  # BLAS_LINKER_FLAGS. If it is ever discovered that this isn't true,
+  # it can be fixed.
+  if (LAPACK_LINKER_FLAGS)
+    if (UNIX)# Or we could force CMake 3.9 and use NATIVE_COMMAND!
+      separate_arguments(__link_flags UNIX_COMMAND "${LAPACK_LINKER_FLAGS}")
+    else ()
+      separate_arguments(__link_flags WINDOWS_COMMAND "${LAPACK_LINKER_FLAGS}")
+    endif ()
+  endif ()
+  list(APPEND __link_flags "${LAPACK_LIBRARIES}")
+
+  set_property(TARGET LAPACK::lapack PROPERTY
+    INTERFACE_LINK_LIBRARIES "${__link_flags}")
+
+endif (NOT TARGET LAPACK::lapack)
+
+# Detect the suffix
+include(CheckFunctionExists)
+
+set(LAPACK_SUFFIX)
+set(CMAKE_REQUIRED_LIBRARIES "${LAPACK_LINKER_FLAGS}" "${LAPACK_LIBRARIES}")
+check_function_exists(dgemm LAPACK_NO_USE_UNDERSCORE)
+check_function_exists(dgemm_ LAPACK_USE_UNDERSCORE)
+
+# If both dgemm and dgemm_ are found, don't use the suffix
+if (LAPACK_NO_USE_UNDERSCORE)
+  set(LAPACK_SUFFIX)
+  message(STATUS "Using LAPACK with no symbol mangling.")
+elseif (LAPACK_USE_UNDERSCORE)
+  set(LAPACK_SUFFIX "_")
+  message(STATUS "Using LAPACK with trailing underscore.")
+else ()
+  message(FATAL_ERROR "Could not determine LAPACK suffix!")
+endif ()
