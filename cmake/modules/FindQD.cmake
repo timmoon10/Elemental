@@ -38,16 +38,7 @@ int main( int argc, char* argv[] )
   unset(CMAKE_REQUIRED_LIBRARIES)
   unset(CMAKE_REQUIRED_INCLUDES)
 
-  if (QD_WORKS)
-    if (NOT TARGET EP::qd)
-      add_library(EP::qd INTERFACE IMPORTED)
-      
-      set_property(TARGET EP::qd
-        PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${QD_INCLUDE_DIR}")
-      set_property(TARGET EP::qd
-        PROPERTY INTERFACE_LINK_LIBRARIES "${QD_LIBRARY}")
-    endif ()
-  else ()
+  if (NOT QD_WORKS)
     
     message(WARNING "Found QD but could not compile with it")
 
@@ -56,7 +47,18 @@ endif ()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(QD DEFAULT_MSG
-  QD_INCLUDE_DIR QD_LIBRARY QD_WORKS)
+  QD_LIBRARY QD_INCLUDE_DIR QD_WORKS)
 
-set(QD_LIBRARIES EP::qd)
-mark_as_advanced(QD_INCLUDE_DIR QD_LIBRARY)
+if (QD_FOUND)
+  if (NOT TARGET EP::qd)
+    add_library(EP::qd INTERFACE IMPORTED)
+    
+    set_property(TARGET EP::qd
+      PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${QD_INCLUDE_DIR}")
+    set_property(TARGET EP::qd
+      PROPERTY INTERFACE_LINK_LIBRARIES "${QD_LIBRARY}")
+  endif ()
+  
+  set(QD_LIBRARIES EP::qd)
+  mark_as_advanced(QD_INCLUDE_DIR QD_LIBRARY)
+endif (QD_FOUND)

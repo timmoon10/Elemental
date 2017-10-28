@@ -114,16 +114,20 @@ option(EL_VECTOR_WARNINGS
 mark_as_advanced(EL_VECTOR_WARNINGS)
 
 #
-# Find third-party libraries
+# Check the compiler features
 #
-
-include(FindAndVerifyExtendedPrecision)
-include(FindAndVerifyLAPACK)
-include(FindAndVerifyMPI)
 
 # FIXME: GET RID OF FORTRAN
 include(detect/CXX)
 include(detect/Fortran)
+
+#
+# Find third-party libraries
+#
+
+include(FindAndVerifyMPI)
+include(FindAndVerifyLAPACK)
+include(FindAndVerifyExtendedPrecision)
 
 # External projects build internally
 # TODO Investigate why
@@ -152,20 +156,20 @@ add_subdirectory(src)
 configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/config.h.in"
   "${PROJECT_BINARY_DIR}/include/El/config.h")
 
-add_library(hydrogen "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
-target_include_directories(hydrogen PUBLIC
+add_library(El "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
+target_include_directories(El PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include/El>)
-target_link_libraries(hydrogen PUBLIC pmrrr)
-target_link_libraries(hydrogen PUBLIC MPI::MPI_CXX)
-target_link_libraries(hydrogen PUBLIC LAPACK::lapack)
+target_link_libraries(El PUBLIC pmrrr)
+target_link_libraries(El PUBLIC MPI::MPI_CXX)
+target_link_libraries(El PUBLIC LAPACK::lapack)
 
 if (BUILD_SHARED_LIBS)
   if (APPLE)
-    target_link_libraries(hydrogen PUBLIC "-Wl,-undefined,error")
+    target_link_libraries(El PUBLIC "-Wl,-undefined,error")
   else ()
-    target_link_libraries(hydrogen PUBLIC "-Wl,-no-undefined")
+    target_link_libraries(El PUBLIC "-Wl,-no-undefined")
   endif()
 endif()
