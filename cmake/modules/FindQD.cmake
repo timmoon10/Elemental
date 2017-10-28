@@ -45,7 +45,7 @@ int main( int argc, char* argv[] )
       set_property(TARGET EP::qd
         PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${QD_INCLUDE_DIR}")
       set_property(TARGET EP::qd
-        PROPERTY INTERFACE_LINK_LIBRARIES "${QUADLIB_LIBRARY}")
+        PROPERTY INTERFACE_LINK_LIBRARIES "${QD_LIBRARY}")
     endif ()
   else ()
     
