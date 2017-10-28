@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_CONFIG_H
@@ -49,14 +49,9 @@
 #cmakedefine EL_BUILT_BLIS_LAPACK
 #cmakedefine EL_HAVE_OPENBLAS
 #cmakedefine EL_BUILT_OPENBLAS
-#cmakedefine EL_HAVE_BLAS_SUFFIX
-#cmakedefine EL_HAVE_LAPACK_SUFFIX
-#ifdef EL_HAVE_BLAS_SUFFIX
-# define EL_BLAS_SUFFIX @EL_BLAS_SUFFIX@
-#endif
-#ifdef EL_HAVE_LAPACK_SUFFIX
-# define EL_LAPACK_SUFFIX @EL_LAPACK_SUFFIX@
-#endif
+
+#cmakedefine HYDROGEN_BLAS_SUFFIX @HYDROGEN_BLAS_SUFFIX@
+#cmakedefine HYDROGEN_LAPACK_SUFFIX @HYDROGEN_LAPACK_SUFFIX@
 
 #cmakedefine EL_HAVE_SCALAPACK
 #cmakedefine EL_BUILT_SCALAPACK
@@ -143,20 +138,5 @@
 #endif
 
 #cmakedefine EL_HAVE_VALGRIND
-
-/* METIS/ParMETIS */
-#ifdef BUILD_SHARED_LIBS
-# if defined _WIN32 || defined __CYGWIN__
-#  ifdef __GNUC__ /* Compiling with GNU on Windows */
-#   define METIS_EXPORT __attribute__ ((dllimport))
-#  else  /* Compiling with non-GNU on Windows (check for MSVC?) */
-#   define METIS_EXPORT __declspec(dllimport)
-#  endif
-# else
-#  define METIS_EXPORT
-# endif
-#else
-# define METIS_EXPORT
-#endif
 
 #endif /* EL_CONFIG_H */

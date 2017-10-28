@@ -17,9 +17,10 @@
 #
 # In addition to the variables set by the standard FindBLAS and
 # FindLAPACK modules, this module also defines the IMPORTED library
-# "LAPACK::lapack" and outputs the variable
+# "LAPACK::lapack" and might output the variable
 #
-#   LAPACK_SUFFIX -- usually "" or "_".
+#   HYDROGEN_BLAS_SUFFIX -- Only defined if BLAS requires a suffix, usually "_".
+#   HYDROGEN_LAPACK_SUFFIX -- Only defined if LAPACK requires a suffix, usually "_".
 #
 # This will prioritize BLA_VENDOR, MKL, OpenBLAS, Apple, Generic, and
 # setting multiple options above will cause a short-circuit if any are
@@ -109,18 +110,33 @@ endif (NOT TARGET LAPACK::lapack)
 # Detect the suffix
 include(CheckFunctionExists)
 
-set(LAPACK_SUFFIX)
+
+set(CMAKE_REQUIRED_LIBRARIES "${BLAS_LINKER_FLAGS}" "${BLAS_LIBRARIES}")
+check_function_exists(dgemm BLAS_NO_USE_UNDERSCORE)
+check_function_exists(dgemm_ BLAS_USE_UNDERSCORE)
+
 set(CMAKE_REQUIRED_LIBRARIES "${LAPACK_LINKER_FLAGS}" "${LAPACK_LIBRARIES}")
-check_function_exists(dgemm LAPACK_NO_USE_UNDERSCORE)
-check_function_exists(dgemm_ LAPACK_USE_UNDERSCORE)
+check_function_exists(dgetrs LAPACK_NO_USE_UNDERSCORE)
+check_function_exists(dgetrs_ LAPACK_USE_UNDERSCORE)
 
 # If both dgemm and dgemm_ are found, don't use the suffix
+if (BLAS_NO_USE_UNDERSCORE)
+  unset(${UPPER_PROJECT_NAME}_BLAS_SUFFIX)
+  message(STATUS "Using BLAS with no symbol mangling.")
+elseif (BLAS_USE_UNDERSCORE)
+  set(${UPPER_PROJECT_NAME}_BLAS_SUFFIX "_")
+  message(STATUS "Using BLAS with trailing underscore.")
+else ()
+  message(FATAL_ERROR "Could not determine BLAS suffix!")
+endif ()
+
 if (LAPACK_NO_USE_UNDERSCORE)
-  set(LAPACK_SUFFIX)
+  unset(${UPPER_PROJECT_NAME}_LAPACK_SUFFIX)
   message(STATUS "Using LAPACK with no symbol mangling.")
 elseif (LAPACK_USE_UNDERSCORE)
-  set(LAPACK_SUFFIX "_")
+  set(${UPPER_PROJECT_NAME}_LAPACK_SUFFIX "_")
   message(STATUS "Using LAPACK with trailing underscore.")
 else ()
   message(FATAL_ERROR "Could not determine LAPACK suffix!")
 endif ()
+

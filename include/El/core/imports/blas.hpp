@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_IMPORTS_BLAS_HPP
@@ -11,35 +11,17 @@
 
 namespace El {
 
-// NOTE: The EL_LAPACK macro is defined here since many of the BLAS overloads
-//       (e.g., zsyr) are technically LAPACK routines
-#if defined(EL_BUILT_BLIS_LAPACK) || defined(EL_BUILT_OPENBLAS)
 
-# ifdef EL_HAVE_BLAS_SUFFIX
-#  define EL_BLAS(name) EL_CONCAT(name,EL_BLAS_SUFFIX)
-# else
-#  define EL_BLAS(name) FC_GLOBAL(name,name)
-# endif
-# ifdef EL_HAVE_LAPACK_SUFFIX
-#  define EL_LAPACK(name) EL_CONCAT(name,EL_LAPACK_SUFFIX)
-# else
-#  define EL_LAPACK(name) FC_GLOBAL(name,name)
-# endif
-
+#if defined(HYDROGEN_BLAS_SUFFIX)
+#define EL_BLAS(name) EL_CONCAT(name,HYDROGEN_BLAS_SUFFIX)
 #else
+#define EL_BLAS(name) name
+#endif
 
-# if defined(EL_HAVE_BLAS_SUFFIX)
-#  define EL_BLAS(name) EL_CONCAT(name,EL_BLAS_SUFFIX)
-# else
-#  define EL_BLAS(name) name
-# endif
-
-# if defined(EL_HAVE_LAPACK_SUFFIX)
-#  define EL_LAPACK(name) EL_CONCAT(name,EL_LAPACK_SUFFIX)
-# else
-#  define EL_LAPACK(name) name
-# endif
-
+#if defined(HYDROGEN_LAPACK_SUFFIX)
+#define EL_LAPACK(name) EL_CONCAT(name,HYDROGEN_LAPACK_SUFFIX)
+#else
+#define EL_LAPACK(name) name
 #endif
 
 #ifdef EL_USE_64BIT_BLAS_INTS
@@ -52,7 +34,7 @@ namespace blas {
 
 // NOTE: templated routines are custom and not wrappers
 
-// Level 1 BLAS 
+// Level 1 BLAS
 // ============
 template<typename T>
 void Axpy
@@ -63,22 +45,22 @@ void Axpy
 
 void Axpy
 ( BlasInt n,
-  const float& alpha, 
+  const float& alpha,
   const float* x, BlasInt incx,
         float* y, BlasInt incy );
 void Axpy
 ( BlasInt n,
-  const double& alpha, 
+  const double& alpha,
   const double* x, BlasInt incx,
         double* y, BlasInt incy );
 void Axpy
 ( BlasInt n,
-  const scomplex& alpha, 
+  const scomplex& alpha,
   const scomplex* x, BlasInt incx,
         scomplex* y, BlasInt incy );
 void Axpy
 ( BlasInt n,
-  const dcomplex& alpha, 
+  const dcomplex& alpha,
   const dcomplex* x, BlasInt incx,
         dcomplex* y, BlasInt incy );
 
@@ -165,37 +147,37 @@ void Rot
 
 void Rot
 ( BlasInt n,
-  float* x, BlasInt incx, 
+  float* x, BlasInt incx,
   float* y, BlasInt incy,
   const float& c,
   const float& s );
 void Rot
 ( BlasInt n,
-  double* x, BlasInt incx, 
+  double* x, BlasInt incx,
   double* y, BlasInt incy,
   const double& c,
   const double& s );
 void Rot
 ( BlasInt n,
-  scomplex* x, BlasInt incx, 
+  scomplex* x, BlasInt incx,
   scomplex* y, BlasInt incy,
   const float& c,
   const scomplex& s );
 void Rot
 ( BlasInt n,
-  dcomplex* x, BlasInt incx, 
+  dcomplex* x, BlasInt incx,
   dcomplex* y, BlasInt incy,
   const double& c,
   const dcomplex& s );
 
-template<typename T> 
+template<typename T>
 void Scal( BlasInt n, const T& alpha, T*  x, BlasInt incx );
 void Scal( BlasInt n, const float&    alpha, float   * x, BlasInt incx );
 void Scal( BlasInt n, const double&   alpha, double  * x, BlasInt incx );
 void Scal( BlasInt n, const scomplex& alpha, scomplex* x, BlasInt incx );
 void Scal( BlasInt n, const dcomplex& alpha, dcomplex* x, BlasInt incx );
 
-template<typename T> 
+template<typename T>
 void Scal( BlasInt n, const T& alpha, Complex<T>* x, BlasInt incx );
 
 // NOTE: Nrm1 is not the official name but is consistent with Nrm2
@@ -211,16 +193,16 @@ void Swap( BlasInt n, float   * x, BlasInt incx, float   * y, BlasInt incy );
 void Swap( BlasInt n, double  * x, BlasInt incx, double  * y, BlasInt incy );
 void Swap( BlasInt n, scomplex* x, BlasInt incx, scomplex* y, BlasInt incy );
 void Swap( BlasInt n, dcomplex* x, BlasInt incx, dcomplex* y, BlasInt incy );
-template<typename T> 
+template<typename T>
 void Swap( BlasInt n, T* x, BlasInt incx, T* y, BlasInt incy );
-            
+
 // Level 2 BLAS
 // ============
 template<typename T>
 void Gemv
 ( char trans, BlasInt m, BlasInt n,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T* x, BlasInt incx,
   const T& beta,
         T* y, BlasInt incy );
@@ -228,28 +210,28 @@ void Gemv
 void Gemv
 ( char trans, BlasInt m, BlasInt n,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* x, BlasInt incx,
   const float& beta,
         float* y, BlasInt incy );
 void Gemv
 ( char trans, BlasInt m, BlasInt n,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* x, BlasInt incx,
   const double& beta,
         double* y, BlasInt incy );
 void Gemv
 ( char trans, BlasInt m, BlasInt n,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* x, BlasInt incx,
   const scomplex& beta,
         scomplex* y, BlasInt incy );
 void Gemv
 ( char trans, BlasInt m, BlasInt n,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* x, BlasInt incx,
   const dcomplex& beta,
         dcomplex* y, BlasInt incy );
@@ -258,32 +240,32 @@ template<typename T>
 void Ger
 ( BlasInt m, BlasInt n,
   const T& alpha,
-  const T* x, BlasInt incx, 
+  const T* x, BlasInt incx,
   const T* y, BlasInt incy,
         T* A, BlasInt ALDim );
 
 void Ger
 ( BlasInt m, BlasInt n,
   const float& alpha,
-  const float* x, BlasInt incx, 
+  const float* x, BlasInt incx,
   const float* y, BlasInt incy,
         float* A, BlasInt ALDim );
 void Ger
 ( BlasInt m, BlasInt n,
   const double& alpha,
-  const double* x, BlasInt incx, 
+  const double* x, BlasInt incx,
   const double* y, BlasInt incy,
         double* A, BlasInt ALDim );
 void Ger
 ( BlasInt m, BlasInt n,
   const scomplex& alpha,
-  const scomplex* x, BlasInt incx, 
+  const scomplex* x, BlasInt incx,
   const scomplex* y, BlasInt incy,
         scomplex* A, BlasInt ALDim );
 void Ger
 ( BlasInt m, BlasInt n,
   const dcomplex& alpha,
-  const dcomplex* x, BlasInt incx, 
+  const dcomplex* x, BlasInt incx,
   const dcomplex* y, BlasInt incy,
         dcomplex* A, BlasInt ALDim );
 
@@ -291,32 +273,32 @@ template<typename T>
 void Geru
 ( BlasInt m, BlasInt n,
   const T& alpha,
-  const T* x, BlasInt incx, 
+  const T* x, BlasInt incx,
   const T* y, BlasInt incy,
         T* A, BlasInt ALDim );
 
 void Geru
 ( BlasInt m, BlasInt n,
   const float& alpha,
-  const float* x, BlasInt incx, 
+  const float* x, BlasInt incx,
   const float* y, BlasInt incy,
         float* A, BlasInt ALDim );
 void Geru
 ( BlasInt m, BlasInt n,
   const double& alpha,
-  const double* x, BlasInt incx, 
+  const double* x, BlasInt incx,
   const double* y, BlasInt incy,
         double* A, BlasInt ALDim );
 void Geru
 ( BlasInt m, BlasInt n,
   const scomplex& alpha,
-  const scomplex* x, BlasInt incx, 
+  const scomplex* x, BlasInt incx,
   const scomplex* y, BlasInt incy,
         scomplex* A, BlasInt ALDim );
 void Geru
 ( BlasInt m, BlasInt n,
   const dcomplex& alpha,
-  const dcomplex* x, BlasInt incx, 
+  const dcomplex* x, BlasInt incx,
   const dcomplex* y, BlasInt incy,
         dcomplex* A, BlasInt ALDim );
 
@@ -324,7 +306,7 @@ template<typename T>
 void Hemv
 ( char uplo, BlasInt m,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T* x, BlasInt incx,
   const T& beta,
         T* y, BlasInt incy );
@@ -332,28 +314,28 @@ void Hemv
 void Hemv
 ( char uplo, BlasInt m,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* x, BlasInt incx,
   const float& beta,
         float* y, BlasInt incy );
 void Hemv
 ( char uplo, BlasInt m,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* x, BlasInt incx,
   const double& beta,
         double* y, BlasInt incy );
 void Hemv
 ( char uplo, BlasInt m,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* x, BlasInt incx,
   const scomplex& beta,
         scomplex* y, BlasInt incy );
 void Hemv
 ( char uplo, BlasInt m,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* x, BlasInt incx,
   const dcomplex& beta,
         dcomplex* y, BlasInt incy );
@@ -390,32 +372,32 @@ template<typename T>
 void Her2
 ( char uplo, BlasInt m,
   const T& alpha,
-  const T* x, BlasInt incx, 
+  const T* x, BlasInt incx,
   const T* y, BlasInt incy,
         T* A, BlasInt ALDim );
 
 void Her2
 ( char uplo, BlasInt m,
   const float& alpha,
-  const float* x, BlasInt incx, 
+  const float* x, BlasInt incx,
   const float* y, BlasInt incy,
         float* A, BlasInt ALDim );
 void Her2
 ( char uplo, BlasInt m,
   const double& alpha,
-  const double* x, BlasInt incx, 
+  const double* x, BlasInt incx,
   const double* y, BlasInt incy,
         double* A, BlasInt ALDim );
 void Her2
 ( char uplo, BlasInt m,
   const scomplex& alpha,
-  const scomplex* x, BlasInt incx, 
+  const scomplex* x, BlasInt incx,
   const scomplex* y, BlasInt incy,
         scomplex* A, BlasInt ALDim );
 void Her2
 ( char uplo, BlasInt m,
   const dcomplex& alpha,
-  const dcomplex* x, BlasInt incx, 
+  const dcomplex* x, BlasInt incx,
   const dcomplex* y, BlasInt incy,
         dcomplex* A, BlasInt ALDim );
 
@@ -423,7 +405,7 @@ template<typename T>
 void Symv
 ( char uplo, BlasInt m,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T* x, BlasInt incx,
   const T& beta,
         T* y, BlasInt incy );
@@ -431,28 +413,28 @@ void Symv
 void Symv
 ( char uplo, BlasInt m,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* x, BlasInt incx,
   const float& beta,
         float* y, BlasInt incy );
 void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* x, BlasInt incx,
   const double& beta,
         double* y, BlasInt incy );
 void Symv
 ( char uplo, BlasInt m,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* x, BlasInt incx,
   const scomplex& beta,
         scomplex* y, BlasInt incy );
 void Symv
 ( char uplo, BlasInt m,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* x, BlasInt incx,
   const dcomplex& beta,
         dcomplex* y, BlasInt incy );
@@ -478,7 +460,7 @@ void Syr
 ( char uplo, BlasInt m,
   const scomplex& alpha,
   const scomplex* x, BlasInt incx,
-        scomplex* A, BlasInt ALDim ); 
+        scomplex* A, BlasInt ALDim );
 void Syr
 ( char uplo, BlasInt m,
   const dcomplex& alpha,
@@ -489,32 +471,32 @@ template<typename T>
 void Syr2
 ( char uplo, BlasInt m,
   const T& alpha,
-  const T* x, BlasInt incx, 
+  const T* x, BlasInt incx,
   const T* y, BlasInt incy,
         T* A, BlasInt ALDim );
 
 void Syr2
 ( char uplo, BlasInt m,
   const float& alpha,
-  const float* x, BlasInt incx, 
+  const float* x, BlasInt incx,
   const float* y, BlasInt incy,
         float* A, BlasInt ALDim );
 void Syr2
 ( char uplo, BlasInt m,
   const double& alpha,
-  const double* x, BlasInt incx, 
+  const double* x, BlasInt incx,
   const double* y, BlasInt incy,
         double* A, BlasInt ALDim );
 void Syr2
 ( char uplo, BlasInt m,
   const scomplex& alpha,
-  const scomplex* x, BlasInt incx, 
+  const scomplex* x, BlasInt incx,
   const scomplex* y, BlasInt incy,
         scomplex* A, BlasInt ALDim );
 void Syr2
 ( char uplo, BlasInt m,
   const dcomplex& alpha,
-  const dcomplex* x, BlasInt incx, 
+  const dcomplex* x, BlasInt incx,
   const dcomplex* y, BlasInt incy,
         dcomplex* A, BlasInt ALDim );
 
@@ -570,7 +552,7 @@ template<typename T>
 void Gemm
 ( char transA, char transB, BlasInt m, BlasInt n, BlasInt k,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T* B, BlasInt BLDim,
   const T& beta,
         T* C, BlasInt CLDim );
@@ -578,28 +560,28 @@ void Gemm
 void Gemm
 ( char transA, char transB, BlasInt m, BlasInt n, BlasInt k,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* B, BlasInt BLDim,
   const float& beta,
         float* C, BlasInt CLDim );
 void Gemm
 ( char transA, char transB, BlasInt m, BlasInt n, BlasInt k,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* B, BlasInt BLDim,
   const double& beta,
         double* C, BlasInt CLDim );
 void Gemm
 ( char transA, char transB, BlasInt m, BlasInt n, BlasInt k,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* B, BlasInt BLDim,
   const scomplex& beta,
         scomplex* C, BlasInt CLDim );
 void Gemm
 ( char transA, char transB, BlasInt m, BlasInt n, BlasInt k,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* B, BlasInt BLDim,
   const dcomplex& beta,
         dcomplex* C, BlasInt CLDim );
@@ -608,7 +590,7 @@ template<typename T>
 void Hemm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T* B, BlasInt BLDim,
   const T& beta,
         T* C, BlasInt CLDim );
@@ -616,28 +598,28 @@ void Hemm
 void Hemm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* B, BlasInt BLDim,
   const float& beta,
         float* C, BlasInt CLDim );
 void Hemm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* B, BlasInt BLDim,
   const double& beta,
         double* C, BlasInt CLDim );
 void Hemm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* B, BlasInt BLDim,
   const scomplex& beta,
         scomplex* C, BlasInt CLDim );
 void Hemm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* B, BlasInt BLDim,
   const dcomplex& beta,
         dcomplex* C, BlasInt CLDim );
@@ -656,7 +638,7 @@ void Her2k
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* B, BlasInt BLDim,
   const float& beta,
         float* C, BlasInt CLDim );
@@ -664,7 +646,7 @@ void Her2k
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* B, BlasInt BLDim,
   const double& beta,
         double* C, BlasInt CLDim );
@@ -672,7 +654,7 @@ void Her2k
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* B, BlasInt BLDim,
   const float& beta,
         scomplex* C, BlasInt CLDim );
@@ -680,7 +662,7 @@ void Her2k
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* B, BlasInt BLDim,
   const double& beta,
         dcomplex* C, BlasInt CLDim );
@@ -688,9 +670,9 @@ void Her2k
 template<typename T>
 void Herk
 ( char uplo, char trans,
-  BlasInt n, BlasInt k, 
+  BlasInt n, BlasInt k,
   const Base<T>& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const Base<T>& beta,
         T* C, BlasInt CLDim );
 
@@ -698,14 +680,14 @@ void Herk
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float& beta,
         float* C, BlasInt CLDim );
 void Herk
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double& beta,
         double* C, BlasInt CLDim );
 void Herk
@@ -728,7 +710,7 @@ void Symm
 ( char side, char uplo,
   BlasInt m, BlasInt n,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T* B, BlasInt BLDim,
   const T& beta,
         T* C, BlasInt CLDim );
@@ -737,7 +719,7 @@ void Symm
 ( char side, char uplo,
   BlasInt m, BlasInt n,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* B, BlasInt BLDim,
   const float& beta,
         float* C, BlasInt CLDim );
@@ -745,7 +727,7 @@ void Symm
 ( char side, char uplo,
   BlasInt m, BlasInt n,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* B, BlasInt BLDim,
   const double& beta,
         double* C, BlasInt CLDim );
@@ -753,7 +735,7 @@ void Symm
 ( char side, char uplo,
   BlasInt m, BlasInt n,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* B, BlasInt BLDim,
   const scomplex& beta,
         scomplex* C, BlasInt CLDim );
@@ -761,7 +743,7 @@ void Symm
 ( char side, char uplo,
   BlasInt m, BlasInt n,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* B, BlasInt BLDim,
   const dcomplex& beta,
         dcomplex* C, BlasInt CLDim );
@@ -780,7 +762,7 @@ void Syr2k
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* B, BlasInt BLDim,
   const float& beta,
         float* C, BlasInt CLDim );
@@ -788,7 +770,7 @@ void Syr2k
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* B, BlasInt BLDim,
   const double& beta,
         double* C, BlasInt CLDim );
@@ -796,7 +778,7 @@ void Syr2k
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* B, BlasInt BLDim,
   const scomplex& beta,
         scomplex* C, BlasInt CLDim );
@@ -804,7 +786,7 @@ void Syr2k
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* B, BlasInt BLDim,
   const dcomplex& beta,
         dcomplex* C, BlasInt CLDim );
@@ -812,9 +794,9 @@ void Syr2k
 template<typename T>
 void Syrk
 ( char uplo, char trans,
-  BlasInt n, BlasInt k, 
+  BlasInt n, BlasInt k,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T& beta,
         T* C, BlasInt CLDim );
 

@@ -8,6 +8,7 @@ endif ()
 
 set(HYDROGEN_VERSION_MAJOR 0)
 set(HYDROGEN_VERSION_MINOR 1)
+string(TOUPPER "${PROJECT_NAME}" UPPER_PROJECT_NAME)
 
 # Prevent in-source builds
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
@@ -24,14 +25,14 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 # Add warning flags
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-pedantic" __has_pedantic)
-check_cxx_compiler_flag("-Wpedantic" __has_wpedantic)
+check_cxx_compiler_flag("-pedantic" CXX_COMPILER_HAS_PEDANTIC_FLAG)
+check_cxx_compiler_flag("-Wpedantic" CXX_COMPILER_HAS_WPEDANTIC_FLAG)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter")
-if (__has_pedantic)
+if (CXX_COMPILER_HAS_PEDANTIC_FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
-elseif (__has_wpedantic)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+elseif (CXX_COMPILER_HAS_WPEDANTIC_FLAG)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wpedantic")
 endif()
 
 # Legacy options, with EL_ prefix intact
@@ -116,10 +117,12 @@ mark_as_advanced(EL_VECTOR_WARNINGS)
 # Find third-party libraries
 #
 
+include(FindAndVerifyExtendedPrecision)
 include(FindAndVerifyLAPACK)
 include(FindAndVerifyMPI)
 
 # FIXME: GET RID OF FORTRAN
+include(detect/CXX)
 include(detect/Fortran)
 
 # External projects build internally
