@@ -18,7 +18,7 @@ find_path(GMP_INCLUDE_DIR gmp.h
   PATH_SUFFIXES include
   NO_DEFAULT_PATH
   DOC "Directory with gmp.h header.")
-find_path(GMP_INCLUDE_DIRS gmp.h)
+find_path(GMP_INCLUDE_DIR gmp.h)
 
 find_library(GMP_LIBRARY gmp
   HINTS ${GMP_DIR} $ENV{GMP_DIR}

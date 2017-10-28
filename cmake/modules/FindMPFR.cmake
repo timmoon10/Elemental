@@ -26,7 +26,7 @@ if (GMP_FOUND)
     PATH_SUFFIXES include
     NO_DEFAULT_PATH
     DOC "Directory with mpfr.h header.")
-  find_path(MPFR_INCLUDE_DIRS mpfr.h)
+  find_path(MPFR_INCLUDE_DIR mpfr.h)
 
   find_library(MPFR_LIBRARY mpfr
     HINTS ${MPFR_DIR} $ENV{MPFR_DIR} ${GMP_DIR} $ENV{GMP_DIR}

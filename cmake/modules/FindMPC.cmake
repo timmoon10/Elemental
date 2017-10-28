@@ -27,7 +27,7 @@ if (MPFR_FOUND)
     PATH_SUFFIXES include
     NO_DEFAULT_PATH
     DOC "Directory with mpc.h header.")
-  find_path(MPC_INCLUDE_DIRS mpc.h)
+  find_path(MPC_INCLUDE_DIR mpc.h)
 
   find_library(MPC_LIBRARY mpc
     HINTS ${MPC_DIR} $ENV{MPC_DIR} ${MPFR_DIR} $ENV{MPFR_DIR}
