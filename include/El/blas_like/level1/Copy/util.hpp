@@ -25,7 +25,7 @@ void InterleaveMatrix
     }
     else
     {
-#ifdef EL_HAVE_MKL
+#ifdef HYDROGEN_HAVE_MKL
         mkl::omatcopy
         ( NORMAL, height, width, T(1),
           A, rowStrideA, colStrideA,

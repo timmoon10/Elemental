@@ -76,7 +76,7 @@ void Transpose( const Matrix<T>& A, Matrix<T>& B, bool conjugate )
     const Int m = A.Height();
     const Int n = A.Width();
     B.Resize( n, m );
-#ifdef EL_HAVE_MKL
+#ifdef HYDROGEN_HAVE_MKL
     Orientation orient = ( conjugate ? ADJOINT : TRANSPOSE );
     mkl::omatcopy
     ( orient, m, n, T(1), A.LockedBuffer(), A.LDim(), B.Buffer(), B.LDim() );

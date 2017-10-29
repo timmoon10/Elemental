@@ -110,7 +110,6 @@ endif (NOT TARGET LAPACK::lapack)
 # Detect the suffix
 include(CheckFunctionExists)
 
-
 set(CMAKE_REQUIRED_LIBRARIES "${BLAS_LINKER_FLAGS}" "${BLAS_LIBRARIES}")
 check_function_exists(dgemm BLAS_NO_USE_UNDERSCORE)
 check_function_exists(dgemm_ BLAS_USE_UNDERSCORE)
@@ -140,3 +139,9 @@ else ()
   message(FATAL_ERROR "Could not determine LAPACK suffix!")
 endif ()
 
+# Check a few MKL features
+check_function_exists(mkl_dcsrmv ${UPPER_PROJECT_NAME}_HAVE_MKL)
+if (${UPPER_PROJECT_NAME}_HAVE_MKL)
+  check_function_exists(dgemmt  ${UPPER_PROJECT_NAME}_HAVE_MKL_GEMMT)
+  check_function_exists(dgemmt_ ${UPPER_PROJECT_NAME}_HAVE_MKL_GEMMT)
+endif ()

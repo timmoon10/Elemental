@@ -7,7 +7,7 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
-#ifdef EL_HAVE_MKL
+#ifdef HYDROGEN_HAVE_MKL
 
 using El::BlasInt;
 using El::scomplex;
@@ -105,7 +105,7 @@ void MKL_Zimatcopy
 ( char ordering, char trans, size_t rows, size_t cols, 
   MKL_Complex16 alpha, MKL_Complex16* A, size_t ALDim, size_t BLDim );
 
-#ifdef EL_HAVE_MKL_GEMMT
+#ifdef HYDROGEN_HAVE_MKL_GEMMT
 // This routine corresponds to Elemental's Trrk (Triangular rank-k);
 // Intel chose this name because it updates a single triangle using a GEMM
 void EL_BLAS(sgemmt)
@@ -395,7 +395,7 @@ void imatcopy
       reinterpret_cast<MKL_Complex16*>(A), ALDim, BLDim );
 }
 
-#ifdef EL_HAVE_MKL_GEMMT
+#ifdef HYDROGEN_HAVE_MKL_GEMMT
 void Trrk
 ( char uplo, char transA, char transB,
   BlasInt n, BlasInt k,
@@ -461,4 +461,4 @@ void Trrk
 } // namespace mkl
 } // namespace El
 
-#endif // ifdef EL_HAVE_MKL
+#endif // ifdef HYDROGEN_HAVE_MKL

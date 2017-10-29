@@ -35,26 +35,38 @@ elseif (CXX_COMPILER_HAS_WPEDANTIC_FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wpedantic")
 endif()
 
+# Configuration options
+option(${PROJECT_NAME}_ENABLE_QUADMATH
+  "Search for quadmath library and enable related features if found." OFF)
+
+option(${PROJECT_NAME}_ENABLE_QD
+  "Search for QD library and enable related features if found." OFF)
+
+option(${PROJECT_NAME}_ENABLE_MPC
+  "Search for MPC(+MPFR+GMP) library and enable related features if found."
+  OFF)
+
 # Legacy options, with EL_ prefix intact
 option(BINARY_SUBDIRECTORIES "Install binaries into tree based on type" ON)
-
-
 
 #
 # MEMORY-RELATED OPTIONS
 #
 
-option(EL_USE_64BIT_INTS "Use 64-bit integers for El indexing" OFF)
-option(EL_USE_64BIT_BLAS_INTS "Use 64-bit integers for BLAS/LAPACK" OFF)
-if(EL_USE_64BIT_BLAS_INTS)
-  set(EL_USE_64BIT_INTS ON)
-endif()
+option(${PROJECT_NAME}_USE_64BIT_INTS
+  "Use 64-bit integers for internal indexing" OFF)
+option(${PROJECT_NAME}_USE_64BIT_BLAS_INTS
+  "Use 64-bit integers for BLAS/LAPACK" OFF)
+if (${PROJECT_NAME}_USE_64BIT_BLAS_INTS)
+  set(${PROJECT_NAME}_USE_64BIT_INTS ON)
+endif ()
 
-option(EL_ZERO_INIT "Initialize buffers to zero by default?" OFF)
-mark_as_advanced(EL_ZERO_INIT)
+option(${PROJECT_NAME}_ZERO_INIT "Initialize buffers to zero by default?" OFF)
+mark_as_advanced(${PROJECT_NAME}_ZERO_INIT)
 
-option(EL_DISABLE_VALGRIND "Prevent Elemental from looking for valgrind?" OFF)
-mark_as_advanced(EL_DISABLE_VALGRIND)
+option(${PROJECT_NAME}_ENABLE_VALGRIND
+  "Search for valgrind and enable related features" OFF)
+mark_as_advanced(${PROJECT_NAME}_ENABLE_VALGRIND)
 
 #
 # OpenMP
@@ -63,34 +75,34 @@ mark_as_advanced(EL_DISABLE_VALGRIND)
 # At one point, a bug was found in IBM's C++ compiler for Blue Gene/P,
 # where OpenMP statements of the form a[i] += alpha b[i], with complex data,
 # would segfault and/or return incorrect results
-option(EL_AVOID_OMP_FMA "Avoid a bug in the IBM compilers." OFF)
-mark_as_advanced(EL_AVOID_OMP_FMA)
+option(${PROJECT_NAME}_AVOID_OMP_FMA "Avoid a bug in the IBM compilers." OFF)
+mark_as_advanced(${PROJECT_NAME}_AVOID_OMP_FMA)
 
 #
 # MPI
 #
 
-option(EL_USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
-mark_as_advanced(EL_USE_CUSTOM_ALLTOALLV)
+option(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
+mark_as_advanced(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV)
 
 # Since it is surprisingly common for MPI libraries to have bugs in their
 # support for complex data, the following option forces Elemental to cast
 # all possible MPI communications in terms of twice as many real units of data.
-option(EL_AVOID_COMPLEX_MPI "Avoid potentially buggy complex MPI routines" ON)
-mark_as_advanced(EL_AVOID_COMPLEX_MPI)
+option(${PROJECT_NAME}_AVOID_COMPLEX_MPI "Avoid potentially buggy complex MPI routines" ON)
+mark_as_advanced(${PROJECT_NAME}_AVOID_COMPLEX_MPI)
 
 # Due to a subtle flaw in the Blue Gene/P extensions for MPICH2, treating
 # floating-point data as a collection of byte-sized objects results in a
 # better algorithm being chosen for MPI_Allgather. This should not effect
 # performance on most machines.
-option(EL_USE_BYTE_ALLGATHERS "Avoid BG/P allgather performance bug." ON)
-mark_as_advanced(EL_USE_BYTE_ALLGATHERS)
+option(${PROJECT_NAME}_USE_BYTE_ALLGATHERS "Avoid BG/P allgather performance bug." ON)
+mark_as_advanced(${PROJECT_NAME}_USE_BYTE_ALLGATHERS)
 
 # If MPI_Reduce_scatter_block doesn't exist, perform it by composing
 # MPI_Allreduce and std::memcpy rather than MPI_Reduce and MPI_Scatter
-option(EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
+option(${PROJECT_NAME}_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
        "AllReduce based block MPI_Reduce_scatter" OFF)
-mark_as_advanced(EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE)
+mark_as_advanced(${PROJECT_NAME}_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE)
 
 #
 # Runtime warnings
@@ -98,20 +110,20 @@ mark_as_advanced(EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE)
 
 # Print a warning any time a redistribution is performed which unpacks a
 # large amount of data with a non-unit stride
-option(EL_CACHE_WARNINGS "Warns when using cache-unfriendly routines" OFF)
-mark_as_advanced(EL_CACHE_WARNINGS)
+option(${PROJECT_NAME}_CACHE_WARNINGS "Warns when using cache-unfriendly routines" OFF)
+mark_as_advanced(${PROJECT_NAME}_CACHE_WARNINGS)
 
 # Print a warning when an improperly aligned redistribution is performed,
 # i.e., if an unnecessary permutation communication stage must take place
-option(EL_UNALIGNED_WARNINGS
+option(${PROJECT_NAME}_UNALIGNED_WARNINGS
        "Warn when performing unaligned redistributions" OFF)
-mark_as_advanced(EL_UNALIGNED_WARNINGS)
+mark_as_advanced(${PROJECT_NAME}_UNALIGNED_WARNINGS)
 
 # Print a warning if an opportunity was missed to implement a redistribution
 # approach specifically for vectors (instead of matrices)
-option(EL_VECTOR_WARNINGS
+option(${PROJECT_NAME}_VECTOR_WARNINGS
        "Warn when vector redistribution chances are missed" OFF)
-mark_as_advanced(EL_VECTOR_WARNINGS)
+mark_as_advanced(${PROJECT_NAME}_VECTOR_WARNINGS)
 
 #
 # Check the compiler features
@@ -158,22 +170,22 @@ configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/config.h.in"
 configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/hydrogen_config.h.in"
   "${PROJECT_BINARY_DIR}/include/El/hydrogen_config.h")
 
-add_library(El "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
-target_include_directories(El PUBLIC
+add_library(${PROJECT_NAME} "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
+target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include/El>)
-target_link_libraries(El PUBLIC pmrrr)
-target_link_libraries(El PUBLIC MPI::MPI_CXX)
-target_link_libraries(El PUBLIC LAPACK::lapack)
-target_link_libraries(El PUBLIC EP::extended_precision)
+target_link_libraries(${PROJECT_NAME} PUBLIC pmrrr)
+target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
+target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)
+target_link_libraries(${PROJECT_NAME} PUBLIC EP::extended_precision)
 
 if (BUILD_SHARED_LIBS)
   if (APPLE)
-    target_link_libraries(El PUBLIC "-Wl,-undefined,error")
+    target_link_libraries(${PROJECT_NAME} PUBLIC "-Wl,-undefined,error")
   else ()
-    target_link_libraries(El PUBLIC "-Wl,-no-undefined")
+    target_link_libraries(${PROJECT_NAME} PUBLIC "-Wl,-no-undefined")
   endif()
 endif()
 

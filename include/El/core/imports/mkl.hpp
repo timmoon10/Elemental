@@ -9,7 +9,7 @@
 #ifndef EL_IMPORTS_MKL_HPP
 #define EL_IMPORTS_MKL_HPP
 
-#ifdef EL_HAVE_MKL
+#ifdef HYDROGEN_HAVE_MKL
 namespace El {
 namespace mkl {
 
@@ -182,6 +182,6 @@ void Trrk
 
 } // namespace mkl
 } // namespace El
-#endif // ifdef EL_HAVE_MKL
+#endif // ifdef HYDROGEN_HAVE_MKL
 
 #endif // ifndef EL_IMPORTS_MKL_HPP
