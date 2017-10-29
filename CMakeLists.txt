@@ -155,6 +155,8 @@ add_subdirectory(src)
 
 configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/config.h.in"
   "${PROJECT_BINARY_DIR}/include/El/config.h")
+configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/hydrogen_config.h.in"
+  "${PROJECT_BINARY_DIR}/include/El/hydrogen_config.h")
 
 add_library(El "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
 target_include_directories(El PUBLIC
@@ -165,6 +167,7 @@ target_include_directories(El PUBLIC
 target_link_libraries(El PUBLIC pmrrr)
 target_link_libraries(El PUBLIC MPI::MPI_CXX)
 target_link_libraries(El PUBLIC LAPACK::lapack)
+target_link_libraries(El PUBLIC EP::extended_precision)
 
 if (BUILD_SHARED_LIBS)
   if (APPLE)
@@ -173,3 +176,6 @@ if (BUILD_SHARED_LIBS)
     target_link_libraries(El PUBLIC "-Wl,-no-undefined")
   endif()
 endif()
+
+install(FILES "${PROJECT_BINARY_DIR}/include/El/config.h"
+  DESTINATION "include/El")

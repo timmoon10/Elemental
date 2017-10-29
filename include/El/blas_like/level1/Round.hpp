@@ -25,7 +25,7 @@ template<>
 inline void Round( Matrix<Int>& /*A*/ )
 { }
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline void Round( Matrix<BigInt>& /*A*/ )
 { }

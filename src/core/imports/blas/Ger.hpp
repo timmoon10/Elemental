@@ -81,7 +81,7 @@ template void Ger
   const Int* x, BlasInt incx, 
   const Int* y, BlasInt incy, 
         Int* A, BlasInt ALDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Ger
 ( BlasInt m, BlasInt n, 
   const DoubleDouble& alpha,
@@ -107,7 +107,7 @@ template void Ger
   const Complex<QuadDouble>* y, BlasInt incy, 
         Complex<QuadDouble>* A, BlasInt ALDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Ger
 ( BlasInt m, BlasInt n, 
   const Quad& alpha,
@@ -121,7 +121,7 @@ template void Ger
   const Complex<Quad>* y, BlasInt incy, 
         Complex<Quad>* A, BlasInt ALDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Ger
 ( BlasInt m, BlasInt n, 
   const BigInt& alpha,
@@ -205,7 +205,7 @@ template void Geru
   const Int* x, BlasInt incx, 
   const Int* y, BlasInt incy, 
         Int* A, BlasInt ALDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Geru
 ( BlasInt m, BlasInt n, 
   const DoubleDouble& alpha,
@@ -231,7 +231,7 @@ template void Geru
   const Complex<QuadDouble>* y, BlasInt incy, 
         Complex<QuadDouble>* A, BlasInt ALDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Geru
 ( BlasInt m, BlasInt n, 
   const Quad& alpha,
@@ -245,7 +245,7 @@ template void Geru
   const Complex<Quad>* y, BlasInt incy, 
         Complex<Quad>* A, BlasInt ALDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Geru
 ( BlasInt m, BlasInt n, 
   const BigInt& alpha,

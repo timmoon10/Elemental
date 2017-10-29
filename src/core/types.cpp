@@ -188,17 +188,17 @@ template struct SafeProduct<float>;
 template struct SafeProduct<double>;
 template struct SafeProduct<Complex<float>>;
 template struct SafeProduct<Complex<double>>;
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template struct SafeProduct<DoubleDouble>;
 template struct SafeProduct<QuadDouble>;
 template struct SafeProduct<Complex<DoubleDouble>>;
 template struct SafeProduct<Complex<QuadDouble>>;
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template struct SafeProduct<Quad>;
 template struct SafeProduct<Complex<Quad>>;
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template struct SafeProduct<BigFloat>;
 template struct SafeProduct<Complex<BigFloat>>;
 #endif

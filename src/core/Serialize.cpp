@@ -8,7 +8,7 @@
 */
 #include <El-lite.hpp>
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 
 namespace El {
 
@@ -543,4 +543,4 @@ void Deserialize
 
 } // namespace El
 
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC

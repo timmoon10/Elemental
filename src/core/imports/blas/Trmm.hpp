@@ -84,7 +84,7 @@ template void Trmm
   const Int& alpha,
   const Int* A, BlasInt ALDim,
         Int* B, BlasInt BLDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Trmm
 ( char side, char uplo, char trans, char unit,
   BlasInt m, BlasInt n,
@@ -110,7 +110,7 @@ template void Trmm
   const Complex<QuadDouble>* A, BlasInt ALDim,
         Complex<QuadDouble>* B, BlasInt BLDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Trmm
 ( char side, char uplo, char trans, char unit,
   BlasInt m, BlasInt n,
@@ -124,7 +124,7 @@ template void Trmm
   const Complex<Quad>* A, BlasInt ALDim,
         Complex<Quad>* B, BlasInt BLDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Trmm
 ( char side, char uplo, char trans, char unit,
   BlasInt m, BlasInt n,

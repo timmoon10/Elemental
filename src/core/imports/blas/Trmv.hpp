@@ -157,7 +157,7 @@ template void Trmv
 ( char uplo, char trans, char diag, BlasInt m,
   const Int* A, BlasInt ALDim,
         Int* x, BlasInt incx );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Trmv
 ( char uplo, char trans, char diag, BlasInt m,
   const DoubleDouble* A, BlasInt ALDim,
@@ -175,7 +175,7 @@ template void Trmv
   const Complex<QuadDouble>* A, BlasInt ALDim,
         Complex<QuadDouble>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Trmv
 ( char uplo, char trans, char diag, BlasInt m,
   const Quad* A, BlasInt ALDim,
@@ -185,7 +185,7 @@ template void Trmv
   const Complex<Quad>* A, BlasInt ALDim,
         Complex<Quad>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Trmv
 ( char uplo, char trans, char diag, BlasInt m,
   const BigInt* A, BlasInt ALDim,

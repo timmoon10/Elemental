@@ -141,7 +141,7 @@ template void Gemv
   const Int* x, BlasInt incx, 
   const Int& beta,
         Int* y, BlasInt incy );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Gemv
 ( char trans, BlasInt m, BlasInt n, 
   const DoubleDouble& alpha,
@@ -171,7 +171,7 @@ template void Gemv
   const Complex<QuadDouble>& beta,
         Complex<QuadDouble>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Gemv
 ( char trans, BlasInt m, BlasInt n, 
   const Quad& alpha,
@@ -187,7 +187,7 @@ template void Gemv
   const Complex<Quad>& beta,
         Complex<Quad>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Gemv
 ( char trans, BlasInt m, BlasInt n, 
   const BigInt& alpha,

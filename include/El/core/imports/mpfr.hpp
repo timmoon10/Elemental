@@ -9,7 +9,7 @@
 #ifndef EL_IMPORTS_MPC_HPP
 #define EL_IMPORTS_MPC_HPP
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 #include <mpc.h>
 
 // TODO: Decide if _MPFR_EXP_FORMAT is reliable enough
@@ -148,10 +148,10 @@ public:
     explicit operator float() const;
     explicit operator double() const;
     explicit operator long double() const;
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     explicit operator Quad() const;
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     explicit operator DoubleDouble() const;
     explicit operator QuadDouble() const;
 #endif
@@ -349,11 +349,11 @@ public:
     BigFloat( const float& a, mpfr_prec_t prec=mpfr::Precision() );
     BigFloat( const double& a, mpfr_prec_t prec=mpfr::Precision() );
     BigFloat( const long double& a, mpfr_prec_t prec=mpfr::Precision() );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     BigFloat( const DoubleDouble& a, mpfr_prec_t prec=mpfr::Precision() );
     BigFloat( const QuadDouble& a, mpfr_prec_t prec=mpfr::Precision() );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     BigFloat( const Quad& a, mpfr_prec_t prec=mpfr::Precision() );
 #endif
     BigFloat( const char* str, int base, mpfr_prec_t prec=mpfr::Precision() );
@@ -366,10 +366,10 @@ public:
 
     BigFloat& operator=( const BigFloat& a );
     BigFloat& operator=( const BigInt& a );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     BigFloat& operator=( const Quad& a );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     BigFloat& operator=( const DoubleDouble& a );
     BigFloat& operator=( const QuadDouble& a );
 #endif
@@ -392,10 +392,10 @@ public:
     BigFloat& operator+=( const long long int& a );
     BigFloat& operator+=( const float& a );
     BigFloat& operator+=( const double& a );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     BigFloat& operator+=( const Quad& a );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     BigFloat& operator+=( const DoubleDouble& a );
     BigFloat& operator+=( const QuadDouble& a );
 #endif
@@ -410,10 +410,10 @@ public:
     BigFloat& operator-=( const long long int& a );
     BigFloat& operator-=( const float& a );
     BigFloat& operator-=( const double& a );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     BigFloat& operator-=( const Quad& a );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     BigFloat& operator-=( const DoubleDouble& a );
     BigFloat& operator-=( const QuadDouble& a );
 #endif
@@ -433,10 +433,10 @@ public:
     BigFloat& operator*=( const long long int& a );
     BigFloat& operator*=( const float& a );
     BigFloat& operator*=( const double& a );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     BigFloat& operator*=( const Quad& a );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     BigFloat& operator*=( const DoubleDouble& a );
     BigFloat& operator*=( const QuadDouble& a );
 #endif
@@ -451,10 +451,10 @@ public:
     BigFloat& operator/=( const long long int& a );
     BigFloat& operator/=( const float& a );
     BigFloat& operator/=( const double& a );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     BigFloat& operator/=( const Quad& a );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     BigFloat& operator/=( const DoubleDouble& a );
     BigFloat& operator/=( const QuadDouble& a );
 #endif
@@ -490,11 +490,11 @@ public:
     explicit operator float() const;
     explicit operator double() const;
     explicit operator long double() const;
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     explicit operator DoubleDouble() const;
     explicit operator QuadDouble() const;
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     explicit operator Quad() const;
 #endif
     explicit operator BigInt() const;
@@ -550,14 +550,14 @@ BigFloat operator-( const BigFloat& a, const double& b );
 BigFloat operator*( const BigFloat& a, const double& b );
 BigFloat operator/( const BigFloat& a, const double& b );
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat operator+( const BigFloat& a, const Quad& b );
 BigFloat operator-( const BigFloat& a, const Quad& b );
 BigFloat operator*( const BigFloat& a, const Quad& b );
 BigFloat operator/( const BigFloat& a, const Quad& b );
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat operator+( const BigFloat& a, const DoubleDouble& b );
 BigFloat operator-( const BigFloat& a, const DoubleDouble& b );
 BigFloat operator*( const BigFloat& a, const DoubleDouble& b );
@@ -609,14 +609,14 @@ BigFloat operator-( const double& a, const BigFloat& b );
 BigFloat operator*( const double& a, const BigFloat& b );
 BigFloat operator/( const double& a, const BigFloat& b );
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat operator+( const Quad& a, const BigFloat& b );
 BigFloat operator-( const Quad& a, const BigFloat& b );
 BigFloat operator*( const Quad& a, const BigFloat& b );
 BigFloat operator/( const Quad& a, const BigFloat& b );
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat operator+( const DoubleDouble& a, const BigFloat& b );
 BigFloat operator-( const DoubleDouble& a, const BigFloat& b );
 BigFloat operator*( const DoubleDouble& a, const BigFloat& b );
@@ -650,6 +650,6 @@ std::ostream& operator<<( std::ostream& os, const BigFloat& alpha );
 std::istream& operator>>( std::istream& is,       BigFloat& alpha );
 
 } // namespace El
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC
 
 #endif // ifndef EL_IMPORTS_MPC_HPP

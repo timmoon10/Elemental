@@ -7,7 +7,7 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 
 namespace {
 
@@ -95,4 +95,4 @@ mpc_rnd_t RoundingMode()
 
 } // namespace El
 
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC

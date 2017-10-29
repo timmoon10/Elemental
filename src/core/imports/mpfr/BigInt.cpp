@@ -9,7 +9,7 @@
 #include <El-lite.hpp>
 #include <climits>
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 
 namespace El {
 
@@ -683,7 +683,7 @@ BigInt::operator double() const
 BigInt::operator long double() const
 { return (long double)(operator double()); }
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigInt::operator DoubleDouble() const
 {
     EL_DEBUG_CSE
@@ -699,7 +699,7 @@ BigInt::operator QuadDouble() const
 }
 #endif
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigInt::operator Quad() const
 {
     EL_DEBUG_CSE
@@ -1172,4 +1172,4 @@ std::istream& operator>>( std::istream& is, BigInt& alpha )
 
 } // namespace El
 
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC

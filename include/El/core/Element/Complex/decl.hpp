@@ -9,7 +9,7 @@
 #ifndef EL_ELEMENT_COMPLEX_DECL_HPP
 #define EL_ELEMENT_COMPLEX_DECL_HPP
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 
 #include <mpc.h>
 
@@ -77,7 +77,7 @@ public:
     inline Complex( const std::complex<realType>& a );
 };
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<>
 class Complex<Quad> : public std::complex<Quad>
 {
@@ -103,7 +103,7 @@ public:
 };
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<>
 class Complex<DoubleDouble>
 {
@@ -219,7 +219,7 @@ public:
 };
 #endif
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 // We force the precision of the real and imaginary components to be the same...
 // Note that we are requiring that the 'j' functions accept long long integers,
 // which implies that intmax_t is at least as large as long long int
@@ -395,9 +395,9 @@ public:
     inline const byte* Deserialize( const byte* buf );
     inline       byte* Deserialize( byte* buf );
 };
-#endif // EL_HAVE_MPC
+#endif // HYDROGEN_HAVE_MPC
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 inline bool operator==
 ( const Complex<DoubleDouble>& a, const Complex<DoubleDouble>& b );
 inline bool operator!=
@@ -425,7 +425,7 @@ inline bool operator==
 inline bool operator!=
 ( const QuadDouble& a, const Complex<QuadDouble>& b );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 inline bool operator==
 ( const Complex<BigFloat>& a, const Complex<BigFloat>& b );
 inline bool operator!=
@@ -444,11 +444,11 @@ inline bool operator!=
 
 template<typename Real>
 inline Complex<Real> operator-( const Complex<Real>& a );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 inline Complex<DoubleDouble> operator-( const Complex<DoubleDouble>& a );
 inline Complex<QuadDouble> operator-( const Complex<QuadDouble>& a );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 inline Complex<BigFloat> operator-( const Complex<BigFloat>& a );
 #endif
 
@@ -464,7 +464,7 @@ operator*( const Complex<Real>& a, const Complex<Real>& b );
 template<typename Real>
 inline Complex<Real>
 operator/( const Complex<Real>& a, const Complex<Real>& b );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 inline Complex<DoubleDouble>
 operator+( const Complex<DoubleDouble>& a, const Complex<DoubleDouble>& b );
 inline Complex<DoubleDouble>
@@ -482,7 +482,7 @@ operator*( const Complex<QuadDouble>& a, const Complex<QuadDouble>& b );
 inline Complex<QuadDouble>
 operator/( const Complex<QuadDouble>& a, const Complex<QuadDouble>& b );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 inline Complex<BigFloat>
 operator+( const Complex<BigFloat>& a, const Complex<BigFloat>& b );
 inline Complex<BigFloat>
@@ -505,7 +505,7 @@ operator*( const Complex<Real>& a, const Real& b );
 template<typename Real>
 inline Complex<Real>
 operator/( const Complex<Real>& a, const Real& b );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 inline Complex<DoubleDouble>
 operator+( const Complex<DoubleDouble>& a, const DoubleDouble& b );
 inline Complex<DoubleDouble>
@@ -523,7 +523,7 @@ operator*( const Complex<QuadDouble>& a, const QuadDouble& b );
 inline Complex<QuadDouble>
 operator/( const Complex<QuadDouble>& a, const QuadDouble& b );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 inline Complex<BigFloat>
 operator+( const Complex<BigFloat>& a, const BigFloat& b );
 inline Complex<BigFloat>
@@ -546,7 +546,7 @@ operator*( const Real& a, const Complex<Real>& b );
 template<typename Real>
 inline Complex<Real>
 operator/( const Real& a, const Complex<Real>& b );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 inline Complex<DoubleDouble>
 operator+( const DoubleDouble& a, const Complex<DoubleDouble>& b );
 inline Complex<DoubleDouble>
@@ -564,7 +564,7 @@ operator*( const QuadDouble& a, const Complex<QuadDouble>& b );
 inline Complex<QuadDouble>
 operator/( const QuadDouble& a, const Complex<QuadDouble>& b );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 inline Complex<BigFloat>
 operator+( const BigFloat& a, const Complex<BigFloat>& b );
 inline Complex<BigFloat>
@@ -577,14 +577,14 @@ operator/( const BigFloat& a, const Complex<BigFloat>& b );
 
 typedef Complex<float> scomplex;
 typedef Complex<double> dcomplex;
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 typedef Complex<Quad> qcomplex;
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 typedef Complex<DoubleDouble> ddcomplex;
 typedef Complex<QuadDouble> qdcomplex;
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 typedef Complex<BigFloat> acomplex;
 #endif
 

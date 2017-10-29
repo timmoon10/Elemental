@@ -281,7 +281,7 @@ void FreeResizedScalarFamily()
 
 } // anonymous namespace
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 
 void CreateBigIntType()
 {
@@ -332,7 +332,7 @@ void CreateBigFloatType()
     CreateStruct<BigFloat>( 4, blockLengths, displs, typeList );
     CreateResized<BigFloat>( 0, packedSize );
 }
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC
 
 template<typename T,typename=EnableIf<IsPacked<T>>>
 static void
@@ -806,7 +806,7 @@ void CreateEntryType() EL_NO_EXCEPT
     CreateResized<Entry<T>>( 0, extent );
 }
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 void CreateBigIntFamily()
 {
     CreateBigIntType();
@@ -953,7 +953,7 @@ void CreateCustom() EL_NO_RELEASE_EXCEPT
     CreateMaxLocPairOp<double>();
     CreateMinLocPairOp<double>();
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     // DoubleDouble
     // ============
     CreateContiguous<DoubleDouble>( 2, MPI_DOUBLE );
@@ -997,7 +997,7 @@ void CreateCustom() EL_NO_RELEASE_EXCEPT
     CreateMinLocPairOp<QuadDouble>();
 #endif
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     // Quad
     // ====
     CreateContiguous<Quad>( 2, MPI_DOUBLE );
@@ -1020,7 +1020,7 @@ void CreateCustom() EL_NO_RELEASE_EXCEPT
     CreateMinLocPairOp<Quad>();
 #endif
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
     // BigFloat
     // ========
     // NOTE: The BigFloat types are created by mpfr::SetPrecision previously
@@ -1072,14 +1072,14 @@ void DestroyCustom() EL_NO_RELEASE_EXCEPT
     DestroyFamily<Int>();
     DestroyScalarFamily<float>();
     DestroyScalarFamily<double>();
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     DestroyScalarFamily<DoubleDouble>();
     DestroyScalarFamily<QuadDouble>();
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     DestroyScalarFamily<Quad>();
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
     DestroyScalarFamily<BigFloat>();
     DestroyFamily<BigInt>();
 #endif

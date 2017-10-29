@@ -186,7 +186,7 @@ void Initialize( int& argc, char**& argv )
     Grid::InitializeDefault();
     Grid::InitializeTrivial();
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
     InitializeQD();
 #endif
 
@@ -229,7 +229,7 @@ void Finalize()
 
         EmptyBlocksizeStack();
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
         FinalizeQD();
 #endif
 
@@ -237,7 +237,7 @@ void Finalize()
     }
 
     EL_DEBUG_ONLY( CloseLog() )
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
     if( EL_RUNNING_ON_VALGRIND )
         mpfr_free_cache();
 #endif

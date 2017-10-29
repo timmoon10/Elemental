@@ -205,7 +205,7 @@ Complex<double>::Complex( const std::complex<double>& a )
 : std::complex<double>(a)
 { }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 // Complex<Quad>
 // =============
 template<typename S>
@@ -231,7 +231,7 @@ Complex<Quad>::Complex( const std::complex<Quad>& a )
 { }
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 // TODO: Avoid redundancy between DoubleDouble and QuadDouble impl's
 Complex<DoubleDouble>::Complex() { }
 
@@ -578,7 +578,7 @@ Complex<QuadDouble>::operator/=( const Complex<QuadDouble>& b )
 }
 #endif
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 // Complex<BigFloat>
 // =================
 void Complex<BigFloat>::SetNumLimbs( mpfr_prec_t prec )
@@ -1483,9 +1483,9 @@ const byte* Complex<BigFloat>::Deserialize( const byte* buf )
 
 byte* Complex<BigFloat>::Deserialize( byte* buf )
 { return const_cast<byte*>(Deserialize(static_cast<const byte*>(buf))); }
-#endif // EL_HAVE_MPC
+#endif // HYDROGEN_HAVE_MPC
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 bool operator==
 ( const Complex<DoubleDouble>& a, const Complex<DoubleDouble>& b )
 {
@@ -1558,7 +1558,7 @@ bool operator!=
     return !(a == b);
 }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 bool operator==
 ( const Complex<BigFloat>& a, const Complex<BigFloat>& b )
 {
@@ -1608,7 +1608,7 @@ operator-( const Complex<Real>& a )
     auto& aStd = static_cast<const std::complex<Real>&>(a);
     return -aStd;
 }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 Complex<DoubleDouble> operator-( const Complex<DoubleDouble>& a )
 {
     Complex<DoubleDouble> aNeg;
@@ -1624,7 +1624,7 @@ Complex<QuadDouble> operator-( const Complex<QuadDouble>& a )
     return aNeg;
 }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 Complex<BigFloat> operator-( const Complex<BigFloat>& a )
 {
     Complex<BigFloat> aNeg;
@@ -1665,7 +1665,7 @@ operator/( const Complex<Real>& a, const Complex<Real>& b )
     auto& bStd = static_cast<const std::complex<Real>&>(b);
     return aStd / bStd;
 }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 Complex<DoubleDouble> operator+
 ( const Complex<DoubleDouble>& a, const Complex<DoubleDouble>& b )
 {
@@ -1730,7 +1730,7 @@ Complex<QuadDouble> operator/
     return c;
 }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 Complex<BigFloat> operator+
 ( const Complex<BigFloat>& a, const Complex<BigFloat>& b )
 {
@@ -1793,7 +1793,7 @@ operator/( const Complex<Real>& a, const Real& b )
     auto& aStd = static_cast<const std::complex<Real>&>(a);
     return aStd / b;
 }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 Complex<DoubleDouble> operator+
 ( const Complex<DoubleDouble>& a, const DoubleDouble& b )
 {
@@ -1854,7 +1854,7 @@ Complex<QuadDouble> operator/
     return c;
 }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 Complex<BigFloat> operator+
 ( const Complex<BigFloat>& a, const BigFloat& b )
 {
@@ -1917,7 +1917,7 @@ operator/( const Real& a, const Complex<Real>& b )
     auto& bStd = static_cast<const std::complex<Real>&>(b);
     return a / bStd;
 }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 Complex<DoubleDouble> operator+
 ( const DoubleDouble& a, const Complex<DoubleDouble>& b )
 {
@@ -1984,7 +1984,7 @@ Complex<QuadDouble> operator/
     return c;
 }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 Complex<BigFloat> operator+
 ( const BigFloat& a, const Complex<BigFloat>& b )
 {

@@ -1234,7 +1234,7 @@ void VerifySendsAndRecvs
 void CreateCustom() EL_NO_RELEASE_EXCEPT;
 void DestroyCustom() EL_NO_RELEASE_EXCEPT;
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 void CreateBigIntFamily();
 void DestroyBigIntFamily();
 void CreateBigFloatFamily();

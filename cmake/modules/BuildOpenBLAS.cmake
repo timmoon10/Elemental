@@ -1,3 +1,6 @@
+message(FATAL_ERROR "Uhhh please just build this yourself...\n"
+  "That is, this is a work in progress.")
+
 include (ExternalProject)
 
 # If not using the Makefile generator for CMake, using
@@ -18,7 +21,7 @@ endif()
 
 message(STATUS "Will pull OpenBLAS (tag ${OpenBLAS_TAG}) from ${OpenBLAS_URL}")
 
-if(EL_USE_64BIT_BLAS_INTS)
+if(${PROJECT_NAME}_USE_64BIT_BLAS_INTS)
   set(OpenBLAS_SUFFIX 64)
 else()
   set(OpenBLAS_SUFFIX)

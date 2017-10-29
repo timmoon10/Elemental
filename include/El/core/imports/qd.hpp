@@ -9,7 +9,7 @@
 #ifndef EL_IMPORTS_QD_HPP
 #define EL_IMPORTS_QD_HPP
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 #include <qd/qd_real.h>
 
 namespace El {
@@ -124,10 +124,10 @@ struct DoubleDouble : public dd_real
     explicit operator float() const { return to_double(*this); }
     explicit operator double() const { return to_double(*this); }
     explicit operator long double() const;
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     explicit operator Quad() const;
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
     explicit operator BigFloat() const;
 #endif
 };
@@ -251,7 +251,7 @@ inline DoubleDouble operator*
 inline DoubleDouble operator/
 ( const DoubleDouble& a, const double& b )
 { return static_cast<const dd_real&>(a) / b; }
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 inline DoubleDouble operator+
 ( const DoubleDouble& a, const Quad& b )
 { return a + DoubleDouble(b); }
@@ -362,7 +362,7 @@ inline DoubleDouble operator*
 inline DoubleDouble operator/
 ( const double& a, const DoubleDouble& b )
 { return a / static_cast<const dd_real&>(b); }
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 inline DoubleDouble operator+
 ( const Quad& a, const DoubleDouble& b )
 { return DoubleDouble(a) += b; }
@@ -491,10 +491,10 @@ struct QuadDouble : public qd_real
     explicit operator long double() const;
     explicit operator long long int() const;
     explicit operator DoubleDouble() const { return to_dd_real(*this); }
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
     explicit operator Quad() const;
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
     explicit operator BigFloat() const;
 #endif
 };
@@ -541,7 +541,7 @@ inline QuadDouble operator*
 inline QuadDouble operator/
 ( const QuadDouble& a, const DoubleDouble& b )
 { return static_cast<const qd_real&>(a) / static_cast<const dd_real&>(b); }
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 inline QuadDouble operator+
 ( const QuadDouble& a, const Quad& b )
 { return a + QuadDouble(b); }
@@ -664,7 +664,7 @@ inline QuadDouble operator*
 inline QuadDouble operator/
 ( const DoubleDouble& a, const QuadDouble& b )
 { return static_cast<const dd_real&>(a) / static_cast<const qd_real&>(b); }
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 inline QuadDouble operator+
 ( const Quad& a, const QuadDouble& b )
 { return QuadDouble(a) += b; }
@@ -780,6 +780,6 @@ void InitializeQD();
 void FinalizeQD();
 
 } // namespace El
-#endif // ifdef EL_HAVE_QD
+#endif // ifdef HYDROGEN_HAVE_QD
 
 #endif // ifndef EL_IMPORTS_QD_HPP

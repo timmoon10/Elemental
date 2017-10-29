@@ -44,7 +44,7 @@ template void Copy
 ( BlasInt n,
   const Int* x, BlasInt incx,
         Int* y, BlasInt incy );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Copy
 ( BlasInt n,
   const DoubleDouble* x, BlasInt incx, 
@@ -62,7 +62,7 @@ template void Copy
   const Complex<QuadDouble>* x, BlasInt incx, 
         Complex<QuadDouble>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Copy
 ( BlasInt n,
   const Quad* x, BlasInt incx, 
@@ -72,7 +72,7 @@ template void Copy
   const Complex<Quad>* x, BlasInt incx, 
         Complex<Quad>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Copy
 ( BlasInt n,
   const BigInt* x, BlasInt incx, 

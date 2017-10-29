@@ -60,7 +60,7 @@ void Rot
         x[i*incx] = gamma;
     }
 }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Rot
 ( BlasInt n,
   DoubleDouble* x, BlasInt incx,
@@ -86,7 +86,7 @@ template void Rot
   const QuadDouble& c,
   const Complex<QuadDouble>& s );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Rot
 ( BlasInt n,
   Quad* x, BlasInt incx,
@@ -100,7 +100,7 @@ template void Rot
   const Quad& c,
   const Complex<Quad>& s );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Rot
 ( BlasInt n,
   BigFloat* x, BlasInt incx,
@@ -185,7 +185,7 @@ template void Rot
   Complex<double>* y, BlasInt incy,
   const double& c,
   const double& s );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Rot
 ( BlasInt n,
   Complex<DoubleDouble>* x, BlasInt incx,
@@ -199,7 +199,7 @@ template void Rot
   const QuadDouble& c,
   const QuadDouble& s );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Rot
 ( BlasInt n,
   Complex<Quad>* x, BlasInt incx,
@@ -207,7 +207,7 @@ template void Rot
   const Quad& c,
   const Quad& s );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Rot
 ( BlasInt n,
   Complex<BigFloat>* x, BlasInt incx,

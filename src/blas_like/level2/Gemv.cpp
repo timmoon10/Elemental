@@ -191,7 +191,7 @@ void Gemv
     LogicError("ScaLAPACK does not support integer data");
 }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<>
 void Gemv
 ( Orientation orientation,
@@ -213,7 +213,7 @@ void Gemv
     EL_DEBUG_CSE
     LogicError("ScaLAPACK does not support quad-precision data");
 }
-#endif // ifdef EL_HAVE_QUAD
+#endif // ifdef HYDROGEN_HAVE_QUADMATH
 
 template<typename T>
 void Gemv

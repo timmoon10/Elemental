@@ -49,7 +49,7 @@ Base<F> Nrm2( BlasInt n, const F* x, BlasInt incx )
 }
 template float Nrm2( BlasInt n, const float* x, BlasInt incx );
 template float Nrm2( BlasInt n, const scomplex* x, BlasInt incx );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template DoubleDouble Nrm2( BlasInt n, const DoubleDouble* x, BlasInt incx );
 template QuadDouble Nrm2( BlasInt n, const QuadDouble* x, BlasInt incx );
 template DoubleDouble
@@ -57,11 +57,11 @@ Nrm2( BlasInt n, const Complex<DoubleDouble>* x, BlasInt incx );
 template QuadDouble
 Nrm2( BlasInt n, const Complex<QuadDouble>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template Quad Nrm2( BlasInt n, const Quad* x, BlasInt incx );
 template Quad Nrm2( BlasInt n, const Complex<Quad>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template BigFloat Nrm2( BlasInt n, const BigFloat* x, BlasInt incx );
 template BigFloat Nrm2( BlasInt n, const Complex<BigFloat>* x, BlasInt incx );
 #endif
@@ -86,7 +86,7 @@ template float
 Nrm1( BlasInt n, const float* x, BlasInt incx );
 template float
 Nrm1( BlasInt n, const scomplex* x, BlasInt incx );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template DoubleDouble
 Nrm1( BlasInt n, const DoubleDouble* x, BlasInt incx );
 template QuadDouble
@@ -96,13 +96,13 @@ Nrm1( BlasInt n, const Complex<DoubleDouble>* x, BlasInt incx );
 template QuadDouble
 Nrm1( BlasInt n, const Complex<QuadDouble>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template Quad
 Nrm1( BlasInt n, const Quad* x, BlasInt incx );
 template Quad
 Nrm1( BlasInt n, const Complex<Quad>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template BigInt
 Nrm1( BlasInt n, const BigInt* x, BlasInt incx );
 template BigFloat
@@ -134,7 +134,7 @@ template double
 NrmInf( BlasInt n, const double* x, BlasInt incx );
 template double
 NrmInf( BlasInt n, const dcomplex* x, BlasInt incx );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template DoubleDouble
 NrmInf( BlasInt n, const DoubleDouble* x, BlasInt incx );
 template QuadDouble
@@ -144,13 +144,13 @@ NrmInf( BlasInt n, const Complex<DoubleDouble>* x, BlasInt incx );
 template QuadDouble
 NrmInf( BlasInt n, const Complex<QuadDouble>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template Quad
 NrmInf( BlasInt n, const Quad* x, BlasInt incx );
 template Quad
 NrmInf( BlasInt n, const Complex<Quad>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template BigInt
 NrmInf( BlasInt n, const BigInt* x, BlasInt incx );
 template BigFloat

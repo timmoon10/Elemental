@@ -7,7 +7,7 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 
 namespace El {
 
@@ -138,7 +138,7 @@ BigFloat::BigFloat( const long double& a, mpfr_prec_t prec )
     mpfr_set_ld( Pointer(), a, mpfr::RoundingMode() ); 
 }
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat::BigFloat( const DoubleDouble& a, mpfr_prec_t prec )
 {
     EL_DEBUG_CSE
@@ -179,7 +179,7 @@ BigFloat::BigFloat( const QuadDouble& a, mpfr_prec_t prec )
 }
 #endif
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat::BigFloat( const Quad& a, mpfr_prec_t prec )
 {
     EL_DEBUG_CSE
@@ -325,7 +325,7 @@ BigFloat& BigFloat::operator=( const long double& a )
     return *this;
 }
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat& BigFloat::operator=( const DoubleDouble& a )
 {
     EL_DEBUG_CSE
@@ -368,7 +368,7 @@ BigFloat& BigFloat::operator=( const QuadDouble& a )
 }
 #endif
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat& BigFloat::operator=( const Quad& a )
 {
     EL_DEBUG_CSE
@@ -475,7 +475,7 @@ BigFloat& BigFloat::operator+=( const double& a )
     return *this;
 }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat& BigFloat::operator+=( const Quad& a )
 {
     EL_DEBUG_CSE
@@ -485,7 +485,7 @@ BigFloat& BigFloat::operator+=( const Quad& a )
 }
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat& BigFloat::operator+=( const DoubleDouble& a )
 {
     EL_DEBUG_CSE
@@ -592,7 +592,7 @@ BigFloat& BigFloat::operator-=( const double& a )
     return *this;
 }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat& BigFloat::operator-=( const Quad& a )
 {
     EL_DEBUG_CSE
@@ -602,7 +602,7 @@ BigFloat& BigFloat::operator-=( const Quad& a )
 }
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat& BigFloat::operator-=( const DoubleDouble& a )
 {
     EL_DEBUG_CSE
@@ -735,7 +735,7 @@ BigFloat& BigFloat::operator*=( const double& a )
     return *this;
 }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat& BigFloat::operator*=( const Quad& a )
 {
     EL_DEBUG_CSE
@@ -745,7 +745,7 @@ BigFloat& BigFloat::operator*=( const Quad& a )
 }
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat& BigFloat::operator*=( const DoubleDouble& a )
 {
     EL_DEBUG_CSE
@@ -852,7 +852,7 @@ BigFloat& BigFloat::operator/=( const double& a )
     return *this;
 }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat& BigFloat::operator/=( const Quad& a )
 {
     EL_DEBUG_CSE
@@ -862,7 +862,7 @@ BigFloat& BigFloat::operator/=( const Quad& a )
 }
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat& BigFloat::operator/=( const DoubleDouble& a )
 {
     EL_DEBUG_CSE
@@ -1003,7 +1003,7 @@ BigFloat::operator double() const
 BigFloat::operator long double() const
 { return mpfr_get_ld( LockedPointer(), mpfr::RoundingMode() ); }
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat::operator DoubleDouble() const
 {
     EL_DEBUG_CSE
@@ -1035,7 +1035,7 @@ BigFloat::operator QuadDouble() const
 }
 #endif
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat::operator Quad() const
 {
     EL_DEBUG_CSE
@@ -1199,7 +1199,7 @@ BigFloat operator*( const BigFloat& a, const double& b )
 BigFloat operator/( const BigFloat& a, const double& b )
 { return BigFloat(a) /= b; }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat operator+( const BigFloat& a, const Quad& b )
 { return BigFloat(a) += b; }
 BigFloat operator-( const BigFloat& a, const Quad& b )
@@ -1210,7 +1210,7 @@ BigFloat operator/( const BigFloat& a, const Quad& b )
 { return BigFloat(a) /= b; }
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat operator+( const BigFloat& a, const DoubleDouble& b )
 { return BigFloat(a) += b; }
 BigFloat operator-( const BigFloat& a, const DoubleDouble& b )
@@ -1302,7 +1302,7 @@ BigFloat operator*( const double& a, const BigFloat& b )
 BigFloat operator/( const double& a, const BigFloat& b )
 { return BigFloat(a) /= b; }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 BigFloat operator+( const Quad& a, const BigFloat& b )
 { return BigFloat(b) += a; }
 BigFloat operator-( const Quad& a, const BigFloat& b )
@@ -1313,7 +1313,7 @@ BigFloat operator/( const Quad& a, const BigFloat& b )
 { return BigFloat(a) /= b; }
 #endif
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 BigFloat operator+( const DoubleDouble& a, const BigFloat& b )
 { return BigFloat(b) += a; }
 BigFloat operator-( const DoubleDouble& a, const BigFloat& b )
@@ -1407,4 +1407,4 @@ std::istream& operator>>( std::istream& is, BigFloat& alpha )
 
 } // namespace El
 
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC

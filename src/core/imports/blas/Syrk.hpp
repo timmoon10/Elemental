@@ -170,7 +170,7 @@ template void Herk
   const Int* A, BlasInt ALDim,
   const Int& beta,
         Int* C, BlasInt CLDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Herk
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
@@ -200,7 +200,7 @@ template void Herk
   const QuadDouble& beta,
         Complex<QuadDouble>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Herk
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
@@ -216,7 +216,7 @@ template void Herk
   const Quad& beta,
         Complex<Quad>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Herk
 ( char uplo, char trans,
   BlasInt n, BlasInt k,
@@ -406,7 +406,7 @@ template void Syrk
   const Int* A, BlasInt ALDim, 
   const Int& beta,
         Int* C, BlasInt CLDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Syrk
 ( char uplo, char trans,
   BlasInt n, BlasInt k, 
@@ -436,7 +436,7 @@ template void Syrk
   const Complex<QuadDouble>& beta,
         Complex<QuadDouble>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Syrk
 ( char uplo, char trans,
   BlasInt n, BlasInt k, 
@@ -452,7 +452,7 @@ template void Syrk
   const Complex<Quad>& beta,
         Complex<Quad>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Syrk
 ( char uplo, char trans,
   BlasInt n, BlasInt k, 

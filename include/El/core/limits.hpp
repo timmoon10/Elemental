@@ -16,7 +16,7 @@ namespace El {
 template<typename Real>
 struct IsFixedPrecision
 { static const bool value=true; };
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 struct IsFixedPrecision<BigFloat>
 { static const bool value=false; };
@@ -45,14 +45,14 @@ template<> struct MantissaBits<float>
 template<> struct MantissaBits<double>
 { static const unsigned value = 53; };
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<> struct MantissaBits<DoubleDouble>
 { static const unsigned value = 106; };
 template<> struct MantissaBits<QuadDouble>
 { static const unsigned value = 212; };
 #endif
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct MantissaBits<Quad>
 { static const unsigned value = 113; };
 #endif
@@ -61,7 +61,7 @@ template<> struct MantissaBits<Quad>
 template<typename T>
 Int NumMantissaBits( const T& alpha=T() )
 { return MantissaBits<T>::value; }
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline Int NumMantissaBits<BigFloat>( const BigFloat& alpha )
 { return alpha.Precision(); }
@@ -75,7 +75,7 @@ struct MantissaIsLonger
 { static const bool value =
     MantissaBits<Real1>::value >
     MantissaBits<Real2>::value; };
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 // While this isn't necessarily always true, it would be a capitally bad
 // idea to use MPFR without using higher than the available fixed precision
 template<typename Real2> struct MantissaIsLonger<BigFloat,Real2>
@@ -96,7 +96,7 @@ template<typename Real,
          typename=EnableIf<IsReal<Real>>>
 inline Real Base()
 { return std::numeric_limits<Real>::radix; }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<>
 inline DoubleDouble Base<DoubleDouble>()
 { return Base<double>(); }
@@ -104,13 +104,13 @@ template<>
 inline QuadDouble Base<QuadDouble>()
 { return Base<double>(); }
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 // std::numeric_limits<__float128>::radix does not seem to be reliably defined
 template<>
 inline Quad Base<Quad>()
 { return Quad(2); }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline BigFloat Base<BigFloat>()
 { return BigFloat(2); }
@@ -128,7 +128,7 @@ template<typename Real,
          typename=EnableIf<IsReal<Real>>>
 inline Real Epsilon( const Real& alpha=Real(1) )
 { return Precision<Real>()*std::numeric_limits<Real>::round_error(); }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<> inline DoubleDouble Precision( const DoubleDouble& alpha )
 { return dd_real::_eps; }
 template<> inline DoubleDouble Epsilon( const DoubleDouble& alpha )
@@ -139,7 +139,7 @@ template<> inline QuadDouble Precision( const QuadDouble& alpha )
 template<> inline QuadDouble Epsilon( const QuadDouble& alpha )
 { return qd_real::_eps/Base<double>(); }
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 // NOTE: The FLT128_* macros require support for the -std=gnu++11
 //       literal 'Q', which is *NOT* provided by GCC with -std=c++11, but
 //       *IS* provided by Intel with -std=c++11.
@@ -148,7 +148,7 @@ template<> inline Quad Precision( const Quad& alpha )
 template<> inline Quad Epsilon( const Quad& alpha )
 { return Precision<Quad>()/Base<Quad>(); }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline BigFloat Precision<BigFloat>( const BigFloat& alpha )
 {
@@ -175,7 +175,7 @@ template<typename Real,
          typename=EnableIf<IsReal<Real>>>
 struct ExponentTypeHelper
 { typedef Real type; };
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<> struct ExponentTypeHelper<BigFloat>
 { typedef mpfr_exp_t type; };
 #endif
@@ -192,7 +192,7 @@ template<typename Real,
          typename=EnableIf<IsReal<Real>>>
 inline ExponentType<Real> MinExponent()
 { return std::numeric_limits<Real>::min_exponent; }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<>
 inline ExponentType<DoubleDouble> MaxExponent<DoubleDouble>()
 { return MaxExponent<double>(); }
@@ -207,7 +207,7 @@ template<>
 inline ExponentType<QuadDouble> MinExponent<QuadDouble>()
 { return MinExponent<double>(); }
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<>
 inline ExponentType<Quad> MaxExponent<Quad>()
 { return FLT128_MAX_EXP; }
@@ -215,7 +215,7 @@ template<>
 inline ExponentType<Quad> MinExponent<Quad>()
 { return FLT128_MIN_EXP; }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 // NOTE: The minimum and maximum exponents are *not* dependent upon MPFR's
 // dynamic precision and are typically fixed at 2^30 - 1
 template<>
@@ -250,7 +250,7 @@ template<> inline long long Lowest<long long>( const long long& alpha )
 template<> inline int Lowest<int>( const int& /*alpha*/ )
 { return INT_MIN; }
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<> inline DoubleDouble Max<DoubleDouble>( const DoubleDouble& alpha )
 { return dd_real::_max; }
 template<> inline DoubleDouble Min<DoubleDouble>( const DoubleDouble& alpha )
@@ -265,7 +265,7 @@ template<> inline QuadDouble Min<QuadDouble>( const QuadDouble& alpha )
 template<> inline QuadDouble Lowest<QuadDouble>( const QuadDouble& alpha )
 { return -qd_real::_max; }
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<> inline Quad Max<Quad>( const Quad& alpha )
 { return FLT128_MAX; }
 template<> inline Quad Min<Quad>( const Quad& alpha )
@@ -273,7 +273,7 @@ template<> inline Quad Min<Quad>( const Quad& alpha )
 template<> inline Quad Lowest<Quad>( const Quad& alpha )
 { return -FLT128_MAX; }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline BigFloat Max<BigFloat>( const BigFloat& alpha )
 {
@@ -303,7 +303,7 @@ inline Real SafeMin( const Real& alpha=Real(1) )
       ( invMax>minVal ? invMax*(one+eps) : minVal );
     return safeMin;
 }
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline BigFloat SafeMin( const BigFloat& alpha )
 {
@@ -345,7 +345,7 @@ inline Real SafeMinToSquare( const Real& alpha=Real(1) )
       Pow( base, Round((Log(safeMin/eps)/Log(base))/Real(2)) );
     return safeMinToSquare;
 }
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline BigFloat SafeMinToSquare( const BigFloat& alpha )
 {
@@ -371,7 +371,7 @@ inline Real SafeMinToCube( const Real& alpha=Real(1) )
       Pow( base, Round((Log(safeMin/eps)/Log(base))/Real(3)) );
     return safeMinToCube;
 }
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline BigFloat SafeMinToCube( const BigFloat& alpha )
 {
@@ -387,7 +387,7 @@ template<typename Real,
          typename=EnableIf<IsReal<Real>>>
 inline Real Infinity( const Real& alpha=Real(1) )
 { return std::numeric_limits<Real>::infinity(); }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<> inline DoubleDouble Infinity<DoubleDouble>
 ( const DoubleDouble& alpha )
 { return dd_real::_inf; }
@@ -395,7 +395,7 @@ template<> inline QuadDouble Infinity<QuadDouble>
 ( const QuadDouble& alpha )
 { return qd_real::_inf; }
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<> inline Quad Infinity<Quad>( const Quad& alpha )
 {
     // libquadmath does not document how to return infinity, so, for now,
@@ -403,7 +403,7 @@ template<> inline Quad Infinity<Quad>( const Quad& alpha )
     return 2*Max<Quad>(alpha);
 }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline BigFloat Infinity<BigFloat>( const BigFloat& alpha )
 {
@@ -417,7 +417,7 @@ template<typename Real,
          typename=EnableIf<IsReal<Real>>>
 inline bool IsFinite( const Real& alpha )
 { return std::isfinite(alpha); }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<>
 inline bool IsFinite( const DoubleDouble& alpha )
 { return alpha.isfinite(); }
@@ -425,12 +425,12 @@ template<>
 inline bool IsFinite( const QuadDouble& alpha )
 { return alpha.isfinite(); }
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<>
 inline bool IsFinite( const Quad& alpha )
 { return finiteq(alpha) != 0; }
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline bool IsFinite( const BigFloat& alpha )
 { return mpfr_number_p( alpha.LockedPointer() ) != 0; }

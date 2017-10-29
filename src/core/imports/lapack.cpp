@@ -335,7 +335,7 @@ template void Copy
 ( char uplo, BlasInt m, BlasInt n, 
   const Int* A, BlasInt lda,
         Int* B, BlasInt ldb );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Copy
 ( char uplo, BlasInt m, BlasInt n, 
   const DoubleDouble* A, BlasInt lda,
@@ -353,7 +353,7 @@ template void Copy
   const Complex<QuadDouble>* A, BlasInt lda,
         Complex<QuadDouble>* B, BlasInt ldb );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Copy
 ( char uplo, BlasInt m, BlasInt n, 
   const Quad* A, BlasInt lda,
@@ -363,7 +363,7 @@ template void Copy
   const Complex<Quad>* A, BlasInt lda,
         Complex<Quad>* B, BlasInt ldb );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Copy
 ( char uplo, BlasInt m, BlasInt n, 
   const BigInt* A, BlasInt lda,
@@ -471,7 +471,7 @@ template double Reflector
 ( BlasInt n, double& chi, double* x, BlasInt incx );
 template Complex<double> Reflector
 ( BlasInt n, Complex<double>& chi, Complex<double>* x, BlasInt incx );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template DoubleDouble Reflector
 ( BlasInt n, DoubleDouble& chi, DoubleDouble* x, BlasInt incx );
 template QuadDouble Reflector
@@ -485,13 +485,13 @@ template Complex<QuadDouble> Reflector
   Complex<QuadDouble>& chi,
   Complex<QuadDouble>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template Quad Reflector
 ( BlasInt n, Quad& chi, Quad* x, BlasInt incx );
 template Complex<Quad> Reflector
 ( BlasInt n, Complex<Quad>& chi, Complex<Quad>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template BigFloat Reflector
 ( BlasInt n, BigFloat& chi, BigFloat* x, BlasInt incx );
 template Complex<BigFloat> Reflector
@@ -570,7 +570,7 @@ template void ApplyReflector
   const Complex<double>* v, BlasInt vInc,
   const Complex<double>& tau,
         Complex<double>* C, BlasInt CLDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void ApplyReflector
 ( bool onLeft, BlasInt m, BlasInt n,
   const DoubleDouble* v, BlasInt vInc,
@@ -592,7 +592,7 @@ template void ApplyReflector
   const Complex<QuadDouble>& tau,
         Complex<QuadDouble>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void ApplyReflector
 ( bool onLeft, BlasInt m, BlasInt n,
   const Quad* v, BlasInt vInc,
@@ -604,7 +604,7 @@ template void ApplyReflector
   const Complex<Quad>& tau,
         Complex<Quad>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void ApplyReflector
 ( bool onLeft, BlasInt m, BlasInt n,
   const BigFloat* v, BlasInt vInc,
@@ -641,7 +641,7 @@ template void ApplyReflector
   const Complex<double>& tau,
         Complex<double>* C, BlasInt CLDim,
         Complex<double>* work );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void ApplyReflector
 ( bool onLeft, BlasInt m, BlasInt n,
   const DoubleDouble* v, BlasInt vInc,
@@ -667,7 +667,7 @@ template void ApplyReflector
         Complex<QuadDouble>* C, BlasInt CLDim,
         Complex<QuadDouble>* work );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void ApplyReflector
 ( bool onLeft, BlasInt m, BlasInt n,
   const Quad* v, BlasInt vInc,
@@ -681,7 +681,7 @@ template void ApplyReflector
         Complex<Quad>* C, BlasInt CLDim,
         Complex<Quad>* work );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void ApplyReflector
 ( bool onLeft, BlasInt m, BlasInt n,
   const BigFloat* v, BlasInt vInc,
@@ -2204,7 +2204,7 @@ template bool Solve2x2FullPiv
         double& scale,
   const double& smallNum,
   const double& minPiv );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template bool Solve2x2FullPiv
 ( const Quad* A,
         Quad* b,
@@ -2212,7 +2212,7 @@ template bool Solve2x2FullPiv
   const Quad& smallNum,
   const Quad& minPiv );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template bool Solve2x2FullPiv
 ( const DoubleDouble* A,
         DoubleDouble* b,
@@ -2226,7 +2226,7 @@ template bool Solve2x2FullPiv
   const QuadDouble& smallNum,
   const QuadDouble& minPiv );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template bool Solve2x2FullPiv
 ( const BigFloat* A,
         BigFloat* b,
@@ -2346,7 +2346,7 @@ template bool Solve4x4FullPiv
   double& scale,
   const double& smallNum,
   const double& minPiv );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template bool Solve4x4FullPiv
 ( Quad* A,
   Quad* b,
@@ -2354,7 +2354,7 @@ template bool Solve4x4FullPiv
   const Quad& smallNum,
   const Quad& minPiv );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template bool Solve4x4FullPiv
 ( DoubleDouble* A,
   DoubleDouble* b,
@@ -2368,7 +2368,7 @@ template bool Solve4x4FullPiv
   const QuadDouble& smallNum,
   const QuadDouble& minPiv );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template bool Solve4x4FullPiv
 ( BigFloat* A,
   BigFloat* b,
@@ -2632,7 +2632,7 @@ template bool SmallSylvester
         double& scale,
         double* X, BlasInt XLDim,
         double& XInfNorm );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template bool SmallSylvester
 ( bool transC,
   bool transD,
@@ -2645,7 +2645,7 @@ template bool SmallSylvester
         Quad* X, BlasInt XLDim,
         Quad& XInfNorm );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template bool SmallSylvester
 ( bool transC,
   bool transD,
@@ -2669,7 +2669,7 @@ template bool SmallSylvester
         QuadDouble* X, BlasInt XLDim,
         QuadDouble& XInfNorm );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template bool SmallSylvester
 ( bool transC,
   bool transD,
@@ -3206,7 +3206,7 @@ template void AdjacentSchurExchange
   BlasInt n2,
   double* work,
   bool testAccuracy );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void AdjacentSchurExchange
 ( BlasInt n,
   Quad* T, BlasInt TLDim,
@@ -3225,7 +3225,7 @@ template void AdjacentSchurExchange
   Quad* work,
   bool testAccuracy );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void AdjacentSchurExchange
 ( BlasInt n,
   DoubleDouble* T, BlasInt TLDim,
@@ -3261,7 +3261,7 @@ template void AdjacentSchurExchange
   QuadDouble* work,
   bool testAccuracy );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void AdjacentSchurExchange
 ( BlasInt n,
   BigFloat* T, BlasInt TLDim,
@@ -3628,7 +3628,7 @@ template void SchurExchange
   Complex<double>* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt j2 );
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void SchurExchange
 ( BlasInt n,
   Quad* T, BlasInt TLDim,
@@ -3656,7 +3656,7 @@ template void SchurExchange
   BlasInt j1,
   BlasInt j2 );
 #endif
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void SchurExchange
 ( BlasInt n,
   DoubleDouble* T, BlasInt TLDim,
@@ -3710,7 +3710,7 @@ template void SchurExchange
   BlasInt j1,
   BlasInt j2 );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void SchurExchange
 ( BlasInt n,
   BigFloat* T, BlasInt TLDim,

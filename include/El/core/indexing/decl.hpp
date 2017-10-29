@@ -48,7 +48,7 @@ Int GlobalBlockedIndex( Int iLoc, Int shift, Int bsize, Int cut, Int numProcs );
 // still returns a result in [0,b). Note that b is assumed to be non-negative.
 Int Mod( Int a, Int b );
 Int Mod_( Int a, Int b ) EL_NO_EXCEPT;
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 BigInt Mod( const BigInt& a, const BigInt& b );
 BigInt Mod( const BigInt& a, const unsigned& b );
 BigInt Mod( const BigInt& a, const unsigned long& b );
@@ -68,7 +68,7 @@ Int GCD_( Int a, Int b ) EL_NO_EXCEPT;
 // TODO: LCM
 // TODO: InvertMod
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 BigInt GCD( const BigInt& a, const BigInt& b );
 // A version which acts in-place to avoid an unnecessary allocation
 void GCD( const BigInt& a, const BigInt& b, BigInt& gcd );
@@ -86,21 +86,21 @@ void InvertMod( const BigInt& a, const BigInt& n, BigInt& aInv );
 
 template<typename T,typename=EnableIf<IsIntegral<T>>>
 void SqrtRem( const T& alpha, T& alphaSqrt, T& remainder );
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<> void SqrtRem
 ( const BigInt& alpha, BigInt& alphaSqrt, BigInt& remainder );
 #endif
 
 template<typename T,typename=EnableIf<IsIntegral<T>>>
 bool IsPerfectSquare( const T& alpha );
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<> bool IsPerfectSquare( const BigInt& alpha );
 #endif
 
 Unsigned FlooredLog2( Unsigned n );
 bool PowerOfTwo( Unsigned n );
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 BigInt PowMod
 ( const BigInt& base,
   const BigInt& exp,

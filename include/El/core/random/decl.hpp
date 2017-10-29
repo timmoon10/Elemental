@@ -55,12 +55,12 @@ template<typename F,
          typename=EnableIf<IsComplex<F>>>
 F SampleUniform( const F& a=F(0), const F& b=UnitCell<F>() );
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 // __float128 is usually first-class in the STL, but not here :-(
 template<>
 Quad SampleUniform( const Quad& a, const Quad& b );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 BigFloat SampleUniform( const BigFloat& a, const BigFloat& b );
 #endif
@@ -69,7 +69,7 @@ template<typename T,typename=EnableIf<IsIntegral<T>>,typename=void>
 T SampleUniform( const T& a, const T& b );
 template<>
 Int SampleUniform( const Int& a, const Int& b );
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 BigInt SampleUniform( const BigInt& a, const BigInt& b );
 #endif
@@ -84,7 +84,7 @@ T SampleNormal( const T& mean=T(0), const Base<T>& stddev=Base<T>(1) );
 template<typename T,typename=DisableIf<IsStdScalar<T>>,typename=void>
 T SampleNormal( const T& mean=T(0), const Base<T>& stddev=Base<T>(1) );
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 // __float128 is usually first-class in the STL, but not here :-(
 template<>
 Quad SampleNormal( const Quad& mean, const Quad& stddev );

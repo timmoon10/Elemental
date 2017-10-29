@@ -11,7 +11,7 @@
 
 namespace El {
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 
 byte* Serialize( Int n, const BigInt* x, byte* xPacked );
 byte* Serialize( Int n, const ValueInt<BigInt>* x, byte* xPacked );
@@ -115,7 +115,7 @@ void Deserialize
 void Deserialize
 ( Int n, const std::vector<byte>& xPacked, Entry<Complex<BigFloat>>* x );
 
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC
 
 } // namespace El
 

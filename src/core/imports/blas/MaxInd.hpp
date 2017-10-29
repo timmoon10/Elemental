@@ -46,7 +46,7 @@ BlasInt MaxInd( BlasInt n, const F* x, BlasInt incx )
 }
 template BlasInt MaxInd
 ( BlasInt n, const Int* x, BlasInt incx );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template BlasInt MaxInd
 ( BlasInt n, const DoubleDouble* x, BlasInt incx );
 template BlasInt MaxInd
@@ -56,13 +56,13 @@ template BlasInt MaxInd
 template BlasInt MaxInd
 ( BlasInt n, const Complex<QuadDouble>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template BlasInt MaxInd
 ( BlasInt n, const Quad* x, BlasInt incx );
 template BlasInt MaxInd
 ( BlasInt n, const Complex<Quad>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template BlasInt MaxInd
 ( BlasInt n, const BigInt* x, BlasInt incx );
 template BlasInt MaxInd

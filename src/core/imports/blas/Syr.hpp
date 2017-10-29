@@ -92,7 +92,7 @@ template void Her
   const Int& alpha,
   const Int* x, BlasInt incx, 
         Int* A, BlasInt ALDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Her
 ( char uplo, BlasInt m, 
   const DoubleDouble& alpha,
@@ -114,7 +114,7 @@ template void Her
   const Complex<QuadDouble>* x, BlasInt incx,
         Complex<QuadDouble>* A, BlasInt ALDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Her
 ( char uplo, BlasInt m, 
   const Quad& alpha,
@@ -126,7 +126,7 @@ template void Her
   const Complex<Quad>* x, BlasInt incx, 
         Complex<Quad>* A, BlasInt ALDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Her
 ( char uplo, BlasInt m, 
   const BigInt& alpha,
@@ -218,7 +218,7 @@ template void Syr
   const Int& alpha,
   const Int* x, BlasInt incx, 
         Int* A, BlasInt ALDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Syr
 ( char uplo, BlasInt m, 
   const DoubleDouble& alpha,
@@ -240,7 +240,7 @@ template void Syr
   const Complex<QuadDouble>* x, BlasInt incx,
         Complex<QuadDouble>* A, BlasInt ALDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Syr
 ( char uplo, BlasInt m, 
   const Quad& alpha,
@@ -252,7 +252,7 @@ template void Syr
   const Complex<Quad>* x, BlasInt incx, 
         Complex<Quad>* A, BlasInt ALDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Syr
 ( char uplo, BlasInt m, 
   const BigInt& alpha,

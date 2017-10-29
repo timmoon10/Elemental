@@ -193,7 +193,7 @@ inline Int Mod_( Int a, Int b ) EL_NO_EXCEPT
     return ( rem >= 0 ? rem : rem+b );
 }
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 inline BigInt Mod( const BigInt& a, const BigInt& b )
 {
     EL_DEBUG_CSE
@@ -281,7 +281,7 @@ inline Int GCD_( Int a, Int b ) EL_NO_EXCEPT
         return GCD_( b, a-b*(a/b) );
 }
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 inline void GCD( const BigInt& a, const BigInt& b, BigInt& gcd )
 {
     mpz_gcd( gcd.Pointer(), a.LockedPointer(), b.LockedPointer() );
@@ -344,7 +344,7 @@ void SqrtRem( const T& alpha, T& alphaSqrt, T& remainder )
     alphaSqrt = Sqrt( alpha );
     remainder = alpha-alphaSqrt*alphaSqrt;
 }
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline void SqrtRem( const BigInt& alpha, BigInt& alphaSqrt, BigInt& remainder )
 {
@@ -359,7 +359,7 @@ bool IsPerfectSquare( const T& alpha )
     T alphaSqrt = Sqrt( alpha );
     return alpha == alphaSqrt*alphaSqrt;
 }
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 inline bool IsPerfectSquare( const BigInt& alpha )
 {
@@ -368,7 +368,7 @@ inline bool IsPerfectSquare( const BigInt& alpha )
 }
 #endif
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 inline void PowMod
 ( const BigInt& base,
   const BigInt& exp,
@@ -450,7 +450,7 @@ inline BigInt PowMod
     return result;
 }
 
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC
 
 } // namespace El
 

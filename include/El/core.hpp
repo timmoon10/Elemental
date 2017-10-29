@@ -56,7 +56,7 @@
 #define EL_CONCAT2(name1,name2) name1 ## name2
 #define EL_CONCAT(name1,name2) EL_CONCAT2(name1,name2)
 
-#ifdef EL_HAVE_QUADMATH
+#ifdef HYDROGEN_HAVE_QUADMATH
 #include <quadmath.h>
 #endif
 
@@ -74,17 +74,17 @@ typedef int Int;
 typedef unsigned Unsigned;
 #endif
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 typedef __float128 Quad;
 #endif
 
 // Forward declarations
 // --------------------
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 struct DoubleDouble;
 struct QuadDouble;
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 class BigInt;
 class BigFloat;
 #endif
@@ -109,7 +109,7 @@ using DisableIf = typename std::enable_if<!Condition::value,T>::type;
 
 template<typename T>
 struct IsIntegral { static const bool value = std::is_integral<T>::value; };
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 struct IsIntegral<BigInt> { static const bool value = true; };
 #endif
@@ -136,17 +136,17 @@ template<> struct IsScalar<double>
 { static const bool value=true; };
 template<> struct IsScalar<long double>
 { static const bool value=true; };
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<> struct IsScalar<DoubleDouble>
 { static const bool value=true; };
 template<> struct IsScalar<QuadDouble>
 { static const bool value=true; };
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct IsScalar<Quad>
 { static const bool value=true; };
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<> struct IsScalar<BigInt>
 { static const bool value=true; };
 template<> struct IsScalar<BigFloat>
@@ -165,17 +165,17 @@ template<> struct IsField<double>
 { static const bool value=true; };
 template<> struct IsField<long double>
 { static const bool value=true; };
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template<> struct IsField<DoubleDouble>
 { static const bool value=true; };
 template<> struct IsField<QuadDouble>
 { static const bool value=true; };
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct IsField<Quad>
 { static const bool value=true; };
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<> struct IsField<BigFloat>
 { static const bool value=true; };
 #endif
@@ -204,7 +204,7 @@ template<> struct IsStdScalar<double>
 { static const bool value=true; };
 template<> struct IsStdScalar<long double>
 { static const bool value=true; };
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct IsStdScalar<Quad>
 { static const bool value=true; };
 #endif
@@ -221,7 +221,7 @@ template<> struct IsStdField<double>
 { static const bool value=true; };
 template<> struct IsStdField<long double>
 { static const bool value=true; };
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct IsStdField<Quad>
 { static const bool value=true; };
 #endif

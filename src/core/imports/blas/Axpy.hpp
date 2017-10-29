@@ -53,7 +53,7 @@ template void Axpy
   const Int& alpha,
   const Int* x, BlasInt incx,
         Int* y, BlasInt incy );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Axpy
 ( BlasInt n,
   const DoubleDouble& alpha, 
@@ -75,7 +75,7 @@ template void Axpy
   const Complex<QuadDouble>* x, BlasInt incx,
         Complex<QuadDouble>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Axpy
 ( BlasInt n,
   const Quad& alpha, 
@@ -87,7 +87,7 @@ template void Axpy
   const Complex<Quad>* x, BlasInt incx,
         Complex<Quad>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Axpy
 ( BlasInt n,
   const BigInt& alpha, 

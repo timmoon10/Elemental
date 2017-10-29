@@ -20,31 +20,31 @@
 # define PROTO_DOUBLE PROTO_REAL(double)
 #endif
 
-#if defined(EL_HAVE_QD) && defined(EL_ENABLE_DOUBLEDOUBLE)
+#if defined(HYDROGEN_HAVE_QD) && defined(EL_ENABLE_DOUBLEDOUBLE)
 #ifndef PROTO_DOUBLEDOUBLE
 # define PROTO_DOUBLEDOUBLE PROTO_REAL(DoubleDouble)
 #endif
 #endif
 
-#if defined(EL_HAVE_QD) && defined(EL_ENABLE_QUADDOUBLE)
+#if defined(HYDROGEN_HAVE_QD) && defined(EL_ENABLE_QUADDOUBLE)
 #ifndef PROTO_QUADDOUBLE
 # define PROTO_QUADDOUBLE PROTO_REAL(QuadDouble)
 #endif
 #endif
 
-#if defined(EL_HAVE_QUAD) && defined(EL_ENABLE_QUAD)
+#if defined(HYDROGEN_HAVE_QUADMATH) && defined(EL_ENABLE_QUAD)
 #ifndef PROTO_QUAD
 # define PROTO_QUAD PROTO_REAL(Quad)
 #endif
 #endif
 
-#if defined(EL_HAVE_MPC) && defined(EL_ENABLE_BIGINT)
+#if defined(HYDROGEN_HAVE_MPC) && defined(EL_ENABLE_BIGINT)
 #ifndef PROTO_BIGINT
 # define PROTO_BIGINT PROTO_INT(BigInt)
 #endif
 #endif
 
-#if defined(EL_HAVE_MPC) && defined(EL_ENABLE_BIGFLOAT)
+#if defined(HYDROGEN_HAVE_MPC) && defined(EL_ENABLE_BIGFLOAT)
 #ifndef PROTO_BIGFLOAT
 # define PROTO_BIGFLOAT PROTO_REAL(BigFloat)
 #endif
@@ -60,25 +60,25 @@
 # define PROTO_COMPLEX_DOUBLE PROTO_COMPLEX(Complex<double>)
 #endif
 
-#if defined(EL_HAVE_QD) && defined(EL_ENABLE_DOUBLEDOUBLE)
+#if defined(HYDROGEN_HAVE_QD) && defined(EL_ENABLE_DOUBLEDOUBLE)
 #ifndef PROTO_COMPLEX_DOUBLEDOUBLE
 # define PROTO_COMPLEX_DOUBLEDOUBLE PROTO_COMPLEX(Complex<DoubleDouble>)
 #endif
 #endif
 
-#if defined(EL_HAVE_QD) && defined(EL_ENABLE_QUADDOUBLE)
+#if defined(HYDROGEN_HAVE_QD) && defined(EL_ENABLE_QUADDOUBLE)
 #ifndef PROTO_COMPLEX_QUADDOUBLE
 # define PROTO_COMPLEX_QUADDOUBLE PROTO_COMPLEX(Complex<QuadDouble>)
 #endif
 #endif
 
-#if defined(EL_HAVE_QUAD) && defined(EL_ENABLE_QUAD)
+#if defined(HYDROGEN_HAVE_QUADMATH) && defined(EL_ENABLE_QUAD)
 #ifndef PROTO_COMPLEX_QUAD
 # define PROTO_COMPLEX_QUAD PROTO_COMPLEX(Complex<Quad>)
 #endif
 #endif
 
-#if defined(EL_HAVE_MPC) && defined(EL_ENABLE_BIGFLOAT)
+#if defined(HYDROGEN_HAVE_MPC) && defined(EL_ENABLE_BIGFLOAT)
 #ifndef PROTO_COMPLEX_BIGFLOAT
 # define PROTO_COMPLEX_BIGFLOAT PROTO_COMPLEX(Complex<BigFloat>)
 #endif
@@ -86,7 +86,7 @@
 
 #ifndef EL_NO_INT_PROTO
 PROTO_INT(Int)
-#if defined(EL_ENABLE_BIGINT) && defined(EL_HAVE_MPC)
+#if defined(EL_ENABLE_BIGINT) && defined(HYDROGEN_HAVE_MPC)
 PROTO_BIGINT
 #endif
 #endif
@@ -98,16 +98,16 @@ PROTO_FLOAT
 # if !defined(EL_NO_DOUBLE_PROTO)
 PROTO_DOUBLE
 # endif
-#if defined(EL_ENABLE_DOUBLEDOUBLE) && defined(EL_HAVE_QD)
+#if defined(EL_ENABLE_DOUBLEDOUBLE) && defined(HYDROGEN_HAVE_QD)
 PROTO_DOUBLEDOUBLE
 #endif
-#if defined(EL_ENABLE_QUADDOUBLE) && defined(EL_HAVE_QD)
+#if defined(EL_ENABLE_QUADDOUBLE) && defined(HYDROGEN_HAVE_QD)
 PROTO_QUADDOUBLE
 #endif
-#if defined(EL_ENABLE_QUAD) && defined(EL_HAVE_QUAD)
+#if defined(EL_ENABLE_QUAD) && defined(HYDROGEN_HAVE_QUADMATH)
 PROTO_QUAD
 #endif
-#if defined(EL_ENABLE_BIGFLOAT) && defined(EL_HAVE_MPC)
+#if defined(EL_ENABLE_BIGFLOAT) && defined(HYDROGEN_HAVE_MPC)
 PROTO_BIGFLOAT
 #endif
 #endif
@@ -119,16 +119,16 @@ PROTO_COMPLEX_FLOAT
 # if !defined(EL_NO_COMPLEX_DOUBLE_PROTO)
 PROTO_COMPLEX_DOUBLE
 # endif
-#if defined(EL_ENABLE_DOUBLEDOUBLE) && defined(EL_HAVE_QD)
+#if defined(EL_ENABLE_DOUBLEDOUBLE) && defined(HYDROGEN_HAVE_QD)
 PROTO_COMPLEX_DOUBLEDOUBLE
 #endif
-#if defined(EL_ENABLE_QUADDOUBLE) && defined(EL_HAVE_QD)
+#if defined(EL_ENABLE_QUADDOUBLE) && defined(HYDROGEN_HAVE_QD)
 PROTO_COMPLEX_QUADDOUBLE
 #endif
-#if defined(EL_ENABLE_QUAD) && defined(EL_HAVE_QUAD)
+#if defined(EL_ENABLE_QUAD) && defined(HYDROGEN_HAVE_QUADMATH)
 PROTO_COMPLEX_QUAD
 #endif
-#if defined(EL_ENABLE_BIGFLOAT) && defined(EL_HAVE_MPC)
+#if defined(EL_ENABLE_BIGFLOAT) && defined(HYDROGEN_HAVE_MPC)
 PROTO_COMPLEX_BIGFLOAT
 #endif
 #endif

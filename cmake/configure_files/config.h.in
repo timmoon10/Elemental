@@ -9,6 +9,8 @@
 #ifndef EL_CONFIG_H
 #define EL_CONFIG_H
 
+#include "hydrogen_config.h"
+
 /* Build type and version information */
 #define EL_GIT_SHA1 "@GIT_SHA1@"
 #define EL_VERSION_MAJOR "@EL_VERSION_MAJOR@"

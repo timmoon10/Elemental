@@ -8,7 +8,7 @@
 */
 #include <El-lite.hpp>
 
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 
 namespace {
 
@@ -37,7 +37,7 @@ DoubleDouble::operator long double() const
     return alpha;
 }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 DoubleDouble::operator Quad() const
 {
     EL_DEBUG_CSE
@@ -57,7 +57,7 @@ QuadDouble::operator long double() const
     return alpha;
 }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 QuadDouble::operator Quad() const
 {
     EL_DEBUG_CSE
@@ -68,7 +68,7 @@ QuadDouble::operator Quad() const
 }
 #endif
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 DoubleDouble::operator BigFloat() const
 {
     EL_DEBUG_CSE
@@ -118,4 +118,4 @@ QuadDouble::operator long long int() const
 }
 
 } // namespace El
-#endif // ifdef EL_HAVE_QD
+#endif // ifdef HYDROGEN_HAVE_QD

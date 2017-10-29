@@ -268,7 +268,7 @@ template void Gemm
   const Int* B, BlasInt BLDim,
   const Int& beta,
         Int* C, BlasInt CLDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Gemm
 ( char transA, char transB,
   BlasInt m, BlasInt n, BlasInt k, 
@@ -302,7 +302,7 @@ template void Gemm
   const Complex<QuadDouble>& beta,
         Complex<QuadDouble>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Gemm
 ( char transA, char transB,
   BlasInt m, BlasInt n, BlasInt k, 
@@ -320,7 +320,7 @@ template void Gemm
   const Complex<Quad>& beta,
         Complex<Quad>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Gemm
 ( char transA, char transB,
   BlasInt m, BlasInt n, BlasInt k, 

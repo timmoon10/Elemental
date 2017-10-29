@@ -1252,7 +1252,7 @@ template<typename T>
 void Round( Matrix<T>& A );
 template<>
 void Round( Matrix<Int>& A );
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 void Round( Matrix<BigInt>& A );
 #endif

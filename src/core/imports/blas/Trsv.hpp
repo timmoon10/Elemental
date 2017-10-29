@@ -145,7 +145,7 @@ void Trsv
         }
     }
 }
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Trsv
 ( char uplo, char trans, char diag, BlasInt m,
   const DoubleDouble* A, BlasInt ALDim,
@@ -163,7 +163,7 @@ template void Trsv
   const Complex<QuadDouble>* A, BlasInt ALDim,
         Complex<QuadDouble>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Trsv
 ( char uplo, char trans, char diag, BlasInt m,
   const Quad* A, BlasInt ALDim,
@@ -173,7 +173,7 @@ template void Trsv
   const Complex<Quad>* A, BlasInt ALDim,
         Complex<Quad>* x, BlasInt incx );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Trsv
 ( char uplo, char trans, char diag, BlasInt m,
   const BigFloat* A, BlasInt ALDim,

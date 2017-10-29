@@ -57,7 +57,7 @@ template dcomplex Dot
 ( BlasInt n,
   const dcomplex* x, BlasInt incx,
   const dcomplex* y, BlasInt incy );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template DoubleDouble Dot
 ( BlasInt n,
   const DoubleDouble* x, BlasInt incx, 
@@ -75,7 +75,7 @@ template Complex<QuadDouble> Dot
   const Complex<QuadDouble>* x, BlasInt incx, 
   const Complex<QuadDouble>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template Quad Dot
 ( BlasInt n,
   const Quad* x, BlasInt incx, 
@@ -85,7 +85,7 @@ template Complex<Quad> Dot
   const Complex<Quad>* x, BlasInt incx, 
   const Complex<Quad>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template BigInt Dot
 ( BlasInt n,
   const BigInt* x, BlasInt incx, 
@@ -142,7 +142,7 @@ template dcomplex Dotu
 ( BlasInt n,
   const dcomplex* x, BlasInt incx,
   const dcomplex* y, BlasInt incy );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template DoubleDouble Dotu
 ( BlasInt n,
   const DoubleDouble* x, BlasInt incx, 
@@ -160,7 +160,7 @@ template Complex<QuadDouble> Dotu
   const Complex<QuadDouble>* x, BlasInt incx, 
   const Complex<QuadDouble>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template Quad Dotu
 ( BlasInt n,
   const Quad* x, BlasInt incx, 
@@ -170,7 +170,7 @@ template Complex<Quad> Dotu
   const Complex<Quad>* x, BlasInt incx, 
   const Complex<Quad>* y, BlasInt incy );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template BigInt Dotu
 ( BlasInt n,
   const BigInt* x, BlasInt incx, 

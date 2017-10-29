@@ -3045,7 +3045,7 @@ MPI_PROTO(ValueInt<double>)
 MPI_PROTO(ValueInt<Complex<double>>)
 MPI_PROTO(Entry<double>)
 MPI_PROTO(Entry<Complex<double>>)
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 MPI_PROTO(DoubleDouble)
 MPI_PROTO(QuadDouble)
 MPI_PROTO(Complex<DoubleDouble>)
@@ -3059,7 +3059,7 @@ MPI_PROTO(Entry<QuadDouble>)
 MPI_PROTO(Entry<Complex<DoubleDouble>>)
 MPI_PROTO(Entry<Complex<QuadDouble>>)
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 MPI_PROTO(Quad)
 MPI_PROTO(Complex<Quad>)
 MPI_PROTO(ValueInt<Quad>)
@@ -3067,7 +3067,7 @@ MPI_PROTO(ValueInt<Complex<Quad>>)
 MPI_PROTO(Entry<Quad>)
 MPI_PROTO(Entry<Complex<Quad>>)
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 MPI_PROTO(BigInt)
 MPI_PROTO(BigFloat)
 MPI_PROTO(Complex<BigFloat>)

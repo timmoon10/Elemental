@@ -246,7 +246,7 @@ template void Hemm
   const Int* B, BlasInt BLDim,
   const Int& beta,
         Int* C, BlasInt CLDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Hemm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const DoubleDouble& alpha,
@@ -276,7 +276,7 @@ template void Hemm
   const Complex<QuadDouble>& beta,
         Complex<QuadDouble>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Hemm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const Quad& alpha,
@@ -292,7 +292,7 @@ template void Hemm
   const Complex<Quad>& beta,
         Complex<Quad>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Hemm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const BigInt& alpha,
@@ -554,7 +554,7 @@ template void Symm
   const Int* B, BlasInt BLDim,
   const Int& beta,
         Int* C, BlasInt CLDim );
-#ifdef EL_HAVE_QD
+#ifdef HYDROGEN_HAVE_QD
 template void Symm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const DoubleDouble& alpha,
@@ -584,7 +584,7 @@ template void Symm
   const Complex<QuadDouble>& beta,
         Complex<QuadDouble>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template void Symm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const Quad& alpha,
@@ -600,7 +600,7 @@ template void Symm
   const Complex<Quad>& beta,
         Complex<Quad>* C, BlasInt CLDim );
 #endif
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template void Symm
 ( char side, char uplo, BlasInt m, BlasInt n,
   const BigInt& alpha,

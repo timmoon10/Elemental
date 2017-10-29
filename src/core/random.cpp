@@ -13,7 +13,7 @@ namespace {
 // A common Mersenne twister configuration
 std::mt19937 generator;
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 gmp_randstate_t gmpRandState;
 #endif
 
@@ -31,7 +31,7 @@ void InitializeRandom( bool deterministic )
 
     srand( seed );
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
     mpfr::SetMinIntBits( 256 );
     mpfr::SetPrecision( 256 );
     gmp_randinit_default( ::gmpRandState );
@@ -41,7 +41,7 @@ void InitializeRandom( bool deterministic )
 
 void FinalizeRandom()
 {
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
     gmp_randclear( ::gmpRandState );
 #endif
 }
@@ -49,7 +49,7 @@ void FinalizeRandom()
 std::mt19937& Generator()
 { return ::generator; }
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 namespace mpfr {
 
 void RandomState( gmp_randstate_t randState )
@@ -72,7 +72,7 @@ bool BooleanCoinFlip()
 
 Int CoinFlip() { return ( BooleanCoinFlip() ? 1 : -1 ); }
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<>
 Quad SampleUniform( const Quad& a, const Quad& b )
 {
@@ -82,7 +82,7 @@ Quad SampleUniform( const Quad& a, const Quad& b )
 }
 #endif
 
-#ifdef EL_HAVE_MPC
+#ifdef HYDROGEN_HAVE_MPC
 template<>
 BigFloat SampleUniform( const BigFloat& a, const BigFloat& b )
 {
@@ -110,7 +110,7 @@ BigInt SampleUniform( const BigInt& a, const BigInt& b )
     return a+Mod(sample,b-a);
 }
 
-#endif // ifdef EL_HAVE_MPC
+#endif // ifdef HYDROGEN_HAVE_MPC
 
 template<>
 Int SampleUniform( const Int& a, const Int& b )
@@ -125,7 +125,7 @@ Int SampleUniform( const Int& a, const Int& b )
 }
 // TODO: BigInt version?
 
-#ifdef EL_HAVE_QUAD
+#ifdef HYDROGEN_HAVE_QUADMATH
 template<>
 Quad SampleNormal( const Quad& mean, const Quad& stddev )
 {
