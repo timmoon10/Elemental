@@ -180,7 +180,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
-  $<INSTALL_INTERFACE:include/El>)
+  $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME} PUBLIC pmrrr)
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)
@@ -249,11 +249,13 @@ install(EXPORT ${PROJECT_NAME}Targets
   DESTINATION lib/cmake/hydrogen)
 
 # Install the headers
-install(DIRECTORY include DESTINATION include
-  FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY include DESTINATION .
+  FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h")
 
 # Install the cmake stuff
 install(FILES
   "${PROJECT_BINARY_DIR}/cmake/HydrogenConfig.cmake"
   "${PROJECT_BINARY_DIR}/HydrogenConfigVersion.cmake"
   DESTINATION ${CMAKE_INSTALL_DIR})
+install(DIRECTORY cmake/modules DESTINATION lib/cmake/hydrogen
+  FILES_MATCHING PATTERN "*.cmake")

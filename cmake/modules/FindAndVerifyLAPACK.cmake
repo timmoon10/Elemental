@@ -32,7 +32,7 @@
 # are set on the command line.
 
 if (NOT UPPER_PROJECT_NAME)
-  string(TO_UPPER "${PROJECT_NAME}" UPPER_PROJECT_NAME)
+  string(TOUPPER "${PROJECT_NAME}" UPPER_PROJECT_NAME)
 endif ()
 
 # Check straight-away if BLA_VENDOR is already set
@@ -75,6 +75,8 @@ if (${PROJECT_NAME}_GENERAL_LAPACK_FALLBACK AND NOT LAPACK_FOUND)
   set(BLA_VENDOR "All")
   find_package(LAPACK QUIET)
 endif (${PROJECT_NAME}_GENERAL_LAPACK_FALLBACK AND NOT LAPACK_FOUND)
+
+find_package(LAPACK)
 
 # Wrap-up
 include(FindPackageHandleStandardArgs)

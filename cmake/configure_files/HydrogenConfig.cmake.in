@@ -1,7 +1,9 @@
 # This will create the H::hydrogen IMPORTED target. It will also
 # export many useful variables that one may want.
 
-include("${CMAKE_CURRENT_LIST_DIR}/HYDROGENConfigVersion.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/HydrogenConfigVersion.cmake")
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 set(HYDROGEN_VERSION ${PACKAGE_VERSION})
 
 @PACKAGE_INIT@

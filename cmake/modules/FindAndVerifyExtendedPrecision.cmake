@@ -1,7 +1,7 @@
 include(CheckCXXSourceCompiles)
 
 if (NOT UPPER_PROJECT_NAME)
-  string(TO_UPPER "${PROJECT_NAME}" UPPER_PROJECT_NAME)
+  string(TOUPPER "${PROJECT_NAME}" UPPER_PROJECT_NAME)
 endif ()
 
 # Check for quad-precision support
