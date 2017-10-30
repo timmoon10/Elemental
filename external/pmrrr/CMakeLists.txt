@@ -25,9 +25,9 @@ include_directories(BEFORE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Define the header files installation rules
 # ------------------------------------------
-#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-#	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-#  FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+	DESTINATION include
+  FILES_MATCHING PATTERN "*.h")
 if(WIN32 OR APPLE OR NOT EL_HYBRID)
   # Disable for Windows because of lack of POSIX support;
   # disable for Mac OS X because of deprecation of unnamed semaphores
@@ -88,4 +88,4 @@ endif()
 if(EL_LINK_FLAGS)
   set_target_properties(pmrrr PROPERTIES LINK_FLAGS ${EL_LINK_FLAGS})
 endif()
-#install(TARGETS pmrrr EXPORT ElementalTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS pmrrr EXPORT HydrogenTargets DESTINATION lib)

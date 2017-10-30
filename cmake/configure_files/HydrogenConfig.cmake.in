@@ -1,0 +1,102 @@
+# This will create the H::hydrogen IMPORTED target. It will also
+# export many useful variables that one may want.
+
+include("${CMAKE_CURRENT_LIST_DIR}/HYDROGENConfigVersion.cmake")
+set(HYDROGEN_VERSION ${PACKAGE_VERSION})
+
+@PACKAGE_INIT@
+
+set(HYDROGEN_C_COMPILER "@CMAKE_C_COMPILER@")
+set(HYDROGEN_CXX_COMPILER "@CMAKE_CXX_COMPILER@")
+
+set(HYDROGEN_C_FLAGS "@CMAKE_C_FLAGS@")
+set(HYDROGEN_CXX_FLAGS "@CMAKE_CXX_FLAGS@")
+
+set(HYDROGEN_MPI_C_COMPILER "@MPI_C_COMPILER@")
+set(HYDROGEN_MPI_CXX_COMPILER "@MPI_CXX_COMPILER@")
+
+if (NOT MPI_C_COMPILER)
+  set(MPI_C_COMPILER "${HYDROGEN_MPI_C_COMPILER}")
+endif ()
+if (NOT MPI_CXX_COMPILER)
+  set(MPI_CXX_COMPILER "${HYDROGEN_MPI_CXX_COMPILER}")
+endif ()
+
+# FIXME: I should do verification to make sure all found features are
+#   the same.
+include (modules/FindAndVerifyMPI)
+
+# Math libraries
+set(_HYDROGEN_HAVE_QUADMATH "@HYDROGEN_HAVE_QUADMATH@")
+set(_HYDROGEN_HAVE_QD "@HYDROGEN_HAVE_QD@")
+set(_HYDROGEN_HAVE_MPC "@HYDROGEN_HAVE_MPC@")
+set(_HYDROGEN_HAVE_MKL "@HYDROGEN_HAVE_MKL@")
+set(_HYDROGEN_HAVE_MKL_GEMMT "@HYDROGEN_HAVE_MKL_GEMMT@")
+
+# Quadmath
+if (NOT QUADMATH_LIBRARY AND _HYDROGEN_HAVE_QUADMATH)
+  set(QUADMATH_LIBRARY "@QUADMATH_LIBRARY@")
+endif ()
+if (NOT QUADMATH_INCLUDE_DIR AND _HYDROGEN_HAVE_QUADMATH)
+  set(QUADMATH_INCLUDE_DIR "@QUADMATH_INCLUDE_DIR@")
+endif ()
+
+# QD
+if (NOT QD_LIBRARY AND _HYDROGEN_HAVE_QD)
+  set(QD_LIBRARY "@QD_LIBRARY@")
+endif ()
+if (NOT QD_INCLUDE_DIR AND _HYDROGEN_HAVE_QD)
+  set(QD_INCLUDE_DIR "@QD_INCLUDE_DIR@")
+endif ()
+
+# MPC
+if (_HYDROGEN_HAVE_MPC)
+  if (NOT GMP_LIBRARY)
+    set(GMP_LIBRARY  "@GMP_LIBRARY@")
+  endif ()
+  if (NOT MPFR_LIBRARY)
+    set(MPFR_LIBRARY "@MPFR_LIBRARY@")
+  endif ()
+  if (NOT MPC_LIBRARY)
+    set(MPC_LIBRARY "@MPC_LIBRARY@")
+  endif ()
+  if (NOT GMP_INCLUDE_DIR)
+    set(GMP_INCLUDE_DIR "@GMP_INCLUDE_DIR@")
+  endif ()
+  if (NOT MPFR_INCLUDE_DIR)
+    set(MPFR_INCLUDE_DIR "@MPFR_INCLUDE_DIR@")
+  endif ()
+  if (NOT MPC_INCLUDE_DIR)
+    set(MPC_INCLUDE_DIR "@MPC_INCLUDE_DIR@")
+  endif ()
+endif (_HYDROGEN_HAVE_MPC)
+
+include("modules/FindAndVerifyExtendedPrecision")
+
+# LAPACK
+if (NOT LAPACK_LIBRARIES)
+  set(LAPACK_LIBRARIES "@LAPACK_LIBRARIES@")
+endif ()
+
+include("modules/FindAndVerifyLAPACK")
+
+# Now actually import the Hydrogen target
+set(_TMP_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIRS@")
+foreach (_DIR ${_TMP_INCLUDE_DIRS})
+  set_and_check(_INCLUDE_DIR "${_DIR}")
+  list(APPEND HYDROGEN_INCLUDE_DIRS "${_INCLUDE_DIR}")
+endforeach (_DIR "${_TMP_INCLUDE_DIRS}")
+
+set(_TMP_LIBRARY_DIRS "@PACKAGE_LIB_INSTALL_DIR@")
+foreach (_DIR ${_TMP_LIBRARY_DIRS})
+  set_and_check(_LIBRARY_DIR "${_DIR}")
+  list(APPEND HYDROGEN_LIBRARY_DIRS "${_LIBRARY_DIR}")  
+endforeach (_DIR ${_TMP_LIBRARY_DIRS})
+
+if (NOT TARGET H::Hydrogen)
+  include(${CMAKE_CURRENT_LIST_DIR}/HydrogenTargets.cmake)
+endif (NOT TARGET H::Hydrogen)
+
+check_required_components(Hydrogen)
+
+set(HYDROGEN_LIBRARIES H::Hydrogen)

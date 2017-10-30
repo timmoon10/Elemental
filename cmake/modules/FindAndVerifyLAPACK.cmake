@@ -31,6 +31,9 @@
 # of course, can be avoided if LAPACK_LIBRARIES and related variables
 # are set on the command line.
 
+if (NOT UPPER_PROJECT_NAME)
+  string(TO_UPPER "${PROJECT_NAME}" UPPER_PROJECT_NAME)
+endif ()
 
 # Check straight-away if BLA_VENDOR is already set
 if (BLA_VENDOR)

@@ -3,11 +3,16 @@ cmake_minimum_required(VERSION 3.5)
 project(Hydrogen C CXX)
 
 if (NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 11)
+  set(CMAKE_CXX_STANDARD 14)
 endif ()
 
 set(HYDROGEN_VERSION_MAJOR 0)
 set(HYDROGEN_VERSION_MINOR 1)
+
+# Back-compatibility, until it's all sorted out
+set(EL_VERSION_MAJOR ${HYDROGEN_VERSION_MAJOR})
+set(EL_VERSION_MINOR ${HYDROGEN_VERSION_MINOR})
+
 string(TOUPPER "${PROJECT_NAME}" UPPER_PROJECT_NAME)
 
 # Prevent in-source builds
@@ -189,5 +194,66 @@ if (BUILD_SHARED_LIBS)
   endif()
 endif()
 
-install(FILES "${PROJECT_BINARY_DIR}/include/El/config.h"
+# Setup the library install
+install(TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}Targets
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  INCLUDES DESTINATION include/El
+  )
+
+# Install target stuff
+include (CMakePackageConfigHelpers)
+
+# Write the version file for both the build and the install tree
+write_basic_package_version_file(
+  "${CMAKE_BINARY_DIR}/HydrogenConfigVersion.cmake"
+  VERSION "${HYDROGEN_VERSION_MAJOR}.${HYDROGEN_VERSION_MINOR}"
+  COMPATIBILITY AnyNewerVersion
+  )
+
+# Write the configure file for the build tree
+set(INCLUDE_INSTALL_DIRS "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_SOURCE_DIR}/include/El"
+  "${CMAKE_BINARY_DIR}/include/El")
+set(LIB_INSTALL_DIR "${CMAKE_BINARY_DIR}")
+configure_package_config_file(cmake/configure_files/HydrogenConfig.cmake.in
+  "${CMAKE_BINARY_DIR}/HydrogenConfig.cmake"
+  INSTALL_DESTINATION "${CMAKE_BINARY_DIR}"
+  PATH_VARS INCLUDE_INSTALL_DIRS LIB_INSTALL_DIR)
+
+# Build tree export
+export(EXPORT HydrogenTargets NAMESPACE H:: FILE HydrogenTargets.cmake)
+
+# Write the configure file for the install tree
+set(INCLUDE_INSTALL_DIRS include)
+set(LIB_INSTALL_DIR lib)
+set(CMAKE_INSTALL_DIR lib/cmake/hydrogen)
+
+configure_package_config_file(cmake/configure_files/HydrogenConfig.cmake.in
+  "${CMAKE_BINARY_DIR}/cmake/HydrogenConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_DIR}
+  PATH_VARS INCLUDE_INSTALL_DIRS LIB_INSTALL_DIR)
+
+# Install the configuration headers
+install(FILES
+  "${PROJECT_BINARY_DIR}/include/El/config.h"
+  "${PROJECT_BINARY_DIR}/include/El/hydrogen_config.h"
   DESTINATION "include/El")
+
+# Install tree export
+install(EXPORT ${PROJECT_NAME}Targets
+  NAMESPACE H::
+  DESTINATION lib/cmake/hydrogen)
+
+# Install the headers
+install(DIRECTORY include DESTINATION include
+  FILES_MATCHING PATTERN "*.hpp")
+
+# Install the cmake stuff
+install(FILES
+  "${PROJECT_BINARY_DIR}/cmake/HydrogenConfig.cmake"
+  "${PROJECT_BINARY_DIR}/HydrogenConfigVersion.cmake"
+  DESTINATION ${CMAKE_INSTALL_DIR})
