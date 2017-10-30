@@ -123,10 +123,10 @@ void TwoByTwo
                         // We can reduce to (real) upper-triangular form
                         Real alpha01Sqrt = Sqrt(Abs(alpha01));
                         Real alpha10Sqrt = Sqrt(Abs(alpha10));
-                        Real p = alpha01Sqrt*alpha10Sqrt*Sgn(alpha10);
+                        Real p_if = alpha01Sqrt*alpha10Sqrt*Sgn(alpha10);
                         tau = one / Sqrt(Abs(alpha01+alpha10));
-                        alpha00 = tmp + p;
-                        alpha11 = tmp - p;
+                        alpha00 = tmp + p_if;
+                        alpha11 = tmp - p_if;
                         alpha01 -= alpha10;
                         alpha10 = zero;
                         Real c1 = alpha01Sqrt*tau;
