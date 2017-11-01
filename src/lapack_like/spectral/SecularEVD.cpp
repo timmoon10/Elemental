@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El.hpp>
@@ -36,7 +36,7 @@ struct State
 
     Real diagDiff;
 
-    Real rootEst; 
+    Real rootEst;
     Real rootRelEst;
     Real rootRelLowerBound;
     Real rootRelUpperBound;
@@ -71,7 +71,7 @@ struct LastState
 
     Real diagDiff;
 
-    Real rootEst; 
+    Real rootEst;
     Real rootRelEst;
     Real rootRelLowerBound;
     Real rootRelUpperBound;
@@ -114,7 +114,7 @@ void EvaluateSecular
     // Compute psi_m and psi'_m, where m is the origin index, and an
     // approximation of the error
     // (see Ren-Cang Li, "Solving Secular Equations Stably and Efficiently",
-    // LAPACK Working Note 89, 1993 [CITATION], as well as LAPACK's 
+    // LAPACK Working Note 89, 1993 [CITATION], as well as LAPACK's
     // {s,d}laed4 [CITATION]). The loop direction is chosen to heuristically
     // sum from small to large components.
     state.psiMinus = 0;
@@ -237,7 +237,7 @@ void SecularInitialGuess
     // Again use LAPACK's {s,d}laed4's [CITATION] suggestion that the
     // diagonal entries minus the center roots be computed in a safe
     // (but somewhat obscured) manner.
-    for( Int j=0; j<n; ++j ) 
+    for( Int j=0; j<n; ++j )
         state.dMinusShift(j) = (d(j) - d(k)) - shiftedCenter;
 
     // Given the partition of the secular equation as
@@ -257,12 +257,12 @@ void SecularInitialGuess
     //
     // and split off the last term of psi_k(x) and first term of phi_k(x)
     // so that the initial condition can be subsequently quickly computed.
-    // We denote psi_k and phi_k evaluated at the center point with said 
+    // We denote psi_k and phi_k evaluated at the center point with said
     // terms removed as 'psiMinus' and 'phiMinus', respectively.
     state.psiMinus = zero;
     for( Int j=0; j<k; ++j )
         state.psiMinus += z(j)*z(j) / state.dMinusShift(j);
-    Real phiMinus = zero; 
+    Real phiMinus = zero;
     for( Int j=k+2; j<n; ++j )
         phiMinus += z(j)*z(j) / state.dMinusShift(j);
 
@@ -271,7 +271,7 @@ void SecularInitialGuess
     //   f(center) = (1/rho) + psiMinus + phiMinus +
     //       z(k)^2 / (d(k) - center) + z(k+1)^2 / (d(k+1) - center),
     //
-    // where the top row will turn out to be the 'a' coefficient of a 
+    // where the top row will turn out to be the 'a' coefficient of a
     // quadratic equation a x^2 + b x + c = 0 that we will solve to compute
     // the initial guess for the sought-after eigenvalue. But recall that
     // we should carefully compute (d(j) - center).
@@ -281,7 +281,7 @@ void SecularInitialGuess
 
     if( secularCenter >= zero )
     {
-        // The eigenvalue lives in (d(k), center), so we solve the 
+        // The eigenvalue lives in (d(k), center), so we solve the
         // quadratic equation
         //
         //   a + z(k)^2 / (d(k) - x) + z(k+1)^2 / (d(k+1) - x) = 0,
@@ -295,11 +295,11 @@ void SecularInitialGuess
         // with gap = d(k+1) - d(k).
         state.originOnLeft = true;
         state.origin = k;
-        state.rootRelLowerBound = zero; 
+        state.rootRelLowerBound = zero;
         state.rootRelUpperBound = shiftedCenter;
         const Real bNeg = a*state.diagDiff + z(k)*z(k) + z(k+1)*z(k+1);
         const Real c = z(k)*z(k)*state.diagDiff;
-        state.rootRelEst = SolveQuadraticMinus( a, bNeg, c, ctrl.negativeFix ); 
+        state.rootRelEst = SolveQuadraticMinus( a, bNeg, c, ctrl.negativeFix );
     }
     else
     {
@@ -318,7 +318,7 @@ void SecularInitialGuess
         state.originOnLeft = false;
         state.origin = k+1;
         state.rootRelLowerBound = -shiftedCenter;
-        state.rootRelUpperBound = 0; 
+        state.rootRelUpperBound = 0;
         const Real bNeg = -a*state.diagDiff + z(k)*z(k) + z(k+1)*z(k+1);
         const Real c = -z(k+1)*z(k+1)*state.diagDiff;
         state.rootRelEst = SolveQuadraticMinus( a, bNeg, c, ctrl.negativeFix );
@@ -329,7 +329,7 @@ void SecularInitialGuess
          state.rootRelUpperBound,"]");
 
     state.rootEst = state.rootRelEst + d(state.origin);
-    for( Int j=0; j<n; ++j ) 
+    for( Int j=0; j<n; ++j )
         state.dMinusShift(j) = (d(j) - d(state.origin)) - state.rootRelEst;
 
     EvaluateSecular( rho, z, state, ctrl.penalizeDerivative );
@@ -360,13 +360,13 @@ void SecularInitialGuessLast
     //   d(n-1) + (0, rho ||z||_2^2) = d(n-1) + (0, rho),
     //
     // we use the center as our initial guess. Therefore, put
-    // 
+    //
     //   rootRelEst = (rho ||z||_2^2) / 2 = rho / 2 = rootEst - d(n-1).
     //
     const Real shiftedCenter = rho / 2;
     state.rootRelEst = shiftedCenter;
     state.rootEst = state.rootRelEst + d(origin);
-    for( Int j=0; j<n; ++j ) 
+    for( Int j=0; j<n; ++j )
     {
         state.dMinusShift(j) = (d(j) - d(origin)) - state.rootRelEst;
     }
@@ -421,7 +421,7 @@ void SecularInitialGuessLast
         //  f_{n-1,n-2}(y) + z(n-2)^2 / (d(n-2) - x) +
         //                   z(n-1)^2 / (d(n-1) - x),
         //
-        // where f_{n-1,n-2}(y) is the secular equation, with the (n-1)'th and 
+        // where f_{n-1,n-2}(y) is the secular equation, with the (n-1)'th and
         // (n-2)'th terms removed, evaluated at the current estimate. We solve
         // for a root of this equation in terms of tau = x - d(n-1).
         // In particular, we pick the '-' branch of the quadratic equation.
@@ -439,7 +439,7 @@ void SecularInitialGuessLast
          state.rootRelUpperBound,"]");
 
     state.rootEst = state.rootRelEst + d(origin);
-    for( Int j=0; j<n; ++j ) 
+    for( Int j=0; j<n; ++j )
         state.dMinusShift(j) = (d(j) - d(origin)) - state.rootRelEst;
     EvaluateSecularLast( rho, z, state, ctrl.penalizeDerivative );
 }
@@ -478,7 +478,7 @@ void SecularUpdate
     {
         // Use the "Hybrid Scheme" described in subsection 3.4 of LAWN 89
         // [CITATION] and implemented within {s,d}laed4 [CITATION].
- 
+
         // Carefully compute
         //
         //   leftGap = d(origin-1) - rootEst, and
@@ -506,8 +506,8 @@ void SecularUpdate
                 // Since the shift origin, m, is k, We will interpolate the
                 // secular equation as
                 //
-                //  Q(x; a, s, S) = a + z(m-1)^2 / (d(m-1) - x) + 
-                //                      z(m  )^2 / (d(m  ) - x) + 
+                //  Q(x; a, s, S) = a + z(m-1)^2 / (d(m-1) - x) +
+                //                      z(m  )^2 / (d(m  ) - x) +
                 //                      S        / (d(m+1) - x),
                 //
                 // which can be effected by applying the Middle Way, the Fixed
@@ -519,7 +519,7 @@ void SecularUpdate
                 // We balance between the Fixed Weight Method and the Middle
                 // Way; their formulae for computing a are identical. In both
                 // cases,
-                // 
+                //
                 //  a = f_m - rightGap*f'_m +
                 //      (z(m-1)/leftGap)^2*(d(m+1)-d(m-1)).
                 //
@@ -543,7 +543,7 @@ void SecularUpdate
                 // flips leads to mirroring LAPACK.
                 const Real psiDoubleMinusDeriv =
                   Max( state.psiMinusDeriv-leftDerivTerm, zero );
-    
+
                 zCubic(0) = z(origin-1)*z(origin-1);
                 zCubic(1) = z(origin)*z(origin);
                 zCubic(2) =
@@ -567,7 +567,7 @@ void SecularUpdate
                 // We balance between the Fixed Weight Method and the Middle
                 // Way; their formulae for computing a are identical. In both
                 // cases,
-                // 
+                //
                 //  a = f_m - leftGap*f'_m -
                 //      (z(m+1)/rightGap)^2*(d(m+1)-d(m-1)),
                 //
@@ -591,7 +591,7 @@ void SecularUpdate
                 // flips leads to mirroring LAPACK.
                 const Real phiMinusDeriv =
                   Max( state.phiDeriv-mPlusDerivTerm, zero );
-            
+
                 zCubic(0) = leftGap*leftGap*(state.psiMinusDeriv+phiMinusDeriv);
                 zCubic(1) = z(origin)*z(origin);
                 zCubic(2) = z(origin+1)*z(origin+1);
@@ -618,7 +618,7 @@ void SecularUpdate
         {
             // For some reason, LAPACK's {s,d}laed4 [CITATION] choose to fail
             // if the cubic iteration did not succeed, but {s,d}lasd4 [CITATION]
-            // uses a recovery process analogous to what follows. We will part 
+            // uses a recovery process analogous to what follows. We will part
             // ways with LAPACK here and run the recovery process rather than
             // simply failing.
             if( ctrl.progress )
@@ -654,7 +654,7 @@ void SecularUpdate
                 }
                 else
                 {
-                    bNeg = z(k+1)*z(k+1) + kGap*kGap*state.secularMinusDeriv; 
+                    bNeg = z(k+1)*z(k+1) + kGap*kGap*state.secularMinusDeriv;
                 }
             }
             eta = SolveQuadraticMinus( a, bNeg, c, ctrl.negativeFix );
@@ -707,7 +707,7 @@ void SecularUpdate
                 //  s = z(k)^2,
                 //  S = kp1Gap^2 (f' - z(k)^2/kGap^2),
                 //
-                // where y is the current estimate of the k'th eigenvalue and 
+                // where y is the current estimate of the k'th eigenvalue and
                 // f and f' are the secular equation and its derivative
                 // evaluated at y.
                 const Real temp = z(k) / kGap;
@@ -857,7 +857,7 @@ void SecularUpdateLast
         {
             // TODO(poulson): Explain this special case.
             //
-            // Note that LAPACK's {s,d}lasd4 [CITATION] uses the equivalent of 
+            // Note that LAPACK's {s,d}lasd4 [CITATION] uses the equivalent of
             //
             //     eta = rho - rootEst,
             //
@@ -872,7 +872,7 @@ void SecularUpdateLast
             // interpolated as G(x; d(n-2)^2, r, s) and phi_{n-2}(x) exactly
             // represented as F(x; p, q). See the discussion surrounding Eq'n
             // (23) of LAWN 89 [CITATION], but keep in mind that we use the
-            // definitions (a,b,c) corresponding to the standard quadratic 
+            // definitions (a,b,c) corresponding to the standard quadratic
             // equation a x^2 + b x + c = 0 rather than the notation of LAWN 89.
             const Real bNeg =
               (kGap+km1Gap)*state.secular -
@@ -905,13 +905,13 @@ void SecularUpdateLast
     {
         if( ctrl.progress )
             Output("Stepped out of bounds");
-        // Move halfway towards the bound instead of exceeding it. Note that 
+        // Move halfway towards the bound instead of exceeding it. Note that
         // LAPACK's {s,d}laed4 [CITATION] follows this strategy, but LAPACK's
         // {s,d}lasd4 uses trivial upper and lower bounds rather than
         // continually updating them.
         if( state.secular < zero )
             eta = (state.rootRelUpperBound - state.rootRelEst) / 2;
-        else 
+        else
             eta = (state.rootRelLowerBound - state.rootRelEst) / 2;
     }
 
@@ -968,13 +968,13 @@ SecularInner
     state.alternateStrategy = false;
     SecularUpdate( initialize, k, d, rho, z, state, info, ctrl );
     ++info.numIterations;
-   
+
     // This strategy was described in Ren-Cang Li's LAWN 89
     if( state.originOnLeft )
     {
         if( -state.secular > Abs(state.secularOld)*ctrl.sufficientDecay )
         {
-            state.alternateStrategy = true;        
+            state.alternateStrategy = true;
             ++info.numAlternations;
         }
     }
@@ -996,7 +996,7 @@ SecularInner
               RuntimeError("Produced non-finite rootEst=",state.rootEst);
           }
         )
-        if( Abs(state.secular) <= eps*state.relErrorBound ) 
+        if( Abs(state.secular) <= eps*state.relErrorBound )
         {
             // We have converged
             break;
@@ -1011,7 +1011,7 @@ SecularInner
         // Decide the next step
         SecularUpdate( initialize, k, d, rho, z, state, info, ctrl );
         ++info.numIterations;
-   
+
         // This strategy was described in Ren-Cang Li's LAWN 89
         if( state.secular*state.secularOld > zero &&
             Abs(state.secular) > Abs(state.secularOld)*ctrl.sufficientDecay )
@@ -1036,9 +1036,9 @@ SecularLast
 {
     EL_DEBUG_CSE
     const Real eps = limits::Epsilon<Real>();
-    const Int k = whichValue;
     const Int n = d.Height();
     EL_DEBUG_ONLY(
+      const Int k = whichValue;
       if( k != n-1 )
           LogicError("SecularLast meant for largest eigenvalue");
       if( n <= 2 )
@@ -1063,7 +1063,7 @@ SecularLast
     initialize = false;
     while( true )
     {
-        if( Abs(state.secular) <= eps*state.relErrorBound ) 
+        if( Abs(state.secular) <= eps*state.relErrorBound )
         {
             // We have converged
             break;
@@ -1309,7 +1309,7 @@ SecularEVD
         // While we will temporarily store dMinusShift in the j'th column of Q.
         auto q = Q(ALL,IR(j));
         auto valueInfo = SecularEigenvalue( j, d, rho, z, w(j), q, ctrl );
-        
+
         info.numIterations += valueInfo.numIterations;
         info.numAlternations += valueInfo.numAlternations;
         info.numCubicIterations += valueInfo.numCubicIterations;

@@ -57,9 +57,9 @@ template<typename Real,
 ValueInt<Real> VectorMinLoc( const AbstractDistMatrix<Real>& x )
 {
     EL_DEBUG_CSE
-    const Int m = x.Height();
     const Int n = x.Width();
     EL_DEBUG_ONLY(
+      const Int m = x.Height();
       if( m != 1 && n != 1 )
           LogicError("Input should have been a vector");
       if( !x.Grid().InGrid() )

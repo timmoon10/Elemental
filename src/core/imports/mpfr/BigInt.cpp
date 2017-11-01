@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
@@ -92,7 +92,7 @@ BigInt::BigInt( const unsigned long long& a, int numBits )
         const size_t count = 1;
         const int order = 1;  // most-significant first
         const size_t size = sizeof(a);
-        const int endian = 0; // native endianness 
+        const int endian = 0; // native endianness
         const size_t nails = 0; // do not skip any bits
         mpz_import( Pointer(), count, order, size, endian, nails, &a );
     }
@@ -128,7 +128,7 @@ BigInt::BigInt( const long long int& a, int numBits )
         const size_t count = 1;
         const int order = 1;  // most-significant first
         const size_t size = sizeof(a);
-        const int endian = 0; // native endianness 
+        const int endian = 0; // native endianness
         const size_t nails = 0; // do not skip any bits
         mpz_import( Pointer(), count, order, size, endian, nails, &a );
         // We must manually handle the sign
@@ -208,7 +208,7 @@ BigInt& BigInt::operator=( const unsigned long long& a )
         const size_t count = 1;
         const int order = 1;  // most-significant first
         const size_t size = sizeof(a);
-        const int endian = 0; // native endianness 
+        const int endian = 0; // native endianness
         const size_t nails = 0; // do not skip any bits
         mpz_import( Pointer(), count, order, size, endian, nails, &a );
     }
@@ -244,7 +244,7 @@ BigInt& BigInt::operator=( const long long int& a )
         const size_t count = 1;
         const int order = 1;  // most-significant first
         const size_t size = sizeof(a);
-        const int endian = 0; // native endianness 
+        const int endian = 0; // native endianness
         const size_t nails = 0; // do not skip any bits
         mpz_import( Pointer(), count, order, size, endian, nails, &a );
         // We must manually handle the sign
@@ -460,7 +460,7 @@ BigInt& BigInt::operator--()
 BigInt BigInt::operator--(int)
 {
     BigInt result(*this);
-    --(*this); 
+    --(*this);
     return result;
 }
 
@@ -628,8 +628,8 @@ BigInt::operator unsigned long long() const
 {
     unsigned long long a;
 
-    const size_t neededSize = mpz_sizeinbase(LockedPointer(),2);
     EL_DEBUG_ONLY(
+      const size_t neededSize = mpz_sizeinbase(LockedPointer(),2);
       if( neededSize > sizeof(a) )
           LogicError
           ("Don't have space for ",neededSize," bits in unsigned long long");
@@ -637,7 +637,7 @@ BigInt::operator unsigned long long() const
 
     const int order = 1;  // most-significant first
     const size_t size = sizeof(a);
-    const int endian = 0; // native endianness 
+    const int endian = 0; // native endianness
     const size_t nails = 0; // do not skip any bits
 
     size_t count;
@@ -655,8 +655,8 @@ BigInt::operator long long int() const
 {
     long long int a;
 
-    const size_t neededSize = mpz_sizeinbase(LockedPointer(),2);
     EL_DEBUG_ONLY(
+      const size_t neededSize = mpz_sizeinbase(LockedPointer(),2);
       if( neededSize >= sizeof(a) )
           LogicError
           ("Don't have space for ",neededSize," bits in long long int");
@@ -664,7 +664,7 @@ BigInt::operator long long int() const
 
     const int order = 1;  // most-significant first
     const size_t size = sizeof(a);
-    const int endian = 0; // native endianness 
+    const int endian = 0; // native endianness
     const size_t nails = 0; // do not skip any bits
 
     size_t count;
@@ -722,7 +722,7 @@ size_t BigInt::SerializedSize( int numLimbs ) const
           LogicError
           ("Upper bound of numLimbs=",numLimbs," < ",NumLimbs());
     )
-    return sizeof(int) + sizeof(mp_limb_t)*numLimbs; 
+    return sizeof(int) + sizeof(mp_limb_t)*numLimbs;
 }
 
 byte* BigInt::ThinSerialize( byte* buf ) const
@@ -1039,7 +1039,7 @@ bool operator<( const long int& a, const BigInt& b )
 { return mpz_cmp_si(b.LockedPointer(),a) > 0; }
 
 bool operator<( const long long int& a, const BigInt& b )
-{ 
+{
     if( (a >=0 && a <= static_cast<long long int>(LONG_MAX)) ||
         (a < 0 && a >= static_cast<long long int>(LONG_MIN)) )
     {

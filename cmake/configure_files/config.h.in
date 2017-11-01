@@ -16,7 +16,11 @@
 #define EL_VERSION_MAJOR "@EL_VERSION_MAJOR@"
 #define EL_VERSION_MINOR "@EL_VERSION_MINOR@"
 #define EL_CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
-#cmakedefine EL_RELEASE
+
+#ifdef HYDROGEN_RELEASE_BUILD
+#define EL_RELEASE
+#endif
+
 #cmakedefine EL_HYBRID
 #cmakedefine BUILD_SHARED_LIBS
 #cmakedefine MSVC

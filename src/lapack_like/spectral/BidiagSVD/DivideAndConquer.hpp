@@ -72,8 +72,8 @@ Merge
     const Int m1 = s1.Height();
     const Int n0 = m0 + 1;
     const Int n1 = n - n0;
-    const bool square = ( m1 == n1 );
     EL_DEBUG_ONLY(
+      const bool square = ( m1 == n1 );
       if( !square && n1 != m1+1 )
           LogicError("B1 has to be square or one column wider than tall");
     )
@@ -905,8 +905,8 @@ Merge
     const Int m1 = s1.Height();
     const Int n0 = m0 + 1;
     const Int n1 = n - n0;
-    const bool square = ( m1 == n1 );
     EL_DEBUG_ONLY(
+      const bool square = ( m1 == n1 );
       if( !square && n1 != m1+1 )
           LogicError("B1 has to be square or one column wider than tall");
     )
