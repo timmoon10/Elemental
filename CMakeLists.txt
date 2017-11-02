@@ -45,6 +45,8 @@ elseif (CXX_COMPILER_HAS_WPEDANTIC_FLAG)
 endif()
 
 # Configuration options
+option(${PROJECT_NAME}_ENABLE_TESTING "Build the test suite." ON)
+
 option(${PROJECT_NAME}_ENABLE_QUADMATH
   "Search for quadmath library and enable related features if found." OFF)
 
@@ -197,6 +199,12 @@ if (BUILD_SHARED_LIBS)
     target_link_libraries(${PROJECT_NAME} PUBLIC "-Wl,-no-undefined")
   endif()
 endif()
+
+# Setup the tests
+if (${PROJECT_NAME}_ENABLE_TESTING)
+  enable_testing()
+  add_subdirectory(tests)
+endif ()
 
 # Setup the library install
 install(TARGETS ${PROJECT_NAME}
