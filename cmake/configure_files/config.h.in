@@ -21,6 +21,10 @@
 #define EL_RELEASE
 #endif
 
+#ifdef Hydrogen_EXPORTS
+#define EL_EXPORTS
+#endif
+
 #cmakedefine EL_HYBRID
 #cmakedefine BUILD_SHARED_LIBS
 #cmakedefine MSVC

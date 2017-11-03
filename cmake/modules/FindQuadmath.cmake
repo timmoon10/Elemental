@@ -19,7 +19,7 @@ find_library(QUADMATH_LIBRARY quadmath
 find_library(QUADMATH_LIBRARY quadmath)
 
 # Check that we can compile with quadmath library
-if (QUADMATH_LIBRARY AND QUADMATH_INCLUDE_DIR)
+if (QUADMATH_LIBRARY AND QUADMATH_INCLUDE_DIR AND NOT QUADMATH_TEST_RUN)
   set(CMAKE_REQUIRED_LIBRARIES "${QUADMATH_LIBRARY}")
   set(CMAKE_REQUIRED_INCLUDES "${QUADMATH_INCLUDE_DIR}")
   set(QUADMATH_CODE "
@@ -41,11 +41,13 @@ int main( int argc, char* argv[] )
 }")
 
   check_cxx_source_compiles("${QUADMATH_CODE}" QUADMATH_WORKS)
+  set(QUADMATH_TEST_RUN 1 CACHE INTERNAL "Whether the QUADMATH test has run")
   unset(CMAKE_REQUIRED_INCLUDES)
   unset(CMAKE_REQUIRED_LIBRARIES)
 
   if (NOT QUADMATH_WORKS)
 
+    set(${PROJECT_NAME}_ENABLE_QUADMATH OFF)
     message(WARNING "Found libquadmath but could compile with it.")
 
   endif ()
@@ -57,12 +59,12 @@ find_package_handle_standard_args(Quadmath DEFAULT_MSG
 
 if (NOT TARGET EP::quadmath)
   add_library(EP::quadmath INTERFACE IMPORTED)
-  
+
   set_property(TARGET EP::quadmath
     PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${QUADMATH_INCLUDE_DIR}")
   set_property(TARGET EP::quadmath
     PROPERTY INTERFACE_LINK_LIBRARIES "${QUADMATH_LIBRARY}")
-endif ()  
+endif ()
 
 set(QUADMATH_LIBRARIES EP::quadmath)
 mark_as_advanced(QUADMATH_INCLUDE_DIR QUADMATH_LIBRARY)
