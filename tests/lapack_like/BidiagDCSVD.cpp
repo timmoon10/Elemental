@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El.hpp>
@@ -27,7 +27,7 @@ void PrintSVDResiduals
     Output("m=",m,", n=",n,", minDim=",minDim);
     if( print )
     {
-        Print( U, "U" ); 
+        Print( U, "U" );
         Print( s, "s" );
         Print( V, "V" );
     }
@@ -62,29 +62,29 @@ void PrintSVDResiduals
         LogicError("SVD residual was unacceptably large");
 
     // Check the unitarity of U
-    Matrix<F> E; 
+    Matrix<F> E;
     Identity( E, U.Width(), U.Width() );
     Herk( LOWER, ADJOINT, Real(-1), U, Real(1), E );
     const Real UOrthogFrob = HermitianFrobeniusNorm( LOWER, E );
     Output("|| I - U' U ||_F = ",UOrthogFrob);
     // TODO(poulson): Failure condition
-    
+
     // Check the unitarity of V
     Identity( E, V.Width(), V.Width() );
     Herk( LOWER, ADJOINT, Real(-1), V, Real(1), E );
     const Real VOrthogFrob = HermitianFrobeniusNorm( LOWER, E );
-    Output("|| I - V' V ||_F = ",UOrthogFrob);
+    Output("|| I - V' V ||_F = ",VOrthogFrob);
     // TODO(poulson): Failure condition
 }
 
 template<typename F>
 void TestDivideAndConquer
 ( Int m,
-  UpperOrLower uplo, 
+  UpperOrLower uplo,
   bool wantU,
   bool wantV,
   Int cutoff,
-  Int maxIter,  
+  Int maxIter,
   Int maxCubicIter,
   FlipOrClip negativeFix,
   bool progress,
@@ -133,7 +133,7 @@ void TestDivideAndConquer
     Output("Bidiag D&C: ",timer.Stop()," seconds");
     Output("  num deflations: ",secularInfo.numDeflations);
     Output("    small diagonal: ",secularInfo.numSmallDiagonalDeflations);
-    Output("    close diagonal: ",secularInfo.numCloseDiagonalDeflations); 
+    Output("    close diagonal: ",secularInfo.numCloseDiagonalDeflations);
     Output("    small update:   ",secularInfo.numSmallUpdateDeflations);
     Output("  num secular iterations: ",secularInfo.numIterations);
     Output("  num secular alternations: ",secularInfo.numAlternations);
@@ -162,7 +162,7 @@ void TestDivideAndConquer
     Output("QR algorithm: ",timer.Stop()," seconds");
     if( wantU && wantV )
     {
-        Output("Residuals with QR:"); 
+        Output("Residuals with QR:");
         PushIndent();
         PrintSVDResiduals( uplo, mainDiag, offDiag, U, s, V, print );
         PopIndent();
