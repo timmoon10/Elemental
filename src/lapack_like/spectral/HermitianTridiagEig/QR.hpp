@@ -101,7 +101,7 @@ void QLSweep
     EL_DEBUG_CSE
     typedef Base<Field> Real;
     const Int n = d.Height();
-    const Real zero(0), one(1), two(2);
+    const Real zero(0), two(2);
     if( wantEigVecs )
     {
         cList.Resize( n-1, 1 );
@@ -154,7 +154,7 @@ void QRSweep
     EL_DEBUG_CSE
     typedef Base<Field> Real;
     const Int n = d.Height();
-    const Real zero(0), one(1), two(2);
+    const Real zero(0), two(2);
     cList.Resize( n-1, 1 );
     sList.Resize( n-1, 1 );
 
