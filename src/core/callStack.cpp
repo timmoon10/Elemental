@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
@@ -22,13 +22,13 @@ EL_DEBUG_ONLY(
 namespace El {
 
 // If we are not in RELEASE mode, then implement wrappers for a call stack
-EL_DEBUG_ONLY(
+#ifndef EL_RELEASE
 
   void EnableTracing() { ::tracingEnabled = true; }
   void DisableTracing() { ::tracingEnabled = false; }
 
   void PushCallStack( string s )
-  { 
+  {
       // [1]:
       // It was discovered that a global instantiation of a BigInt
       // (::bigIntZero) led to pushing to the call stack in global scope
@@ -48,20 +48,20 @@ EL_DEBUG_ONLY(
           DumpCallStack();
           return;
       }
-      ::callStack.push(s); 
+      ::callStack.push(s);
       if( ::tracingEnabled )
       {
           const int stackSize = ::callStack.size();
           ostringstream os;
           for( int j=0; j<stackSize; ++j )
-              os << " "; 
+              os << " ";
           os << s << endl;
           cout <<  os.str();
       }
   }
 
   void PopCallStack()
-  { 
+  {
       // See note [1] above.
       if( !Initialized() )
           return;
@@ -71,7 +71,7 @@ EL_DEBUG_ONLY(
 #endif
       if( ::callStack.empty() )
           LogicError("Attempted to pop an empty call stack");
-      ::callStack.pop(); 
+      ::callStack.pop();
   }
 
   void DumpCallStack( ostream& os )
@@ -79,7 +79,7 @@ EL_DEBUG_ONLY(
       ostringstream msg;
       while( ! ::callStack.empty() )
       {
-          msg << "[" << ::callStack.size() << "]: " << ::callStack.top() 
+          msg << "[" << ::callStack.size() << "]: " << ::callStack.top()
               << "\n";
           ::callStack.pop();
       }
@@ -87,6 +87,6 @@ EL_DEBUG_ONLY(
       os.flush();
   }
 
-) // EL_DEBUG_ONLY
+#endif // EL_RELEASE
 
 } // namespace El
