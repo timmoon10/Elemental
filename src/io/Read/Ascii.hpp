@@ -2,19 +2,24 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_READ_ASCII_HPP
 #define EL_READ_ASCII_HPP
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 namespace El {
 namespace read {
 
 template<typename T>
 inline void
-Ascii( Matrix<T>& A, const string filename )
+Ascii( Matrix<T>& A, string const& filename )
 {
     EL_DEBUG_CSE
     std::ifstream file( filename.c_str() );
@@ -24,9 +29,12 @@ Ascii( Matrix<T>& A, const string filename )
     // Walk through the file once to both count the number of rows and
     // columns and to ensure that the number of columns is consistent
     Int height=0, width=0;
-    string line;
-    while( std::getline( file, line ) )
+    std::string line;
+    for ( ;; )
     {
+        if (!std::getline( file, line ))
+            break;
+
         std::stringstream lineStream( line );
         Int numCols=0;
         T value;
@@ -46,8 +54,11 @@ Ascii( Matrix<T>& A, const string filename )
     // Resize the matrix and then read it
     A.Resize( height, width );
     Int i=0;
-    while( std::getline( file, line ) )
+    for ( ;; )
     {
+        if (!std::getline(file, line))
+            break;
+
         std::stringstream lineStream( line );
         Int j=0;
         T value;
@@ -62,7 +73,7 @@ Ascii( Matrix<T>& A, const string filename )
 
 template<typename T>
 inline void
-Ascii( AbstractDistMatrix<T>& A, const string filename )
+Ascii( AbstractDistMatrix<T>& A, string const& filename )
 {
     EL_DEBUG_CSE
     std::ifstream file( filename.c_str() );
@@ -73,8 +84,11 @@ Ascii( AbstractDistMatrix<T>& A, const string filename )
     // columns and to ensure that the number of columns is consistent
     Int height=0, width=0;
     string line;
-    while( std::getline( file, line ) )
+    for ( ;; )
     {
+        if (!std::getline(file, line))
+            break;
+
         std::stringstream lineStream( line );
         Int numCols=0;
         T value;
@@ -94,8 +108,11 @@ Ascii( AbstractDistMatrix<T>& A, const string filename )
     // Resize the matrix and then read in our local portion
     A.Resize( height, width );
     Int i=0;
-    while( std::getline( file, line ) )
+    for ( ;; )
     {
+        if (!std::getline(file, line))
+            break;
+
         std::stringstream lineStream( line );
         Int j=0;
         T value;
