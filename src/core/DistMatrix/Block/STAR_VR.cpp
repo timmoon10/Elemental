@@ -262,7 +262,7 @@ int BDM::PartialUnionColRank() const EL_NO_EXCEPT
            DistMatrix<T,COLDIST,ROWDIST,BLOCK>::operator= \
            ( const DistMatrix<T,U,V>& A )
 #define BOTH(T,U,V) \
-  SELF(T,U,V); \
+  SELF(T,U,V) \
   OTHER(T,U,V)
 #define PROTO(T) \
   template class DistMatrix<T,COLDIST,ROWDIST,BLOCK>; \

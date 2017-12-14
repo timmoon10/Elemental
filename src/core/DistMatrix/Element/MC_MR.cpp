@@ -257,7 +257,7 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
            DistMatrix<T,COLDIST,ROWDIST>::operator= \
            ( const DistMatrix<T,U,V,BLOCK>& A )
 #define BOTH(T,U,V) \
-  SELF(T,U,V); \
+  SELF(T,U,V) \
   OTHER(T,U,V)
 #define PROTO(T) \
   template class DistMatrix<T,COLDIST,ROWDIST>; \
