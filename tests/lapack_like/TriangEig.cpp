@@ -408,7 +408,7 @@ main( int argc, char* argv[] )
         PrintInputReport();
 
         bool testNonstandard = true;
-        if( whichMatrix == 1 || whichMatrix == 2 )
+        if (( whichMatrix == 1 ) || ( whichMatrix == 2 ))
         {
             testReal = false;
             testNonstandard = false;
@@ -450,6 +450,8 @@ main( int argc, char* argv[] )
             if( testCpx && testNonstandard )
                 TestTriangEig<Complex<Quad>>
                 ( n, correctness, print, whichMatrix );
+#else
+            (void) testNonstandard;
 #endif
 
 #ifdef EL_HAVE_QD
