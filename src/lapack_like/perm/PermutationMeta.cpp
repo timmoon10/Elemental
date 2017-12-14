@@ -90,15 +90,17 @@ PermutationMeta::PermutationMeta
         }
     }
 
+    // FIXME (trb 12/14/17): This was only executed in debug
+    // mode. Since these displs are actually used in all modes, so
+    // this led to runtime errors in, say, release mode. :/
+
     // Construct the send and recv displacements from the counts
-    EL_DEBUG_ONLY(
-      const Int totalSend = Scan( sendCounts, sendDispls );
-      const Int totalRecv = Scan( recvCounts, recvDispls );
-      if( totalSend != totalRecv )
-          LogicError
-          ("Send and recv counts do not match: send=",totalSend,", recv=",
-           totalRecv);
-    )
+    const Int totalSend = Scan( sendCounts, sendDispls );
+    const Int totalRecv = Scan( recvCounts, recvDispls );
+    if( totalSend != totalRecv )
+        LogicError
+            ("Send and recv counts do not match: send=",totalSend,", recv=",
+             totalRecv);
 }
 
 } // namespace El
