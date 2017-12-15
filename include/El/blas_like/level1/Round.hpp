@@ -24,11 +24,21 @@ void Round( Matrix<T>& A )
 template<>
 inline void Round( Matrix<Int>& /*A*/ )
 { }
+#ifdef EL_INSTANTIATE_BLAS_LEVEL1
+#define PROTO_INT
+#define EL_NO_INT_PROTO
+#endif
 
 #ifdef HYDROGEN_HAVE_MPC
 template<>
 inline void Round( Matrix<BigInt>& /*A*/ )
 { }
+#ifdef EL_INSTANTIATE_BLAS_LEVEL1
+#define PROTO_BIGINT
+#ifndef EL_NO_INT_PROTO
+#define EL_NO_INT_PROTO
+#endif
+#endif
 #endif
 
 template<typename T>
