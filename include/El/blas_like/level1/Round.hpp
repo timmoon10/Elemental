@@ -45,6 +45,11 @@ template<typename T>
 void Round( AbstractDistMatrix<T>& A )
 { Round( A.Matrix() ); }
 
+// FIXME
+template<>
+inline void Round( AbstractDistMatrix<Int>& A )
+{ Round( A.Matrix() ); }
+
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else

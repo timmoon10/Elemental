@@ -20,13 +20,13 @@ if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
 endif ()
 
 # Prevent in-source builds
-if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   message(FATAL_ERROR
     "In-source build attempted; please clean the CMake cache and then "
     "switch to an out-of-source build, e.g.,\n"
     "rm CMakeCache.txt && rm -Rf CMakeFiles/\nmkdir build/ && "
     "cd build/ && cmake ..\n")
-endif()
+endif ()
 
 # Set the module path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -42,9 +42,11 @@ if (CXX_COMPILER_HAS_PEDANTIC_FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
 elseif (CXX_COMPILER_HAS_WPEDANTIC_FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wpedantic")
-endif()
+endif ()
 
 # Configuration options
+option(${PROJECT_NAME}_ENABLE_CUDA "Build with CUDA support." ON)
+
 option(${PROJECT_NAME}_ENABLE_TESTING "Build the test suite." ON)
 
 option(${PROJECT_NAME}_ENABLE_QUADMATH
@@ -140,6 +142,46 @@ mark_as_advanced(${PROJECT_NAME}_VECTOR_WARNINGS)
 # Check the compiler features
 #
 
+if (${PROJECT_NAME}_ENABLE_CUDA)
+
+  include(CheckLanguage)
+  check_language(CUDA)
+
+  if (CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+
+    if (NOT CMAKE_CUDA_STANDARD OR CMAKE_CUDA_STANDAR EQUAL 98)
+      set(CMAKE_CUDA_STANDARD 11)
+      set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
+    endif ()
+
+    find_package(CUDA) # Enable all the macros
+
+    if (NOT TARGET cuda::toolkit)
+
+      add_library(cuda::toolkit INTERFACE IMPORTED)
+
+      set_property(TARGET cuda::toolkit PROPERTY
+        INTERFACE_LINK_LIBRARIES "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}")
+
+      set_property(TARGET cuda::toolkit PROPERTY
+        INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)
+
+      set_property(TARGET cuda::toolkit PROPERTY
+        INTERFACE_INCLUDE_DIRECTORIES "${CUDA_INCLUDE_DIRS}")
+    endif ()
+    set(HYDROGEN_HAVE_CUDA TRUE)
+
+  else ()
+
+    message(FATAL_ERROR "CUDA support not found. Disabling CUDA the features.")
+    set(${PROJECT_NAME}_ENABLE_CUDA FALSE)
+    set(HYDROGEN_HAVE_CUDA FALSE)
+
+  endif ()
+
+endif (${PROJECT_NAME}_ENABLE_CUDA)
+
 # FIXME: GET RID OF FORTRAN
 include(detect/CXX)
 include(detect/Fortran)
@@ -191,14 +233,17 @@ target_link_libraries(${PROJECT_NAME} PUBLIC pmrrr)
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)
 target_link_libraries(${PROJECT_NAME} PUBLIC EP::extended_precision)
+if (HYDROGEN_HAVE_CUDA)
+  target_link_libraries(${PROJECT_NAME} PUBLIC cuda::toolkit)
+endif ()
 
 if (BUILD_SHARED_LIBS)
   if (APPLE)
     target_link_libraries(${PROJECT_NAME} PUBLIC "-Wl,-undefined,error")
   else ()
     target_link_libraries(${PROJECT_NAME} PUBLIC "-Wl,-no-undefined")
-  endif()
-endif()
+  endif ()
+endif ()
 
 # Setup the tests
 if (${PROJECT_NAME}_ENABLE_TESTING)

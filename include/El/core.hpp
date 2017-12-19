@@ -62,6 +62,8 @@
 
 namespace El {
 
+enum class Device : unsigned char { CPU, GPU };
+
 typedef unsigned char byte;
 
 // If these are changes, you must make sure that they have
@@ -267,7 +269,8 @@ template<typename T=double> class AbstractDistMatrix;
 template<typename T=double> class ElementalMatrix;
 template<typename T=double> class BlockMatrix;
 
-template<typename T=double,Dist U=MC,Dist V=MR,DistWrap wrap=ELEMENT>
+template<typename T=double, Dist U=MC, Dist V=MR,
+         DistWrap wrap=ELEMENT>//, Device=Device::CPU>
 class DistMatrix;
 
 } // namespace El

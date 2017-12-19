@@ -20,4 +20,9 @@
 #cmakedefine HYDROGEN_HAVE_MKL
 #cmakedefine HYDROGEN_HAVE_MKL_GEMMT
 
+// CUDA stuff
+#cmakedefine HYDROGEN_HAVE_CUDA
+#cmakedefine HYDROGEN_HAVE_CUDA_AWARE_MPI
+#cmakedefine HYDROGEN_HAVE_NCCL2
+
 #endif /* HYDROGEN_CONFIG_H */
