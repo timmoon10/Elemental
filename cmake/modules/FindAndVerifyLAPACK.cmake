@@ -55,7 +55,8 @@ if (${PROJECT_NAME}_USE_OpenBLAS AND NOT LAPACK_FOUND)
   # Build OpenBLAS if requested
   if (NOT LAPACK_FOUND)
 
-    find_package(OpenBLAS NO_MODULE REQUIRED)
+    find_package(OpenBLAS NO_MODULE REQUIRED
+      PATH_SUFFIXES lib/cmake/openblas)
 
     # FIXME: So it looks like this might be the only way to trick the
     # FindLAPACK module?? Another possibility is that we just say that
