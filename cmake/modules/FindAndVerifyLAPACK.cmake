@@ -5,8 +5,6 @@
 #   BLA_VENDOR -- If set, use this value and ignore all other options.
 #   Hydrogen_USE_MKL -- If set, look for MKL installations.
 #   Hydrogen_USE_OpenBLAS -- If set, look for OpenBLAS implementation.
-#   Hydrogen_BUILD_OpenBLAS_IF_NOTFOUND -- If set, download and build
-#       OpenBLAS from source.
 #   Hydrogen_USE_ACCELERATE -- If set, skip other searches in favor of
 #       Apple's accelerate framework
 #   Hydrogen_USE_GENERIC_LAPACK -- If set, skip other searches in
@@ -53,8 +51,13 @@ if (${PROJECT_NAME}_USE_OpenBLAS AND NOT LAPACK_FOUND)
   find_package(LAPACK QUIET)
 
   # Build OpenBLAS if requested
-  if (NOT LAPACK_FOUND AND ${PACKAGE_NAME}_BUILD_OpenBLAS_IF_NOTFOUND)
-    include(BuildOpenBLAS)
+  if (NOT LAPACK_FOUND)
+    find_package(OpenBLAS NO_MODULE REQUIRED)
+
+    set(BLAS_LIBRARIES "${OpenBLAS_LIBRARIES}")
+    set(LAPACK_LIBRARIES "${OpenBLAS_LIBRARIES}")
+
+    find_package(LAPACK REQUIRED)
   endif()
 endif (${PROJECT_NAME}_USE_OpenBLAS AND NOT LAPACK_FOUND)
 
