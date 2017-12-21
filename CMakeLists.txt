@@ -57,6 +57,10 @@ option(${PROJECT_NAME}_ENABLE_MPC
   "Search for MPC(+MPFR+GMP) library and enable related features if found."
   OFF)
 
+option(${PROJECT_NAME}_ENABLE_CUDA
+  "Search for CUDA support and enable related features if found."
+  OFF)
+
 # Legacy options, with EL_ prefix intact
 option(BINARY_SUBDIRECTORIES "Install binaries into tree based on type" ON)
 
@@ -69,7 +73,12 @@ option(${PROJECT_NAME}_USE_64BIT_INTS
 option(${PROJECT_NAME}_USE_64BIT_BLAS_INTS
   "Use 64-bit integers for BLAS/LAPACK" OFF)
 if (${PROJECT_NAME}_USE_64BIT_BLAS_INTS)
+  set(EL_USE_64BIT_BLAS_INTS ON)
   set(${PROJECT_NAME}_USE_64BIT_INTS ON)
+endif ()
+
+if (${PROJECT_NAME}_USE_64BIT_INTS)
+  set(EL_USE_64BIT_INTS ON)
 endif ()
 
 option(${PROJECT_NAME}_ZERO_INIT "Initialize buffers to zero by default?" OFF)
@@ -147,6 +156,10 @@ include(detect/Fortran)
 #
 # Find third-party libraries
 #
+
+if (${PROJECT_NAME}_ENABLE_CUDA)
+  include(FindAndVerifyCUDA)
+endif ()
 
 include(FindAndVerifyMPI)
 include(FindAndVerifyLAPACK)
