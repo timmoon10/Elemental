@@ -75,8 +75,8 @@ if (${PROJECT_NAME}_USE_OpenBLAS AND NOT LAPACK_FOUND)
       find_package(LAPACK REQUIRED)
       set(ENV{LD_LIBRARY_PATH} "${_tmp_ld_path}")
     endif ()
-
   endif()
+  set(HYDROGEN_HAVE_OPENBLAS ${LAPACK_FOUND})
 endif (${PROJECT_NAME}_USE_OpenBLAS AND NOT LAPACK_FOUND)
 
 # Check for Accelerate
