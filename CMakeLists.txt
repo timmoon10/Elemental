@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.9)
 
 project(Hydrogen C CXX)
 
@@ -92,6 +92,9 @@ mark_as_advanced(${PROJECT_NAME}_ENABLE_VALGRIND)
 # OpenMP
 #
 
+option(${PROJECT_NAME}_ENABLE_OPENMP
+  "Enable OpenMP support in Hydrogen" OFF)
+
 # At one point, a bug was found in IBM's C++ compiler for Blue Gene/P,
 # where OpenMP statements of the form a[i] += alpha b[i], with complex data,
 # would segfault and/or return incorrect results
@@ -156,6 +159,14 @@ include(detect/Fortran)
 #
 # Find third-party libraries
 #
+
+if (${PROJECT_NAME}_ENABLE_OPENMP)
+  include(FindAndVerifyOpenMP)
+  if (OpenMP_FOUND)
+    set(EL_HYBRID ON)
+    set(EL_HAVE_OPENMP TRUE)
+  endif ()
+endif (${PROJECT_NAME}_ENABLE_OPENMP)
 
 if (${PROJECT_NAME}_ENABLE_CUDA)
   include(FindAndVerifyCUDA)
