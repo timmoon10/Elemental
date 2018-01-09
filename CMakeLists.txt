@@ -219,7 +219,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include>)
 
 if (TARGET OpenMP::OpenMP_CXX)
-  target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+  target_link_libraries(${PROJECT_NAME} PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:OpenMP::OpenMP_CXX>)
 endif ()  
 target_link_libraries(${PROJECT_NAME} PUBLIC pmrrr)
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
