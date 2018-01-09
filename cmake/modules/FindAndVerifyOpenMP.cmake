@@ -1,4 +1,4 @@
-find_package(OpenMP)
+find_package(OpenMP COMPONENTS CXX)
 
 if (NOT OpenMP_FOUND AND APPLE)
 
