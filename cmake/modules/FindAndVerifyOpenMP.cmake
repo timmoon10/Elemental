@@ -14,7 +14,7 @@ if (NOT OpenMP_FOUND AND APPLE)
     message(WARNING "No OpenMP library found.")
   else ()
     get_filename_component(_OpenMP_LIB_DIR "${_OpenMP_LIBRARY}" DIRECTORY)
-    
+
     if (${_OpenMP_LIBRARY} MATCHES "libomp*")
       set(OpenMP_libomp_LIBRARY ${_OpenMP_LIBRARY}
         CACHE PATH "The OpenMP omp library.")
@@ -47,6 +47,10 @@ if (NOT OpenMP_FOUND AND APPLE)
 
   endif (NOT _OpenMP_LIBRARY)
 endif (NOT OpenMP_FOUND AND APPLE)
+
+get_target_property(_OMP_FLAGS OpenMP::OpenMP_CXX INTERFACE_COMPILE_OPTIONS)
+set_property(TARGET OpenMP::OpenMP_CXX PROPERTY
+  INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:${_OMP_FLAGS}>)
 
 set(_OPENMP_TEST_SOURCE
   "
