@@ -17,7 +17,7 @@
 #endif // HYDROGEN_HAVE_CUDA
 
 #include "El/hydrogen_config.h"
-#include "El/core/Memory/decl.hpp"
+#include "decl.hpp"
 
 namespace El
 {
@@ -50,7 +50,7 @@ struct MemHelper<G,Device::GPU>
 {
     static G* New( size_t size)
     {
-        G* dptr;
+        G* dptr = nullptr;
         cudaMalloc(&dptr, size*sizeof(G));
         return dptr;
     }
@@ -64,7 +64,7 @@ struct MemHelper<G,Device::GPU>
 };
 
 #endif // HYDROGEN_HAVE_CUDA
-} // anonymous namespace
+} // namespace <anonymous>
 
 template<typename G, Device D>
 Memory<G,D>::Memory()
@@ -156,12 +156,14 @@ void Memory<G,D>::Empty()
     size_ = 0;
 }
 
+
 #ifdef EL_INSTANTIATE_CORE
 # define EL_EXTERN
 #else
 # define EL_EXTERN extern
 #endif
 
+#if 0
 #define PROTO(T) EL_EXTERN template class Memory<T,Device::CPU>;
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
@@ -169,6 +171,9 @@ void Memory<G,D>::Empty()
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
 #include <El/macros/Instantiate.h>
+#endif // 0
+
+EL_EXTERN template class Memory<double, Device::CPU>;
 
 // GPU instantiations
 EL_EXTERN template class Memory<Int, Device::GPU>;

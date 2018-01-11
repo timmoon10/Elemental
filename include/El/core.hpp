@@ -62,8 +62,6 @@
 
 namespace El {
 
-enum class Device : unsigned char { CPU, GPU };
-
 typedef unsigned char byte;
 
 // If these are changes, you must make sure that they have
@@ -258,11 +256,13 @@ template<typename T> struct IsStdField<Complex<T>>
 
 #include <El/core/limits.hpp>
 
+#include <El/core/Device.hpp>
+
 #include <El/core/Memory.hpp>
 
 namespace El {
 
-template<typename T=double> class Matrix;
+template<typename T=double, Device D=Device::CPU> class Matrix;
 
 template<typename T=double> class AbstractDistMatrix;
 

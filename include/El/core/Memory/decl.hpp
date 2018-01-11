@@ -15,9 +15,6 @@ namespace El
 template<typename G, Device D=Device::CPU>
 class Memory
 {
-    size_t size_;
-    G* rawBuffer_;
-    G* buffer_;
 public:
     Memory();
     Memory(size_t size);
@@ -35,6 +32,10 @@ public:
     G* Require(size_t size);
     void Release();
     void Empty();
+private:
+    size_t size_;
+    G* rawBuffer_;
+    G* buffer_;
 };// class Memory
 
 } // namespace El
