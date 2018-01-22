@@ -325,6 +325,11 @@ private:
     void LockedAttach_(
         Int height, Int width, const Ring* buffer, Int leadingDimension);
 
+    template<typename S, Device D> friend class Matrix;
+    template<typename S> friend class AbstractDistMatrix;
+    template<typename S> friend class ElementalMatrix;
+    template<typename S> friend class BlockMatrix;
+
 private:
 
     El::ViewType viewType_=OWNER;
