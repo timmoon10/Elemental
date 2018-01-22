@@ -9,7 +9,8 @@
 #ifndef EL_DISTMATRIX_ABSTRACT_HPP
 #define EL_DISTMATRIX_ABSTRACT_HPP
 
-namespace El {
+namespace El
+{
 
 struct DistData;
 
@@ -303,7 +304,7 @@ public:
     // --------------
     vector<Entry<Ring>> remoteUpdates;
 
-protected:
+private:
     // Member variables
     // ================
 
@@ -333,6 +334,8 @@ protected:
     //       require separate MPI wrappers from ValueInt<Int>
     mutable vector<ValueInt<Int>> remotePulls_;
 
+protected:
+
     // Protected constructors
     // ======================
     // Create a 0 x 0 distributed matrix
@@ -350,8 +353,8 @@ private:
     void ShallowSwap( type& A );
 
     template<typename S> friend class AbstractDistMatrix;
-    template<typename S> friend class ElementalMatrix;
-    template<typename S> friend class BlockMatrix;
+    template<typename S, Device D> friend class ElementalMatrix;
+    template<typename S, Device D> friend class BlockMatrix;
 };
 
 struct DistData

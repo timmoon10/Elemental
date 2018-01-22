@@ -125,7 +125,7 @@ BDM& BDM::operator=( const BDM& A )
     this->Resize( A.Height(), A.Width() );
     if( this->Grid() == A.Grid() )
     {
-        this->matrix_ = A.LockedMatrix();
+        this->Matrix() = A.LockedMatrix();
     }
     else
     {
@@ -168,7 +168,7 @@ mpi::Comm BDM::CrossComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
 template<typename T>
 mpi::Comm BDM::RedundantComm() const EL_NO_EXCEPT
-{ return this->grid_->VCComm(); }
+{ return Grid().VCComm(); }
 
 template<typename T>
 mpi::Comm BDM::ColComm() const EL_NO_EXCEPT
@@ -196,7 +196,7 @@ int BDM::DistSize() const EL_NO_EXCEPT { return 1; }
 template<typename T>
 int BDM::CrossSize() const EL_NO_EXCEPT { return 1; }
 template<typename T>
-int BDM::RedundantSize() const EL_NO_EXCEPT { return this->grid_->VCSize(); }
+int BDM::RedundantSize() const EL_NO_EXCEPT { return Grid().VCSize(); }
 
 template<typename T>
 int BDM::ColStride() const EL_NO_EXCEPT { return 1; }
@@ -218,7 +218,7 @@ template<typename T>
 int BDM::CrossRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
 template<typename T>
-int BDM::RedundantRank() const EL_NO_EXCEPT { return this->grid_->VCRank(); }
+int BDM::RedundantRank() const EL_NO_EXCEPT { return Grid().VCRank(); }
 
 template<typename T>
 int BDM::ColRank() const EL_NO_EXCEPT

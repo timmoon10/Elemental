@@ -167,7 +167,7 @@ BDM& BDM::operator=( const BlockMatrix<T>& A )
 // =============
 template<typename T>
 mpi::Comm BDM::DistComm() const EL_NO_EXCEPT
-{ return this->grid_->VRComm(); }
+{ return Grid().VRComm(); }
 template<typename T>
 mpi::Comm BDM::CrossComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
@@ -177,17 +177,17 @@ mpi::Comm BDM::RedundantComm() const EL_NO_EXCEPT
 
 template<typename T>
 mpi::Comm BDM::ColComm() const EL_NO_EXCEPT
-{ return this->grid_->VRComm(); }
+{ return Grid().VRComm(); }
 template<typename T>
 mpi::Comm BDM::RowComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
 
 template<typename T>
 mpi::Comm BDM::PartialColComm() const EL_NO_EXCEPT
-{ return this->grid_->MRComm(); }
+{ return Grid().MRComm(); }
 template<typename T>
 mpi::Comm BDM::PartialUnionColComm() const EL_NO_EXCEPT
-{ return this->grid_->MCComm(); }
+{ return Grid().MCComm(); }
 
 template<typename T>
 mpi::Comm BDM::PartialRowComm() const EL_NO_EXCEPT
@@ -198,7 +198,7 @@ mpi::Comm BDM::PartialUnionRowComm() const EL_NO_EXCEPT
 
 template<typename T>
 int BDM::DistSize() const EL_NO_EXCEPT
-{ return this->grid_->VRSize(); }
+{ return Grid().VRSize(); }
 template<typename T>
 int BDM::CrossSize() const EL_NO_EXCEPT
 { return 1; }
@@ -208,16 +208,16 @@ int BDM::RedundantSize() const EL_NO_EXCEPT
 
 template<typename T>
 int BDM::ColStride() const EL_NO_EXCEPT
-{ return this->grid_->VRSize(); }
+{ return Grid().VRSize(); }
 template<typename T>
 int BDM::RowStride() const EL_NO_EXCEPT
 { return 1; }
 template<typename T>
 int BDM::PartialColStride() const EL_NO_EXCEPT
-{ return this->grid_->MRSize(); }
+{ return Grid().MRSize(); }
 template<typename T>
 int BDM::PartialUnionColStride() const EL_NO_EXCEPT
-{ return this->grid_->MCSize(); }
+{ return Grid().MCSize(); }
 template<typename T>
 int BDM::PartialRowStride() const EL_NO_EXCEPT
 { return this->RowStride(); }
@@ -227,7 +227,7 @@ int BDM::PartialUnionRowStride() const EL_NO_EXCEPT
 
 template<typename T>
 int BDM::DistRank() const EL_NO_EXCEPT
-{ return this->grid_->VRRank(); }
+{ return Grid().VRRank(); }
 template<typename T>
 int BDM::CrossRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
@@ -237,16 +237,16 @@ int BDM::RedundantRank() const EL_NO_EXCEPT
 
 template<typename T>
 int BDM::ColRank() const EL_NO_EXCEPT
-{ return this->grid_->VRRank(); }
+{ return Grid().VRRank(); }
 template<typename T>
 int BDM::RowRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
 template<typename T>
 int BDM::PartialColRank() const EL_NO_EXCEPT
-{ return this->grid_->MRRank(); }
+{ return Grid().MRRank(); }
 template<typename T>
 int BDM::PartialUnionColRank() const EL_NO_EXCEPT
-{ return this->grid_->MCRank(); }
+{ return Grid().MCRank(); }
 template<typename T>
 int BDM::PartialRowRank() const EL_NO_EXCEPT
 { return this->RowRank(); }

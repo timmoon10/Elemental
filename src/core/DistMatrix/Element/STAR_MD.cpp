@@ -160,10 +160,10 @@ DM& DM::operator=( const ElementalMatrix<T>& A )
 // =============
 template<typename T>
 mpi::Comm DM::DistComm() const EL_NO_EXCEPT
-{ return this->grid_->MDComm(); }
+{ return Grid().MDComm(); }
 template<typename T>
 mpi::Comm DM::CrossComm() const EL_NO_EXCEPT
-{ return this->grid_->MDPerpComm(); }
+{ return Grid().MDPerpComm(); }
 template<typename T>
 mpi::Comm DM::RedundantComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
@@ -173,7 +173,7 @@ mpi::Comm DM::ColComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
 template<typename T>
 mpi::Comm DM::RowComm() const EL_NO_EXCEPT
-{ return this->grid_->MDComm(); }
+{ return Grid().MDComm(); }
 
 template<typename T>
 mpi::Comm DM::PartialColComm() const EL_NO_EXCEPT
@@ -192,11 +192,11 @@ mpi::Comm DM::PartialUnionRowComm() const EL_NO_EXCEPT
 template<typename T>
 int DM::ColStride() const EL_NO_EXCEPT { return 1; }
 template<typename T>
-int DM::RowStride() const EL_NO_EXCEPT { return this->grid_->LCM(); }
+int DM::RowStride() const EL_NO_EXCEPT { return Grid().LCM(); }
 template<typename T>
-int DM::DistSize() const EL_NO_EXCEPT { return this->grid_->LCM(); }
+int DM::DistSize() const EL_NO_EXCEPT { return Grid().LCM(); }
 template<typename T>
-int DM::CrossSize() const EL_NO_EXCEPT { return this->grid_->GCD(); }
+int DM::CrossSize() const EL_NO_EXCEPT { return Grid().GCD(); }
 template<typename T>
 int DM::RedundantSize() const EL_NO_EXCEPT { return 1; }
 template<typename T>
@@ -210,10 +210,10 @@ int DM::PartialUnionRowStride() const EL_NO_EXCEPT { return 1; }
 
 template<typename T>
 int DM::DistRank() const EL_NO_EXCEPT
-{ return this->grid_->MDRank(); }
+{ return Grid().MDRank(); }
 template<typename T>
 int DM::CrossRank() const EL_NO_EXCEPT
-{ return this->grid_->MDPerpRank(); }
+{ return Grid().MDPerpRank(); }
 template<typename T>
 int DM::RedundantRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
@@ -223,7 +223,7 @@ int DM::ColRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
 template<typename T>
 int DM::RowRank() const EL_NO_EXCEPT
-{ return this->grid_->MDRank(); }
+{ return Grid().MDRank(); }
 
 template<typename T>
 int DM::PartialColRank() const EL_NO_EXCEPT

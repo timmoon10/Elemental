@@ -160,7 +160,7 @@ public:
     int DiagonalRoot( Int offset=0 ) const override;
     int DiagonalAlign( Int offset=0 ) const override;
 
-protected:
+private:
     // Member variables
     // ================
 
@@ -169,6 +169,7 @@ protected:
     Int blockHeight_, blockWidth_;
     Int colCut_,   rowCut_;
 
+protected:
     // Private constructors
     // ====================
     BlockMatrix( const El::Grid& g=Grid::Default(),  int root=0 );

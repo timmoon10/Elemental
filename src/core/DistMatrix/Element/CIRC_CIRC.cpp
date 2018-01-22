@@ -36,7 +36,7 @@ DM& DM::operator=( const ElementalMatrix<T>& A )
 // =============
 template<typename T>
 mpi::Comm DM::CrossComm() const EL_NO_EXCEPT
-{ return this->grid_->VCComm(); }
+{ return Grid().VCComm(); }
 
 template<typename T>
 mpi::Comm DM::ColComm() const EL_NO_EXCEPT
@@ -70,7 +70,7 @@ int DM::RowStride() const EL_NO_EXCEPT { return 1; }
 template<typename T>
 int DM::DistSize() const EL_NO_EXCEPT { return 1; }
 template<typename T>
-int DM::CrossSize() const EL_NO_EXCEPT { return this->grid_->VCSize(); }
+int DM::CrossSize() const EL_NO_EXCEPT { return Grid().VCSize(); }
 template<typename T>
 int DM::RedundantSize() const EL_NO_EXCEPT { return 1; }
 template<typename T>
@@ -92,7 +92,7 @@ template<typename T>
 int DM::DistRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
 template<typename T>
-int DM::CrossRank() const EL_NO_EXCEPT { return this->grid_->VCRank(); }
+int DM::CrossRank() const EL_NO_EXCEPT { return Grid().VCRank(); }
 template<typename T>
 int DM::RedundantRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
