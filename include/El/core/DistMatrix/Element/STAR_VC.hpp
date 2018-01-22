@@ -152,7 +152,7 @@ public:
     int PartialUnionColRank() const EL_NO_EXCEPT override;
     int PartialUnionRowRank() const EL_NO_EXCEPT override;
 
-    template<typename S,Dist U,Dist V,DistWrap wrap> friend class DistMatrix;
+    template<typename S,Dist U,Dist V,DistWrap wrap,Device D> friend class DistMatrix;
 };
 
 } // namespace El

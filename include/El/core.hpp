@@ -270,7 +270,7 @@ template<typename T=double, Device D=Device::CPU> class ElementalMatrix;
 template<typename T=double, Device D=Device::CPU> class BlockMatrix;
 
 template<typename T=double, Dist U=MC, Dist V=MR,
-         DistWrap wrap=ELEMENT>//, Device=Device::CPU>
+         DistWrap wrap=ELEMENT, Device=Device::CPU>
 class DistMatrix;
 
 } // namespace El
