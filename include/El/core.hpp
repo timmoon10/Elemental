@@ -266,8 +266,8 @@ template<typename T=double, Device D=Device::CPU> class Matrix;
 
 template<typename T=double> class AbstractDistMatrix;
 
-template<typename T=double> class ElementalMatrix;
-template<typename T=double> class BlockMatrix;
+template<typename T=double, Device D=Device::CPU> class ElementalMatrix;
+template<typename T=double, Device D=Device::CPU> class BlockMatrix;
 
 template<typename T=double, Dist U=MC, Dist V=MR,
          DistWrap wrap=ELEMENT>//, Device=Device::CPU>

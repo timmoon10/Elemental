@@ -16,8 +16,11 @@ Int DefaultBlockWidth();
 void SetDefaultBlockHeight( Int blockHeight );
 void SetDefaultBlockWidth( Int blockWidth );
 
+template<typename Ring, Device D>
+class BlockMatrix;
+
 template<typename Ring>
-class BlockMatrix : public AbstractDistMatrix<Ring>
+class BlockMatrix<Ring, Device::CPU> : public AbstractDistMatrix<Ring>
 {
 public:
     // Typedefs
@@ -184,8 +187,8 @@ private:
     void ShallowSwap( type& A );
 
     template<typename S> friend class AbstractDistMatrix;
-    template<typename S> friend class ElementalMatrix;
-    template<typename S> friend class BlockMatrix;
+    template<typename S, Device D> friend class ElementalMatrix;
+    template<typename S, Device D> friend class BlockMatrix;
 };
 
 template<typename Ring>

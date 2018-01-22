@@ -218,8 +218,8 @@ private:
     // ===================
     template<typename S, Device D> friend class Matrix;
     template<typename S> friend class AbstractDistMatrix;
-    template<typename S> friend class ElementalMatrix;
-    template<typename S> friend class BlockMatrix;
+    template<typename S, Device D> friend class ElementalMatrix;
+    template<typename S, Device D> friend class BlockMatrix;
 
     // For supporting duck typing
     // ==========================
@@ -327,8 +327,8 @@ private:
 
     template<typename S, Device D> friend class Matrix;
     template<typename S> friend class AbstractDistMatrix;
-    template<typename S> friend class ElementalMatrix;
-    template<typename S> friend class BlockMatrix;
+    template<typename S, Device D> friend class ElementalMatrix;
+    template<typename S, Device D> friend class BlockMatrix;
 
 private:
 
