@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.9)
 
 project(Hydrogen C CXX)
 
@@ -57,6 +57,10 @@ option(${PROJECT_NAME}_ENABLE_MPC
   "Search for MPC(+MPFR+GMP) library and enable related features if found."
   OFF)
 
+option(${PROJECT_NAME}_ENABLE_CUDA
+  "Search for CUDA support and enable related features if found."
+  OFF)
+
 # Legacy options, with EL_ prefix intact
 option(BINARY_SUBDIRECTORIES "Install binaries into tree based on type" ON)
 
@@ -69,7 +73,12 @@ option(${PROJECT_NAME}_USE_64BIT_INTS
 option(${PROJECT_NAME}_USE_64BIT_BLAS_INTS
   "Use 64-bit integers for BLAS/LAPACK" OFF)
 if (${PROJECT_NAME}_USE_64BIT_BLAS_INTS)
+  set(EL_USE_64BIT_BLAS_INTS ON)
   set(${PROJECT_NAME}_USE_64BIT_INTS ON)
+endif ()
+
+if (${PROJECT_NAME}_USE_64BIT_INTS)
+  set(EL_USE_64BIT_INTS ON)
 endif ()
 
 option(${PROJECT_NAME}_ZERO_INIT "Initialize buffers to zero by default?" OFF)
@@ -156,8 +165,18 @@ if (${PROJECT_NAME}_ENABLE_OPENMP)
   if (OpenMP_FOUND)
     set(EL_HYBRID ON)
     set(EL_HAVE_OPENMP TRUE)
+  else ()
+    message(WARNING "Requested OpenMP support but OpenMP support was either "
+      "not found or not functional.")
+    set(EL_HYBRID OFF)
+    set(EL_HAVE_OPENMP FALSE)
+    set(${PROJECT_NAME}_ENABLE_OPENMP OFF)
   endif ()
 endif (${PROJECT_NAME}_ENABLE_OPENMP)
+
+if (${PROJECT_NAME}_ENABLE_CUDA)
+  include(FindAndVerifyCUDA)
+endif ()
 
 include(FindAndVerifyMPI)
 include(FindAndVerifyLAPACK)
@@ -198,6 +217,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+
+if (TARGET OpenMP::OpenMP_CXX)
+  target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+endif ()
 target_link_libraries(${PROJECT_NAME} PUBLIC pmrrr)
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)

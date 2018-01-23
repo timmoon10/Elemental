@@ -5,8 +5,6 @@
 #   BLA_VENDOR -- If set, use this value and ignore all other options.
 #   Hydrogen_USE_MKL -- If set, look for MKL installations.
 #   Hydrogen_USE_OpenBLAS -- If set, look for OpenBLAS implementation.
-#   Hydrogen_BUILD_OpenBLAS_IF_NOTFOUND -- If set, download and build
-#       OpenBLAS from source.
 #   Hydrogen_USE_ACCELERATE -- If set, skip other searches in favor of
 #       Apple's accelerate framework
 #   Hydrogen_USE_GENERIC_LAPACK -- If set, skip other searches in
@@ -50,12 +48,35 @@ endif (${PROJECT_NAME}_USE_MKL AND NOT LAPACK_FOUND)
 # Check for OpenBLAS
 if (${PROJECT_NAME}_USE_OpenBLAS AND NOT LAPACK_FOUND)
   set(BLA_VENDOR "OpenBLAS")
-  find_package(LAPACK QUIET)
+  set(LAPACK_DIR "${OpenBLAS_DIR}")
+  set(BLAS_DIR "${OpenBLAS_DIR}")
+  find_package(LAPACK)
 
   # Build OpenBLAS if requested
-  if (NOT LAPACK_FOUND AND ${PACKAGE_NAME}_BUILD_OpenBLAS_IF_NOTFOUND)
-    include(BuildOpenBLAS)
+  if (NOT LAPACK_FOUND)
+
+    find_package(OpenBLAS NO_MODULE REQUIRED
+      PATH_SUFFIXES lib/cmake/openblas)
+
+    # FIXME: So it looks like this might be the only way to trick the
+    # FindLAPACK module?? Another possibility is that we just say that
+    # LAPACK_FOUND=BLAS_FOUND=OpenBLAS_FOUND,
+    # LAPACK_LIBRARIES=BLAS_LIBRARIES=OpenBLAS_LIBRARIES, and no
+    # {BLAS,LAPACK}_LINK_FLAGS.
+    get_filename_component(_openblas_lib_dir "${OpenBLAS_LIBRARIES}" DIRECTORY)
+    if (APPLE)
+      set(_tmp_ld_path $ENV{DYLD_LIBRARY_PATH})
+      set(ENV{DYLD_LIBRARY_PATH} "${_openblas_lib_dir}:$ENV{DYLD_LIBRARY_PATH}")
+      find_package(LAPACK REQUIRED)
+      set(ENV{DYLD_LIBRARY_PATH} "${_tmp_ld_path}")
+    else ()
+      set(_tmp_ld_path $ENV{LD_LIBRARY_PATH})
+      set(ENV{LD_LIBRARY_PATH} "${_openblas_lib_dir}:$ENV{LD_LIBRARY_PATH}")
+      find_package(LAPACK REQUIRED)
+      set(ENV{LD_LIBRARY_PATH} "${_tmp_ld_path}")
+    endif ()
   endif()
+  set(HYDROGEN_HAVE_OPENBLAS ${LAPACK_FOUND})
 endif (${PROJECT_NAME}_USE_OpenBLAS AND NOT LAPACK_FOUND)
 
 # Check for Accelerate
