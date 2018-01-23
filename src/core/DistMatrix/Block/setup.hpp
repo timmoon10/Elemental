@@ -9,10 +9,11 @@
 
 #include "El/blas_like/level1/Copy/internal_impl.hpp"
 
-namespace El {
+namespace El
+{
 
 #define DM DistMatrix<T,COLDIST,ROWDIST>
-#define BDM DistMatrix<T,COLDIST,ROWDIST,BLOCK>
+#define BDM DistMatrix<T,COLDIST,ROWDIST,BLOCK,D>
 #define BCM BlockMatrix<T>
 #define ADM AbstractDistMatrix<T>
 
@@ -22,7 +23,7 @@ namespace El {
 // Constructors and destructors
 // ============================
 
-template<typename T>
+template <typename T, Device D>
 BDM::DistMatrix( const El::Grid& g, int root )
 : BCM(g,root)
 {
@@ -31,7 +32,7 @@ BDM::DistMatrix( const El::Grid& g, int root )
     this->SetShifts();
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM::DistMatrix
 ( const El::Grid& g, Int blockHeight, Int blockWidth, int root )
 : BCM(g,blockHeight,blockWidth,root)
@@ -41,7 +42,7 @@ BDM::DistMatrix
     this->SetShifts();
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM::DistMatrix
 ( Int height, Int width, const El::Grid& g, int root )
 : BCM(g,root)
@@ -51,7 +52,7 @@ BDM::DistMatrix
     this->SetShifts(); this->Resize(height,width);
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM::DistMatrix
 ( Int height, Int width, const El::Grid& g,
   Int blockHeight, Int blockWidth, int root )
@@ -63,7 +64,7 @@ BDM::DistMatrix
     this->Resize(height,width);
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM::DistMatrix( const BDM& A )
 : BCM(A.Grid())
 {
@@ -77,9 +78,9 @@ BDM::DistMatrix( const BDM& A )
         LogicError("Tried to construct block DistMatrix with itself");
 }
 
-template<typename T>
+template <typename T, Device D>
 template<Dist U,Dist V>
-BDM::DistMatrix( const DistMatrix<T,U,V,BLOCK>& A )
+BDM::DistMatrix( const DistMatrix<T,U,V,BLOCK,D>& A )
 : BCM(A.Grid())
 {
     EL_DEBUG_CSE
@@ -93,7 +94,7 @@ BDM::DistMatrix( const DistMatrix<T,U,V,BLOCK>& A )
         LogicError("Tried to construct block DistMatrix with itself");
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM::DistMatrix( const AbstractDistMatrix<T>& A )
 : BCM(A.Grid())
 {
@@ -110,7 +111,7 @@ BDM::DistMatrix( const AbstractDistMatrix<T>& A )
     #include "El/macros/GuardAndPayload.h"
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM::DistMatrix( const BlockMatrix<T>& A )
 : BCM(A.Grid())
 {
@@ -123,7 +124,7 @@ BDM::DistMatrix( const BlockMatrix<T>& A )
       A.Wrap() == WRAP
     #define PAYLOAD(CDIST,RDIST,WRAP) \
       auto& ACast = \
-        static_cast<const DistMatrix<T,CDIST,RDIST,BLOCK>&>(A); \
+        static_cast<const DistMatrix<T,CDIST,RDIST,BLOCK,D>&>(A); \
       if( COLDIST != CDIST || ROWDIST != RDIST || BLOCK != WRAP || \
           reinterpret_cast<const BDM*>(&A) != this ) \
           *this = ACast; \
@@ -132,9 +133,10 @@ BDM::DistMatrix( const BlockMatrix<T>& A )
     #include "El/macros/GuardAndPayload.h"
 }
 
-template<typename T>
+template <typename T, Device D>
 template<Dist U,Dist V>
-BDM::DistMatrix( const DistMatrix<T,U,V>& A )
+//FIXME
+BDM::DistMatrix( const DistMatrix<T,U,V,ELEMENT,D>& A )
 : BCM(A.Grid())
 {
     EL_DEBUG_CSE
@@ -144,25 +146,25 @@ BDM::DistMatrix( const DistMatrix<T,U,V>& A )
     *this = A;
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM::DistMatrix( BDM&& A ) EL_NO_EXCEPT : BCM(std::move(A)) { }
 
-template<typename T> BDM::~DistMatrix() { }
+template <typename T, Device D> BDM::~DistMatrix() { }
 
-template<typename T>
+template <typename T, Device D>
 BDM* BDM::Copy() const
-{ return new DistMatrix<T,COLDIST,ROWDIST,BLOCK>(*this); }
+{ return new DistMatrix<T,COLDIST,ROWDIST,BLOCK,D>(*this); }
 
-template<typename T>
+template <typename T, Device D>
 BDM* BDM::Construct( const El::Grid& g, int root ) const
-{ return new DistMatrix<T,COLDIST,ROWDIST,BLOCK>(g,root); }
+{ return new DistMatrix<T,COLDIST,ROWDIST,BLOCK,D>(g,root); }
 
-template<typename T>
-DistMatrix<T,ROWDIST,COLDIST,BLOCK>* BDM::ConstructTranspose
+template <typename T, Device D>
+DistMatrix<T,ROWDIST,COLDIST,BLOCK,D>* BDM::ConstructTranspose
 ( const El::Grid& g, int root ) const
-{ return new DistMatrix<T,ROWDIST,COLDIST,BLOCK>(g,root); }
+{ return new DistMatrix<T,ROWDIST,COLDIST,BLOCK,D>(g,root); }
 
-template<typename T>
+template <typename T, Device D>
 typename BDM::diagType*
 BDM::ConstructDiagonal
 ( const El::Grid& g, int root ) const
@@ -174,7 +176,7 @@ BDM::ConstructDiagonal
 
 // Return a view
 // -------------
-template<typename T>
+template <typename T, Device D>
 BDM BDM::operator()( Range<Int> I, Range<Int> J )
 {
     EL_DEBUG_CSE
@@ -184,7 +186,7 @@ BDM BDM::operator()( Range<Int> I, Range<Int> J )
         return View( *this, I, J );
 }
 
-template<typename T>
+template <typename T, Device D>
 const BDM BDM::operator()( Range<Int> I, Range<Int> J ) const
 {
     EL_DEBUG_CSE
@@ -193,7 +195,7 @@ const BDM BDM::operator()( Range<Int> I, Range<Int> J ) const
 
 // Non-contiguous
 // --------------
-template<typename T>
+template <typename T, Device D>
 BDM BDM::operator()( Range<Int> I, const vector<Int>& J ) const
 {
     EL_DEBUG_CSE
@@ -202,7 +204,7 @@ BDM BDM::operator()( Range<Int> I, const vector<Int>& J ) const
     return ASub;
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM BDM::operator()( const vector<Int>& I, Range<Int> J ) const
 {
     EL_DEBUG_CSE
@@ -211,7 +213,7 @@ BDM BDM::operator()( const vector<Int>& I, Range<Int> J ) const
     return ASub;
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM BDM::operator()( const vector<Int>& I, const vector<Int>& J ) const
 {
     EL_DEBUG_CSE
@@ -223,7 +225,7 @@ BDM BDM::operator()( const vector<Int>& I, const vector<Int>& J ) const
 // Copy
 // ----
 
-template<typename T>
+template <typename T, Device D>
 BDM& BDM::operator=( const AbstractDistMatrix<T>& A )
 {
     EL_DEBUG_CSE
@@ -237,9 +239,9 @@ BDM& BDM::operator=( const AbstractDistMatrix<T>& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 template<Dist U,Dist V>
-BDM& BDM::operator=( const DistMatrix<T,U,V>& A )
+BDM& BDM::operator=( const DistMatrix<T,U,V,ELEMENT,D>& A )
 {
     EL_DEBUG_CSE
     // TODO: Use either AllGather or Gather if the distribution of this matrix
@@ -249,7 +251,7 @@ BDM& BDM::operator=( const DistMatrix<T,U,V>& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM& BDM::operator=( BDM&& A )
 {
     if( this->Viewing() || A.Viewing() )
@@ -261,7 +263,7 @@ BDM& BDM::operator=( BDM&& A )
 
 // Rescaling
 // ---------
-template<typename T>
+template <typename T, Device D>
 const BDM& BDM::operator*=( T alpha )
 {
     EL_DEBUG_CSE
@@ -271,7 +273,7 @@ const BDM& BDM::operator*=( T alpha )
 
 // Addition/subtraction
 // --------------------
-template<typename T>
+template <typename T, Device D>
 const BDM& BDM::operator+=( const BCM& A )
 {
     EL_DEBUG_CSE
@@ -279,7 +281,7 @@ const BDM& BDM::operator+=( const BCM& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 const BDM& BDM::operator+=( const ADM& A )
 {
     EL_DEBUG_CSE
@@ -287,7 +289,7 @@ const BDM& BDM::operator+=( const ADM& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 const BDM& BDM::operator-=( const BCM& A )
 {
     EL_DEBUG_CSE
@@ -295,7 +297,7 @@ const BDM& BDM::operator-=( const BCM& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 const BDM& BDM::operator-=( const ADM& A )
 {
     EL_DEBUG_CSE
@@ -305,26 +307,26 @@ const BDM& BDM::operator-=( const ADM& A )
 
 // Distribution data
 // =================
-template<typename T>
+template <typename T, Device D>
 Dist BDM::ColDist() const EL_NO_EXCEPT { return COLDIST; }
-template<typename T>
+template <typename T, Device D>
 Dist BDM::RowDist() const EL_NO_EXCEPT { return ROWDIST; }
 
-template<typename T>
+template <typename T, Device D>
 Dist BDM::PartialColDist() const EL_NO_EXCEPT { return Partial<COLDIST>(); }
-template<typename T>
+template <typename T, Device D>
 Dist BDM::PartialRowDist() const EL_NO_EXCEPT { return Partial<ROWDIST>(); }
 
-template<typename T>
+template <typename T, Device D>
 Dist BDM::PartialUnionColDist() const EL_NO_EXCEPT
 { return PartialUnionCol<COLDIST,ROWDIST>(); }
-template<typename T>
+template <typename T, Device D>
 Dist BDM::PartialUnionRowDist() const EL_NO_EXCEPT
 { return PartialUnionRow<COLDIST,ROWDIST>(); }
 
-template<typename T>
+template <typename T, Device D>
 Dist BDM::CollectedColDist() const EL_NO_EXCEPT { return Collect<COLDIST>(); }
-template<typename T>
+template <typename T, Device D>
 Dist BDM::CollectedRowDist() const EL_NO_EXCEPT { return Collect<ROWDIST>(); }
 
 } // namespace El

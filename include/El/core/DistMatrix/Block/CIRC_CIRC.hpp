@@ -14,17 +14,18 @@ namespace El {
 // Partial specialization to A[o,o].
 //
 // The entire matrix is only stored on a single process.
-template<typename Ring>
-class DistMatrix<Ring,CIRC,CIRC,BLOCK> : public BlockMatrix<Ring>
+template <typename Ring, Device Dev>
+class DistMatrix<Ring,CIRC,CIRC,BLOCK,Dev>
+    : public BlockMatrix<Ring>
 {
 public:
     // Typedefs
     // ========
     typedef AbstractDistMatrix<Ring> absType;
     typedef BlockMatrix<Ring> blockType;
-    typedef DistMatrix<Ring,CIRC,CIRC,BLOCK> type;
-    typedef DistMatrix<Ring,CIRC,CIRC,BLOCK> transType;
-    typedef DistMatrix<Ring,CIRC,CIRC,BLOCK> diagType;
+    typedef DistMatrix<Ring,CIRC,CIRC,BLOCK,Dev> type;
+    typedef DistMatrix<Ring,CIRC,CIRC,BLOCK,Dev> transType;
+    typedef DistMatrix<Ring,CIRC,CIRC,BLOCK,Dev> diagType;
 
     // Constructors and destructors
     // ============================
@@ -50,9 +51,9 @@ public:
     DistMatrix( const absType& A );
     DistMatrix( const blockType& A );
     template<Dist colDist,Dist rowDist>
-    DistMatrix( const DistMatrix<Ring,colDist,rowDist,BLOCK>& A );
+    DistMatrix( const DistMatrix<Ring,colDist,rowDist,BLOCK,Dev>& A );
     template<Dist colDist,Dist rowDist>
-    DistMatrix( const DistMatrix<Ring,colDist,rowDist,ELEMENT>& A );
+    DistMatrix( const DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev>& A );
 
     // Move constructor
     DistMatrix( type&& A ) EL_NO_EXCEPT;
@@ -88,7 +89,7 @@ public:
     type& operator=( const absType& A );
     type& operator=( const blockType& A );
     template<Dist colDist,Dist rowDist>
-    type& operator=( const DistMatrix<Ring,colDist,rowDist,ELEMENT>& A );
+    type& operator=( const DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev>& A );
 
     // Move assignment
     // ---------------

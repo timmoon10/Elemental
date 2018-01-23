@@ -15,8 +15,8 @@
 
 namespace El {
 
-#define DM DistMatrix<T,COLDIST,ROWDIST>
-#define EM ElementalMatrix<T>
+#define DM DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>
+#define EM ElementalMatrix<T,D>
 #define ADM AbstractDistMatrix<T>
 
 // Public section
@@ -25,7 +25,7 @@ namespace El {
 // Constructors and destructors
 // ============================
 
-template<typename T>
+template <typename T, Device D>
 DM::DistMatrix( const El::Grid& grid, int root )
 : EM(grid,root)
 {
@@ -34,7 +34,7 @@ DM::DistMatrix( const El::Grid& grid, int root )
     this->SetShifts();
 }
 
-template<typename T>
+template <typename T, Device D>
 DM::DistMatrix( Int height, Int width, const El::Grid& grid, int root )
 : EM(grid,root)
 {
@@ -44,7 +44,7 @@ DM::DistMatrix( Int height, Int width, const El::Grid& grid, int root )
     this->Resize(height,width);
 }
 
-template<typename T>
+template <typename T, Device D>
 DM::DistMatrix( const DM& A )
 : EM(A.Grid())
 {
@@ -58,9 +58,9 @@ DM::DistMatrix( const DM& A )
         LogicError("Tried to construct DistMatrix with itself");
 }
 
-template<typename T>
+template <typename T, Device D>
 template<Dist U,Dist V>
-DM::DistMatrix( const DistMatrix<T,U,V>& A )
+DM::DistMatrix( const DistMatrix<T,U,V,ELEMENT,D>& A )
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
@@ -74,7 +74,7 @@ DM::DistMatrix( const DistMatrix<T,U,V>& A )
         LogicError("Tried to construct DistMatrix with itself");
 }
 
-template<typename T>
+template <typename T, Device D>
 DM::DistMatrix( const AbstractDistMatrix<T>& A )
 : EM(A.Grid())
 {
@@ -94,8 +94,8 @@ DM::DistMatrix( const AbstractDistMatrix<T>& A )
     #include "El/macros/GuardAndPayload.h"
 }
 
-template<typename T>
-DM::DistMatrix( const ElementalMatrix<T>& A )
+template <typename T, Device D>
+DM::DistMatrix( const ElementalMatrix<T,D>& A )
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
@@ -115,9 +115,9 @@ DM::DistMatrix( const ElementalMatrix<T>& A )
     #include "El/macros/GuardAndPayload.h"
 }
 
-template<typename T>
+template <typename T, Device D>
 template<Dist U,Dist V>
-DM::DistMatrix( const DistMatrix<T,U,V,BLOCK>& A )
+DM::DistMatrix( const DistMatrix<T,U,V,BLOCK,D>& A )
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
@@ -127,45 +127,45 @@ DM::DistMatrix( const DistMatrix<T,U,V,BLOCK>& A )
     *this = A;
 }
 
-template<typename T>
+template <typename T, Device D>
 DM::DistMatrix( DM&& A ) EL_NO_EXCEPT : EM(std::move(A)) { }
 
-template<typename T> DM::~DistMatrix() { }
+template <typename T, Device D> DM::~DistMatrix() { }
 
-template<typename T>
-DistMatrix<T,COLDIST,ROWDIST>* DM::Copy() const
-{ return new DistMatrix<T,COLDIST,ROWDIST>(*this); }
+template <typename T, Device D>
+DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>* DM::Copy() const
+{ return new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>(*this); }
 
-template<typename T>
-DistMatrix<T,COLDIST,ROWDIST>* DM::Construct
+template <typename T, Device D>
+DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>* DM::Construct
 ( const El::Grid& g, int root ) const
-{ return new DistMatrix<T,COLDIST,ROWDIST>(g,root); }
+{ return new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>(g,root); }
 
-template<typename T>
-DistMatrix<T,ROWDIST,COLDIST>* DM::ConstructTranspose
+template <typename T, Device D>
+DistMatrix<T,ROWDIST,COLDIST,ELEMENT,D>* DM::ConstructTranspose
 ( const El::Grid& g, int root ) const
-{ return new DistMatrix<T,ROWDIST,COLDIST>(g,root); }
+{ return new DistMatrix<T,ROWDIST,COLDIST,ELEMENT,D>(g,root); }
 
-template<typename T>
+template <typename T, Device D>
 typename DM::diagType*
 DM::ConstructDiagonal
 ( const El::Grid& g, int root ) const
 { return new DistMatrix<T,DiagCol<COLDIST,ROWDIST>(),
-                          DiagRow<COLDIST,ROWDIST>()>(g,root); }
+                        DiagRow<COLDIST,ROWDIST>(),ELEMENT,D>(g,root); }
 
 // Operator overloading
 // ====================
 
 // Return a view
 // -------------
-template<typename T>
+template <typename T, Device D>
 DM DM::operator()( Range<Int> I, Range<Int> J )
 {
     EL_DEBUG_CSE
     return View( *this, I, J );
 }
 
-template<typename T>
+template <typename T, Device D>
 const DM DM::operator()( Range<Int> I, Range<Int> J ) const
 {
     EL_DEBUG_CSE
@@ -174,7 +174,7 @@ const DM DM::operator()( Range<Int> I, Range<Int> J ) const
 
 // Non-contiguous
 // --------------
-template<typename T>
+template <typename T, Device D>
 DM DM::operator()( Range<Int> I, const vector<Int>& J ) const
 {
     EL_DEBUG_CSE
@@ -183,7 +183,7 @@ DM DM::operator()( Range<Int> I, const vector<Int>& J ) const
     return ASub;
 }
 
-template<typename T>
+template <typename T, Device D>
 DM DM::operator()( const vector<Int>& I, Range<Int> J ) const
 {
     EL_DEBUG_CSE
@@ -192,7 +192,7 @@ DM DM::operator()( const vector<Int>& I, Range<Int> J ) const
     return ASub;
 }
 
-template<typename T>
+template <typename T, Device D>
 DM DM::operator()( const vector<Int>& I, const vector<Int>& J ) const
 {
     EL_DEBUG_CSE
@@ -203,7 +203,7 @@ DM DM::operator()( const vector<Int>& I, const vector<Int>& J ) const
 
 // Copy
 // ----
-template<typename T>
+template <typename T, Device D>
 DM& DM::operator=( const DM& A )
 {
     EL_DEBUG_CSE
@@ -211,7 +211,7 @@ DM& DM::operator=( const DM& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 DM& DM::operator=( const AbstractDistMatrix<T>& A )
 {
     EL_DEBUG_CSE
@@ -220,15 +220,15 @@ DM& DM::operator=( const AbstractDistMatrix<T>& A )
     #define GUARD(CDIST,RDIST,WRAP) \
       A.ColDist() == CDIST && A.RowDist() == RDIST && A.Wrap() == WRAP
     #define PAYLOAD(CDIST,RDIST,WRAP) \
-      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP>&>(A); \
+        auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP,D>&>(A); \
       *this = ACast;
     #include "El/macros/GuardAndPayload.h"
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 template<Dist U,Dist V>
-DM& DM::operator=( const DistMatrix<T,U,V,BLOCK>& A )
+DM& DM::operator=( const DistMatrix<T,U,V,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
     // TODO(poulson):
@@ -255,7 +255,7 @@ DM& DM::operator=( const DistMatrix<T,U,V,BLOCK>& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 DM& DM::operator=( DM&& A )
 {
     EL_DEBUG_CSE
@@ -268,7 +268,7 @@ DM& DM::operator=( DM&& A )
 
 // Rescaling
 // ---------
-template<typename T>
+template <typename T, Device D>
 const DM& DM::operator*=( T alpha )
 {
     EL_DEBUG_CSE
@@ -278,7 +278,7 @@ const DM& DM::operator*=( T alpha )
 
 // Addition/subtraction
 // --------------------
-template<typename T>
+template <typename T, Device D>
 const DM& DM::operator+=( const EM& A )
 {
     EL_DEBUG_CSE
@@ -286,7 +286,7 @@ const DM& DM::operator+=( const EM& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 const DM& DM::operator+=( const ADM& A )
 {
     EL_DEBUG_CSE
@@ -294,7 +294,7 @@ const DM& DM::operator+=( const ADM& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 const DM& DM::operator-=( const EM& A )
 {
     EL_DEBUG_CSE
@@ -302,7 +302,7 @@ const DM& DM::operator-=( const EM& A )
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 const DM& DM::operator-=( const ADM& A )
 {
     EL_DEBUG_CSE
@@ -312,26 +312,26 @@ const DM& DM::operator-=( const ADM& A )
 
 // Distribution data
 // =================
-template<typename T>
+template <typename T, Device D>
 Dist DM::ColDist() const EL_NO_EXCEPT { return COLDIST; }
-template<typename T>
+template <typename T, Device D>
 Dist DM::RowDist() const EL_NO_EXCEPT { return ROWDIST; }
 
-template<typename T>
+template <typename T, Device D>
 Dist DM::PartialColDist() const EL_NO_EXCEPT { return Partial<COLDIST>(); }
-template<typename T>
+template <typename T, Device D>
 Dist DM::PartialRowDist() const EL_NO_EXCEPT { return Partial<ROWDIST>(); }
 
-template<typename T>
+template <typename T, Device D>
 Dist DM::PartialUnionColDist() const EL_NO_EXCEPT
 { return PartialUnionCol<COLDIST,ROWDIST>(); }
-template<typename T>
+template <typename T, Device D>
 Dist DM::PartialUnionRowDist() const EL_NO_EXCEPT
 { return PartialUnionRow<COLDIST,ROWDIST>(); }
 
-template<typename T>
+template <typename T, Device D>
 Dist DM::CollectedColDist() const EL_NO_EXCEPT { return Collect<COLDIST>(); }
-template<typename T>
+template <typename T, Device D>
 Dist DM::CollectedRowDist() const EL_NO_EXCEPT { return Collect<ROWDIST>(); }
 
 } // namespace El

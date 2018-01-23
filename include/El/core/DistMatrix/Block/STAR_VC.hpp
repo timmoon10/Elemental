@@ -16,15 +16,16 @@ namespace El {
 // The rows of these distributed matrices are spread throughout the
 // process grid in a column-major fashion, while the columns are not
 // distributed.
-template<typename Ring>
-class DistMatrix<Ring,STAR,VC,BLOCK> : public BlockMatrix<Ring>
+template <typename Ring, Device Dev>
+class DistMatrix<Ring,STAR,VC,BLOCK,Dev>
+    : public BlockMatrix<Ring>
 {
 public:
     typedef AbstractDistMatrix<Ring> absType;
     typedef BlockMatrix<Ring> blockType;
-    typedef DistMatrix<Ring,STAR,VC,BLOCK> type;
-    typedef DistMatrix<Ring,VC,STAR,BLOCK> transType;
-    typedef DistMatrix<Ring,VC,STAR,BLOCK> diagType;
+    typedef DistMatrix<Ring,STAR,VC,BLOCK,Dev> type;
+    typedef DistMatrix<Ring,VC,STAR,BLOCK,Dev> transType;
+    typedef DistMatrix<Ring,VC,STAR,BLOCK,Dev> diagType;
 
     // Constructors and destructors
     // ============================
@@ -50,9 +51,9 @@ public:
     DistMatrix( const absType& A );
     DistMatrix( const blockType& A );
     template<Dist colDist,Dist rowDist>
-    DistMatrix( const DistMatrix<Ring,colDist,rowDist,BLOCK>& A );
+    DistMatrix( const DistMatrix<Ring,colDist,rowDist,BLOCK,Dev>& A );
     template<Dist colDist,Dist rowDist>
-    DistMatrix( const DistMatrix<Ring,colDist,rowDist,ELEMENT>& A );
+    DistMatrix( const DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev>& A );
 
     // Move constructor
     DistMatrix( type&& A ) EL_NO_EXCEPT;
@@ -86,22 +87,22 @@ public:
     // -----------
     type& operator=( const absType& A );
     type& operator=( const blockType& A );
-    type& operator=( const DistMatrix<Ring,MC,  MR  ,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,MC,  STAR,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,STAR,MR  ,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,MD,  STAR,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,STAR,MD  ,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,MR,  MC  ,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,MR,  STAR,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,STAR,MC  ,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,VC,  STAR,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,STAR,VC  ,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,VR,  STAR,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,STAR,VR  ,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,STAR,STAR,BLOCK>& A );
-    type& operator=( const DistMatrix<Ring,CIRC,CIRC,BLOCK>& A );
+    type& operator=( const DistMatrix<Ring,MC,  MR  ,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,MC,  STAR,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,STAR,MR  ,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,MD,  STAR,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,STAR,MD  ,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,MR,  MC  ,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,MR,  STAR,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,STAR,MC  ,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,VC,  STAR,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,STAR,VC  ,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,VR,  STAR,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,STAR,VR  ,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,STAR,STAR,BLOCK,Dev>& A );
+    type& operator=( const DistMatrix<Ring,CIRC,CIRC,BLOCK,Dev>& A );
     template<Dist colDist,Dist rowDist>
-    type& operator=( const DistMatrix<Ring,colDist,rowDist,ELEMENT>& A );
+    type& operator=( const DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev>& A );
 
     // Move assignment
     // ---------------

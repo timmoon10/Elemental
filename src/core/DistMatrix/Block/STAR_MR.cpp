@@ -22,26 +22,26 @@ namespace El {
 // Assignment and reconfiguration
 // ==============================
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,MC,MR,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,MC,MR,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
     copy::ColAllGather( A, *this );
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,MC,STAR,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,MC,STAR,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
-    DistMatrix<T,MC,MR,BLOCK> A_MC_MR(this->Grid());
+    DistMatrix<T,MC,MR,BLOCK,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignRowsWith(*this);
     A_MC_MR = A;
     *this = A_MC_MR;
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM& BDM::operator=( const BDM& A )
 {
     EL_DEBUG_CSE
@@ -49,8 +49,8 @@ BDM& BDM::operator=( const BDM& A )
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,MD,STAR,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,MD,STAR,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
     // TODO: More efficient implementation
@@ -58,8 +58,8 @@ BDM& BDM::operator=( const DistMatrix<T,MD,STAR,BLOCK>& A )
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,STAR,MD,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,STAR,MD,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
     // TODO: More efficient implementation
@@ -67,12 +67,12 @@ BDM& BDM::operator=( const DistMatrix<T,STAR,MD,BLOCK>& A )
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,MR,MC,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,MR,MC,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
-    DistMatrix<T,STAR,VC,BLOCK> A_STAR_VC( A );
-    DistMatrix<T,STAR,VR,BLOCK> A_STAR_VR( this->Grid() );
+    DistMatrix<T,STAR,VC,BLOCK,D> A_STAR_VC( A );
+    DistMatrix<T,STAR,VR,BLOCK,D> A_STAR_VR( this->Grid() );
     A_STAR_VR.AlignRowsWith(*this);
     A_STAR_VR = A_STAR_VC;
     A_STAR_VC.Empty();
@@ -81,15 +81,15 @@ BDM& BDM::operator=( const DistMatrix<T,MR,MC,BLOCK>& A )
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,MR,STAR,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,MR,STAR,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
-    DistMatrix<T,VR,STAR,BLOCK> A_VR_STAR( A );
-    DistMatrix<T,VC,STAR,BLOCK> A_VC_STAR( A_VR_STAR );
+    DistMatrix<T,VR,STAR,BLOCK,D> A_VR_STAR( A );
+    DistMatrix<T,VC,STAR,BLOCK,D> A_VC_STAR( A_VR_STAR );
     A_VR_STAR.Empty();
 
-    DistMatrix<T,MC,MR,BLOCK> A_MC_MR( this->Grid() );
+    DistMatrix<T,MC,MR,BLOCK,D> A_MC_MR( this->Grid() );
     A_MC_MR.AlignRowsWith(*this);
     A_MC_MR = A_VC_STAR;
     A_VC_STAR.Empty();
@@ -98,51 +98,51 @@ BDM& BDM::operator=( const DistMatrix<T,MR,STAR,BLOCK>& A )
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,STAR,MC,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,STAR,MC,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
-    DistMatrix<T,STAR,VC,BLOCK> A_STAR_VC( A );
-    DistMatrix<T,STAR,VR,BLOCK> A_STAR_VR( this->Grid() );
+    DistMatrix<T,STAR,VC,BLOCK,D> A_STAR_VC( A );
+    DistMatrix<T,STAR,VR,BLOCK,D> A_STAR_VR( this->Grid() );
     A_STAR_VR.AlignRowsWith(*this);
     A_STAR_VR = A_STAR_VC;
     A_STAR_VC.Empty();
 
-    DistMatrix<T,MC,MR,BLOCK> A_MC_MR( A_STAR_VR );
+    DistMatrix<T,MC,MR,BLOCK,D> A_MC_MR( A_STAR_VR );
     A_STAR_VR.Empty();
 
     *this = A_MC_MR;
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,VC,STAR,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,VC,STAR,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
-    DistMatrix<T,MC,MR,BLOCK> A_MC_MR(this->Grid());
+    DistMatrix<T,MC,MR,BLOCK,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignRowsWith(*this);
     A_MC_MR = A;
     *this = A_MC_MR;
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,STAR,VC,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,STAR,VC,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
-    DistMatrix<T,STAR,VR,BLOCK> A_STAR_VR(this->Grid());
+    DistMatrix<T,STAR,VR,BLOCK,D> A_STAR_VR(this->Grid());
     A_STAR_VR.AlignRowsWith(*this);
     A_STAR_VR = A;
     *this = A_STAR_VR;
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,VR,STAR,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,VR,STAR,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
-    DistMatrix<T,VC,STAR,BLOCK> A_VC_STAR( A );
-    DistMatrix<T,MC,MR,BLOCK> A_MC_MR( this->Grid() );
+    DistMatrix<T,VC,STAR,BLOCK,D> A_VC_STAR( A );
+    DistMatrix<T,MC,MR,BLOCK,D> A_MC_MR( this->Grid() );
     A_MC_MR.AlignRowsWith(*this);
     A_MC_MR = A_VC_STAR;
     A_VC_STAR.Empty();
@@ -151,34 +151,34 @@ BDM& BDM::operator=( const DistMatrix<T,VR,STAR,BLOCK>& A )
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,STAR,VR,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,STAR,VR,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
     copy::PartialRowAllGather( A, *this );
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,STAR,STAR,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,STAR,STAR,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
     copy::RowFilter( A, *this );
     return *this;
 }
 
-template<typename T>
-BDM& BDM::operator=( const DistMatrix<T,CIRC,CIRC,BLOCK>& A )
+template <typename T, Device D>
+BDM& BDM::operator=( const DistMatrix<T,CIRC,CIRC,BLOCK,D>& A )
 {
     EL_DEBUG_CSE
-    DistMatrix<T,MC,MR,BLOCK> A_MC_MR( A );
+    DistMatrix<T,MC,MR,BLOCK,D> A_MC_MR( A );
     A_MC_MR.AlignWith( *this );
     A_MC_MR = A;
     *this = A_MC_MR;
     return *this;
 }
 
-template<typename T>
+template <typename T, Device D>
 BDM& BDM::operator=( const BlockMatrix<T>& A )
 {
     EL_DEBUG_CSE
@@ -187,7 +187,7 @@ BDM& BDM::operator=( const BlockMatrix<T>& A )
       BLOCK == WRAP
     #define PAYLOAD(CDIST,RDIST,WRAP) \
       auto& ACast = \
-        static_cast<const DistMatrix<T,CDIST,RDIST,BLOCK>&>(A); \
+        static_cast<const DistMatrix<T,CDIST,RDIST,BLOCK,D>&>(A); \
       *this = ACast;
     #include "El/macros/GuardAndPayload.h"
     return *this;
@@ -195,78 +195,78 @@ BDM& BDM::operator=( const BlockMatrix<T>& A )
 
 // Basic queries
 // =============
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::DistComm() const EL_NO_EXCEPT
 { return Grid().MRComm(); }
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::CrossComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::RedundantComm() const EL_NO_EXCEPT
 { return Grid().MCComm(); }
 
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::ColComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::RowComm() const EL_NO_EXCEPT
 { return Grid().MRComm(); }
 
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::PartialColComm() const EL_NO_EXCEPT
 { return this->ColComm(); }
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::PartialRowComm() const EL_NO_EXCEPT
 { return this->RowComm(); }
 
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::PartialUnionColComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
-template<typename T>
+template <typename T, Device D>
 mpi::Comm BDM::PartialUnionRowComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
 
-template<typename T>
+template <typename T, Device D>
 int BDM::DistSize() const EL_NO_EXCEPT { return Grid().MRSize(); }
-template<typename T>
+template <typename T, Device D>
 int BDM::CrossSize() const EL_NO_EXCEPT { return 1; }
-template<typename T>
+template <typename T, Device D>
 int BDM::RedundantSize() const EL_NO_EXCEPT { return Grid().MCSize(); }
 
-template<typename T>
+template <typename T, Device D>
 int BDM::ColStride() const EL_NO_EXCEPT { return 1; }
-template<typename T>
+template <typename T, Device D>
 int BDM::RowStride() const EL_NO_EXCEPT { return Grid().MRSize(); }
-template<typename T>
+template <typename T, Device D>
 int BDM::PartialColStride() const EL_NO_EXCEPT { return this->ColStride(); }
-template<typename T>
+template <typename T, Device D>
 int BDM::PartialRowStride() const EL_NO_EXCEPT { return this->RowStride(); }
-template<typename T>
+template <typename T, Device D>
 int BDM::PartialUnionColStride() const EL_NO_EXCEPT { return 1; }
-template<typename T>
+template <typename T, Device D>
 int BDM::PartialUnionRowStride() const EL_NO_EXCEPT { return 1; }
 
-template<typename T>
+template <typename T, Device D>
 int BDM::DistRank() const EL_NO_EXCEPT { return Grid().MRRank(); }
-template<typename T>
+template <typename T, Device D>
 int BDM::CrossRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
-template<typename T>
+template <typename T, Device D>
 int BDM::RedundantRank() const EL_NO_EXCEPT { return Grid().MCRank(); }
 
-template<typename T>
+template <typename T, Device D>
 int BDM::ColRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
-template<typename T>
+template <typename T, Device D>
 int BDM::RowRank() const EL_NO_EXCEPT { return Grid().MRRank(); }
-template<typename T>
+template <typename T, Device D>
 int BDM::PartialColRank() const EL_NO_EXCEPT { return this->ColRank(); }
-template<typename T>
+template <typename T, Device D>
 int BDM::PartialRowRank() const EL_NO_EXCEPT { return this->RowRank(); }
-template<typename T>
+template <typename T, Device D>
 int BDM::PartialUnionColRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
-template<typename T>
+template <typename T, Device D>
 int BDM::PartialUnionRowRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
 
@@ -274,19 +274,19 @@ int BDM::PartialUnionRowRank() const EL_NO_EXCEPT
 // ####################################################################
 
 #define SELF(T,U,V) \
-  template DistMatrix<T,COLDIST,ROWDIST,BLOCK>::DistMatrix \
-  ( const DistMatrix<T,U,V,BLOCK>& A );
+  template DistMatrix<T,COLDIST,ROWDIST,BLOCK,Device::CPU>::DistMatrix \
+  ( const DistMatrix<T,U,V,BLOCK,Device::CPU>& A );
 #define OTHER(T,U,V) \
-  template DistMatrix<T,COLDIST,ROWDIST,BLOCK>::DistMatrix \
+  template DistMatrix<T,COLDIST,ROWDIST,BLOCK,Device::CPU>::DistMatrix \
   ( const DistMatrix<T,U,V>& A ); \
-  template DistMatrix<T,COLDIST,ROWDIST,BLOCK>& \
-           DistMatrix<T,COLDIST,ROWDIST,BLOCK>::operator= \
+  template DistMatrix<T,COLDIST,ROWDIST,BLOCK,Device::CPU>& \
+           DistMatrix<T,COLDIST,ROWDIST,BLOCK,Device::CPU>::operator= \
            ( const DistMatrix<T,U,V>& A )
 #define BOTH(T,U,V) \
   SELF(T,U,V) \
   OTHER(T,U,V)
 #define PROTO(T) \
-  template class DistMatrix<T,COLDIST,ROWDIST,BLOCK>; \
+  template class DistMatrix<T,COLDIST,ROWDIST,BLOCK,Device::CPU>; \
   BOTH( T,CIRC,CIRC); \
   BOTH( T,MC,  MR  ); \
   BOTH( T,MC,  STAR); \
