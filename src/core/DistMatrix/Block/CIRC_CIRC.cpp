@@ -42,7 +42,7 @@ BDM& BDM::operator=( const BDM& A )
 // =============
 template <typename T, Device D>
 mpi::Comm BDM::CrossComm() const EL_NO_EXCEPT
-{ return Grid().VCComm(); }
+{ return this->Grid().VCComm(); }
 
 template <typename T, Device D>
 mpi::Comm BDM::ColComm() const EL_NO_EXCEPT
@@ -76,7 +76,7 @@ int BDM::RowStride() const EL_NO_EXCEPT { return 1; }
 template <typename T, Device D>
 int BDM::DistSize() const EL_NO_EXCEPT { return 1; }
 template <typename T, Device D>
-int BDM::CrossSize() const EL_NO_EXCEPT { return Grid().VCSize(); }
+int BDM::CrossSize() const EL_NO_EXCEPT { return this->Grid().VCSize(); }
 template <typename T, Device D>
 int BDM::RedundantSize() const EL_NO_EXCEPT { return 1; }
 template <typename T, Device D>

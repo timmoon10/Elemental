@@ -168,7 +168,7 @@ mpi::Comm BDM::CrossComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
 template <typename T, Device D>
 mpi::Comm BDM::RedundantComm() const EL_NO_EXCEPT
-{ return Grid().VCComm(); }
+{ return this->Grid().VCComm(); }
 
 template <typename T, Device D>
 mpi::Comm BDM::ColComm() const EL_NO_EXCEPT
@@ -196,7 +196,7 @@ int BDM::DistSize() const EL_NO_EXCEPT { return 1; }
 template <typename T, Device D>
 int BDM::CrossSize() const EL_NO_EXCEPT { return 1; }
 template <typename T, Device D>
-int BDM::RedundantSize() const EL_NO_EXCEPT { return Grid().VCSize(); }
+int BDM::RedundantSize() const EL_NO_EXCEPT { return this->Grid().VCSize(); }
 
 template <typename T, Device D>
 int BDM::ColStride() const EL_NO_EXCEPT { return 1; }
@@ -218,7 +218,7 @@ template <typename T, Device D>
 int BDM::CrossRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
 template <typename T, Device D>
-int BDM::RedundantRank() const EL_NO_EXCEPT { return Grid().VCRank(); }
+int BDM::RedundantRank() const EL_NO_EXCEPT { return this->Grid().VCRank(); }
 
 template <typename T, Device D>
 int BDM::ColRank() const EL_NO_EXCEPT

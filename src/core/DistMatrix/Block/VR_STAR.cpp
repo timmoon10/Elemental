@@ -167,7 +167,7 @@ BDM& BDM::operator=( const BlockMatrix<T>& A )
 // =============
 template <typename T, Device D>
 mpi::Comm BDM::DistComm() const EL_NO_EXCEPT
-{ return Grid().VRComm(); }
+{ return this->Grid().VRComm(); }
 template <typename T, Device D>
 mpi::Comm BDM::CrossComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
@@ -177,17 +177,17 @@ mpi::Comm BDM::RedundantComm() const EL_NO_EXCEPT
 
 template <typename T, Device D>
 mpi::Comm BDM::ColComm() const EL_NO_EXCEPT
-{ return Grid().VRComm(); }
+{ return this->Grid().VRComm(); }
 template <typename T, Device D>
 mpi::Comm BDM::RowComm() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
 
 template <typename T, Device D>
 mpi::Comm BDM::PartialColComm() const EL_NO_EXCEPT
-{ return Grid().MRComm(); }
+{ return this->Grid().MRComm(); }
 template <typename T, Device D>
 mpi::Comm BDM::PartialUnionColComm() const EL_NO_EXCEPT
-{ return Grid().MCComm(); }
+{ return this->Grid().MCComm(); }
 
 template <typename T, Device D>
 mpi::Comm BDM::PartialRowComm() const EL_NO_EXCEPT
@@ -198,7 +198,7 @@ mpi::Comm BDM::PartialUnionRowComm() const EL_NO_EXCEPT
 
 template <typename T, Device D>
 int BDM::DistSize() const EL_NO_EXCEPT
-{ return Grid().VRSize(); }
+{ return this->Grid().VRSize(); }
 template <typename T, Device D>
 int BDM::CrossSize() const EL_NO_EXCEPT
 { return 1; }
@@ -208,16 +208,16 @@ int BDM::RedundantSize() const EL_NO_EXCEPT
 
 template <typename T, Device D>
 int BDM::ColStride() const EL_NO_EXCEPT
-{ return Grid().VRSize(); }
+{ return this->Grid().VRSize(); }
 template <typename T, Device D>
 int BDM::RowStride() const EL_NO_EXCEPT
 { return 1; }
 template <typename T, Device D>
 int BDM::PartialColStride() const EL_NO_EXCEPT
-{ return Grid().MRSize(); }
+{ return this->Grid().MRSize(); }
 template <typename T, Device D>
 int BDM::PartialUnionColStride() const EL_NO_EXCEPT
-{ return Grid().MCSize(); }
+{ return this->Grid().MCSize(); }
 template <typename T, Device D>
 int BDM::PartialRowStride() const EL_NO_EXCEPT
 { return this->RowStride(); }
@@ -227,7 +227,7 @@ int BDM::PartialUnionRowStride() const EL_NO_EXCEPT
 
 template <typename T, Device D>
 int BDM::DistRank() const EL_NO_EXCEPT
-{ return Grid().VRRank(); }
+{ return this->Grid().VRRank(); }
 template <typename T, Device D>
 int BDM::CrossRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
@@ -237,16 +237,16 @@ int BDM::RedundantRank() const EL_NO_EXCEPT
 
 template <typename T, Device D>
 int BDM::ColRank() const EL_NO_EXCEPT
-{ return Grid().VRRank(); }
+{ return this->Grid().VRRank(); }
 template <typename T, Device D>
 int BDM::RowRank() const EL_NO_EXCEPT
 { return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
 template <typename T, Device D>
 int BDM::PartialColRank() const EL_NO_EXCEPT
-{ return Grid().MRRank(); }
+{ return this->Grid().MRRank(); }
 template <typename T, Device D>
 int BDM::PartialUnionColRank() const EL_NO_EXCEPT
-{ return Grid().MCRank(); }
+{ return this->Grid().MCRank(); }
 template <typename T, Device D>
 int BDM::PartialRowRank() const EL_NO_EXCEPT
 { return this->RowRank(); }
