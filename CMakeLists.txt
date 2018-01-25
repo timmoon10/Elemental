@@ -45,6 +45,9 @@ elseif (CXX_COMPILER_HAS_WPEDANTIC_FLAG)
 endif()
 
 # Configuration options
+option(CMAKE_POSITION_INDEPENDENT_CODE
+  "Build using position-independent code" ON)
+
 option(${PROJECT_NAME}_ENABLE_TESTING "Build the test suite." ON)
 
 option(${PROJECT_NAME}_ENABLE_QUADMATH
