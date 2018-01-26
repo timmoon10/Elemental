@@ -45,6 +45,12 @@ elseif (CXX_COMPILER_HAS_WPEDANTIC_FLAG)
 endif()
 
 # Configuration options
+option(${PROJECT_NAME}_EXPORT_PACKAGE_REGISTRY
+  "Export the build directory to the user's CMake package registry." OFF)
+if (NOT ${PROJECT_NAME}_EXPORT_PACKAGE_REGISTRY)
+  set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY ON)
+endif ()
+
 option(CMAKE_POSITION_INDEPENDENT_CODE
   "Build using position-independent code" ON)
 
