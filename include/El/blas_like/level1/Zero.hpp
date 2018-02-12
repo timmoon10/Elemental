@@ -17,14 +17,25 @@ void Zero( Matrix<T>& A )
     EL_DEBUG_CSE
     const Int height = A.Height();
     const Int width = A.Width();
+    const Int size = height * width;
     const Int ALDim = A.LDim();
     T* ABuf = A.Buffer();
 
-    // Zero out all entries if memory is contiguous. Otherwise zero
-    // out each column.
     if( ALDim == height )
     {
-        MemZero( ABuf, height*width );
+#ifdef _OPENMP
+        #pragma omp parallel
+        {
+            const Int numThreads = omp_get_num_threads();
+            const Int thread = omp_get_thread_num();
+            const Int chunk = (size + numThreads - 1) / numThreads;
+            const Int start = Min(chunk * thread, size);
+            const Int end = Min(chunk * (thread + 1), size);
+            MemZero( &ABuf[start], end - start );
+        }
+#else
+        MemZero( ABuf, size );
+#endif
     }
     else
     {
