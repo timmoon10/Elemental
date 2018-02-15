@@ -25,6 +25,11 @@ if (NOT MPI_CXX_COMPILER)
   set(MPI_CXX_COMPILER "${HYDROGEN_MPI_CXX_COMPILER}")
 endif ()
 
+set(_OpenMP_DIR "@OpenMP_DIR@")
+if (NOT OpenMP_DIR)
+  set(OpenMP_DIR "${_OpenMP_DIR}")
+endif ()
+include (modules/FindAndVerifyOpenMP)
 # FIXME: I should do verification to make sure all found features are
 #   the same.
 include (modules/FindAndVerifyMPI)

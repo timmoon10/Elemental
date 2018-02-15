@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.9)
 
 project(Hydrogen C CXX)
 
@@ -165,6 +165,12 @@ if (${PROJECT_NAME}_ENABLE_OPENMP)
   if (OpenMP_FOUND)
     set(EL_HYBRID ON)
     set(EL_HAVE_OPENMP TRUE)
+  else ()
+    message(WARNING "Requested OpenMP support but OpenMP support was either "
+      "not found or not functional.")
+    set(EL_HYBRID OFF)
+    set(EL_HAVE_OPENMP FALSE)
+    set(${PROJECT_NAME}_ENABLE_OPENMP OFF)
   endif ()
 endif (${PROJECT_NAME}_ENABLE_OPENMP)
 
@@ -211,6 +217,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+
+if (TARGET OpenMP::OpenMP_CXX)
+  target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+endif ()
 target_link_libraries(${PROJECT_NAME} PUBLIC pmrrr)
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)
