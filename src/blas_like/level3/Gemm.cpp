@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
@@ -20,7 +20,7 @@ template<typename T>
 void Gemm
 ( Orientation orientA, Orientation orientB,
   T alpha, const Matrix<T>& A,
-           const Matrix<T>& B, 
+           const Matrix<T>& B,
   T beta,        Matrix<T>& C )
 {
     EL_DEBUG_CSE
@@ -29,28 +29,40 @@ void Gemm
         if( A.Height() != C.Height() ||
             B.Width()  != C.Width()  ||
             A.Width()  != B.Height() )
-            LogicError("Nonconformal GemmNN");
+            LogicError("Nonconformal GemmNN. Matrix dimensions are:\n"
+                       "  A: ", A.Height(), "x", A.Width(), '\n',
+                       "  B: ", B.Height(), "x", B.Width(), '\n',
+                       "  C: ", C.Height(), "x", C.Width());
     }
     else if( orientA == NORMAL )
     {
         if( A.Height() != C.Height() ||
             B.Height() != C.Width()  ||
             A.Width()  != B.Width() )
-            LogicError("Nonconformal GemmN(T/C)");
+            LogicError("Nonconformal GemmN(T/C). Matrix dimensions are:\n"
+                       "  A: ", A.Height(), "x", A.Width(), '\n',
+                       "  B: ", B.Height(), "x", B.Width(), '\n',
+                       "  C: ", C.Height(), "x", C.Width());
     }
     else if( orientB == NORMAL )
     {
         if( A.Width()  != C.Height() ||
             B.Width()  != C.Width()  ||
             A.Height() != B.Height() )
-            LogicError("Nonconformal Gemm(T/C)N");
+            LogicError("Nonconformal Gemm(T/C)N. Matrix dimensions are:\n"
+                       "  A: ", A.Height(), "x", A.Width(), '\n',
+                       "  B: ", B.Height(), "x", B.Width(), '\n',
+                       "  C: ", C.Height(), "x", C.Width());
     }
     else
     {
         if( A.Width()  != C.Height() ||
             B.Height() != C.Width()  ||
             A.Height() != B.Width() )
-            LogicError("Nonconformal Gemm(T/C)(T/C)");
+            LogicError("Nonconformal Gemm(T/C)(T/C). Matrix dimensions are:\n"
+                       "  A: ", A.Height(), "x", A.Width(), '\n',
+                       "  B: ", B.Height(), "x", B.Width(), '\n',
+                       "  C: ", C.Height(), "x", C.Width());
     }
     const char transA = OrientationToChar( orientA );
     const char transB = OrientationToChar( orientB );
@@ -75,7 +87,7 @@ template<typename T>
 void Gemm
 ( Orientation orientA, Orientation orientB,
   T alpha, const Matrix<T>& A,
-           const Matrix<T>& B, 
+           const Matrix<T>& B,
                  Matrix<T>& C )
 {
     EL_DEBUG_CSE
@@ -91,7 +103,7 @@ void Gemm
 ( Orientation orientA, Orientation orientB,
   T alpha, const AbstractDistMatrix<T>& A,
            const AbstractDistMatrix<T>& B,
-  T beta,        AbstractDistMatrix<T>& C, 
+  T beta,        AbstractDistMatrix<T>& C,
   GemmAlgorithm alg )
 {
     EL_DEBUG_CSE
@@ -100,7 +112,7 @@ void Gemm
     {
         if( alg == GEMM_CANNON )
             gemm::Cannon_NN( alpha, A, B, C );
-        else 
+        else
             gemm::SUMMA_NN( alpha, A, B, C, alg );
     }
     else if( orientA == NORMAL )
