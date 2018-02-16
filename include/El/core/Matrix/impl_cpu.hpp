@@ -23,21 +23,17 @@ Matrix<Ring, Device::CPU>::Matrix() { }
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Int height, Int width)
-: height_(height), width_(width), leadingDimension_(Max(height,1))
+    : AbstractMatrix<Ring>{height,width,Max(height,1)}
 {
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidDimensions(height, width))
-    memory_.Require(leadingDimension_ * width);
+    memory_.Require(Max(height,1) * width);
     data_ = memory_.Buffer();
     // TODO(poulson): Consider explicitly zeroing
 }
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Int height, Int width, Int leadingDimension)
-: height_(height), width_(width), leadingDimension_(leadingDimension)
+    : AbstractMatrix<Ring>{height, width, leadingDimension}
 {
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidDimensions(height, width, leadingDimension))
     memory_.Require(leadingDimension*width);
     data_ = memory_.Buffer();
 }
@@ -45,27 +41,22 @@ Matrix<Ring, Device::CPU>::Matrix(Int height, Int width, Int leadingDimension)
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix
 (Int height, Int width, const Ring* buffer, Int leadingDimension)
-: viewType_(LOCKED_VIEW),
-  height_(height), width_(width), leadingDimension_(leadingDimension),
-  data_(const_cast<Ring*>(buffer))
+    : AbstractMatrix<Ring>{LOCKED_VIEW,height,width,leadingDimension},
+    data_(const_cast<Ring*>(buffer))
 {
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidDimensions(height, width, leadingDimension))
 }
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix
 (Int height, Int width, Ring* buffer, Int leadingDimension)
-: viewType_(VIEW),
-  height_(height), width_(width), leadingDimension_(leadingDimension),
-  data_(buffer)
+    : AbstractMatrix<Ring>{VIEW,height,width,leadingDimension},
+    data_(buffer)
 {
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidDimensions(height, width, leadingDimension))
 }
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::CPU> const& A)
+    : AbstractMatrix<Ring>{A}
 {
     EL_DEBUG_CSE
     if (&A != this)
@@ -76,12 +67,13 @@ Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::CPU> const& A)
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::GPU> const& A)
-    : Matrix{A.height_, A.width_, A.leadingDimension_}
+    : Matrix{A.Height(), A.Width(), A.LDim()}
 {
     EL_DEBUG_CSE;
-    auto error = cudaMemcpy2D(data_, width_*sizeof(Ring),
-                              A.LockedBuffer(), A.width_*sizeof(Ring),
-                              width_*sizeof(Ring), leadingDimension_,//height_*sizeof(Ring),
+    auto error = cudaMemcpy2D(data_, A.Width()*sizeof(Ring),
+                              A.LockedBuffer(), A.Width()*sizeof(Ring),
+                              A.Width()*sizeof(Ring), A.LDim(),
+                              //height_*sizeof(Ring),
                               cudaMemcpyDeviceToHost);
     if (error != cudaSuccess)
     {
@@ -95,10 +87,11 @@ Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::GPU> const& A)
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::CPU>&& A) EL_NO_EXCEPT
-: viewType_(A.viewType_),
-  height_(A.height_), width_(A.width_), leadingDimension_(A.leadingDimension_),
-  memory_(std::move(A.memory_)), data_(nullptr)
-{ std::swap(data_, A.data_); }
+    : AbstractMatrix<Ring>{A},
+      memory_(std::move(A.memory_)), data_(nullptr)
+{
+    std::swap(data_, A.data_);
+}
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::~Matrix() { }
@@ -106,57 +99,6 @@ Matrix<Ring, Device::CPU>::~Matrix() { }
 // Assignment and reconfiguration
 // ==============================
 
-template<typename Ring>
-void Matrix<Ring, Device::CPU>::Empty(bool freeMemory)
-{
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      if (FixedSize())
-          LogicError("Cannot empty a fixed-size matrix");
-   )
-    Empty_(freeMemory);
-}
-
-template<typename Ring>
-void Matrix<Ring, Device::CPU>::Resize(Int height, Int width)
-{
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      AssertValidDimensions(height, width);
-      if (FixedSize() && (height != height_ || width != width_))
-      {
-          LogicError
-          ("Cannot resize this matrix from ",
-           height_," x ",width_," to ",height," x ",width);
-      }
-      if (Viewing() && (height > height_ || width > width_))
-          LogicError("Cannot increase the size of this matrix");
-   )
-    Resize_(height, width);
-}
-
-template<typename Ring>
-void Matrix<Ring, Device::CPU>::Resize(
-    Int height, Int width, Int leadingDimension)
-{
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      AssertValidDimensions(height, width, leadingDimension);
-      if (FixedSize() &&
-          (height != height_ || width != width_ ||
-            leadingDimension != leadingDimension_))
-      {
-          LogicError
-          ("Cannot resize this matrix from ",
-           height_," x ",width_," (",leadingDimension_,") to ",
-           height," x ",width," (",leadingDimension,")");
-      }
-      if (Viewing() && (height > height_ || width > width_ ||
-          leadingDimension != leadingDimension_))
-          LogicError("Cannot increase the size of this matrix");
-   )
-    Resize_(height, width, leadingDimension);
-}
 
 template<typename Ring>
 void Matrix<Ring, Device::CPU>::Attach
@@ -164,7 +106,7 @@ void Matrix<Ring, Device::CPU>::Attach
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if (FixedSize())
+      if (this->FixedSize())
           LogicError("Cannot attach a new buffer to a view with fixed size");
    )
     Attach_(height, width, buffer, leadingDimension);
@@ -176,7 +118,7 @@ void Matrix<Ring, Device::CPU>::LockedAttach
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if (FixedSize())
+      if (this->FixedSize())
           LogicError("Cannot attach a new buffer to a view with fixed size");
    )
     LockedAttach_(height, width, buffer, leadingDimension);
@@ -188,7 +130,7 @@ void Matrix<Ring, Device::CPU>::Control
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if (FixedSize())
+      if (this->FixedSize())
           LogicError("Cannot attach a new buffer to a view with fixed size");
    )
     Control_(height, width, buffer, leadingDimension);
@@ -268,18 +210,15 @@ Matrix<Ring, Device::CPU>&
 Matrix<Ring, Device::CPU>::operator=(Matrix<Ring, Device::CPU>&& A)
 {
     EL_DEBUG_CSE
-    if (Viewing() || A.Viewing())
+    if (this->Viewing() || A.Viewing())
     {
-        operator=((Matrix<Ring, Device::CPU> const&)A);
+        operator=(static_cast<Matrix<Ring, Device::CPU> const&>(A));
     }
     else
     {
+        AbstractMatrix<Ring>::operator=(A);
         memory_.ShallowSwap(A.memory_);
         std::swap(data_, A.data_);
-        viewType_ = A.viewType_;
-        height_ = A.height_;
-        width_ = A.width_;
-        leadingDimension_ = A.leadingDimension_;
     }
     return *this;
 }
@@ -319,29 +258,21 @@ Matrix<Ring, Device::CPU>::operator-=(Matrix<Ring, Device::CPU> const& A)
 // =============
 
 template<typename Ring>
-Int Matrix<Ring, Device::CPU>::Height() const EL_NO_EXCEPT { return height_; }
-
-template<typename Ring>
-Int Matrix<Ring, Device::CPU>::Width() const EL_NO_EXCEPT { return width_; }
-
-template<typename Ring>
-Int Matrix<Ring, Device::CPU>::LDim() const EL_NO_EXCEPT
-{ return leadingDimension_; }
-
-template<typename Ring>
-Int Matrix<Ring, Device::CPU>::MemorySize() const EL_NO_EXCEPT
+Int Matrix<Ring, Device::CPU>::do_get_memory_size_() const EL_NO_EXCEPT
 { return memory_.Size(); }
 
-template<typename Ring>
-Int Matrix<Ring, Device::CPU>::DiagonalLength(Int offset) const EL_NO_EXCEPT
-{ return El::DiagonalLength(height_,width_,offset); }
+template <typename Ring>
+Device Matrix<Ring, Device::CPU>::do_get_device_() const EL_NO_EXCEPT
+{
+    return Device::CPU;
+}
 
 template<typename Ring>
 Ring* Matrix<Ring, Device::CPU>::Buffer() EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if (Locked())
+      if (this->Locked())
           LogicError("Cannot return non-const buffer of locked Matrix");
    )
     return data_;
@@ -352,14 +283,14 @@ Ring* Matrix<Ring, Device::CPU>::Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if (Locked())
+      if (this->Locked())
           LogicError("Cannot return non-const buffer of locked Matrix");
    )
     if (data_ == nullptr)
         return nullptr;
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
-    return &data_[i+j*leadingDimension_];
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
+    return &data_[i+j*this->LDim()];
 }
 
 template<typename Ring>
@@ -373,38 +304,10 @@ Matrix<Ring, Device::CPU>::LockedBuffer(Int i, Int j) const EL_NO_EXCEPT
     EL_DEBUG_CSE
     if (data_ == nullptr)
         return nullptr;
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
-    return &data_[i+j*leadingDimension_];
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
+    return &data_[i+j*this->LDim()];
 }
-
-template<typename Ring>
-bool Matrix<Ring, Device::CPU>::Viewing() const EL_NO_EXCEPT
-{ return IsViewing(viewType_); }
-
-template<typename Ring>
-void Matrix<Ring, Device::CPU>::FixSize() EL_NO_EXCEPT
-{
-    // A view is marked as fixed if its second bit is nonzero
-    // (and OWNER_FIXED is zero except in its second bit).
-    viewType_ = static_cast<El::ViewType>(viewType_ | OWNER_FIXED);
-}
-
-template<typename Ring>
-bool Matrix<Ring, Device::CPU>::FixedSize() const EL_NO_EXCEPT
-{ return IsFixedSize(viewType_); }
-
-template<typename Ring>
-bool Matrix<Ring, Device::CPU>::Locked() const EL_NO_EXCEPT
-{ return IsLocked(viewType_); }
-
-template<typename Ring>
-void Matrix<Ring, Device::CPU>::SetViewType(El::ViewType viewType) EL_NO_EXCEPT
-{ viewType_ = viewType; }
-
-template<typename Ring>
-El::ViewType Matrix<Ring, Device::CPU>::ViewType() const EL_NO_EXCEPT
-{ return viewType_; }
 
 // Single-entry manipulation
 // =========================
@@ -414,9 +317,9 @@ Ring Matrix<Ring, Device::CPU>::Get(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidEntry(i, j))
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     return CRef(i, j);
 }
 
@@ -425,9 +328,9 @@ Base<Ring> Matrix<Ring, Device::CPU>::GetRealPart(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidEntry(i, j))
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     return El::RealPart(CRef(i, j));
 }
 
@@ -436,9 +339,9 @@ Base<Ring> Matrix<Ring, Device::CPU>::GetImagPart(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidEntry(i, j))
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     return El::ImagPart(CRef(i, j));
 }
 
@@ -448,12 +351,12 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     Ref(i, j) = alpha;
 }
 
@@ -470,12 +373,12 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     El::SetRealPart(Ref(i, j), alpha);
 }
 
@@ -491,12 +394,12 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     El::SetImagPart(Ref(i, j), alpha);
 }
 
@@ -511,12 +414,12 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     Ref(i, j) += alpha;
 }
 
@@ -532,12 +435,12 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     El::UpdateRealPart(Ref(i, j), alpha);
 }
 
@@ -553,12 +456,12 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
+    if (i == END) i = this->Height() - 1;
+    if (j == END) j = this->Width() - 1;
     El::UpdateImagPart(Ref(i, j), alpha);
 }
 
@@ -573,8 +476,8 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
     Set(i, j, GetRealPart(i,j));
@@ -586,8 +489,8 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
     Set(i, j, El::Conj(Get(i,j)));
@@ -601,60 +504,49 @@ EL_NO_RELEASE_EXCEPT
 template<typename Ring>
 void Matrix<Ring, Device::CPU>::ShallowSwap(Matrix<Ring, Device::CPU>& A)
 {
+    AbstractMatrix<Ring>::ShallowSwap(A);
     memory_.ShallowSwap(A.memory_);
     std::swap(data_, A.data_);
-    std::swap(viewType_, A.viewType_);
-    std::swap(height_, A.height_);
-    std::swap(width_, A.width_);
-    std::swap(leadingDimension_, A.leadingDimension_);
 }
 
 // Reconfigure without error-checking
 // ==================================
 
 template<typename Ring>
-void Matrix<Ring, Device::CPU>::Empty_(bool freeMemory)
+void Matrix<Ring, Device::CPU>::do_empty_(bool freeMemory)
 {
     if (freeMemory)
         memory_.Empty();
-    height_ = 0;
-    width_ = 0;
-    leadingDimension_ = 1;
     data_ = nullptr;
-    viewType_ = static_cast<El::ViewType>(viewType_ & ~LOCKED_VIEW);
 }
 
 template<typename Ring>
 void Matrix<Ring, Device::CPU>::Attach_
 (Int height, Int width, Ring* buffer, Int leadingDimension)
 {
-    height_ = height;
-    width_ = width;
-    leadingDimension_ = leadingDimension;
+    this->SetViewType(static_cast<El::ViewType>((this->ViewType() & ~LOCKED_OWNER) | VIEW));
+    this->SetSize_(height, width, leadingDimension);
     data_ = buffer;
-    viewType_ = static_cast<El::ViewType>((viewType_ & ~LOCKED_OWNER) | VIEW);
 }
 
 template<typename Ring>
 void Matrix<Ring, Device::CPU>::LockedAttach_
 (Int height, Int width, const Ring* buffer, Int leadingDimension)
 {
-    height_ = height;
-    width_ = width;
-    leadingDimension_ = leadingDimension;
+    this->SetViewType(
+        static_cast<El::ViewType>(this->ViewType() | LOCKED_VIEW));
+    this->SetSize_(height,width,leadingDimension);
     data_ = const_cast<Ring*>(buffer);
-    viewType_ = static_cast<El::ViewType>(viewType_ | LOCKED_VIEW);
 }
 
 template<typename Ring>
 void Matrix<Ring, Device::CPU>::Control_
 (Int height, Int width, Ring* buffer, Int leadingDimension)
 {
-    height_ = height;
-    width_ = width;
-    leadingDimension_ = leadingDimension;
+    this->SetViewType(
+        static_cast<El::ViewType>(this->ViewType() & ~LOCKED_VIEW));
+    this->SetSize_(height,width,leadingDimension);
     data_ = buffer;
-    viewType_ = static_cast<El::ViewType>(viewType_ & ~LOCKED_VIEW);
 }
 
 // Return a reference to a single entry without error-checking
@@ -663,7 +555,7 @@ template<typename Ring>
 Ring const& Matrix<Ring, Device::CPU>::CRef(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
-    return data_[i+j*leadingDimension_];
+    return data_[i+j*this->LDim()];
 }
 
 template<typename Ring>
@@ -671,15 +563,15 @@ Ring const& Matrix<Ring, Device::CPU>::operator()(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidEntry(i, j))
-    return data_[i+j*leadingDimension_];
+    EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
+    return data_[i+j*this->LDim()];
 }
 
 template<typename Ring>
 Ring& Matrix<Ring, Device::CPU>::Ref(Int i, Int j)
 EL_NO_RELEASE_EXCEPT
 {
-    return data_[i+j*leadingDimension_];
+    return data_[i+j*this->LDim()];
 }
 
 template<typename Ring>
@@ -688,87 +580,17 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertValidEntry(i, j);
-      if (Locked())
+      this->AssertValidEntry(i, j);
+      if (this->Locked())
           LogicError("Cannot modify data of locked matrices");
    )
-    return data_[i+j*leadingDimension_];
-}
-
-// Assertions
-// ==========
-
-template<typename Ring>
-void
-Matrix<Ring, Device::CPU>::AssertValidDimensions(Int height, Int width) const
-{
-    EL_DEBUG_CSE
-    if (height < 0 || width < 0)
-        LogicError("Height and width must be non-negative");
+    return data_[i+j*this->LDim()];
 }
 
 template<typename Ring>
-void Matrix<Ring, Device::CPU>::AssertValidDimensions
-(Int height, Int width, Int leadingDimension) const
+void Matrix<Ring, Device::CPU>::do_resize_()
 {
-    EL_DEBUG_CSE
-    AssertValidDimensions(height, width);
-    if (leadingDimension < height)
-        LogicError("Leading dimension must be no less than height");
-    if (leadingDimension == 0)
-        LogicError("Leading dimension cannot be zero (for BLAS compatibility)");
-}
-
-template<typename Ring>
-void Matrix<Ring, Device::CPU>::AssertValidEntry(Int i, Int j) const
-{
-    EL_DEBUG_CSE
-    if (i == END) i = height_ - 1;
-    if (j == END) j = width_ - 1;
-    if (i < 0 || j < 0)
-        LogicError("Indices must be non-negative");
-    if (i >= Height() || j >= Width())
-        LogicError
-        ("Out of bounds: (",i,",",j,") of ",Height()," x ",Width()," Matrix");
-}
-
-template<typename Ring>
-void Matrix<Ring, Device::CPU>::Resize_(Int height, Int width)
-{
-    // Only change the leadingDimension when necessary.
-    // Simply 'shrink' our view if possible.
-    //
-    // Note that the matrix is, by default, initialized as 0 x 0 with a
-    // leading dimension of 1, so any resize to a nonzero number of entries
-    // will trigger a reallocation if we use the following logic.
-    //
-    // TODO(poulson): Avoid reallocation if height*width == 0?
-    const bool reallocate = height > leadingDimension_ || width > width_;
-    height_ = height;
-    width_ = width;
-    if (reallocate)
-    {
-        leadingDimension_ = Max(height, 1);
-        memory_.Require(leadingDimension_ * width);
-        data_ = memory_.Buffer();
-    }
-}
-
-template<typename Ring>
-void Matrix<Ring, Device::CPU>::Resize_(
-    Int height, Int width, Int leadingDimension)
-{
-    const bool reallocate =
-      height > leadingDimension_ || width > width_ ||
-      leadingDimension != leadingDimension_;
-    height_ = height;
-    width_ = width;
-    if (reallocate)
-    {
-        leadingDimension_ = leadingDimension;
-        memory_.Require(leadingDimension*width);
-        data_ = memory_.Buffer();
-    }
+    data_ = memory_.Require(this->LDim() * this->Width());
 }
 
 // For supporting duck typing

@@ -21,8 +21,8 @@ template<typename Ring, Device Dev>
 class Matrix;
 
 // Specialization for CPU
-template<typename Ring>
-class Matrix<Ring, Device::CPU>
+template <typename Ring>
+class Matrix<Ring, Device::CPU> : public AbstractMatrix<Ring>
 {
 public:
     // Constructors and destructors
@@ -68,10 +68,6 @@ public:
     // Assignment and reconfiguration
     //
 
-    void Empty(bool freeMemory=true);
-    void Resize(Int height, Int width);
-    void Resize(Int height, Int width, Int leadingDimension);
-
     // Reconfigure around the given buffer, but do not assume ownership
     void Attach
     (Int height, Int width, Ring* buffer, Int leadingDimension);
@@ -81,9 +77,6 @@ public:
     // Reconfigure around the given buffer and assume ownership
     void Control
     (Int height, Int width, Ring* buffer, Int leadingDimension);
-
-    // Force the size to remain constant (but allow the entries to be modified).
-    void FixSize() EL_NO_EXCEPT;
 
     //
     // Operator overloading
@@ -117,24 +110,11 @@ public:
     // Basic queries
     //
 
-    Int Height() const EL_NO_EXCEPT;
-    Int Width() const EL_NO_EXCEPT;
-    Int LDim() const EL_NO_EXCEPT;
-    Int MemorySize() const EL_NO_EXCEPT;
-    Int DiagonalLength(Int offset=0) const EL_NO_EXCEPT;
-
     Ring* Buffer() EL_NO_RELEASE_EXCEPT;
     Ring* Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT;
     const Ring* LockedBuffer() const EL_NO_EXCEPT;
     const Ring* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT;
 
-    bool Viewing()   const EL_NO_EXCEPT;
-    bool FixedSize() const EL_NO_EXCEPT;
-    bool Locked()    const EL_NO_EXCEPT;
-    // Advanced
-    // --------
-    void SetViewType(El::ViewType viewType) EL_NO_EXCEPT;
-    El::ViewType ViewType() const EL_NO_EXCEPT;
 
     // Single-entry manipulation
     // =========================
@@ -182,13 +162,13 @@ public:
 private:
     // Member variables
     // ================
-    El::ViewType viewType_=OWNER;
-    Int height_=0, width_=0, leadingDimension_=1;
-
     Memory<Ring,Device::CPU> memory_;
     // Const-correctness is internally managed to avoid the need for storing
     // two separate pointers with different 'const' attributes
     Ring* data_=nullptr;
+
+    Int do_get_memory_size_() const EL_NO_EXCEPT override;
+    Device do_get_device_() const EL_NO_EXCEPT override;
 
     // Exchange metadata with another matrix
     // =====================================
@@ -196,9 +176,8 @@ private:
 
     // Reconfigure without error-checking
     // ==================================
-    void Empty_(bool freeMemory=true);
-    void Resize_(Int height, Int width);
-    void Resize_(Int height, Int width, Int leadingDimension);
+    void do_empty_(bool freeMemory) override;
+    void do_resize_() override;
 
     void Control_
     (Int height, Int width, Ring* buffer, Int leadingDimension);
@@ -207,19 +186,12 @@ private:
     void LockedAttach_
     (Int height, Int width, const Ring* buffer, Int leadingDimension);
 
-    // Assertions
-    // ==========
-    void AssertValidDimensions(Int height, Int width) const;
-    void AssertValidDimensions
-    (Int height, Int width, Int leadingDimension) const;
-    void AssertValidEntry(Int i, Int j) const;
-
     // Friend declarations
     // ===================
     template<typename S, Device D> friend class Matrix;
     template<typename S> friend class AbstractDistMatrix;
-    template<typename S, Device D> friend class ElementalMatrix;
-    template<typename S, Device D> friend class BlockMatrix;
+    template<typename S> friend class ElementalMatrix;
+    template<typename S> friend class BlockMatrix;
 
     // For supporting duck typing
     // ==========================
@@ -247,8 +219,8 @@ private:
 };
 
 // GPU version
-template<typename Ring>
-class Matrix<Ring, Device::GPU>
+template <typename Ring>
+class Matrix<Ring, Device::GPU> : public AbstractMatrix<Ring>
 {
 public:
     // Constructors and destructors
@@ -310,31 +282,27 @@ public:
     const Matrix<Ring, Device::GPU>
     operator()(Range<Int> I, Range<Int> J) const;
 
-    Int Height() const EL_NO_EXCEPT;
-    Int Width() const EL_NO_EXCEPT;
-    Int LDim() const EL_NO_EXCEPT;
-    Int MemorySize() const EL_NO_EXCEPT;
-
-    bool Viewing() const EL_NO_EXCEPT;
-    bool FixedSize() const EL_NO_EXCEPT;
-    bool Locked()    const EL_NO_EXCEPT;
-
 private:
+
+    Int do_get_memory_size_() const EL_NO_EXCEPT override;
+    Device do_get_device_() const EL_NO_EXCEPT override;
+    void do_empty_(bool freeMemory) override;
+    void do_resize_() override;
 
     void Attach_(Int height, Int width, Ring* buffer, Int leadingDimension);
     void LockedAttach_(
         Int height, Int width, const Ring* buffer, Int leadingDimension);
 
+    // Exchange metadata with another matrix
+    // =====================================
+    void ShallowSwap(Matrix<Ring, Device::GPU>& A);
+
     template<typename S, Device D> friend class Matrix;
     template<typename S> friend class AbstractDistMatrix;
-    template<typename S, Device D> friend class ElementalMatrix;
-    template<typename S, Device D> friend class BlockMatrix;
+    template<typename S> friend class ElementalMatrix;
+    template<typename S> friend class BlockMatrix;
 
 private:
-
-    El::ViewType viewType_=OWNER;
-
-    Int height_=0, width_=0, leadingDimension_=1;
 
     Memory<Ring,Device::GPU> memory_;
 

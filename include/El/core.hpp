@@ -262,12 +262,13 @@ template<typename T> struct IsStdField<Complex<T>>
 
 namespace El {
 
+template <typename T=double> class AbstractMatrix;
 template<typename T=double, Device D=Device::CPU> class Matrix;
 
 template<typename T=double> class AbstractDistMatrix;
 
-template<typename T=double, Device D=Device::CPU> class ElementalMatrix;
-template<typename T=double, Device D=Device::CPU> class BlockMatrix;
+template<typename T=double> class ElementalMatrix;
+template<typename T=double> class BlockMatrix;
 
 template<typename T=double, Dist U=MC, Dist V=MR,
          DistWrap wrap=ELEMENT, Device=Device::CPU>
@@ -275,6 +276,7 @@ class DistMatrix;
 
 } // namespace El
 
+#include <El/core/AbstractMatrix.hpp>
 #include <El/core/Matrix/decl.hpp>
 #include <El/core/DistMap/decl.hpp>
 #include <El/core/View/decl.hpp>
