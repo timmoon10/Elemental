@@ -177,7 +177,7 @@ DM& DM::operator=(const DistMatrix<T,CIRC,CIRC,ELEMENT,D>& A)
 }
 
 template <typename T, Device D>
-DM& DM::operator=(const ElementalMatrix<T,D>& A)
+DM& DM::operator=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE
     #define GUARD(CDIST,RDIST,WRAP) \

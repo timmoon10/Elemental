@@ -14,7 +14,8 @@
 
 #include "./setup.hpp"
 
-namespace El {
+namespace El
+{
 
 // Public section
 // ##############
@@ -160,7 +161,7 @@ DM& DM::operator=(const DistMatrix<T,CIRC,CIRC,ELEMENT,D>& A)
 }
 
 template <typename T, Device D>
-DM& DM::operator=(const ElementalMatrix<T,D>& A)
+DM& DM::operator=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE
     #define GUARD(CDIST,RDIST,WRAP) \
@@ -255,26 +256,26 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
   (const DistMatrix<T,U,V,BLOCK>& A); \
   template DistMatrix<T,COLDIST,ROWDIST>& \
            DistMatrix<T,COLDIST,ROWDIST>::operator= \
-           (const DistMatrix<T,U,V,BLOCK>& A)
+  (const DistMatrix<T,U,V,BLOCK>& A)
 #define BOTH(T,U,V) \
-  SELF(T,U,V) \
-  OTHER(T,U,V)
-#define PROTO(T) \
-  template class DistMatrix<T,COLDIST,ROWDIST>; \
-  BOTH(T,CIRC,CIRC); \
-  OTHER(T,MC,  MR ); \
-  BOTH(T,MC,  STAR); \
-  BOTH(T,MD,  STAR); \
-  BOTH(T,MR,  MC ); \
-  BOTH(T,MR,  STAR); \
-  BOTH(T,STAR,MC ); \
-  BOTH(T,STAR,MD ); \
-  BOTH(T,STAR,MR ); \
-  BOTH(T,STAR,STAR); \
-  BOTH(T,STAR,VC ); \
-  BOTH(T,STAR,VR ); \
-  BOTH(T,VC,  STAR); \
-  BOTH(T,VR,  STAR);
+    SELF(T,U,V)     \
+    OTHER(T,U,V)
+#define PROTO(T)                                        \
+    template class DistMatrix<T,COLDIST,ROWDIST>;       \
+    BOTH(T,CIRC,CIRC);                                  \
+    OTHER(T,MC,  MR );                                  \
+    BOTH(T,MC,  STAR);                                  \
+    BOTH(T,MD,  STAR);                                  \
+    BOTH(T,MR,  MC );                                   \
+    BOTH(T,MR,  STAR);                                  \
+    BOTH(T,STAR,MC );                                   \
+    BOTH(T,STAR,MD );                                   \
+    BOTH(T,STAR,MR );                                   \
+    BOTH(T,STAR,STAR);                                  \
+    BOTH(T,STAR,VC );                                   \
+    BOTH(T,STAR,VR );                                   \
+    BOTH(T,VC,  STAR);                                  \
+    BOTH(T,VR,  STAR);
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

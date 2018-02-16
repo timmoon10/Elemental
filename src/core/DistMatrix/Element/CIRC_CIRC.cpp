@@ -25,7 +25,7 @@ namespace El {
 // Make a copy
 // -----------
 template <typename T, Device D>
-DM& DM::operator=(const ElementalMatrix<T,D>& A)
+DM& DM::operator=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE
     copy::Gather(A, *this);

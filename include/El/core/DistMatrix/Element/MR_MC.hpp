@@ -20,13 +20,13 @@ namespace El {
 // of the process grid.
 template <typename Ring, Device Dev>
 class DistMatrix<Ring,MR,MC,ELEMENT,Dev>
-    : public ElementalMatrix<Ring,Dev>
+    : public ElementalMatrix<Ring>
 {
 public:
     // Typedefs
     // ========
     typedef AbstractDistMatrix<Ring> absType;
-    typedef ElementalMatrix<Ring,Dev> elemType;
+    typedef ElementalMatrix<Ring> elemType;
     typedef DistMatrix<Ring,MR,MC,ELEMENT,Dev> type;
     typedef DistMatrix<Ring,MC,MR,ELEMENT,Dev> transType;
     typedef DistMatrix<Ring,MD,STAR,ELEMENT,Dev> diagType;

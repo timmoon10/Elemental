@@ -16,13 +16,13 @@ namespace El {
 // The entire matrix is only stored on a single process.
 template <typename Ring, Device Dev>
 class DistMatrix<Ring,CIRC,CIRC,ELEMENT,Dev>
-    : public ElementalMatrix<Ring,Dev>
+    : public ElementalMatrix<Ring>
 {
 public:
     // Typedefs
     // ========
     typedef AbstractDistMatrix<Ring> absType;
-    typedef ElementalMatrix<Ring,Dev> elemType;
+    typedef ElementalMatrix<Ring> elemType;
     typedef DistMatrix<Ring,CIRC,CIRC,ELEMENT,Dev> type;
     typedef DistMatrix<Ring,CIRC,CIRC,ELEMENT,Dev> transType;
     typedef DistMatrix<Ring,CIRC,CIRC,ELEMENT,Dev> diagType;

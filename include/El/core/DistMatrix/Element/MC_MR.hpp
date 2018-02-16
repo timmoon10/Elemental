@@ -9,7 +9,8 @@
 #ifndef EL_DISTMATRIX_ELEMENTAL_MC_MR_HPP
 #define EL_DISTMATRIX_ELEMENTAL_MC_MR_HPP
 
-namespace El {
+namespace El
+{
 
 // Partial specialization to A[MC,MR].
 //
@@ -19,13 +20,13 @@ namespace El {
 
 template <typename Ring, Device Dev>
 class DistMatrix<Ring,MC,MR,ELEMENT,Dev>
-    : public ElementalMatrix<Ring,Dev>
+    : public ElementalMatrix<Ring>
 {
 public:
     // Typedefs
     // ========
     typedef AbstractDistMatrix<Ring> absType;
-    typedef ElementalMatrix<Ring,Dev> elemType;
+    typedef ElementalMatrix<Ring> elemType;
     typedef DistMatrix<Ring,MC,MR,ELEMENT,Dev> type;
     typedef DistMatrix<Ring,MR,MC,ELEMENT,Dev> transType;
     typedef DistMatrix<Ring,MD,STAR,ELEMENT,Dev> diagType;
@@ -156,6 +157,9 @@ public:
 
     template<typename S,Dist U,Dist V,DistWrap wrap,Device D>
     friend class DistMatrix;
+
+private:
+    El::Matrix<Ring,Dev> matrix_;
 };
 
 } // namespace El

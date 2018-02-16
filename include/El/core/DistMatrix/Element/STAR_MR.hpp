@@ -18,13 +18,13 @@ namespace El {
 // Thus the rows will be distributed among rows of the process grid.
 template <typename Ring, Device Dev>
 class DistMatrix<Ring,STAR,MR,ELEMENT,Dev>
-    : public ElementalMatrix<Ring,Dev>
+    : public ElementalMatrix<Ring>
 {
 public:
     // Typedefs
     // ========
     typedef AbstractDistMatrix<Ring> absType;
-    typedef ElementalMatrix<Ring,Dev> elemType;
+    typedef ElementalMatrix<Ring> elemType;
     typedef DistMatrix<Ring,STAR,MR,ELEMENT,Dev> type;
     typedef DistMatrix<Ring,MR,STAR,ELEMENT,Dev> transType;
     typedef DistMatrix<Ring,MR,STAR,ELEMENT,Dev> diagType;

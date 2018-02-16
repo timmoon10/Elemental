@@ -12,16 +12,13 @@
 namespace El
 {
 
-template <typename Ring, Device D>
-class ElementalMatrix;
-
-template<typename Ring>
-class ElementalMatrix<Ring, Device::CPU> : public AbstractDistMatrix<Ring>
+template <typename Ring>
+class ElementalMatrix : public AbstractDistMatrix<Ring>
 {
 public:
     // Typedefs
     // ========
-    typedef ElementalMatrix<Ring, Device::CPU> type;
+    typedef ElementalMatrix<Ring> type;
     typedef AbstractDistMatrix<Ring> absType;
 
     // Constructors and destructors
@@ -151,22 +148,22 @@ private:
     void ShallowSwap(type& A);
 
     template<typename S> friend class AbstractDistMatrix;
-    template<typename S, Device D> friend class ElementalMatrix;
-    template<typename S, Device D> friend class BlockMatrix;
+    template<typename S> friend class ElementalMatrix;
+    template<typename S> friend class BlockMatrix;
 };
 
-template<typename Ring>
-void AssertConforming1x2
-(const ElementalMatrix<Ring>& AL, const ElementalMatrix<Ring>& AR);
+template <typename Ring>
+void AssertConforming1x2(
+    const ElementalMatrix<Ring>& AL, const ElementalMatrix<Ring>& AR);
 
-template<typename Ring>
-void AssertConforming2x1
-(const ElementalMatrix<Ring>& AT, const ElementalMatrix<Ring>& AB);
+template <typename Ring>
+void AssertConforming2x1(
+    const ElementalMatrix<Ring>& AT, const ElementalMatrix<Ring>& AB);
 
-template<typename Ring>
-void AssertConforming2x2
-(const ElementalMatrix<Ring>& ATL, const ElementalMatrix<Ring>& ATR,
-  const ElementalMatrix<Ring>& ABL, const ElementalMatrix<Ring>& ABR);
+template <typename Ring>
+void AssertConforming2x2(
+    const ElementalMatrix<Ring>& ATL, const ElementalMatrix<Ring>& ATR,
+    const ElementalMatrix<Ring>& ABL, const ElementalMatrix<Ring>& ABR);
 
 } // namespace El
 

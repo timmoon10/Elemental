@@ -18,13 +18,13 @@ namespace El {
 // distributed.
 template <typename Ring, Device Dev>
 class DistMatrix<Ring,VC,STAR,ELEMENT,Dev>
-    : public ElementalMatrix<Ring,Dev>
+    : public ElementalMatrix<Ring>
 {
 public:
     // Typedefs
     // ========
     typedef AbstractDistMatrix<Ring> absType;
-    typedef ElementalMatrix<Ring,Dev> elemType;
+    typedef ElementalMatrix<Ring> elemType;
     typedef DistMatrix<Ring,VC,STAR,ELEMENT,Dev> type;
     typedef DistMatrix<Ring,STAR,VC,ELEMENT,Dev> transType;
     typedef DistMatrix<Ring,VC,STAR,ELEMENT,Dev> diagType;

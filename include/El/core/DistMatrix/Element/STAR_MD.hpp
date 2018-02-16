@@ -20,13 +20,13 @@ namespace El {
 // are coprime.
 template <typename Ring, Device Dev>
 class DistMatrix<Ring,STAR,MD,ELEMENT,Dev>
-    : public ElementalMatrix<Ring,Dev>
+    : public ElementalMatrix<Ring>
 {
 public:
     // Typedefs
     // ========
     typedef AbstractDistMatrix<Ring> absType;
-    typedef ElementalMatrix<Ring,Dev> elemType;
+    typedef ElementalMatrix<Ring> elemType;
     typedef DistMatrix<Ring,STAR,MD,ELEMENT,Dev> type;
     typedef DistMatrix<Ring,MD,STAR,ELEMENT,Dev> transType;
     typedef DistMatrix<Ring,MD,STAR,ELEMENT,Dev> diagType;

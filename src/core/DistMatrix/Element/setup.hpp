@@ -16,7 +16,7 @@
 namespace El {
 
 #define DM DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>
-#define EM ElementalMatrix<T,D>
+#define EM ElementalMatrix<T>
 #define ADM AbstractDistMatrix<T>
 
 // Public section
@@ -95,7 +95,7 @@ DM::DistMatrix( const AbstractDistMatrix<T>& A )
 }
 
 template <typename T, Device D>
-DM::DistMatrix( const ElementalMatrix<T,D>& A )
+DM::DistMatrix( const ElementalMatrix<T>& A )
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
