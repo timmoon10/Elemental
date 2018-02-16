@@ -247,6 +247,7 @@ template<typename T> struct IsStdField<Complex<T>>
 #include <El/core/Timer.hpp>
 #include <El/core/indexing/decl.hpp>
 #include <El/core/imports/blas.hpp>
+#include <El/core/imports/cublas.hpp>
 #include <El/core/imports/lapack.hpp>
 #include <El/core/imports/flame.hpp>
 #include <El/core/imports/mkl.hpp>

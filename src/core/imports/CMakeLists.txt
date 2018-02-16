@@ -1,6 +1,7 @@
 # Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
   blas.cpp
+  cublas.cpp
   flame.cpp
   lapack.cpp
   mkl.cpp
