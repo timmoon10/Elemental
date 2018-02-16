@@ -312,7 +312,6 @@ void LockedView(Matrix<T,D>& A, Matrix<T,D> const& B,
             ("Trying to view outside of a Matrix: (",i,",",j,") up to (",
              i+height-1,",",j+width-1,") of ",B.Height()," x ",B.Width(),
              " Matrix");
-    )
 #endif // !EL_RELEASE
 
     A.LockedAttach(height, width, B.LockedBuffer(i,j), B.LDim());
