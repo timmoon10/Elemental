@@ -48,7 +48,7 @@ ElementalMatrix<T>::Resize( Int height, Int width )
     this->height_ = height;
     this->width_ = width;
     if( this->Participating() )
-        this->matrix_.Resize_
+        this->Matrix().Resize_
         ( Length(height,this->ColShift(),this->ColStride()),
           Length(width,this->RowShift(),this->RowStride()) );
 }
@@ -62,13 +62,13 @@ ElementalMatrix<T>::Resize( Int height, Int width, Int ldim )
       this->AssertNotLocked();
       if( this->Viewing() &&
           (height > this->height_ || width > this->width_ ||
-           ldim > this->matrix_.LDim()) )
+           ldim > this->Matrix().LDim()) )
           LogicError("Tried to increase the size of a view");
     )
     this->height_ = height;
     this->width_ = width;
     if( this->Participating() )
-        this->matrix_.Resize_
+        this->Matrix().Resize_
         ( Length(height,this->ColShift(),this->ColStride()),
           Length(width,this->RowShift(),this->RowStride()), ldim );
 }
@@ -350,7 +350,7 @@ ElementalMatrix<T>::Attach
     {
         Int localHeight = Length(height,this->colShift_,this->ColStride());
         Int localWidth = Length(width,this->rowShift_,this->RowStride());
-        this->matrix_.Attach_( localHeight, localWidth, buffer, ldim );
+        this->Matrix().Attach_( localHeight, localWidth, buffer, ldim );
     }
 }
 
@@ -398,7 +398,7 @@ ElementalMatrix<T>::LockedAttach
     {
         Int localHeight = Length(height,this->colShift_,this->ColStride());
         Int localWidth = Length(width,this->rowShift_,this->RowStride());
-        this->matrix_.LockedAttach_( localHeight, localWidth, buffer, ldim );
+        this->Matrix().LockedAttach_( localHeight, localWidth, buffer, ldim );
     }
 }
 
@@ -508,7 +508,7 @@ ElementalMatrix<T>::operator=( ElementalMatrix<T>&& A )
     }
     else
     {
-        this->matrix_.ShallowSwap( A.matrix_ );
+        this->Matrix().ShallowSwap( A.Matrix() );
         this->viewType_ = A.viewType_;
         this->height_ = A.height_;
         this->width_ = A.width_;
@@ -781,7 +781,7 @@ template <typename T>
 void
 ElementalMatrix<T>::ShallowSwap( ElementalMatrix<T>& A )
 {
-    this->matrix_.ShallowSwap( A.matrix_ );
+    this->Matrix().ShallowSwap( A.Matrix() );
     std::swap( this->viewType_, A.viewType_ );
     std::swap( this->height_ , A.height_ );
     std::swap( this->width_, A.width_ );

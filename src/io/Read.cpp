@@ -16,6 +16,27 @@
 
 namespace El {
 
+template <typename T>
+void Read(AbstractMatrix<T>& A,
+          std::string const& filename, FileFormat format)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Read(static_cast<Matrix<T,Device::CPU>&>(A), filename, format);
+        break;
+    case Device::GPU:
+    {
+        Matrix<T,Device::CPU> A_CPU;
+        Read(A_CPU, filename, format);
+        static_cast<Matrix<T,Device::GPU>&>(A) = A_CPU;
+    }
+    break;
+    default:
+        LogicError("Read: Bad device type.");
+    }
+}
+
 template<typename T>
 void Read( Matrix<T>& A, const string filename, FileFormat format )
 {

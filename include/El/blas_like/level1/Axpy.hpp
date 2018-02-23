@@ -13,10 +13,22 @@
 
 namespace El {
 
+template <typename T, typename S>
+void Axpy( S alphaS, AbstractMatrix<T> const& X, AbstractMatrix<T>& Y)
+{
+    if ((X.GetDevice() != Device::CPU) && (Y.GetDevice() != Device::CPU))
+        LogicError("TODO Axpy not supported for non-CPU devices.");
+
+    Axpy(alphaS,
+         static_cast<Matrix<T,Device::CPU> const&>(X),
+         static_cast<Matrix<T,Device::CPU>&>(Y));
+}
+
 template<typename T,typename S>
 void Axpy( S alphaS, const Matrix<T>& X, Matrix<T>& Y )
 {
-    EL_DEBUG_CSE
+    EL_DEBUG_CSE;
+
     const T alpha = T(alphaS);
     const Int mX = X.Height();
     const Int nX = X.Width();
@@ -25,6 +37,7 @@ void Axpy( S alphaS, const Matrix<T>& X, Matrix<T>& Y )
     const Int ldY = Y.LDim();
     const T* XBuf = X.LockedBuffer();
           T* YBuf = Y.Buffer();
+
 
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
@@ -166,6 +179,8 @@ void Axpy( S alphaS, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y )
 #endif
 
 #define PROTO(T) \
+  EL_EXTERN template void Axpy \
+  ( T alpha, const AbstractMatrix<T>& X, AbstractMatrix<T>& Y ); \
   EL_EXTERN template void Axpy \
   ( T alpha, const Matrix<T>& X, Matrix<T>& Y ); \
   EL_EXTERN template void Axpy \

@@ -85,6 +85,15 @@ Matrix<Ring, Device::GPU>::Matrix(Matrix<Ring, Device::CPU> const& A)
     }
 }
 
+template <typename Ring>
+Matrix<Ring, Device::GPU>&
+Matrix<Ring, Device::GPU>::operator=(Matrix<Ring, Device::CPU> const& A)
+{
+    auto A_new = Matrix<Ring, Device::GPU>(A);
+    *this = std::move(A_new);
+    return *this;
+}
+
 template<typename Ring>
 Matrix<Ring, Device::GPU>::Matrix(Matrix<Ring, Device::GPU>&& A) EL_NO_EXCEPT
     : AbstractMatrix<Ring>{std::move(A)},
@@ -193,17 +202,18 @@ Matrix<Ring, Device::GPU> Matrix<Ring, Device::GPU>::operator()
     return ASub;
 }
 
+#endif // 0
+
 // Make a copy
 // -----------
 template<typename Ring>
-Matrix<Ring, Device::GPU> const&
+Matrix<Ring, Device::GPU>&
 Matrix<Ring, Device::GPU>::operator=(Matrix<Ring, Device::GPU> const& A)
 {
     EL_DEBUG_CSE;
     Copy(A, *this);
     return *this;
 }
-#endif // 0
 
 // Move assignment
 // ---------------
@@ -743,14 +753,14 @@ template<typename Ring>
 int Matrix<Ring, Device::GPU>::RowAlign() const EL_NO_EXCEPT { return 0; }
 #endif // 0
 
-#if 0
+
 #ifdef EL_INSTANTIATE_CORE
 # define EL_EXTERN
 #else
 # define EL_EXTERN extern
 #endif
 
-#define PROTO(Ring) EL_EXTERN template class Matrix<Ring>;
+#define PROTO(Ring) EL_EXTERN template class Matrix<Ring,Device::GPU>;
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD
@@ -759,7 +769,7 @@ int Matrix<Ring, Device::GPU>::RowAlign() const EL_NO_EXCEPT { return 0; }
 #include <El/macros/Instantiate.h>
 
 #undef EL_EXTERN
-#endif // 0
+
 } // namespace El
 
 #endif // ifndef EL_MATRIX_IMPL_GPU_HPP_

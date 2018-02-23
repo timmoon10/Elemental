@@ -7,20 +7,20 @@ set_full_path(THIS_DIR_SOURCES
   EntrywiseMap.cpp
   Gemm.cpp
   Hadamard.cpp
-  MaxAbs.cpp
-  MultiShiftQuasiTrsm.cpp
-  MultiShiftTrsm.cpp
-  QuasiTrsm.cpp
-  SafeMultiShiftTrsm.cpp
-  Symm.cpp
-  Symv.cpp
-  Syr2k.cpp
-  Syrk.cpp
-  Trmm.cpp
-  Trsm.cpp
-  Trsv.cpp
-  TwoSidedTrmm.cpp
-  TwoSidedTrsm.cpp
+#  MaxAbs.cpp
+#  MultiShiftQuasiTrsm.cpp
+#  MultiShiftTrsm.cpp
+#  QuasiTrsm.cpp
+#  SafeMultiShiftTrsm.cpp
+#  Symm.cpp
+#  Symv.cpp
+#  Syr2k.cpp
+#  Syrk.cpp
+#  Trmm.cpp
+#  Trsm.cpp
+#  Trsv.cpp
+#  TwoSidedTrmm.cpp
+#  TwoSidedTrsm.cpp
   )
 
 # Propagate the files up the tree

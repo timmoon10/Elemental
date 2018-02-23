@@ -195,7 +195,7 @@ Matrix<Ring, Device::CPU> Matrix<Ring, Device::CPU>::operator()
 // Make a copy
 // -----------
 template<typename Ring>
-Matrix<Ring, Device::CPU> const&
+Matrix<Ring, Device::CPU>&
 Matrix<Ring, Device::CPU>::operator=(Matrix<Ring, Device::CPU> const& A)
 {
     EL_DEBUG_CSE
@@ -638,7 +638,6 @@ int Matrix<Ring, Device::CPU>::ColAlign() const EL_NO_EXCEPT { return 0; }
 template<typename Ring>
 int Matrix<Ring, Device::CPU>::RowAlign() const EL_NO_EXCEPT { return 0; }
 
-#if 0
 #ifdef EL_INSTANTIATE_CORE
 # define EL_EXTERN
 #else
@@ -654,7 +653,6 @@ int Matrix<Ring, Device::CPU>::RowAlign() const EL_NO_EXCEPT { return 0; }
 #include <El/macros/Instantiate.h>
 
 #undef EL_EXTERN
-#endif // 0
 } // namespace El
 
 #endif // ifndef EL_MATRIX_IMPL_CPU_HPP_

@@ -16,7 +16,7 @@ public:
 
     virtual ~AbstractMatrix() = default;
 
-    Device DeviceType() const EL_NO_EXCEPT;
+    Device GetDevice() const EL_NO_EXCEPT;
 
     Int Height() const EL_NO_EXCEPT;
     Int Width() const EL_NO_EXCEPT;
@@ -40,6 +40,16 @@ public:
     void SetViewType(El::ViewType viewType) EL_NO_EXCEPT;
     El::ViewType ViewType() const EL_NO_EXCEPT;
 
+    virtual T* Buffer() EL_NO_EXCEPT = 0;
+    virtual T* Buffer(Int i, Int j) EL_NO_EXCEPT = 0;
+    virtual T const* LockedBuffer() const EL_NO_EXCEPT = 0;
+    virtual T const* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT = 0;
+
+    virtual void Attach(
+        Int height, Int width, T* buffer, Int leadingDimension) = 0;
+    virtual void LockedAttach(
+        Int height, Int width, const T* buffer, Int leadingDimension) = 0;
+
     // Assertions
     void AssertValidDimensions(
         Int height, Int width, Int leadingDimension) const;
@@ -58,6 +68,11 @@ private:
     template<typename S> friend class BlockMatrix;
 
     // These don't have debugging checks
+    virtual void Attach_(
+        Int height, Int width, T* buffer, Int leadingDimension) = 0;
+    virtual void LockedAttach_(
+        Int height, Int width, const T* buffer, Int leadingDimension) = 0;
+
     void Empty_(bool freeMemory=true);
     void Resize_(Int height, Int width);
     void Resize_(Int height, Int width, Int leadingDimension);
@@ -76,7 +91,7 @@ private:
 };// class AbstractMatrix
 
 template <typename T>
-inline Device AbstractMatrix<T>::DeviceType() const EL_NO_EXCEPT { return do_get_device_(); }
+inline Device AbstractMatrix<T>::GetDevice() const EL_NO_EXCEPT { return do_get_device_(); }
 
 template <typename T>
 inline Int AbstractMatrix<T>::Height() const EL_NO_EXCEPT { return height_; }

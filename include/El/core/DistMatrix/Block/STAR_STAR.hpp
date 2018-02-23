@@ -21,11 +21,13 @@ class DistMatrix<Ring,STAR,STAR,BLOCK,Dev>
 public:
     // Typedefs
     // ========
-    typedef AbstractDistMatrix<Ring> absType;
-    typedef BlockMatrix<Ring> blockType;
-    typedef DistMatrix<Ring,STAR,STAR,BLOCK,Dev> type;
-    typedef DistMatrix<Ring,STAR,STAR,BLOCK,Dev> transType;
-    typedef DistMatrix<Ring,STAR,STAR,BLOCK,Dev> diagType;
+    using absType = AbstractDistMatrix<Ring>;
+    using blockType = BlockMatrix<Ring>;
+    using type = DistMatrix<Ring,STAR,STAR,BLOCK,Dev>;
+    using transType = DistMatrix<Ring,STAR,STAR,BLOCK,Dev>;
+    using diagType = DistMatrix<Ring,STAR,STAR,BLOCK,Dev>;
+    using absLocalType = AbstractMatrix<Ring>;
+    using localMatrixType = El::Matrix<Ring,Dev>;
 
     // Constructors and destructors
     // ============================
@@ -160,8 +162,125 @@ public:
     int PartialUnionColRank() const EL_NO_EXCEPT override;
     int PartialUnionRowRank() const EL_NO_EXCEPT override;
 
+    // Single-entry manipulation
+    // =========================
+
+    // Global entry manipulation
+    // -------------------------
+    // NOTE: Local entry manipulation is often much faster and should be
+    //       preferred in most circumstances where performance matters.
+
+    Ring Get(Int i, Int j) const EL_NO_RELEASE_EXCEPT override;
+
+    Base<Ring> GetRealPart(Int i, Int j) const EL_NO_RELEASE_EXCEPT override;
+    Base<Ring> GetImagPart(Int i, Int j) const EL_NO_RELEASE_EXCEPT override;
+
+    void Set(Int i, Int j, Ring alpha) EL_NO_RELEASE_EXCEPT override;
+    void Set(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT override;
+
+    void SetRealPart(Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT override;
+    void SetImagPart (Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT override;
+
+    void SetRealPart(const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT override;
+    void SetImagPart(const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT override;
+
+    void Update(Int i, Int j, Ring alpha) EL_NO_RELEASE_EXCEPT override;
+    void Update(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT override;
+
+    void UpdateRealPart(Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT override;
+    void UpdateImagPart(Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT override;
+
+    void UpdateRealPart(const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT override;
+    void UpdateImagPart(const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT override;
+
+    void MakeReal(Int i, Int j) EL_NO_RELEASE_EXCEPT override;
+    void Conjugate(Int i, Int j) EL_NO_RELEASE_EXCEPT override;
+
+    // Batch updating of remote entries
+    // ---------------------------------
+    void Reserve(Int numRemoteEntries) override;
+    void QueueUpdate(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT override;
+    void QueueUpdate(Int i, Int j, Ring value) EL_NO_RELEASE_EXCEPT override;
+    void ProcessQueues(bool includeViewers=true) override;
+
+    // Batch extraction of remote entries
+    // ----------------------------------
+    void ReservePulls(Int numPulls) const override;
+    void QueuePull(Int i, Int j) const EL_NO_RELEASE_EXCEPT override;
+    void ProcessPullQueue(Ring* pullBuf, bool includeViewers=true) const override;
+    void ProcessPullQueue(
+        vector<Ring>& pullBuf, bool includeViewers=true) const override;
+
+    // Local entry manipulation
+    // ------------------------
+    // NOTE: Clearly each of the following routines could instead be performed
+    //       via composing [Locked]Matrix() with the corresponding local
+    //       routine, but a large amount of code might need to change if
+    //       these were removed.
+
+    Ring GetLocal(Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT override;
+    Base<Ring> GetLocalRealPart(Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT override;
+    Base<Ring> GetLocalImagPart(Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT override;
+
+    void SetLocal(Int iLoc, Int jLoc, Ring alpha) EL_NO_RELEASE_EXCEPT override;
+    void SetLocal(Entry<Ring> const& localEntry) EL_NO_RELEASE_EXCEPT override;
+
+    void SetLocalRealPart(Int iLoc, Int jLoc, Base<Ring> alpha)
+        EL_NO_RELEASE_EXCEPT override;
+    void SetLocalImagPart(Int iLoc, Int jLoc, Base<Ring> alpha)
+        EL_NO_RELEASE_EXCEPT override;
+
+    void SetLocalRealPart(const Entry<Base<Ring>>& localEntry)
+        EL_NO_RELEASE_EXCEPT override;
+    void SetLocalImagPart(const Entry<Base<Ring>>& localEntry)
+        EL_NO_RELEASE_EXCEPT override;
+
+    void UpdateLocal
+    (Int iLoc, Int jLoc, Ring alpha) EL_NO_RELEASE_EXCEPT override;
+    void UpdateLocal
+    (const Entry<Ring>& localEntry) EL_NO_RELEASE_EXCEPT override;
+
+    void UpdateLocalRealPart(Int iLoc, Int jLoc, Base<Ring> alpha)
+        EL_NO_RELEASE_EXCEPT override;
+    void UpdateLocalImagPart(Int iLoc, Int jLoc, Base<Ring> alpha)
+        EL_NO_RELEASE_EXCEPT override;
+
+    void UpdateLocalRealPart(const Entry<Base<Ring>>& localEntry)
+        EL_NO_RELEASE_EXCEPT override;
+    void UpdateLocalImagPart(const Entry<Base<Ring>>& localEntry)
+        EL_NO_RELEASE_EXCEPT override;
+
+    void MakeLocalReal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT override;
+    void ConjugateLocal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT override;
+
+    localMatrixType& Matrix() override;
+    localMatrixType const& LockedMatrix() const override;
+
+    Device GetLocalDevice() const EL_NO_EXCEPT override;
+
+private:
+
+    void do_empty_data_() override;
+
     template<typename S,Dist U,Dist V,DistWrap wrap,Device D>
     friend class DistMatrix;
+
+private:
+
+    // The node-local portion of the matrix
+    localMatrixType matrix_ = localMatrixType{};
+
+    // Remote updates
+    // --------------
+    // NOTE: Using ValueInt<Int> is somewhat of a hack; it would be nice to
+    //       have a pair of integers as its own data structure that does not
+    //       require separate MPI wrappers from ValueInt<Int>
+    mutable vector<ValueInt<Int>> remotePulls_;
+
+    // Remote updates
+    // --------------
+    vector<Entry<Ring>> remoteUpdates_;
+
 };
 
 } // namespace El

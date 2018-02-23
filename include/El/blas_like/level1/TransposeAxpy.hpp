@@ -11,6 +11,30 @@
 
 namespace El {
 
+template <typename T, typename S>
+void TransposeAxpy(
+    S alphaS, AbstractMatrix<T> const& X, AbstractMatrix<T>& Y, bool conjugate)
+{
+    EL_DEBUG_CSE
+    if (X.GetDevice() != Y.GetDevice())
+        LogicError("X and Y must have same device for TransposeAxpy.");
+
+    switch (X.GetDevice())
+    {
+    case Device::CPU:
+        TransposeAxpy(alphaS,
+                      static_cast<Matrix<T,Device::CPU> const&>(X),
+                      static_cast<Matrix<T,Device::CPU>&>(Y),
+                      conjugate);
+        break;
+    case Device::GPU:
+        LogicError("TransposeAxpy not supported for GPUs");
+        break;
+    default:
+        LogicError("Bad device for TransposeAxpy");
+    }
+}
+
 template<typename T,typename S>
 void TransposeAxpy
 (       S alphaS,
@@ -133,6 +157,11 @@ void AdjointAxpy
 #endif
 
 #define PROTO_TYPES(T,S) \
+  EL_EXTERN template void TransposeAxpy \
+  (       S alpha, \
+    const AbstractMatrix<T>& A, \
+          AbstractMatrix<T>& B, \
+          bool conjugate ); \
   EL_EXTERN template void TransposeAxpy \
   (       S alpha, \
     const Matrix<T>& A, \

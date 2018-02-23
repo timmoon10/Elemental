@@ -9,10 +9,15 @@
 #ifndef EL_BLAS_ALLREDUCE_HPP
 #define EL_BLAS_ALLREDUCE_HPP
 
-namespace El {
+#ifdef HYDROGEN_ENABLE_CUDA
+#include "GPU/AllReduce.hpp"
+#endif
+
+namespace El
+{
 
 template<typename T>
-void AllReduce( Matrix<T>& A, mpi::Comm comm, mpi::Op op )
+void AllReduce( AbstractMatrix<T>& A, mpi::Comm comm, mpi::Op op )
 {
     EL_DEBUG_CSE
     if( mpi::Size(comm) == 1 )
@@ -26,22 +31,38 @@ void AllReduce( Matrix<T>& A, mpi::Comm comm, mpi::Op op )
     }
     else
     {
-        vector<T> buf;
-        FastResize( buf, size );
+        switch (A.GetDevice())
+        {
+        case Device::CPU:
+        {
+            vector<T> buf;
+            FastResize( buf, size );
 
-        // Pack
-        copy::util::InterleaveMatrix
-        ( height, width,
-          A.LockedBuffer(), 1, A.LDim(),
-          buf.data(),       1, height );
+            // Pack
+            copy::util::InterleaveMatrix
+                ( height, width,
+                  A.LockedBuffer(), 1, A.LDim(),
+                  buf.data(),       1, height );
 
-        mpi::AllReduce( buf.data(), size, op, comm );
+            mpi::AllReduce( buf.data(), size, op, comm );
 
-        // Unpack
-        copy::util::InterleaveMatrix
-        ( height,        width,
-          buf.data(), 1, height,
-          A.Buffer(), 1, A.LDim() );
+            // Unpack
+            copy::util::InterleaveMatrix
+                ( height,        width,
+                  buf.data(), 1, height,
+                  A.Buffer(), 1, A.LDim() );
+        }
+        break;
+#ifdef HYDROGEN_ENABLE_CUDA
+        case Device::GPU:
+        {
+            AllReduce_GPU_impl(
+                static_cast<Matrix<T,Device::GPU>&>(A), comm, op);
+            break;
+#endif // HYDROGEN_ENABLE_CUDA
+        default:
+            LogicError("Bad device in AllReduce");
+        }
     }
 }
 
@@ -54,6 +75,8 @@ void AllReduce( AbstractDistMatrix<T>& A, mpi::Comm comm, mpi::Op op )
     if( !A.Participating() )
         return;
 
+    AllReduce(A.Matrix(), comm, op);
+#if 0
     const Int localHeight = A.LocalHeight();
     const Int localWidth = A.LocalWidth();
     const Int localSize = localHeight*localWidth;
@@ -80,6 +103,7 @@ void AllReduce( AbstractDistMatrix<T>& A, mpi::Comm comm, mpi::Op op )
           buf.data(), 1, localHeight,
           A.Buffer(), 1, A.LDim() );
     }
+#endif // 0
 }
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
@@ -90,7 +114,7 @@ void AllReduce( AbstractDistMatrix<T>& A, mpi::Comm comm, mpi::Op op )
 
 #define PROTO(T) \
   EL_EXTERN template void AllReduce \
-  ( Matrix<T>& A, mpi::Comm comm, mpi::Op op ); \
+  ( AbstractMatrix<T>& A, mpi::Comm comm, mpi::Op op ); \
   EL_EXTERN template void AllReduce \
   ( AbstractDistMatrix<T>& A, mpi::Comm comm, mpi::Op op );
 

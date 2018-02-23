@@ -9,11 +9,33 @@
 #ifndef EL_BLAS_SENDRECV_HPP
 #define EL_BLAS_SENDRECV_HPP
 
-namespace El {
+namespace El
+{
+template <typename T>
+void SendRecv(
+    AbstractMatrix<T> const& A, AbstractMatrix<T>& B,
+    mpi::Comm comm, int sendRank, int recvRank)
+{
+    if (A.GetDevice() != B.GetDevice())
+        LogicError("SendRecv: Matrices must be on the same device.");
 
-template<typename T>
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        SendRecv(
+            static_cast<Matrix<T,Device::CPU> const&>(A),
+            static_cast<Matrix<T,Device::CPU>&>(B),
+            comm, sendRank, recvRank);
+        break;
+    default:
+        LogicError("SendRecv: Unsupported device.");
+    }
+}
+
+template <typename T, Device D>
 void SendRecv
-( const Matrix<T>& A, Matrix<T>& B, mpi::Comm comm, int sendRank, int recvRank )
+( Matrix<T,D> const& A, Matrix<T,D>& B,
+  mpi::Comm comm, int sendRank, int recvRank )
 {
     EL_DEBUG_CSE
     const Int heightA = A.Height();
@@ -69,7 +91,7 @@ void SendRecv
 
 #define PROTO(T) \
   EL_EXTERN template void SendRecv \
-  ( const Matrix<T>& A, Matrix<T>& B, mpi::Comm comm, \
+  ( const Matrix<T,Device::CPU>& A, Matrix<T,Device::CPU>& B, mpi::Comm comm, \
     int sendRank, int recvRank );
 
 #define EL_ENABLE_DOUBLEDOUBLE

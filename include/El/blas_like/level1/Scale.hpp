@@ -9,10 +9,15 @@
 #ifndef EL_BLAS_SCALE_HPP
 #define EL_BLAS_SCALE_HPP
 
-namespace El {
+#ifdef HYDROGEN_ENABLE_CUDA
+#include "GPU/Scale.hpp"
+#endif
+
+namespace El
+{
 
 template<typename T,typename S>
-void Scale( S alphaS, Matrix<T>& A )
+void Scale( S alphaS, AbstractMatrix<T>& A )
 {
     EL_DEBUG_CSE
     const T alpha = T(alphaS);
@@ -32,27 +37,62 @@ void Scale( S alphaS, Matrix<T>& A )
     {
         if( ALDim == height )
         {
-            EL_PARALLEL_FOR
-            for( Int i=0; i<height*width; ++i )
-                ABuf[i] *= alpha;
+            switch (A.GetDevice())
+            {
+            case Device::CPU:
+            {
+                EL_PARALLEL_FOR
+                for( Int i=0; i<height*width; ++i )
+                    ABuf[i] *= alpha;
+            }
+            break;
+#ifdef HYDROGEN_ENABLE_CUDA
+            case Device::GPU:
+                Scale_GPU_impl(ABuf, ABuf, height*width, alphaS);
+                break;
+#endif // HYDROGEN_ENABLE_CUDA
+            default:
+                LogicError("Bad device for scale!");
+            }
         }
         else
         {
-            EL_PARALLEL_FOR
-            for( Int j=0; j<width; ++j )
+            switch (A.GetDevice())
             {
-                EL_SIMD
-                for( Int i=0; i<height; ++i )
+            case Device::CPU:
+            {
+                EL_PARALLEL_FOR
+                for( Int j=0; j<width; ++j )
                 {
-                    ABuf[i+j*ALDim] *= alpha;
+                    EL_SIMD
+                    for( Int i=0; i<height; ++i )
+                    {
+                        ABuf[i+j*ALDim] *= alpha;
+                    }
                 }
+            }
+            break;
+#ifdef HYDROGEN_ENABLE_CUDA
+            case Device::GPU:
+            {
+                for( Int j=0; j<width; ++j )
+                {
+                    // FIXME: Probably faster to do both loops on GPU!
+                    Scale_GPU_impl(
+                        ABuf + j*ALDim, ABuf + j*ALDim, height, alphaS);
+                }
+            }
+            break;
+#endif // HYDROGEN_ENABLE_CUDA
+            default:
+                LogicError("Bad device for scale");
             }
         }
     }
 }
 
 template<typename Real,typename S,typename>
-void Scale( S alphaS, Matrix<Real>& AReal, Matrix<Real>& AImag )
+void Scale( S alphaS, AbstractMatrix<Real>& AReal, AbstractMatrix<Real>& AImag )
 {
     EL_DEBUG_CSE
     typedef Complex<Real> C;
@@ -101,7 +141,7 @@ void Scale( S alpha, AbstractDistMatrix<Real>& AReal,
 
 #define PROTO(T) \
   EL_EXTERN template void Scale \
-  ( T alpha, Matrix<T>& A ); \
+  ( T alpha, AbstractMatrix<T>& A ); \
   EL_EXTERN template void Scale \
   ( T alpha, AbstractDistMatrix<T>& A );
 

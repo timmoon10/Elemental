@@ -46,11 +46,15 @@ void UpdateSubmatrix
 {
     EL_DEBUG_CSE
     // TODO(poulson): Intelligently pick the redundant rank to pack from?
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("UpdateSubmatrix for CPU only.");
+
     if( ASub.RedundantRank() == 0 )
     {
         const Int ASubLocalHeight = ASub.LocalHeight();
         const Int ASubLocalWidth = ASub.LocalWidth();
-        auto& ASubLoc = ASub.LockedMatrix();
+        auto& ASubLoc =
+            static_cast<Matrix<T,Device::CPU> const&>(ASub.LockedMatrix());
         A.Reserve( ASubLocalHeight*ASubLocalWidth );
         for( Int jLoc=0; jLoc<ASubLocalWidth; ++jLoc )
         {

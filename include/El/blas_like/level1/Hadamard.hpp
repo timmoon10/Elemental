@@ -9,16 +9,23 @@
 #ifndef EL_BLAS_HADAMARD_HPP
 #define EL_BLAS_HADAMARD_HPP
 
+#ifdef HYDROGEN_ENABLE_CUDA
+#include "GPU/Hadamard.hpp"
+#endif // HYDROGEN_ENABLE_CUDA
+
 // C(i,j) := A(i,j) B(i,j)
 
 namespace El {
 
 template<typename T>
-void Hadamard( const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C )
+void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
+              AbstractMatrix<T>& C )
 {
     EL_DEBUG_CSE
     if( A.Height() != B.Height() || A.Width() != B.Width() )
         LogicError("Hadamard product requires equal dimensions");
+    if ((A.GetDevice() != B.GetDevice()) || (B.GetDevice() != C.GetDevice()))
+        LogicError("Hadamard product requires all matrices on same device");
     C.Resize( A.Height(), A.Width() );
 
     const Int height = A.Height();
@@ -34,36 +41,76 @@ void Hadamard( const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C )
     // iterate over double loop.
     if( ALDim == height && BLDim == height && CLDim == height )
     {
-        // Check if output matrix is equal to either input matrix
-        if( CBuf == BBuf )
+
+        switch (A.GetDevice())
         {
-            EL_PARALLEL_FOR
-            for( Int i=0; i<height*width; ++i )
-                CBuf[i] *= ABuf[i];
+        case Device::CPU:
+        {
+            // Check if output matrix is equal to either input matrix
+            if( CBuf == BBuf )
+            {
+                EL_PARALLEL_FOR
+                    for( Int i=0; i<height*width; ++i )
+                        CBuf[i] *= ABuf[i];
+            }
+            else if( CBuf == ABuf )
+            {
+                EL_PARALLEL_FOR
+                    for( Int i=0; i<height*width; ++i )
+                        CBuf[i] *= BBuf[i];
+            }
+            else
+            {
+                EL_PARALLEL_FOR
+                    for( Int i=0; i<height*width; ++i )
+                        CBuf[i] = ABuf[i] * BBuf[i];
+            }
         }
-        else if( CBuf == ABuf )
-        {
-            EL_PARALLEL_FOR
-            for( Int i=0; i<height*width; ++i )
-                CBuf[i] *= BBuf[i];
-        }
-        else
-        {
-            EL_PARALLEL_FOR
-            for( Int i=0; i<height*width; ++i )
-                CBuf[i] = ABuf[i] * BBuf[i];
+        break;
+#ifdef HYDROGEN_ENABLE_CUDA
+        case Device::GPU:
+            if (CBuf == BBuf)
+                Hadamard_GPU_impl(CBuf, ABuf, CBuf, height*width);
+            else if (CBuf == ABuf)
+                Hadamard_GPU_impl(CBuf, BBuf, CBuf, height*width);
+            else
+                Hadamard_GPU_impl(ABuf, BBuf, CBuf, height*width);
+            break;
+#endif // HYDROGEN_ENABLE_CUDA
+        default:
+            LogicError("Bad device type for Hadamard.");
         }
     }
     else
     {
-        EL_PARALLEL_FOR
-        for( Int j=0; j<width; ++j )
+        switch (A.GetDevice())
         {
-            EL_SIMD
-            for( Int i=0; i<height; ++i )
+        case Device::CPU:
+        {
+            EL_PARALLEL_FOR
+            for( Int j=0; j<width; ++j )
             {
-                CBuf[i+j*CLDim] = ABuf[i+j*ALDim] * BBuf[i+j*BLDim];
+                EL_SIMD
+                for( Int i=0; i<height; ++i )
+                {
+                    CBuf[i+j*CLDim] = ABuf[i+j*ALDim] * BBuf[i+j*BLDim];
+                }
             }
+        }
+        break;
+#ifdef HYDROGEN_ENABLE_CUDA
+        case Device::GPU:
+        {
+            for (Int j = 0; j < width; ++j)
+                // FIXME: probably faster to do whole thing on GPU
+                Hadamard_GPU_impl(
+                    ABuf + j*ALDim, BBuf + j*ALDim,
+                    CBuf + j*ALDim, height);
+        }
+        break;
+#endif // HYDROGEN_ENABLE_CUDA
+        default:
+            LogicError("Bad device type for Hadamard");
         }
     }
 }
@@ -104,7 +151,7 @@ void Hadamard
 
 #define PROTO(T) \
   EL_EXTERN template void Hadamard \
-  ( const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C ); \
+  ( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B, AbstractMatrix<T>& C ); \
   EL_EXTERN template void Hadamard \
   ( const AbstractDistMatrix<T>& A, \
     const AbstractDistMatrix<T>& B, \

@@ -15,6 +15,21 @@ namespace El {
 // Draw each entry from a uniform PDF over a closed ball.
 
 template<typename T>
+void MakeUniform( AbstractMatrix<T>& A, T center, Base<T> radius )
+{
+    EL_DEBUG_CSE
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        MakeUniform(static_cast<Matrix<T,Device::CPU>&>(A), center, radius);
+        break;
+    case Device::GPU:
+    default:
+        LogicError("MakeUniform: Bad device.");
+    }
+}
+
+template<typename T>
 void MakeUniform( Matrix<T>& A, T center, Base<T> radius )
 {
     EL_DEBUG_CSE

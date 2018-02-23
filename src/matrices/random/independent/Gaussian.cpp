@@ -12,6 +12,21 @@
 
 namespace El {
 
+template <typename F>
+void MakeGaussian(AbstractMatrix<F>& A, F mean, Base<F> stddev)
+{
+    EL_DEBUG_CSE
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        MakeGaussian(static_cast<Matrix<F,Device::CPU>&>(A), mean, stddev);
+        break;
+    case Device::GPU:
+    default:
+        LogicError("MakeGaussian: Bad device.");
+    }
+}
+
 // Draw each entry from a normal PDF
 template<typename F>
 void MakeGaussian( Matrix<F>& A, F mean, Base<F> stddev )

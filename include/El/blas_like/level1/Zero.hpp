@@ -12,7 +12,7 @@
 namespace El {
 
 template<typename T>
-void Zero( Matrix<T>& A )
+void Zero( AbstractMatrix<T>& A )
 {
     EL_DEBUG_CSE
     const Int height = A.Height();
@@ -24,14 +24,36 @@ void Zero( Matrix<T>& A )
     // out each column.
     if( ALDim == height )
     {
-        MemZero( ABuf, height*width );
+        switch (A.GetDevice())
+        {
+        case Device::CPU:
+            MemZero( ABuf, height*width );
+            break;
+        case Device::GPU:
+            if (cudaMemset(ABuf,0x0,height*width*sizeof(T)) != cudaSuccess)
+                RuntimeError("Something wrong with cudaMemset");
+            break;
+        default:
+            LogicError("Bad device type for Zero");
+        }
     }
     else
     {
         EL_PARALLEL_FOR
         for( Int j=0; j<width; ++j )
         {
-            MemZero( &ABuf[j*ALDim], height );
+            switch (A.GetDevice())
+            {
+            case Device::CPU:
+                MemZero( &ABuf[j*ALDim], height );
+                break;
+            case Device::GPU:
+                if (cudaMemset(ABuf+j*ALDim,0x0,height*sizeof(T)) != cudaSuccess)
+                    RuntimeError("Something wrong with cudaMemset");
+                break;
+            default:
+                LogicError("Bad device type for Zero");
+            }
         }
     }
 
@@ -52,7 +74,7 @@ void Zero( AbstractDistMatrix<T>& A )
 #endif
 
 #define PROTO(T) \
-  EL_EXTERN template void Zero( Matrix<T>& A ); \
+  EL_EXTERN template void Zero( AbstractMatrix<T>& A ); \
   EL_EXTERN template void Zero( AbstractDistMatrix<T>& A );
 
 #define EL_ENABLE_DOUBLEDOUBLE

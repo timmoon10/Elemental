@@ -15,6 +15,18 @@
 
 namespace El {
 
+template <typename T>
+void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
+{
+    if (A.GetDevice() != B.GetDevice())
+        LogicError("Copy: A and B must be on same device for now.");
+    if (A.GetDevice() != Device::CPU)
+        LogicError("Copy not supported for GPU yet.");
+
+    Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
+         static_cast<Matrix<T,Device::CPU>&>(B));
+}
+
 template<typename T>
 void Copy( const Matrix<T>& A, Matrix<T>& B )
 {
@@ -248,6 +260,8 @@ void CopyFromNonRoot
 #endif
 
 #define PROTO(T) \
+  EL_EXTERN template void Copy \
+  ( const AbstractMatrix<T>& A, AbstractMatrix<T>& B ); \
   EL_EXTERN template void Copy \
   ( const Matrix<T>& A, Matrix<T>& B ); \
   EL_EXTERN template void Copy \

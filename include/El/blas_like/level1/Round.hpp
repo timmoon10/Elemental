@@ -12,6 +12,21 @@
 namespace El {
 
 // TODO(poulson): Sparse matrix versions
+template <typename T>
+void Round(AbstractMatrix<T>& A)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Round(static_cast<Matrix<T,Device::CPU>&>(A));
+        break;
+    case Device::GPU:
+        Round(static_cast<Matrix<T,Device::GPU>&>(A));
+        break;
+    default:
+        LogicError("Invalid device type.");
+    }
+}
 
 template<typename T>
 void Round( Matrix<T>& A )

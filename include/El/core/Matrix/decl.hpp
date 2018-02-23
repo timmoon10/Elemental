@@ -54,11 +54,11 @@ public:
     ~Matrix();
 
     // Copy assignment
-    Matrix<Ring, Device::CPU> const& operator=(
+    Matrix<Ring, Device::CPU> & operator=(
         Matrix<Ring, Device::CPU> const& A);
 
     // Assign by copying data from a GPU
-    Matrix<Ring, Device::CPU> const& operator=(
+    Matrix<Ring, Device::CPU> & operator=(
         Matrix<Ring, Device::GPU> const& A);
 
     // Move assignment
@@ -70,9 +70,9 @@ public:
 
     // Reconfigure around the given buffer, but do not assume ownership
     void Attach
-    (Int height, Int width, Ring* buffer, Int leadingDimension);
+    (Int height, Int width, Ring* buffer, Int leadingDimension) override;
     void LockedAttach
-    (Int height, Int width, const Ring* buffer, Int leadingDimension);
+    (Int height, Int width, const Ring* buffer, Int leadingDimension) override;
 
     // Reconfigure around the given buffer and assume ownership
     void Control
@@ -110,10 +110,10 @@ public:
     // Basic queries
     //
 
-    Ring* Buffer() EL_NO_RELEASE_EXCEPT;
-    Ring* Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT;
-    const Ring* LockedBuffer() const EL_NO_EXCEPT;
-    const Ring* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT;
+    Ring* Buffer() EL_NO_RELEASE_EXCEPT override;
+    Ring* Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT override;
+    const Ring* LockedBuffer() const EL_NO_EXCEPT override;
+    const Ring* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT override;
 
 
     // Single-entry manipulation
@@ -182,9 +182,9 @@ private:
     void Control_
     (Int height, Int width, Ring* buffer, Int leadingDimension);
     void Attach_
-    (Int height, Int width, Ring* buffer, Int leadingDimension);
+    (Int height, Int width, Ring* buffer, Int leadingDimension) override;
     void LockedAttach_
-    (Int height, Int width, const Ring* buffer, Int leadingDimension);
+    (Int height, Int width, const Ring* buffer, Int leadingDimension) override;
 
     // Friend declarations
     // ===================
@@ -252,11 +252,11 @@ public:
     ~Matrix();
 
     // Copy assignment
-    Matrix<Ring, Device::GPU> const& operator=(
+    Matrix<Ring, Device::GPU>& operator=(
         Matrix<Ring, Device::GPU> const& A);
 
     // Assign by copying data from a CPU matrix
-    Matrix<Ring, Device::GPU> const& operator=(
+    Matrix<Ring, Device::GPU>& operator=(
         Matrix<Ring, Device::CPU> const& A);
 
     // Move assignment
@@ -264,16 +264,16 @@ public:
 
     DevicePtr<const Ring> Data() { return data_; }
 
-    DevicePtr<Ring> Buffer() EL_NO_RELEASE_EXCEPT;
+    DevicePtr<Ring> Buffer() EL_NO_RELEASE_EXCEPT override;
     DevicePtr<Ring> Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT;
-    DevicePtr<const Ring> LockedBuffer() const EL_NO_EXCEPT;
+    DevicePtr<const Ring> LockedBuffer() const EL_NO_EXCEPT override;
     DevicePtr<const Ring> LockedBuffer(Int i, Int j) const EL_NO_EXCEPT;
 
 
     // Reconfigure around the given buffer, but do not assume ownership
-    void Attach(Int height, Int width, Ring* buffer, Int leadingDimension);
+    void Attach(Int height, Int width, Ring* buffer, Int leadingDimension) override;
     void LockedAttach(
-        Int height, Int width, const Ring* buffer, Int leadingDimension);
+        Int height, Int width, const Ring* buffer, Int leadingDimension) override;
 
     // Return a view
     Matrix<Ring, Device::GPU> operator()(Range<Int> I, Range<Int> J);
@@ -289,9 +289,11 @@ private:
     void do_empty_(bool freeMemory) override;
     void do_resize_() override;
 
-    void Attach_(Int height, Int width, Ring* buffer, Int leadingDimension);
+    void Attach_(
+        Int height, Int width, Ring* buffer, Int leadingDimension) override;
     void LockedAttach_(
-        Int height, Int width, const Ring* buffer, Int leadingDimension);
+        Int height, Int width,
+        const Ring* buffer, Int leadingDimension) override;
 
     // Exchange metadata with another matrix
     // =====================================

@@ -10,6 +10,21 @@
 
 namespace El {
 
+template <typename Field>
+Base<Field> FrobeniusNorm(AbstractMatrix<Field> const& A)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        return FrobeniusNorm(static_cast<Matrix<Field,Device::GPU> const&>(A));
+        break;
+    case Device::GPU:
+        // FIXME: This can't be toooooo hard to write
+    default:
+        LogicError("FrobeniusNorm: Bad Device.");
+    }
+}
+
 template<typename Field>
 Base<Field> FrobeniusNorm( const Matrix<Field>& A )
 {
@@ -103,7 +118,8 @@ Base<Field> FrobeniusNorm( const AbstractDistMatrix<Field>& A )
         Real localScale=0, localScaledSquare=1;
         const Int localHeight = A.LocalHeight();
         const Int localWidth = A.LocalWidth();
-        const Matrix<Field>& ALoc = A.LockedMatrix();
+        const Matrix<Field>& ALoc =
+            dynamic_cast<Matrix<Field,Device::CPU> const&>(A.LockedMatrix());
         for( Int jLoc=0; jLoc<localWidth; ++jLoc )
             for( Int iLoc=0; iLoc<localHeight; ++iLoc )
                 UpdateScaledSquare
@@ -132,7 +148,8 @@ Base<Field> HermitianFrobeniusNorm
         Real localScaledSquare = 1;
         const Int localWidth = A.LocalWidth();
         const Int localHeight = A.LocalHeight();
-        const Matrix<Field>& ALoc = A.LockedMatrix();
+        const Matrix<Field>& ALoc =
+            dynamic_cast<Matrix<Field,Device::CPU> const&>(A.LockedMatrix());
         if( uplo == UPPER )
         {
             for( Int jLoc=0; jLoc<localWidth; ++jLoc )

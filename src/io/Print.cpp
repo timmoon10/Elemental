@@ -21,6 +21,26 @@ void ConfigurePrecision( ostream& os )
 
 // Dense
 // =====
+template <typename T>
+void Print(AbstractMatrix<T> const& A, string title, ostream& os)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Print(static_cast<Matrix<T,Device::CPU> const&>(A), title, os);
+        break;
+    case Device::GPU:
+    {
+        // Copy to host
+        Matrix<T,Device::CPU> A_CPU =
+            static_cast<Matrix<T,Device::CPU> const&>(A);
+        Print(A_CPU, title, os);
+    }
+    break;
+    default:
+        LogicError("Print: Bad device.");
+    }
+}
 
 template<typename T>
 void Print( const Matrix<T>& A, string title, ostream& os )

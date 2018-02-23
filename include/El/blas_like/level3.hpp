@@ -34,12 +34,25 @@ using namespace GemmAlgorithmNS;
 template<typename T>
 void Gemm
 ( Orientation orientA, Orientation orientB,
-  T alpha, const Matrix<T>& A, const Matrix<T>& B, T beta, Matrix<T>& C );
+  T alpha, const AbstractMatrix<T>& A, const AbstractMatrix<T>& B,
+  T beta, AbstractMatrix<T>& C );
 
 template<typename T>
 void Gemm
 ( Orientation orientA, Orientation orientB,
-  T alpha, const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C );
+  T alpha, const AbstractMatrix<T>& A, const AbstractMatrix<T>& B,
+  AbstractMatrix<T>& C );
+
+template <typename T, Device D>
+void Gemm
+( Orientation orientA, Orientation orientB,
+  T alpha, const Matrix<T,D>& A, const Matrix<T,D>& B,
+  T beta, Matrix<T,D>& C );
+
+template <typename T, Device D>
+void Gemm
+( Orientation orientA, Orientation orientB,
+  T alpha, const Matrix<T,D>& A, const Matrix<T,D>& B, Matrix<T,D>& C );
 
 template<typename T>
 void Gemm

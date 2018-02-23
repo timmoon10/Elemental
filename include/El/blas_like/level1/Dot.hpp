@@ -60,8 +60,8 @@ T Dotu( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B )
     if( A.Participating() )
     {
         T localInnerProd(0);
-        auto& ALoc = A.LockedMatrix();
-        auto& BLoc = B.LockedMatrix();
+        auto& ALoc = dynamic_cast<Matrix<T,Device::CPU> const&>(A.LockedMatrix());
+        auto& BLoc = dynamic_cast<Matrix<T,Device::CPU> const&>(B.LockedMatrix());
         const Int localHeight = A.LocalHeight();
         const Int localWidth = A.LocalWidth();
         for( Int jLoc=0; jLoc<localWidth; ++jLoc )

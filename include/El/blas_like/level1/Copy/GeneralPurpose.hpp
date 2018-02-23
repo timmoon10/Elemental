@@ -33,8 +33,6 @@ void Helper
 
     const Int localHeight = A.LocalHeight();
     const Int localWidth = A.LocalWidth();
-    auto& ALoc = A.LockedMatrix();
-    auto& BLoc = B.Matrix();
 
     // TODO: Break into smaller pieces to avoid excessive memory usage?
     vector<Entry<S>> remoteEntries;
@@ -70,10 +68,10 @@ void Helper
                 const int ownerRow = ownerRows[iLoc];
                 const Int localRow = localRows[iLoc];
                 const bool isLocalRow = ( BPartic && ownerRow == colRank );
-                const S& alpha = ALoc(iLoc,jLoc);
+                const S& alpha = A.GetLocal(iLoc,jLoc);
                 if( noRedundant && isLocalRow && isLocalCol )
                 {
-                    BLoc(localRow,localCol) = Caster<S,T>::Cast(alpha);
+                    B.SetLocal(localRow,localCol,Caster<S,T>::Cast(alpha));
                 }
                 else
                 {
@@ -163,7 +161,7 @@ void Helper
             for( Int k=0; k<recvBufSize; ++k )
             {
                 const auto& entry = recvBuf[k];
-                BLoc(entry.i,entry.j) = Caster<S,T>::Cast(entry.value);
+                B.SetLocal(entry.i,entry.j,Caster<S,T>::Cast(entry.value));
             }
         }
         El::Broadcast( B, B.RedundantComm(), redundantRootB );

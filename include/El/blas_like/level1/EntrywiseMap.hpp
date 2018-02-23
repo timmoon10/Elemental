@@ -12,9 +12,13 @@
 namespace El {
 
 template<typename T>
-void EntrywiseMap( Matrix<T>& A, function<T(const T&)> func )
+void EntrywiseMap( AbstractMatrix<T>& A, function<T(const T&)> func )
 {
     EL_DEBUG_CSE
+
+    if (A.GetDevice() != Device::CPU)
+        LogicError("EntrywiseMap not allowed on non-CPU matrices.");
+
     const Int m = A.Height();
     const Int n = A.Width();
     T* ABuf = A.Buffer();
@@ -50,9 +54,13 @@ void EntrywiseMap( AbstractDistMatrix<T>& A, function<T(const T&)> func )
 
 template<typename S,typename T>
 void EntrywiseMap
-( const Matrix<S>& A, Matrix<T>& B, function<T(const S&)> func )
+( const AbstractMatrix<S>& A, AbstractMatrix<T>& B, function<T(const S&)> func )
 {
     EL_DEBUG_CSE
+
+    if ((A.GetDevice() != Device::CPU) || (B.GetDevice() != Device::CPU))
+        LogicError("EntrywiseMap not allowed on non-CPU matrices.");
+
     const Int m = A.Height();
     const Int n = A.Width();
     B.Resize( m, n );
@@ -111,14 +119,14 @@ void EntrywiseMap
 
 #define PROTO(T) \
   EL_EXTERN template void EntrywiseMap \
-  ( Matrix<T>& A, \
+  ( AbstractMatrix<T>& A, \
     function<T(const T&)> func ); \
   EL_EXTERN template void EntrywiseMap \
   ( AbstractDistMatrix<T>& A, \
     function<T(const T&)> func ); \
   EL_EXTERN template void EntrywiseMap \
-  ( const Matrix<T>& A, \
-          Matrix<T>& B, \
+  ( const AbstractMatrix<T>& A, \
+          AbstractMatrix<T>& B, \
           function<T(const T&)> func ); \
   EL_EXTERN template void EntrywiseMap \
   ( const AbstractDistMatrix<T>& A, \

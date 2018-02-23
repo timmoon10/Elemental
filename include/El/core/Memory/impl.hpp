@@ -160,7 +160,7 @@ void Memory<G,D>::Empty()
 #ifdef EL_INSTANTIATE_CORE
 # define EL_EXTERN
 #else
-# define EL_EXTERN extern
+# define EL_EXTERN// extern
 #endif
 
 #if 0
@@ -176,7 +176,6 @@ void Memory<G,D>::Empty()
 EL_EXTERN template class Memory<double, Device::CPU>;
 
 // GPU instantiations
-EL_EXTERN template class Memory<Int, Device::GPU>;
 EL_EXTERN template class Memory<float, Device::GPU>;
 EL_EXTERN template class Memory<double, Device::GPU>;
 

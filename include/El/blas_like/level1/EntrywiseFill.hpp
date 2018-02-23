@@ -24,7 +24,7 @@ void EntrywiseFill( Matrix<T>& A, function<T(void)> func )
 
 template<typename T>
 void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func )
-{ EntrywiseFill( A.Matrix(), func ); }
+{ EntrywiseFill( dynamic_cast<Matrix<T,Device::CPU>&>(A.Matrix()), func ); }
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN

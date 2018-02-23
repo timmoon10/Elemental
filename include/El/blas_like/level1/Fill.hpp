@@ -9,10 +9,15 @@
 #ifndef EL_BLAS_FILL_HPP
 #define EL_BLAS_FILL_HPP
 
-namespace El {
+#ifdef HYDROGEN_ENABLE_CUDA
+#include <GPU/Fill.hpp>
+#endif
+
+namespace El
+{
 
 template<typename T>
-void Fill( Matrix<T>& A, T alpha )
+void Fill( AbstractMatrix<T>& A, T alpha )
 {
     EL_DEBUG_CSE
     const Int m = A.Height();
@@ -24,18 +29,47 @@ void Fill( Matrix<T>& A, T alpha )
     // iterate over double loop.
     if( ALDim == m )
     {
-        for( Int i=0; i<m*n; ++i )
+        switch (A.GetDevice())
         {
-            ABuf[i] = alpha;
+        case Device::CPU:
+        {
+            for( Int i=0; i<m*n; ++i )
+            {
+                ABuf[i] = alpha;
+            }
+        }
+        break;
+#ifdef HYDROGEN_ENABLE_CUDA
+        case Device::GPU:
+            Fill_GPU_impl<T>(ABuf, m*n, alpha);
+            break;
+#endif // HYDROGEN_ENABLE_CUDA
+        default:
+            LogicError("Bad device type in Fill");
         }
     }
     else
     {
         for( Int j=0; j<n; ++j )
         {
-            for( Int i=0; i<m; ++i )
+            switch(A.GetDevice())
             {
-                ABuf[i+j*ALDim] = alpha;
+            case Device::CPU:
+            {
+                for( Int i=0; i<m; ++i )
+                {
+                    ABuf[i+j*ALDim] = alpha;
+                }
+            }
+            break;
+#ifdef HYDROGEN_ENABLE_CUDA
+            case Device::GPU:
+                // FIXME: probably faster to do both loops on GPU!
+                Fill_GPU_impl(ABuf + j*ALDim, m, alpha);
+                break;
+#endif // HYDROGEN_ENABLE_CUDA
+            default:
+                LogicError("Bad device type in Fill");
             }
         }
     }
@@ -55,7 +89,7 @@ void Fill( AbstractDistMatrix<T>& A, T alpha )
 #endif
 
 #define PROTO(T) \
-  EL_EXTERN template void Fill( Matrix<T>& A, T alpha ); \
+  EL_EXTERN template void Fill( AbstractMatrix<T>& A, T alpha ); \
   EL_EXTERN template void Fill( AbstractDistMatrix<T>& A, T alpha );
 
 #define EL_ENABLE_DOUBLEDOUBLE

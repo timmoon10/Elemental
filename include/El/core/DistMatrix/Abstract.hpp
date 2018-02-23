@@ -29,34 +29,10 @@ public:
 
     virtual ~AbstractDistMatrix();
 
-    virtual type* Copy() const = 0;
-    virtual type* Construct
-    (const El::Grid& grid, int root) const = 0;
-    virtual type* ConstructTranspose
-    (const El::Grid& grid, int root) const = 0;
-    virtual type* ConstructDiagonal
-    (const El::Grid& grid, int root) const = 0;
-    // TODO(poulson): ConstructPartialCol and friends?
-
     // Assignment and reconfiguration
     // ==============================
-    virtual void Empty(bool freeMemory=true);
     void EmptyData(bool freeMemory=true);
     void SetGrid(const El::Grid& grid);
-
-    virtual void AlignWith
-    (const El::DistData& data,
-     bool constrain=true, bool allowMismatch=false) = 0;
-    virtual void AlignColsWith
-    (const El::DistData& data,
-     bool constrain=true, bool allowMismatch=false) = 0;
-    virtual void AlignRowsWith
-    (const El::DistData& data,
-     bool constrain=true, bool allowMismatch=false) = 0;
-    virtual void FreeAlignments();
-
-    virtual void Resize(Int height, Int width) = 0;
-    virtual void Resize(Int height, Int width, Int ldim) = 0;
 
     void MakeSizeConsistent(bool includingViewers=false);
 
@@ -98,17 +74,12 @@ public:
     const Ring* LockedBuffer() const EL_NO_EXCEPT;
     const Ring* LockedBuffer(Int iLoc, Int jLoc) const EL_NO_EXCEPT;
 
-    El::Matrix<Ring>& Matrix() EL_NO_EXCEPT;
-    const El::Matrix<Ring>& LockedMatrix() const EL_NO_EXCEPT;
+    virtual El::AbstractMatrix<Ring>& Matrix() EL_NO_EXCEPT = 0;
+    virtual const El::AbstractMatrix<Ring>& LockedMatrix() const EL_NO_EXCEPT = 0;
 
     // Distribution information
     // ------------------------
     const El::Grid& Grid() const EL_NO_EXCEPT;
-
-    virtual Int BlockHeight() const EL_NO_EXCEPT = 0;
-    virtual Int BlockWidth() const EL_NO_EXCEPT = 0;
-    virtual Int ColCut() const EL_NO_EXCEPT = 0;
-    virtual Int RowCut() const EL_NO_EXCEPT = 0;
 
     int ColAlign() const EL_NO_EXCEPT;
     int RowAlign() const EL_NO_EXCEPT;
@@ -120,15 +91,6 @@ public:
     bool Participating() const EL_NO_RELEASE_EXCEPT;
     int Root() const EL_NO_EXCEPT;
 
-    virtual int RowOwner(Int i) const EL_NO_EXCEPT = 0;
-    virtual int ColOwner(Int j) const EL_NO_EXCEPT = 0;
-    virtual Int LocalRowOffset(Int i) const EL_NO_EXCEPT = 0;
-    virtual Int LocalColOffset(Int j) const EL_NO_EXCEPT = 0;
-    virtual Int LocalRowOffset(Int i, int rowOwner) const EL_NO_EXCEPT = 0;
-    virtual Int LocalColOffset(Int j, int colOwner) const EL_NO_EXCEPT = 0;
-    virtual Int GlobalRow(Int iLoc) const EL_NO_EXCEPT = 0;
-    virtual Int GlobalCol(Int jLoc) const EL_NO_EXCEPT = 0;
-
     Int LocalRow(Int i) const EL_NO_RELEASE_EXCEPT;
     Int LocalCol(Int j) const EL_NO_RELEASE_EXCEPT;
     Int LocalRow(Int i, int rowOwner) const EL_NO_RELEASE_EXCEPT;
@@ -137,6 +99,148 @@ public:
     bool IsLocalRow(Int i) const EL_NO_RELEASE_EXCEPT;
     bool IsLocalCol(Int j) const EL_NO_RELEASE_EXCEPT;
     bool IsLocal(Int i, Int j) const EL_NO_RELEASE_EXCEPT;
+
+    El::DistData DistData() const EL_NO_EXCEPT;
+
+    // Single-entry manipulation
+    // =========================
+
+    // Global entry manipulation
+    // -------------------------
+    // NOTE: Local entry manipulation is often much faster and should be
+    //       preferred in most circumstances where performance matters.
+
+    virtual Ring Get(Int i, Int j) const EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual Base<Ring> GetRealPart(Int i, Int j) const EL_NO_RELEASE_EXCEPT = 0;
+    virtual Base<Ring> GetImagPart(Int i, Int j) const EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void Set(Int i, Int j, Ring alpha) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void Set(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void SetRealPart(Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void SetImagPart (Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void SetRealPart(const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void SetImagPart(const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void Update(Int i, Int j, Ring alpha) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void Update(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void UpdateRealPart(Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void UpdateImagPart(Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void UpdateRealPart(const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void UpdateImagPart(const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void MakeReal(Int i, Int j) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void Conjugate(Int i, Int j) EL_NO_RELEASE_EXCEPT = 0;
+
+    // Batch updating of remote entries
+    // ---------------------------------
+    virtual void Reserve(Int numRemoteEntries) = 0;
+    virtual void QueueUpdate(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void QueueUpdate(Int i, Int j, Ring value) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void ProcessQueues(bool includeViewers=true) = 0;
+
+    // Batch extraction of remote entries
+    // ----------------------------------
+    virtual void ReservePulls(Int numPulls) const = 0;
+    virtual void QueuePull(Int i, Int j) const EL_NO_RELEASE_EXCEPT = 0;
+    virtual void ProcessPullQueue(Ring* pullBuf, bool includeViewers=true) const = 0;
+    virtual void ProcessPullQueue(
+        vector<Ring>& pullBuf, bool includeViewers=true) const = 0;
+
+    // Local entry manipulation
+    // ------------------------
+    // NOTE: Clearly each of the following routines could instead be performed
+    //       via composing [Locked]Matrix() with the corresponding local
+    //       routine, but a large amount of code might need to change if
+    //       these were removed.
+
+    virtual Ring GetLocal(Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT = 0;
+    virtual Base<Ring> GetLocalRealPart(Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT = 0;
+    virtual Base<Ring> GetLocalImagPart(Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void SetLocal(Int iLoc, Int jLoc, Ring alpha) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void SetLocal(Entry<Ring> const& localEntry) EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void SetLocalRealPart(Int iLoc, Int jLoc, Base<Ring> alpha)
+        EL_NO_RELEASE_EXCEPT = 0;
+    virtual void SetLocalImagPart(Int iLoc, Int jLoc, Base<Ring> alpha)
+        EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void SetLocalRealPart(const Entry<Base<Ring>>& localEntry)
+        EL_NO_RELEASE_EXCEPT = 0;
+    virtual void SetLocalImagPart(const Entry<Base<Ring>>& localEntry)
+        EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void UpdateLocal
+    (Int iLoc, Int jLoc, Ring alpha) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void UpdateLocal
+    (const Entry<Ring>& localEntry) EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void UpdateLocalRealPart(Int iLoc, Int jLoc, Base<Ring> alpha)
+        EL_NO_RELEASE_EXCEPT = 0;
+    virtual void UpdateLocalImagPart(Int iLoc, Int jLoc, Base<Ring> alpha)
+        EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void UpdateLocalRealPart(const Entry<Base<Ring>>& localEntry)
+        EL_NO_RELEASE_EXCEPT = 0;
+    virtual void UpdateLocalImagPart(const Entry<Base<Ring>>& localEntry)
+        EL_NO_RELEASE_EXCEPT = 0;
+
+    virtual void MakeLocalReal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT = 0;
+    virtual void ConjugateLocal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT = 0;
+
+    // Assertions
+    // ==========
+    void AssertNotLocked() const;
+    void AssertNotStoringData() const;
+    void AssertValidEntry(Int i, Int j) const;
+    void AssertValidSubmatrix(Int i, Int j, Int height, Int width) const;
+    void AssertSameSize(Int height, Int width) const;
+
+    //
+    // Virtual functions
+    //
+    virtual void Empty(bool freeMemory=true);
+    virtual void FreeAlignments();
+
+    // Pure virtual functions
+
+    virtual type* Copy() const = 0;
+    virtual type* Construct(const El::Grid& grid, int root) const = 0;
+    virtual type* ConstructTranspose(const El::Grid& grid, int root) const = 0;
+    virtual type* ConstructDiagonal(const El::Grid& grid, int root) const = 0;
+    // TODO(poulson): ConstructPartialCol and friends?
+
+    virtual void AlignWith(
+        const El::DistData& data,
+        bool constrain=true, bool allowMismatch=false) = 0;
+    virtual void AlignColsWith(
+        const El::DistData& data,
+        bool constrain=true, bool allowMismatch=false) = 0;
+    virtual void AlignRowsWith(
+        const El::DistData& data,
+        bool constrain=true, bool allowMismatch=false) = 0;
+
+    virtual void Resize(Int height, Int width) = 0;
+    virtual void Resize(Int height, Int width, Int ldim) = 0;
+
+    virtual Int BlockHeight() const EL_NO_EXCEPT = 0;
+    virtual Int BlockWidth() const EL_NO_EXCEPT = 0;
+    virtual Int ColCut() const EL_NO_EXCEPT = 0;
+    virtual Int RowCut() const EL_NO_EXCEPT = 0;
+
+    virtual int RowOwner(Int i) const EL_NO_EXCEPT = 0;
+    virtual int ColOwner(Int j) const EL_NO_EXCEPT = 0;
+    virtual Int LocalRowOffset(Int i) const EL_NO_EXCEPT = 0;
+    virtual Int LocalColOffset(Int j) const EL_NO_EXCEPT = 0;
+    virtual Int LocalRowOffset(Int i, int rowOwner) const EL_NO_EXCEPT = 0;
+    virtual Int LocalColOffset(Int j, int colOwner) const EL_NO_EXCEPT = 0;
+    virtual Int GlobalRow(Int iLoc) const EL_NO_EXCEPT = 0;
+    virtual Int GlobalCol(Int jLoc) const EL_NO_EXCEPT = 0;
 
     // NOTE: These are all clearly equivalent to composing mpi::Rank
     //       with ColComm(), RowComm(), etc., but it is not clear that
@@ -160,7 +264,6 @@ public:
     virtual Dist PartialUnionColDist() const EL_NO_EXCEPT = 0;
     virtual Dist PartialUnionRowDist() const EL_NO_EXCEPT = 0;
     virtual DistWrap Wrap() const EL_NO_EXCEPT = 0;
-    El::DistData DistData() const EL_NO_EXCEPT;
 
     virtual mpi::Comm ColComm() const EL_NO_EXCEPT = 0;
     virtual mpi::Comm RowComm() const EL_NO_EXCEPT = 0;
@@ -182,109 +285,6 @@ public:
     virtual int CrossSize() const EL_NO_EXCEPT = 0;
     virtual int RedundantSize() const EL_NO_EXCEPT = 0;
 
-    // Single-entry manipulation
-    // =========================
-
-    // Global entry manipulation
-    // -------------------------
-    // NOTE: Local entry manipulation is often much faster and should be
-    //       preferred in most circumstances where performance matters.
-
-    Ring Get(Int i, Int j) const EL_NO_RELEASE_EXCEPT;
-
-    Base<Ring> GetRealPart(Int i, Int j) const EL_NO_RELEASE_EXCEPT;
-    Base<Ring> GetImagPart(Int i, Int j) const EL_NO_RELEASE_EXCEPT;
-
-    void Set(Int i, Int j, Ring alpha) EL_NO_RELEASE_EXCEPT;
-    void Set(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT;
-
-    void SetRealPart
-    (Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT;
-    void SetImagPart
-    (Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT;
-
-    void SetRealPart
-    (const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT;
-    void SetImagPart
-    (const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT;
-
-    void Update(Int i, Int j, Ring alpha) EL_NO_RELEASE_EXCEPT;
-    void Update(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT;
-
-    void UpdateRealPart
-    (Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT;
-    void UpdateImagPart
-    (Int i, Int j, Base<Ring> alpha) EL_NO_RELEASE_EXCEPT;
-
-    void UpdateRealPart
-    (const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT;
-    void UpdateImagPart
-    (const Entry<Base<Ring>>& entry) EL_NO_RELEASE_EXCEPT;
-
-    void MakeReal(Int i, Int j) EL_NO_RELEASE_EXCEPT;
-    void Conjugate(Int i, Int j) EL_NO_RELEASE_EXCEPT;
-
-    // Batch updating of remote entries
-    // ---------------------------------
-    void Reserve(Int numRemoteEntries);
-    void QueueUpdate(const Entry<Ring>& entry) EL_NO_RELEASE_EXCEPT;
-    void QueueUpdate(Int i, Int j, Ring value) EL_NO_RELEASE_EXCEPT;
-    void ProcessQueues(bool includeViewers=true);
-
-    // Batch extraction of remote entries
-    // ----------------------------------
-    void ReservePulls(Int numPulls) const;
-    void QueuePull(Int i, Int j) const EL_NO_RELEASE_EXCEPT;
-    void ProcessPullQueue
-    (Ring* pullBuf, bool includeViewers=true) const;
-    void ProcessPullQueue
-    (vector<Ring>& pullBuf, bool includeViewers=true) const;
-
-    // Local entry manipulation
-    // ------------------------
-    // NOTE: Clearly each of the following routines could instead be performed
-    //       via composing [Locked]Matrix() with the corresponding local
-    //       routine, but a large amount of code might need to change if
-    //       these were removed.
-
-    Ring GetLocal(Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT;
-
-    Base<Ring> GetLocalRealPart
-    (Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT;
-    Base<Ring> GetLocalImagPart
-    (Int iLoc, Int jLoc) const EL_NO_RELEASE_EXCEPT;
-
-    void SetLocal(Int iLoc, Int jLoc, Ring alpha) EL_NO_RELEASE_EXCEPT;
-    void SetLocal(const Entry<Ring>& localEntry) EL_NO_RELEASE_EXCEPT;
-
-    void SetLocalRealPart(Int iLoc, Int jLoc, Base<Ring> alpha)
-        EL_NO_RELEASE_EXCEPT;
-    void SetLocalImagPart(Int iLoc, Int jLoc, Base<Ring> alpha)
-        EL_NO_RELEASE_EXCEPT;
-
-    void SetLocalRealPart(const Entry<Base<Ring>>& localEntry)
-        EL_NO_RELEASE_EXCEPT;
-    void SetLocalImagPart(const Entry<Base<Ring>>& localEntry)
-        EL_NO_RELEASE_EXCEPT;
-
-    void UpdateLocal
-    (Int iLoc, Int jLoc, Ring alpha) EL_NO_RELEASE_EXCEPT;
-    void UpdateLocal
-    (const Entry<Ring>& localEntry) EL_NO_RELEASE_EXCEPT;
-
-    void UpdateLocalRealPart(Int iLoc, Int jLoc, Base<Ring> alpha)
-        EL_NO_RELEASE_EXCEPT;
-    void UpdateLocalImagPart(Int iLoc, Int jLoc, Base<Ring> alpha)
-        EL_NO_RELEASE_EXCEPT;
-
-    void UpdateLocalRealPart(const Entry<Base<Ring>>& localEntry)
-        EL_NO_RELEASE_EXCEPT;
-    void UpdateLocalImagPart(const Entry<Base<Ring>>& localEntry)
-        EL_NO_RELEASE_EXCEPT;
-
-    void MakeLocalReal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT;
-    void ConjugateLocal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT;
-
     // Diagonal manipulation
     // =====================
     virtual bool DiagonalAlignedWith
@@ -292,17 +292,7 @@ public:
     virtual int DiagonalRoot(Int offset=0) const EL_NO_EXCEPT = 0;
     virtual int DiagonalAlign(Int offset=0) const EL_NO_EXCEPT = 0;
 
-    // Assertions
-    // ==========
-    void AssertNotLocked() const;
-    void AssertNotStoringData() const;
-    void AssertValidEntry(Int i, Int j) const;
-    void AssertValidSubmatrix(Int i, Int j, Int height, Int width) const;
-    void AssertSameSize(Int height, Int width) const;
-
-    // Remote updates
-    // --------------
-    vector<Entry<Ring>> remoteUpdates;
+    virtual Device GetLocalDevice() const EL_NO_EXCEPT = 0;
 
 private:
     // Member variables
@@ -325,15 +315,6 @@ private:
     // An observing pointer to a pre-existing grid.
     const El::Grid* grid_=nullptr;
 
-    El::Matrix<Ring> matrix_=El::Matrix<Ring>();
-
-    // Remote updates
-    // --------------
-    // NOTE: Using ValueInt<Int> is somewhat of a hack; it would be nice to
-    //       have a pair of integers as its own data structure that does not
-    //       require separate MPI wrappers from ValueInt<Int>
-    mutable vector<ValueInt<Int>> remotePulls_;
-
 protected:
 
     // Protected constructors
@@ -351,6 +332,8 @@ private:
     // Exchange metadata with another matrix
     // =====================================
     void ShallowSwap(type& A);
+
+    virtual void do_empty_data_() = 0;
 
     template<typename S> friend class AbstractDistMatrix;
     template<typename S> friend class ElementalMatrix;

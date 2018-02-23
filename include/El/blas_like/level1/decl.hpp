@@ -67,12 +67,15 @@ void AdjointAxpyContract
 // AllReduce
 // =========
 template<typename T>
-void AllReduce( Matrix<T>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
+void AllReduce( AbstractMatrix<T>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
 template<typename T>
 void AllReduce( AbstractDistMatrix<T>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
 
 // Axpy
 // ====
+template<typename Ring1,typename Ring2>
+void Axpy(
+    Ring2 alpha, const AbstractMatrix<Ring1>& X, AbstractMatrix<Ring1>& Y );
 template<typename Ring1,typename Ring2>
 void Axpy( Ring2 alpha, const Matrix<Ring1>& X, Matrix<Ring1>& Y );
 template<typename Ring1,typename Ring2>
@@ -147,7 +150,11 @@ void Send( const Matrix<T>& A, mpi::Comm comm, int destination );
 // ========
 template<typename T>
 void SendRecv
-( const Matrix<T>& A, Matrix<T>& B, mpi::Comm comm,
+( const AbstractMatrix<T>& A, AbstractMatrix<T>& B, mpi::Comm comm,
+  int sendRank, int recvRank );
+template<typename T, Device D>
+void SendRecv
+( const Matrix<T,D>& A, Matrix<T,D>& B, mpi::Comm comm,
   int sendRank, int recvRank );
 
 // Recv
@@ -337,6 +344,8 @@ void Contract( const BlockMatrix<T>& A, BlockMatrix<T>& B );
 // Copy
 // ====
 
+template<typename T>
+void Copy( const AbstractMatrix<T>& A, AbstractMatrix<T>& B );
 template<typename T>
 void Copy( const Matrix<T>& A, Matrix<T>& B );
 template<typename S,typename T,
@@ -575,13 +584,13 @@ void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func );
 // EntrywiseMap
 // ============
 template<typename T>
-void EntrywiseMap( Matrix<T>& A, function<T(const T&)> func );
+void EntrywiseMap( AbstractMatrix<T>& A, function<T(const T&)> func );
 template<typename T>
 void EntrywiseMap( AbstractDistMatrix<T>& A, function<T(const T&)> func );
 
 template<typename S,typename T>
 void EntrywiseMap
-( const Matrix<S>& A, Matrix<T>& B, function<T(const S&)> func );
+( const AbstractMatrix<S>& A, AbstractMatrix<T>& B, function<T(const S&)> func );
 template<typename S,typename T>
 void EntrywiseMap
 ( const AbstractDistMatrix<S>& A, AbstractDistMatrix<T>& B,
@@ -590,7 +599,7 @@ void EntrywiseMap
 // Fill
 // ====
 template<typename T>
-void Fill( Matrix<T>& A, T alpha );
+void Fill( AbstractMatrix<T>& A, T alpha );
 template<typename T>
 void Fill( AbstractDistMatrix<T>& A, T alpha );
 
@@ -1248,6 +1257,9 @@ void RotateCols
 // Round
 // =====
 // Round each entry to the nearest integer
+template <typename T>
+void Round(AbstractMatrix<T>& A);
+
 template<typename T>
 void Round( Matrix<T>& A );
 template<>
@@ -1263,13 +1275,13 @@ void Round( AbstractDistMatrix<T>& A );
 // =====
 // TODO(poulson): Force S=T?
 template<typename T,typename S>
-void Scale( S alpha, Matrix<T>& A );
+void Scale( S alpha, AbstractMatrix<T>& A );
 template<typename T,typename S>
 void Scale( S alpha, AbstractDistMatrix<T>& A );
 
 template<typename Real,typename S,
          typename=EnableIf<IsReal<Real>>>
-void Scale( S alpha, Matrix<Real>& AReal, Matrix<Real>& AImag );
+void Scale( S alpha, AbstractMatrix<Real>& AReal, AbstractMatrix<Real>& AImag );
 template<typename Real,typename S,
          typename=EnableIf<IsReal<Real>>>
 void Scale
@@ -1523,7 +1535,7 @@ void UpdateSubmatrix
 // Zero
 // ====
 template<typename T>
-void Zero( Matrix<T>& A );
+void Zero( AbstractMatrix<T>& A );
 template<typename T>
 void Zero( AbstractDistMatrix<T>& A );
 
@@ -1538,7 +1550,6 @@ void Zero( AbstractDistMatrix<T>& A );
 // This routine uses the stable approach suggested by Kahan and Demmel and
 // returns the value rho.
 //
-
 template<typename Real>
 Real Givens
 ( const Real& phi,
