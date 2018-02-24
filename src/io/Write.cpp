@@ -28,6 +28,7 @@ void Write(AbstractMatrix<T> const& A, string basename,
               basename, format, title);
         break;
     case Device::GPU:
+#ifdef HYDROGEN_HAVE_CUDA
     {
         // Copy to the CPU
         Matrix<T,Device::CPU> A_CPU
@@ -35,6 +36,7 @@ void Write(AbstractMatrix<T> const& A, string basename,
         Write(A_CPU, basename, format, title);
     }
     break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Write: Bad Device type.");
     }

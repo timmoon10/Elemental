@@ -9,12 +9,21 @@
 #ifndef EL_BLAS_FILL_HPP
 #define EL_BLAS_FILL_HPP
 
-#ifdef HYDROGEN_ENABLE_CUDA
-#include <GPU/Fill.hpp>
+#ifdef HYDROGEN_HAVE_CUDA
+#include "GPU/Fill.hpp"
+#include <thrust/device_ptr.h>
 #endif
 
 namespace El
 {
+struct FillDispatch
+{
+    template <typename... Ts>
+    static void Call(Ts&&... args)
+    {
+        Fill_GPU_impl(std::forward<Ts>(args)...);
+    }
+};// FillDispatch
 
 template<typename T>
 void Fill( AbstractMatrix<T>& A, T alpha )
@@ -39,11 +48,18 @@ void Fill( AbstractMatrix<T>& A, T alpha )
             }
         }
         break;
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
-            Fill_GPU_impl<T>(ABuf, m*n, alpha);
-            break;
-#endif // HYDROGEN_ENABLE_CUDA
+        {
+            constexpr bool valid_type = IsDeviceValidType_v<T,Device::GPU>();
+            using Dispatcher =
+                typename std::conditional<valid_type,
+                                          FillDispatch,
+                                          BadDeviceDispatch>::type;
+            Dispatcher::Call(ABuf, m*n, alpha);
+        }
+        break;
+#endif // HYDROGEN_HAVE_CUDA
         default:
             LogicError("Bad device type in Fill");
         }
@@ -62,12 +78,19 @@ void Fill( AbstractMatrix<T>& A, T alpha )
                 }
             }
             break;
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
             case Device::GPU:
+            {
                 // FIXME: probably faster to do both loops on GPU!
-                Fill_GPU_impl(ABuf + j*ALDim, m, alpha);
-                break;
-#endif // HYDROGEN_ENABLE_CUDA
+                constexpr bool valid_type = IsDeviceValidType_v<T,Device::GPU>();
+                using Dispatcher =
+                    typename std::conditional<valid_type,
+                                              FillDispatch,
+                                              BadDeviceDispatch>::type;
+                Dispatcher::Call(ABuf + j*ALDim, m, alpha);
+            }
+            break;
+#endif // HYDROGEN_HAVE_CUDA
             default:
                 LogicError("Bad device type in Fill");
             }

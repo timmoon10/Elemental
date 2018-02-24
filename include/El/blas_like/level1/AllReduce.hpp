@@ -9,12 +9,21 @@
 #ifndef EL_BLAS_ALLREDUCE_HPP
 #define EL_BLAS_ALLREDUCE_HPP
 
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
 #include "GPU/AllReduce.hpp"
 #endif
 
 namespace El
 {
+
+struct AllReduceDispatch
+{
+    template <typename... Ts>
+    static void Call(Ts&&... args)
+    {
+        AllReduce_GPU_impl(std::forward<Ts>(args)...);
+    }
+};// AllReduceDispatch
 
 template<typename T>
 void AllReduce( AbstractMatrix<T>& A, mpi::Comm comm, mpi::Op op )
@@ -53,13 +62,18 @@ void AllReduce( AbstractMatrix<T>& A, mpi::Comm comm, mpi::Op op )
                   A.Buffer(), 1, A.LDim() );
         }
         break;
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
         {
-            AllReduce_GPU_impl(
-                static_cast<Matrix<T,Device::GPU>&>(A), comm, op);
-            break;
-#endif // HYDROGEN_ENABLE_CUDA
+            constexpr bool valid_type = IsDeviceValidType_v<T,Device::GPU>();
+            using Dispatcher =
+                typename std::conditional<valid_type,
+                                          AllReduceDispatch,
+                                          BadDeviceDispatch>::type;
+            Dispatcher::Call(static_cast<Matrix<T,Device::GPU>&>(A), comm, op);
+        }
+        break;
+#endif // HYDROGEN_HAVE_CUDA
         default:
             LogicError("Bad device in AllReduce");
         }

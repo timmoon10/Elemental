@@ -7,7 +7,7 @@ namespace El
 {
 
 template <typename T>
-void Fill_GPU_impl(thrust::device_ptr<T>, size_t, T const&);
+void Fill_GPU_impl(T*, size_t, T const&);
 
 }// namespace El
 #endif // EL_BLAS_LIKE_LEVEL1_GPU_FILL_HPP_

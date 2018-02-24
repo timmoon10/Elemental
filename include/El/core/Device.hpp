@@ -24,5 +24,14 @@ template <> struct IsDeviceValidType<double,Device::GPU> : std::true_type {};
 template <typename T, Device D>
 constexpr bool IsDeviceValidType_v() { return IsDeviceValidType<T,D>::value; }
 
+struct BadDeviceDispatch
+{
+    template <typename... Ts>
+    static void Call(Ts&&...)
+    {
+        LogicError("Bad device type!");
+    }
+};// struct BadDeviceDispatch
+
 }// namespace El
 #endif // EL_CORE_DEVICE_HPP_

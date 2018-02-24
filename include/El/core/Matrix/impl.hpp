@@ -10,6 +10,9 @@
 #define EL_MATRIX_IMPL_HPP
 
 #include "impl_cpu.hpp"
+
+#ifdef HYDROGEN_HAVE_CUDA
 #include "impl_gpu.hpp"
+#endif
 
 #endif // EL_MATRIX_IMPL_HPP

@@ -44,9 +44,6 @@ public:
     // Create a copy of a matrix
     Matrix(Matrix<Ring, Device::CPU> const& A);
 
-    // Create a copy of a matrix from a GPU matrix
-    Matrix(Matrix<Ring, Device::GPU> const& A);
-
     // Move the metadata from a given matrix
     Matrix(Matrix<Ring, Device::CPU>&& A) EL_NO_EXCEPT;
 
@@ -57,9 +54,14 @@ public:
     Matrix<Ring, Device::CPU> & operator=(
         Matrix<Ring, Device::CPU> const& A);
 
+#ifdef HYDROGEN_HAVE_CUDA
+    // Create a copy of a matrix from a GPU matrix
+    Matrix(Matrix<Ring, Device::GPU> const& A);
+
     // Assign by copying data from a GPU
     Matrix<Ring, Device::CPU> & operator=(
         Matrix<Ring, Device::GPU> const& A);
+#endif
 
     // Move assignment
     Matrix<Ring, Device::CPU>& operator=(Matrix<Ring, Device::CPU>&& A);
@@ -265,9 +267,10 @@ public:
     DevicePtr<const Ring> Data() { return data_; }
 
     DevicePtr<Ring> Buffer() EL_NO_RELEASE_EXCEPT override;
-    DevicePtr<Ring> Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT;
+    DevicePtr<Ring> Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT override;
     DevicePtr<const Ring> LockedBuffer() const EL_NO_EXCEPT override;
-    DevicePtr<const Ring> LockedBuffer(Int i, Int j) const EL_NO_EXCEPT;
+    DevicePtr<const Ring>
+    LockedBuffer(Int i, Int j) const EL_NO_EXCEPT override;
 
 
     // Reconfigure around the given buffer, but do not assume ownership

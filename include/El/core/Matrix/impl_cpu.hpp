@@ -65,6 +65,7 @@ Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::CPU> const& A)
         LogicError("You just tried to construct a Matrix with itself!");
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::GPU> const& A)
     : Matrix{A.Height(), A.Width(), A.LDim()}
@@ -84,6 +85,7 @@ Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::GPU> const& A)
         RuntimeError(oss.str());
     }
 }
+#endif
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::CPU>&& A) EL_NO_EXCEPT

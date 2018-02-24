@@ -9,12 +9,22 @@
 #ifndef EL_BLAS_SCALE_HPP
 #define EL_BLAS_SCALE_HPP
 
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
 #include "GPU/Scale.hpp"
+#include <thrust/device_ptr.h>
 #endif
 
 namespace El
 {
+
+struct ScaleDispatch
+{
+    template <typename... Ts>
+    static void Call(Ts&&... args)
+    {
+        Scale_GPU_impl(std::forward<Ts>(args)...);
+    }
+};// ScaleDispatch
 
 template<typename T,typename S>
 void Scale( S alphaS, AbstractMatrix<T>& A )
@@ -46,11 +56,19 @@ void Scale( S alphaS, AbstractMatrix<T>& A )
                     ABuf[i] *= alpha;
             }
             break;
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
             case Device::GPU:
-                Scale_GPU_impl(ABuf, ABuf, height*width, alphaS);
-                break;
-#endif // HYDROGEN_ENABLE_CUDA
+            {
+                constexpr bool valid_type =
+                    IsDeviceValidType_v<T,Device::GPU>();
+                using Dispatcher =
+                    typename std::conditional<valid_type,
+                                              ScaleDispatch,
+                                              BadDeviceDispatch>::type;
+                Dispatcher::Call(ABuf, ABuf, height*width, alphaS);
+            }
+            break;
+#endif // HYDROGEN_HAVE_CUDA
             default:
                 LogicError("Bad device for scale!");
             }
@@ -72,18 +90,24 @@ void Scale( S alphaS, AbstractMatrix<T>& A )
                 }
             }
             break;
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
             case Device::GPU:
             {
+                constexpr bool valid_type =
+                    IsDeviceValidType_v<T,Device::GPU>();
+                using Dispatcher =
+                    typename std::conditional<valid_type,
+                                              ScaleDispatch,
+                                              BadDeviceDispatch>::type;
                 for( Int j=0; j<width; ++j )
                 {
                     // FIXME: Probably faster to do both loops on GPU!
-                    Scale_GPU_impl(
-                        ABuf + j*ALDim, ABuf + j*ALDim, height, alphaS);
+                    Dispatcher::Call(ABuf + j*ALDim, ABuf + j*ALDim,
+                                     height, alphaS);
                 }
             }
             break;
-#endif // HYDROGEN_ENABLE_CUDA
+#endif // HYDROGEN_HAVE_CUDA
             default:
                 LogicError("Bad device for scale");
             }

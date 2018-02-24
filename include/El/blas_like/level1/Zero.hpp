@@ -30,9 +30,11 @@ void Zero( AbstractMatrix<T>& A )
             MemZero( ABuf, height*width );
             break;
         case Device::GPU:
+#ifdef HYDROGEN_HAVE_CUDA
             if (cudaMemset(ABuf,0x0,height*width*sizeof(T)) != cudaSuccess)
                 RuntimeError("Something wrong with cudaMemset");
             break;
+#endif // HYDROGEN_HAVE_CUDA
         default:
             LogicError("Bad device type for Zero");
         }
@@ -48,9 +50,11 @@ void Zero( AbstractMatrix<T>& A )
                 MemZero( &ABuf[j*ALDim], height );
                 break;
             case Device::GPU:
+#ifdef HYDROGEN_HAVE_CUDA
                 if (cudaMemset(ABuf+j*ALDim,0x0,height*sizeof(T)) != cudaSuccess)
                     RuntimeError("Something wrong with cudaMemset");
                 break;
+#endif // HYDROGEN_HAVE_CUDA
             default:
                 LogicError("Bad device type for Zero");
             }

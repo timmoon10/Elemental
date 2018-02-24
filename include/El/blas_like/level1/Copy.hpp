@@ -142,7 +142,7 @@ void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
     #define GUARD(CDIST,RDIST,WRAP) \
-      B.ColDist() == CDIST && B.RowDist() == RDIST && ELEMENT == WRAP
+        B.ColDist() == CDIST && B.RowDist() == RDIST && B.Wrap() == WRAP && B.GetLocalDevice() == Device::CPU
     #define PAYLOAD(CDIST,RDIST,WRAP) \
         auto& BCast = static_cast<DistMatrix<T,CDIST,RDIST,ELEMENT>&>(B); \
         Copy( A, BCast );
@@ -202,7 +202,7 @@ void Copy( const BlockMatrix<S>& A, BlockMatrix<T>& B )
 {
     EL_DEBUG_CSE
     #define GUARD(CDIST,RDIST,WRAP) \
-      B.ColDist() == CDIST && B.RowDist() == RDIST && BLOCK == WRAP
+        B.ColDist() == CDIST && B.RowDist() == RDIST && B.Wrap() == WRAP && B.GetLocalDevice() == Device::CPU
     #define PAYLOAD(CDIST,RDIST,WRAP) \
       auto& BCast = static_cast<DistMatrix<T,CDIST,RDIST,BLOCK>&>(B); \
       Copy( A, BCast );

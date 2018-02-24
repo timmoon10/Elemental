@@ -52,17 +52,18 @@ inline cublasOperation_t CharTocuBLASOp(char c)
 
 }// namespace <anon>
 
-cuBLAS_Manager manager_;
+  //cuBLAS_Manager manager_;
 
 #define ADD_GEMM_IMPL(ScalarType, TypeChar)                             \
     void Gemm(                                                          \
-        char transA, char transB, BlasInt m, BlasInt n, BlasInt k,      \
+        char transA, char transB, int m, int n, int k,                  \
         ScalarType const& alpha,                                        \
-        ScalarType const* A, BlasInt ALDim,                             \
-        ScalarType const* B, BlasInt BLDim,                             \
+        ScalarType const* A, int ALDim,                                 \
+        ScalarType const* B, int BLDim,                                 \
         ScalarType const& beta,                                         \
-        ScalarType* C, BlasInt CLDim )                                  \
+        ScalarType* C, int CLDim )                                      \
     {                                                                   \
+      cuBLAS_Manager manager_; \
         auto ret = cublas ## TypeChar ## gemm(                          \
             manager_,                                                   \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \

@@ -9,13 +9,23 @@
 #ifndef EL_BLAS_HADAMARD_HPP
 #define EL_BLAS_HADAMARD_HPP
 
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
 #include "GPU/Hadamard.hpp"
-#endif // HYDROGEN_ENABLE_CUDA
+#endif // HYDROGEN_HAVE_CUDA
 
 // C(i,j) := A(i,j) B(i,j)
 
-namespace El {
+namespace El
+{
+
+struct HadamardDispatch
+{
+    template <typename... Ts>
+    static void Call(Ts&&... args)
+    {
+        Hadamard_GPU_impl(std::forward<Ts>(args)...);
+    }
+};// FillDispatch
 
 template<typename T>
 void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
@@ -67,16 +77,24 @@ void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
             }
         }
         break;
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
+        {
+            constexpr bool valid_type =
+                IsDeviceValidType_v<T,Device::GPU>();
+            using Dispatcher =
+                typename std::conditional<valid_type,
+                                          HadamardDispatch,
+                                          BadDeviceDispatch>::type;
             if (CBuf == BBuf)
-                Hadamard_GPU_impl(CBuf, ABuf, CBuf, height*width);
+                Dispatcher::Call(CBuf, ABuf, CBuf, height*width);
             else if (CBuf == ABuf)
-                Hadamard_GPU_impl(CBuf, BBuf, CBuf, height*width);
+                Dispatcher::Call(CBuf, BBuf, CBuf, height*width);
             else
-                Hadamard_GPU_impl(ABuf, BBuf, CBuf, height*width);
-            break;
-#endif // HYDROGEN_ENABLE_CUDA
+                Dispatcher::Call(ABuf, BBuf, CBuf, height*width);
+        }
+        break;
+#endif // HYDROGEN_HAVE_CUDA
         default:
             LogicError("Bad device type for Hadamard.");
         }
@@ -98,17 +116,23 @@ void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
             }
         }
         break;
-#ifdef HYDROGEN_ENABLE_CUDA
+#ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
         {
+            constexpr bool valid_type =
+                IsDeviceValidType_v<T,Device::GPU>();
+            using Dispatcher =
+                typename std::conditional<valid_type,
+                                          HadamardDispatch,
+                                          BadDeviceDispatch>::type;
+
             for (Int j = 0; j < width; ++j)
                 // FIXME: probably faster to do whole thing on GPU
-                Hadamard_GPU_impl(
-                    ABuf + j*ALDim, BBuf + j*ALDim,
-                    CBuf + j*ALDim, height);
+                Dispatcher::Call(ABuf + j*ALDim, BBuf + j*ALDim,
+                                 CBuf + j*ALDim, height);
         }
         break;
-#endif // HYDROGEN_ENABLE_CUDA
+#endif // HYDROGEN_HAVE_CUDA
         default:
             LogicError("Bad device type for Hadamard");
         }

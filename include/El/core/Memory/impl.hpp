@@ -62,7 +62,6 @@ struct MemHelper<G,Device::GPU>
         cudaMemset(buffer, 0, numEntries);
     }
 };
-
 #endif // HYDROGEN_HAVE_CUDA
 } // namespace <anonymous>
 
@@ -176,8 +175,10 @@ void Memory<G,D>::Empty()
 EL_EXTERN template class Memory<double, Device::CPU>;
 
 // GPU instantiations
+#ifdef HYDROGEN_HAVE_CUDA
 EL_EXTERN template class Memory<float, Device::GPU>;
 EL_EXTERN template class Memory<double, Device::GPU>;
+#endif
 
 #undef EL_EXTERN
 

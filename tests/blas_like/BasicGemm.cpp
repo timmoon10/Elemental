@@ -8,18 +8,18 @@
 */
 #include <El.hpp>
 
-template<typename T>
+template<typename T, El::Device D>
 void BasicInstrumentedGemm
-( T alpha, const El::DistMatrix<T>& A,
-           const El::DistMatrix<T>& B,
-  T beta,        El::DistMatrix<T>& C )
+( T alpha, const El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,D>& A,
+           const El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,D>& B,
+  T beta,        El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,D>& C )
 {
     const El::Grid& grid = A.Grid();
     C *= beta;
 
     // Temporary distributions
-    El::DistMatrix<T,El::MC,El::STAR> A1_MC_STAR(grid);
-    El::DistMatrix<T,El::MR,El::STAR> B1Trans_MR_STAR(grid);
+    El::DistMatrix<T,El::MC,El::STAR,El::ELEMENT,D> A1_MC_STAR(grid);
+    El::DistMatrix<T,El::MR,El::STAR,El::ELEMENT,D> B1Trans_MR_STAR(grid);
     A1_MC_STAR.AlignWith( C );
     B1Trans_MR_STAR.AlignWith( C );
 
@@ -81,7 +81,7 @@ void BasicInstrumentedGemm
     }
 }
 
-template<typename T>
+template<typename T, El::Device D>
 void TestGemm
 ( El::Int m, El::Int n, El::Int k, const El::Grid& grid,
   bool testSequential, bool instrument )
@@ -93,7 +93,7 @@ void TestGemm
 
     if( testSequential && grid.Rank() == 0 )
     {
-        El::Matrix<T> A, B, C;
+        El::Matrix<T,D> A, B, C;
         El::Uniform( A, m, k );
         El::Uniform( B, k, n );
         El::Uniform( C, m, n );
@@ -114,7 +114,7 @@ void TestGemm
         El::Output("Root waited for ",rootWaitTime," seconds");
     }
 
-    El::DistMatrix<T> A(grid), B(grid), C(grid);
+    El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,D> A(grid), B(grid), C(grid);
     El::Uniform( A, m, k );
     El::Uniform( B, k, n );
     El::Uniform( C, m, n );
@@ -151,6 +151,9 @@ int main( int argc, char *argv[] )
           El::Input("--testHigherPrec","test higher precisions?",false);
         const bool instrument =
           El::Input("--instrument","instrument Gemm?",true);
+        const bool testGPU =
+            El::Input("--testGPU", "test GPU gemm?", false);
+
         El::Int gridHeight = El::Input("--gridHeight","process grid height",0);
         El::ProcessInput();
 
@@ -163,37 +166,45 @@ int main( int argc, char *argv[] )
         if( commRank == 0 )
             El::Output("grid is ",grid.Height()," x ",grid.Width());
 
-        TestGemm<float>
+        TestGemm<float,El::Device::CPU>
         ( m, n, k, grid, testSequential, instrument );
-        TestGemm<El::Complex<float>>
+
+#if 0//def HYDROGEN_HAVE_CUDA
+        if (testGPU)
+            TestGemm<float,El::Device::GPU>
+                ( m, n, k, grid, testSequential, instrument );
+#else
+        (void) testGPU;
+#endif // HYDROGEN_ENABLE_CUDA
+        TestGemm<El::Complex<float>,El::Device::CPU>
         ( m, n, k, grid, testSequential, instrument );
-        TestGemm<double>
+        TestGemm<double,El::Device::CPU>
         ( m, n, k, grid, testSequential, instrument );
-        TestGemm<El::Complex<double>>
+        TestGemm<El::Complex<double>,El::Device::CPU>
         ( m, n, k, grid, testSequential, instrument );
 
         if( testHigherPrec )
         {
 #ifdef EL_HAVE_QD
-            TestGemm<El::DoubleDouble>
+            TestGemm<El::DoubleDouble,El::Device::CPU>
             ( m, n, k, grid, testSequential, instrument );
-            TestGemm<El::Complex<El::DoubleDouble>>
+            TestGemm<El::Complex<El::DoubleDouble>,El::Device::CPU>
             ( m, n, k, grid, testSequential, instrument );
-            TestGemm<El::QuadDouble>
+            TestGemm<El::QuadDouble,El::Device::CPU>
             ( m, n, k, grid, testSequential, instrument );
-            TestGemm<El::Complex<El::QuadDouble>>
+            TestGemm<El::Complex<El::QuadDouble>,El::Device::CPU>
             ( m, n, k, grid, testSequential, instrument );
 #endif
 #ifdef EL_HAVE_QUAD
-            TestGemm<El::Quad>
+            TestGemm<El::Quad,El::Device::CPU>
             ( m, n, k, grid, testSequential, instrument );
-            TestGemm<El::Complex<El::Quad>>
+            TestGemm<El::Complex<El::Quad>,El::Device::CPU>
             ( m, n, k, grid, testSequential, instrument );
 #endif
 #ifdef EL_HAVE_MPC
-            TestGemm<El::BigFloat>
+            TestGemm<El::BigFloat,El::Device::CPU>
             ( m, n, k, grid, testSequential, instrument );
-            TestGemm<El::Complex<El::BigFloat>>
+            TestGemm<El::Complex<El::BigFloat>,El::Device::CPU>
             ( m, n, k, grid, testSequential, instrument );
 #endif
         }

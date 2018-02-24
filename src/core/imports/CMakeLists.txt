@@ -1,7 +1,6 @@
 # Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
   blas.cpp
-  cublas.cpp
   flame.cpp
   lapack.cpp
   mkl.cpp
@@ -13,6 +12,11 @@ set_full_path(THIS_DIR_SOURCES
   qt5.cpp
   scalapack.cpp
   )
+
+if (HYDROGEN_HAVE_CUDA)
+  set_full_path(CUDA_SOURCES cublas.cpp)
+  list(APPEND THIS_DIR_SOURCES ${CUDA_SOURCES})
+endif()
 
 # Add the subdirectories
 add_subdirectory(blas)

@@ -17,39 +17,6 @@
 namespace El
 {
 
-namespace
-{
-template <bool Valid>
-struct CallIfValid
-{
-    template <typename... Ts>
-    static void Gemm(Ts&&...)
-    {
-        LogicError("Invalid type/device combination.");
-    }
-};
-
-template <>
-struct CallIfValid<true>
-{
-#if 0
-    template <typename T, Device D>
-    static void Gemm(Orientation orientA, Orientation orientB,
-                     T alpha, Matrix<T,D> const& A, Matrix<T,D> const& B,
-                     T beta, Matrix<T,D>& C)
-    {
-        El::Gemm(orientA, orientB, alpha, A, B, beta, C);
-    }
-#else
-    template <typename... Ts>
-    static void Gemm(Ts&&... args)
-    {
-        El::Gemm(std::forward<Ts>(args)...);
-    }
-#endif
-};// class CallIfValid
-}// namespace <anon>
-
 template <typename T>
 void Gemm(Orientation orientA, Orientation orientB,
           T alpha, AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
@@ -61,21 +28,21 @@ void Gemm(Orientation orientA, Orientation orientB,
     switch (A.GetDevice())
     {
     case Device::CPU:
-        CallIfValid<IsDeviceValidType_v<T,Device::CPU>()>::Gemm(
-            orientA, orientB, alpha,
-            static_cast<Matrix<T,Device::CPU> const&>(A),
-            static_cast<Matrix<T,Device::CPU> const&>(B),
-            beta,
-            static_cast<Matrix<T,Device::CPU>&>(C));
+        Gemm(orientA, orientB, alpha,
+             static_cast<Matrix<T,Device::CPU> const&>(A),
+             static_cast<Matrix<T,Device::CPU> const&>(B),
+             beta,
+             static_cast<Matrix<T,Device::CPU>&>(C));
         break;
     case Device::GPU:
-        CallIfValid<IsDeviceValidType_v<T,Device::GPU>()>::Gemm(
-            orientA, orientB, alpha,
-            static_cast<Matrix<T,Device::GPU> const&>(A),
-            static_cast<Matrix<T,Device::GPU> const&>(B),
-            beta,
-            static_cast<Matrix<T,Device::GPU>&>(C));
+#ifdef HYDROGEN_HAVE_CUDA
+        Gemm(orientA, orientB, alpha,
+             static_cast<Matrix<T,Device::GPU> const&>(A),
+             static_cast<Matrix<T,Device::GPU> const&>(B),
+             beta,
+             static_cast<Matrix<T,Device::GPU>&>(C));
         break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Bad device type.");
     }
@@ -91,6 +58,7 @@ void Gemm(Orientation orientA, Orientation orientB,
 
 namespace
 {
+
 template <Device D> struct BLASHelper;
 
 template <>
@@ -103,6 +71,7 @@ struct BLASHelper<Device::CPU>
     }
 };// struct BLASHelper<T,Device::CPU>
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <>
 struct BLASHelper<Device::GPU>
 {
@@ -112,8 +81,65 @@ struct BLASHelper<Device::GPU>
         cublas::Gemm(std::forward<Ts>(args)...);
     }
 };// struct BLASHelper<T,Device::GPU>
-}// namespace <anon>
+#endif // HYDROGEN_HAVE_CUDA
 
+struct GemmDispatch
+{
+    template <typename T, Device D>
+    static void Call(Orientation orientA, Orientation orientB,
+                     T alpha, Matrix<T,D> const& A, Matrix<T,D> const& B,
+                     T beta, Matrix<T,D>& C)
+    {
+        EL_DEBUG_CSE
+        if(orientA == NORMAL && orientB == NORMAL)
+        {
+            if(A.Height() != C.Height() ||
+               B.Width()  != C.Width()  ||
+               A.Width()  != B.Height())
+                LogicError("Nonconformal GemmNN");
+        }
+        else if(orientA == NORMAL)
+        {
+            if(A.Height() != C.Height() ||
+               B.Height() != C.Width()  ||
+               A.Width()  != B.Width())
+                LogicError("Nonconformal GemmN(T/C)");
+        }
+        else if(orientB == NORMAL)
+        {
+            if(A.Width()  != C.Height() ||
+               B.Width()  != C.Width()  ||
+               A.Height() != B.Height())
+                LogicError("Nonconformal Gemm(T/C)N");
+        }
+        else
+        {
+            if(A.Width()  != C.Height() ||
+               B.Height() != C.Width()  ||
+               A.Height() != B.Width())
+                LogicError("Nonconformal Gemm(T/C)(T/C)");
+        }
+        const char transA = OrientationToChar(orientA);
+        const char transB = OrientationToChar(orientB);
+        const Int m = C.Height();
+        const Int n = C.Width();
+        const Int k = (orientA == NORMAL ? A.Width() : A.Height());
+        if(k != 0)
+        {
+            BLASHelper<D>::Gemm(
+                transA, transB, m, n, k,
+                alpha, A.LockedBuffer(), A.LDim(),
+                B.LockedBuffer(), B.LDim(),
+                beta,  C.Buffer(),       C.LDim());
+        }
+        else
+        {
+//        C *= beta;
+        }
+    }
+};// struct GemmDispatch
+
+}// namespace <anon>
 
 template<typename T, Device D>
 void Gemm
@@ -121,53 +147,14 @@ void Gemm
   T alpha, Matrix<T,D> const& A, Matrix<T,D> const& B,
   T beta, Matrix<T,D>& C)
 {
-    EL_DEBUG_CSE
-    if(orientA == NORMAL && orientB == NORMAL)
-    {
-        if(A.Height() != C.Height() ||
-            B.Width()  != C.Width()  ||
-            A.Width()  != B.Height())
-            LogicError("Nonconformal GemmNN");
-    }
-    else if(orientA == NORMAL)
-    {
-        if(A.Height() != C.Height() ||
-            B.Height() != C.Width()  ||
-            A.Width()  != B.Width())
-            LogicError("Nonconformal GemmN(T/C)");
-    }
-    else if(orientB == NORMAL)
-    {
-        if(A.Width()  != C.Height() ||
-            B.Width()  != C.Width()  ||
-            A.Height() != B.Height())
-            LogicError("Nonconformal Gemm(T/C)N");
-    }
-    else
-    {
-        if(A.Width()  != C.Height() ||
-            B.Height() != C.Width()  ||
-            A.Height() != B.Width())
-            LogicError("Nonconformal Gemm(T/C)(T/C)");
-    }
-    const char transA = OrientationToChar(orientA);
-    const char transB = OrientationToChar(orientB);
-    const Int m = C.Height();
-    const Int n = C.Width();
-    const Int k = (orientA == NORMAL ? A.Width() : A.Height());
-    if(k != 0)
-    {
-        BLASHelper<D>::Gemm(
-            transA, transB, m, n, k,
-            alpha, A.LockedBuffer(), A.LDim(),
-            B.LockedBuffer(), B.LDim(),
-            beta,  C.Buffer(),       C.LDim());
-    }
-    else
-    {
-//        C *= beta;
-    }
+    constexpr bool valid_type = IsDeviceValidType_v<T,D>();
+    using Dispatcher = typename std::conditional<valid_type,
+                                                 GemmDispatch,
+                                                 BadDeviceDispatch>::type;
+
+    Dispatcher::Call(orientA, orientB, alpha, A, B, beta, C);
 }
+
 
 template <typename T, Device D>
 void Gemm (
@@ -355,6 +342,7 @@ void LocalGemm
     LocalGemm(orientA, orientB, alpha, A, B, T(0), C);
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template void Gemm(Orientation orientA, Orientation orientB,
                    float alpha,
                    Matrix<float,Device::GPU> const& A,
@@ -367,6 +355,7 @@ template void Gemm(Orientation orientA, Orientation orientB,
                    Matrix<double,Device::GPU> const& B,
                    double beta,
                    Matrix<double,Device::GPU>& C);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define PROTO(T) \
   template void Gemm                                          \
