@@ -52,6 +52,72 @@ Matrix<T,D> LockedView(const Matrix<T,D>& B)
     return A;
 }
 
+template<typename T>
+void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B)
+{
+    if (A.GetDevice() != B.GetDevice())
+        LogicError("View requires matching device types.");
+
+    if ((A.GetDevice() == Device::CPU)) {
+      View(static_cast<Matrix<T,Device::CPU>&>(A),
+           static_cast<Matrix<T,Device::CPU>&>(B));
+    }else if ((A.GetDevice() == Device::GPU)) {
+      View(static_cast<Matrix<T,Device::GPU>&>(A),
+           static_cast<Matrix<T,Device::GPU>&>(B));
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+void LockedView(AbstractMatrix<T>& A, const AbstractMatrix<T>& B)
+{
+    if (A.GetDevice() != B.GetDevice())
+        LogicError("View requires matching device types.");
+
+    if ((A.GetDevice() == Device::CPU)) {
+      LockedView(static_cast<Matrix<T,Device::CPU>&>(A),
+                 static_cast<Matrix<T,Device::CPU>&>(B));
+    }else if ((A.GetDevice() == Device::GPU)) {
+      LockedView(static_cast<Matrix<T,Device::GPU>&>(A),
+                 static_cast<Matrix<T,Device::GPU>&>(B));
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+AbstractMatrix<T> View(AbstractMatrix<T>& B)
+{
+    if ((B.GetDevice() == Device::CPU)) {
+      Matrix<T,Device::CPU> A;
+      View(static_cast<AbstractMatrix<T>&>(A), B);
+      return A;
+    }else if ((B.GetDevice() == Device::GPU)) {
+      Matrix<T,Device::GPU> A;
+      View(static_cast<AbstractMatrix<T>&>(A), B);
+      return A;
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+AbstractMatrix<T> LockedView(const AbstractMatrix<T>& B)
+{
+    if ((B.GetDevice() == Device::CPU)) {
+      Matrix<T,Device::CPU> A;
+      LockedView(static_cast<AbstractMatrix<T>&>(A), B);
+      return A;
+    }else if ((B.GetDevice() == Device::GPU)) {
+      Matrix<T,Device::GPU> A;
+      LockedView(static_cast<AbstractMatrix<T>&>(A), B);
+      return A;
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
 // ElementalMatrix
 // ---------------
 
