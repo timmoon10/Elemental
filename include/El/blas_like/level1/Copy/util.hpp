@@ -14,6 +14,72 @@ namespace copy {
 namespace util {
 
 template<typename T>
+void CopyArray( Int size, const T* EL_RESTRICT A, T* EL_RESTRICT B )
+{
+#ifdef _OPENMP
+    const Int lineSize = Max( 64 / sizeof(T), 1 ); // Assuming 64B cache lines
+    if( size > 4 * lineSize )
+    {
+
+        // Find cache lines
+        std::size_t alignedSize = size * sizeof(T);
+        void* alignedPtr = reinterpret_cast<void*>(B);
+        std::align( lineSize * sizeof(T), sizeof(T), alignedPtr, alignedSize );
+        const Int offset = ( alignedPtr != nullptr ?
+                             reinterpret_cast<T*>(alignedPtr) - B :
+                             0 );
+        const Int firstLine = (offset > 0) ? offset - lineSize : 0;
+        const Int numLines = (size - firstLine + lineSize - 1) / lineSize;
+
+        // Distribute cache lines amongst threads
+        const Int maxThreads = omp_get_max_threads();
+        const Int linesPerThread = (numLines + maxThreads - 1) / maxThreads;
+        const Int sizePerThread = linesPerThread * lineSize;
+            
+        // Copy cache lines in parallel
+        #pragma omp parallel
+        {
+            const Int thread = omp_get_thread_num();
+            const Int front = Max(firstLine + thread * sizePerThread, Int(0));
+            const Int back = Min(firstLine + (thread+1) * sizePerThread, size);
+            if( front < back )
+            {
+                MemCopy( &B[front], &A[front], back - front );
+            }
+        }
+
+    }
+    else
+#endif // _OPENMP
+    {
+        // Serial copy
+        MemCopy( B, A, size );
+    }
+}
+
+template<typename T>
+void CopyMatrix
+( Int height, Int width,
+  const T* EL_RESTRICT A, Int lda,
+        T* EL_RESTRICT B, Int ldb )
+{
+
+    if( width == 1 || ( lda == height && ldb == height ) )
+    {
+        CopyArray( height * width, A, B );
+    }
+    else
+    {
+        EL_PARALLEL_FOR
+        for( Int j=0; j<width; ++j )
+        {
+            MemCopy(&B[j*ldb], &A[j*lda], height);
+        }
+    }
+  
+}
+
+template<typename T>
 void InterleaveMatrix
 ( Int height, Int width,
   const T* A, Int colStrideA, Int rowStrideA,
@@ -21,11 +87,11 @@ void InterleaveMatrix
 {
     if( colStrideA == 1 && colStrideB == 1 )
     {
-        lapack::Copy( 'F', height, width, A, rowStrideA, B, rowStrideB );
+        CopyMatrix( height, width, A, rowStrideA, B, rowStrideB );
     }
     else
     {
-#ifdef EL_HAVE_MKL
+#ifdef HYDROGEN_HAVE_MKL
         mkl::omatcopy
         ( NORMAL, height, width, T(1),
           A, rowStrideA, colStrideA,
@@ -121,8 +187,8 @@ void BlockedColStridedUnpack
                 firstBlockHeight :
                 Min(blockHeight,height-rowIndex) );
 
-            lapack::Copy
-            ( 'F', thisBlockHeight, width,
+            CopyMatrix
+            ( thisBlockHeight, width,
               &APortion[packedRowIndex], localHeight,
               &B[rowIndex],              BLDim );
 
@@ -230,8 +296,8 @@ void RowStridedPack
     {
         const Int rowShift = Shift_( k, rowAlign, rowStride );
         const Int localWidth = Length_( width, rowShift, rowStride );
-        lapack::Copy
-        ( 'F', height, localWidth,
+        CopyMatrix
+        ( height, localWidth,
           &A[rowShift*ALDim],        rowStride*ALDim,
           &BPortions[k*portionSize], height );
     }
@@ -248,8 +314,8 @@ void RowStridedUnpack
     {
         const Int rowShift = Shift_( k, rowAlign, rowStride );
         const Int localWidth = Length_( width, rowShift, rowStride );
-        lapack::Copy
-        ( 'F', height, localWidth,
+        CopyMatrix
+        ( height, localWidth,
           &APortions[k*portionSize], height,
           &B[rowShift*BLDim],        rowStride*BLDim );
     }
@@ -281,8 +347,8 @@ void BlockedRowStridedUnpack
                 firstBlockWidth :
                 Min(blockWidth,width-colIndex) );
 
-            lapack::Copy
-            ( 'F', height, thisBlockWidth,
+            CopyMatrix
+            ( height, thisBlockWidth,
               &APortion[packedColIndex*height], height,
               &B[colIndex*BLDim],               BLDim );
 
@@ -317,8 +383,8 @@ void BlockedRowFilter
             firstBlockWidth :
             Min(blockWidth,width-colIndex) );
 
-        lapack::Copy
-        ( 'F', height, thisBlockWidth,
+        CopyMatrix
+        ( height, thisBlockWidth,
           &A[colIndex      *ALDim], ALDim,
           &B[packedColIndex*BLDim], BLDim );
 
@@ -352,8 +418,8 @@ void BlockedColFilter
             firstBlockHeight :
             Min(blockHeight,height-rowIndex) );
 
-        lapack::Copy
-        ( 'F', thisBlockHeight, width,
+        CopyMatrix
+        ( thisBlockHeight, width,
           &A[rowIndex],       ALDim,
           &B[packedRowIndex], BLDim );
 
@@ -378,8 +444,8 @@ void PartialRowStridedPack
             Shift_( rowRankPart+k*rowStridePart, rowAlign, rowStride );
         const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
         const Int localWidth = Length_( width, rowShift, rowStride );
-        lapack::Copy
-        ( 'F', height, localWidth,
+        CopyMatrix
+        ( height, localWidth,
           &A[rowOffset*ALDim],       rowStrideUnion*ALDim,
           &BPortions[k*portionSize], height );
     }
@@ -399,8 +465,8 @@ void PartialRowStridedUnpack
             Shift_( rowRankPart+k*rowStridePart, rowAlign, rowStride );
         const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
         const Int localWidth = Length_( width, rowShift, rowStride );
-        lapack::Copy
-        ( 'F', height, localWidth,
+        CopyMatrix
+        ( height, localWidth,
           &APortions[k*portionSize], height,
           &B[rowOffset*BLDim],       rowStrideUnion*BLDim );
     }

@@ -13,6 +13,78 @@ namespace El {
 namespace axpy {
 namespace util {
 
+// Serial axpy on a contiguous array
+template<typename T> inline
+void SerialArrayAxpy
+( T a, Int n, const T* EL_RESTRICT x, T* EL_RESTRICT y )
+{
+    EL_SIMD
+    for( Int i=0; i<n; ++i ) { y[i] += a * x[i]; }
+}
+
+// Axpy on a contiguous array
+template<typename T>
+void ArrayAxpy( T a, Int n, const T* EL_RESTRICT x, T* EL_RESTRICT y )
+{
+#ifdef _OPENMP
+    const Int lineSize = Max( 64 / sizeof(T), 1 ); // Assuming 64B cache lines
+    if( n > 4 * lineSize )
+    {
+
+        // Find cache lines
+        std::size_t alignedSize = n * sizeof(T);
+        void* alignedPtr = reinterpret_cast<void*>(y);
+        std::align( lineSize * sizeof(T), sizeof(T), alignedPtr, alignedSize );
+        const Int offset = ( alignedPtr != nullptr ?
+                             reinterpret_cast<T*>(alignedPtr) - y :
+                             0 );
+        const Int firstLine = (offset > 0) ? offset - lineSize : 0;
+        const Int numLines = (n - firstLine + lineSize - 1) / lineSize;
+
+        // Distribute cache lines amongst threads
+        const Int maxThreads = omp_get_max_threads();
+        const Int linesPerThread = (numLines + maxThreads - 1) / maxThreads;
+        const Int sizePerThread = linesPerThread * lineSize;
+            
+        // Apply axpy to cache lines in parallel
+        #pragma omp parallel
+        {
+            const Int thread = omp_get_thread_num();
+            const Int front = Max(firstLine + thread * sizePerThread, Int(0));
+            const Int back = Min(firstLine + (thread+1) * sizePerThread, n);
+            SerialArrayAxpy( a, back - front, &x[front], &y[front] );
+        }
+
+    }
+    else
+#endif // _OPENMP
+    {
+        SerialArrayAxpy( a, n, x, y );
+    }
+}
+
+template<typename T>
+void MatrixAxpy
+( T alpha, Int height, Int width,
+  const T* EL_RESTRICT A, Int lda,
+        T* EL_RESTRICT B, Int ldb )
+{
+
+    if( width == 1 || ( lda == height && ldb == height ) )
+    {
+        ArrayAxpy( alpha, height * width, A, B );
+    }
+    else
+    {
+        EL_PARALLEL_FOR
+        for( Int j=0; j<width; ++j )
+        {
+            SerialArrayAxpy( alpha, height, &A[j*lda], &B[j*ldb] );
+        }
+    }
+  
+}
+
 template<typename T>
 void InterleaveMatrixUpdate
 ( T alpha, Int height, Int width,

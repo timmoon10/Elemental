@@ -21,21 +21,46 @@ void Zero( Matrix<T>& A )
     const Int ALDim = A.LDim();
     T* ABuf = A.Buffer();
 
-    if( ALDim == height )
+    if( width == 1 || ALDim == height )
     {
 #ifdef _OPENMP
-        #pragma omp parallel
+        const Int lineSize = Max( 64 / sizeof(T), 1 ); // Assuming 64B cache lines
+        if( size > 4 * lineSize )
         {
-            const Int numThreads = omp_get_num_threads();
-            const Int thread = omp_get_thread_num();
-            const Int chunk = (size + numThreads - 1) / numThreads;
-            const Int start = Min(chunk * thread, size);
-            const Int end = Min(chunk * (thread + 1), size);
-            MemZero( &ABuf[start], end - start );
+
+            // Find cache lines
+            std::size_t alignedSize = size * sizeof(T);
+            void* alignedPtr = reinterpret_cast<void*>(ABuf);
+            std::align( lineSize * sizeof(T), sizeof(T), alignedPtr, alignedSize );
+            const Int offset = ( alignedPtr != nullptr ?
+                                 reinterpret_cast<T*>(alignedPtr) - ABuf :
+                                 0 );
+            const Int firstLine = (offset > 0) ? offset - lineSize : 0;
+            const Int numLines = (size - firstLine + lineSize - 1) / lineSize;
+
+            // Distribute cache lines amongst threads
+            const Int maxThreads = omp_get_max_threads();
+            const Int linesPerThread = (numLines + maxThreads - 1) / maxThreads;
+            const Int sizePerThread = linesPerThread * lineSize;
+            
+            // Zero out cache lines in parallel
+            #pragma omp parallel
+            {
+                const Int thread = omp_get_thread_num();
+                const Int front = Max(firstLine + thread * sizePerThread, Int(0));
+                const Int back = Min(firstLine + (thread+1) * sizePerThread, size);
+                if( front < back )
+                {
+                    MemZero( &ABuf[front], back - front );
+                }
+            }
+          
         }
-#else
-        MemZero( ABuf, size );
-#endif
+        else
+#endif // _OPENMP
+        {
+            MemZero( ABuf, size );
+        }
     }
     else
     {

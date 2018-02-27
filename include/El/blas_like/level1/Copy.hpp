@@ -21,38 +21,10 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
     EL_DEBUG_CSE
     const Int height = A.Height();
     const Int width = A.Width();
-    const Int size = height * width;
     B.Resize( height, width );
-    const Int ldA = A.LDim();
-    const Int ldB = B.LDim();
-    const T* EL_RESTRICT ABuf = A.LockedBuffer();
-          T* EL_RESTRICT BBuf = B.Buffer();
-
-    if( ldA == height && ldB == height )
-    {
-#ifdef _OPENMP
-        #pragma omp parallel
-        {
-            const Int numThreads = omp_get_num_threads();
-            const Int thread = omp_get_thread_num();
-            const Int chunk = (size + numThreads - 1) / numThreads;
-            const Int start = Min(chunk * thread, size);
-            const Int end = Min(chunk * (thread + 1), size);
-            MemCopy( &BBuf[start], &ABuf[start], end - start );
-        }
-#else
-        MemCopy( BBuf, ABuf, size );
-#endif
-    }
-    else
-    {
-        EL_PARALLEL_FOR
-        for( Int j=0; j<width; ++j )
-        {
-            MemCopy(&BBuf[j*ldB], &ABuf[j*ldA], height);
-        }
-    }
-
+    copy::util::CopyMatrix( height, width,
+                            A.LockedBuffer(), A.LDim(),
+                            B.Buffer(), B.LDim() );
 }
 
 template<typename S,typename T,

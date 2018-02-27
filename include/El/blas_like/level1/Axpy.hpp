@@ -45,26 +45,7 @@ void Axpy( S alphaS, const Matrix<T>& X, Matrix<T>& Y )
     }
     else
     {
-        // Iterate over single loop if X and Y are both contiguous in
-        // memory. Otherwise iterate over double loop.
-        if( ldX == mX && ldY == mX )
-        {
-            EL_PARALLEL_FOR
-            for( Int i=0; i<mX*nX; ++i )
-                YBuf[i] += alpha*XBuf[i];
-        }
-        else
-        {
-            EL_PARALLEL_FOR
-            for( Int j=0; j<nX; ++j )
-            {
-                EL_SIMD
-                for( Int i=0; i<mX; ++i )
-                {
-                    YBuf[i+j*ldY] += alpha*XBuf[i+j*ldX];
-                }
-            }
-        }
+        axpy::util::MatrixAxpy( alpha, mX, nX, XBuf, ldX, YBuf, ldY );
     }
 }
 

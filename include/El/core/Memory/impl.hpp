@@ -7,6 +7,28 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 
+#ifdef __GNUG__
+// GCC-4.9 fails to implement std::align
+// See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57350
+namespace std {
+#pragma weak align
+inline void*
+align(size_t __align, size_t __size, void*& __ptr, size_t& __space) noexcept
+{
+  const auto __intptr = reinterpret_cast<uintptr_t>(__ptr);
+  const auto __aligned = (__intptr - 1u + __align) & -__align;
+  const auto __diff = __aligned - __intptr;
+  if ((__size + __diff) > __space)
+    return nullptr;
+  else
+    {
+      __space -= __diff;
+      return __ptr = reinterpret_cast<void*>(__aligned);
+    }
+}
+}
+#endif // __GNUG__
+
 namespace El {
 
 namespace {
