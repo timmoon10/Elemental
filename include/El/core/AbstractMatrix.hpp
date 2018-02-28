@@ -55,6 +55,14 @@ public:
         Int height, Int width, Int leadingDimension) const;
     void AssertValidEntry(Int i, Int j) const;
 
+    // Return a reference to a single entry without error-checking
+    // -----------------------------------------------------------
+    inline T const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+    inline T const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+
+    inline T& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+    inline T& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+
 protected:
 
     AbstractMatrix(Int height, Int width, Int ldim);
@@ -265,6 +273,60 @@ inline void AbstractMatrix<T>::SetSize_(
     height_ = height;
     width_ = width;
     leadingDimension_ = leadingDimension;
+}
+
+// Return a reference to a single entry without error-checking
+// ===========================================================
+template<typename T>
+T const& AbstractMatrix<T>::CRef(Int i, Int j) const
+EL_NO_RELEASE_EXCEPT
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<Matrix<T,Device::CPU>>(this)->CRef(i,j);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<Matrix<T,Device::GPU>>(this)->CRef(i,j);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+T const& AbstractMatrix<T>::operator()(Int i, Int j) const
+EL_NO_RELEASE_EXCEPT
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<Matrix<T,Device::CPU>>(this)->operator()(i,j);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<Matrix<T,Device::GPU>>(this)->operator()(i,j);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+T& AbstractMatrix<T>::Ref(Int i, Int j)
+EL_NO_RELEASE_EXCEPT
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<Matrix<T,Device::CPU>*>(this)->Ref(i,j);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<Matrix<T,Device::GPU>*>(this)->Ref(i,j);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+T& AbstractMatrix<T>::operator()(Int i, Int j)
+EL_NO_RELEASE_EXCEPT
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<Matrix<T,Device::CPU>*>(*this)->operator()(i,j);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<Matrix<T,Device::GPU>*>(*this)->operator()(i,j);
+    }else {
+      LogicError("Unsupported device type.");
+    }
 }
 
 }// namespace El
