@@ -9,7 +9,26 @@
 #ifndef EL_MEMORY_DECL_HPP
 #define EL_MEMORY_DECL_HPP
 
+#ifndef EL_CACHE_LINE_SIZE
+// Cache lines on x86 systems are 64B
+#define EL_CACHE_LINE_SIZE 64
+#endif
+
 namespace El {
+
+namespace memory {
+
+template<typename T=char> inline
+Int CacheLineSize()
+{
+    return Max( Int( EL_CACHE_LINE_SIZE / sizeof(T) ), Int(1) );
+}
+
+// Get the first position in buf aligned with a cache line
+template<typename T>
+Int AlignmentOffset( const T* buf );
+
+} // namespace memory
 
 template<typename G>
 class Memory

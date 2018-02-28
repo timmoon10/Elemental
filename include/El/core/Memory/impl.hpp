@@ -31,6 +31,24 @@ align(size_t __align, size_t __size, void*& __ptr, size_t& __space) noexcept
 
 namespace El {
 
+namespace memory {
+
+template<typename T>
+Int AlignmentOffset( const T* buf )
+{
+    std::size_t lineSize = CacheLineSize<T>() * sizeof(T);
+    void* alignedBuf = reinterpret_cast<void*>(const_cast<T*>(buf));
+    std::size_t alignedSize = 2 * lineSize;
+    std::align( lineSize, sizeof(T), alignedBuf, alignedSize );
+    if( alignedBuf != nullptr ) {
+        return reinterpret_cast<const T*>(alignedBuf) - buf;
+    } else {
+        return 0;
+    }
+}
+
+} // namespace memory
+
 namespace {
 
 template<typename G>

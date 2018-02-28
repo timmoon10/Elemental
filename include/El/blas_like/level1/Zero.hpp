@@ -24,22 +24,15 @@ void Zero( Matrix<T>& A )
     if( width == 1 || ALDim == height )
     {
 #ifdef _OPENMP
-        const Int lineSize = Max( 64 / sizeof(T), 1 ); // Assuming 64B cache lines
+        const Int lineSize = memory::CacheLineSize<T>();
         if( size > 4 * lineSize )
         {
 
-            // Find cache lines
-            std::size_t alignedSize = size * sizeof(T);
-            void* alignedPtr = reinterpret_cast<void*>(ABuf);
-            std::align( lineSize * sizeof(T), sizeof(T), alignedPtr, alignedSize );
-            const Int offset = ( alignedPtr != nullptr ?
-                                 reinterpret_cast<T*>(alignedPtr) - ABuf :
-                                 0 );
-            const Int firstLine = (offset > 0) ? offset - lineSize : 0;
-            const Int numLines = (size - firstLine + lineSize - 1) / lineSize;
-
             // Distribute cache lines amongst threads
             const Int maxThreads = omp_get_max_threads();
+            const Int offset = memory::AlignmentOffset( ABuf );
+            const Int firstLine = (offset > 0) ? offset - lineSize : 0;
+            const Int numLines = (size - firstLine + lineSize - 1) / lineSize;
             const Int linesPerThread = (numLines + maxThreads - 1) / maxThreads;
             const Int sizePerThread = linesPerThread * lineSize;
             

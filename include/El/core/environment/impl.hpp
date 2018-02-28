@@ -100,8 +100,11 @@ void StridedMemCopy
 (       T* dest,   Int destStride,
   const T* source, Int sourceStride, Int numEntries )
 {
-    // For now, use the BLAS wrappers/generalization
-    blas::Copy( numEntries, source, sourceStride, dest, destStride );
+    EL_PARALLEL_FOR
+    for( Int i=0; i<numEntries; ++i )
+    {
+        dest[i*destStride] = source[i*sourceStride];
+    }
 }
 template<typename T,
          typename/*=DisableIf<IsPacked<T>>*/,

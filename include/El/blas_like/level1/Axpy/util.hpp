@@ -27,22 +27,15 @@ template<typename T>
 void ArrayAxpy( T a, Int n, const T* EL_RESTRICT x, T* EL_RESTRICT y )
 {
 #ifdef _OPENMP
-    const Int lineSize = Max( 64 / sizeof(T), 1 ); // Assuming 64B cache lines
+    const Int lineSize = memory::CacheLineSize<T>();
     if( n > 4 * lineSize )
     {
 
-        // Find cache lines
-        std::size_t alignedSize = n * sizeof(T);
-        void* alignedPtr = reinterpret_cast<void*>(y);
-        std::align( lineSize * sizeof(T), sizeof(T), alignedPtr, alignedSize );
-        const Int offset = ( alignedPtr != nullptr ?
-                             reinterpret_cast<T*>(alignedPtr) - y :
-                             0 );
-        const Int firstLine = (offset > 0) ? offset - lineSize : 0;
-        const Int numLines = (n - firstLine + lineSize - 1) / lineSize;
-
         // Distribute cache lines amongst threads
         const Int maxThreads = omp_get_max_threads();
+        const Int offset = memory::AlignmentOffset( y );
+        const Int firstLine = (offset > 0) ? offset - lineSize : 0;
+        const Int numLines = (n - firstLine + lineSize - 1) / lineSize;
         const Int linesPerThread = (numLines + maxThreads - 1) / maxThreads;
         const Int sizePerThread = linesPerThread * lineSize;
             
