@@ -45,6 +45,13 @@ public:
     virtual T const* LockedBuffer() const EL_NO_EXCEPT = 0;
     virtual T const* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT = 0;
 
+    // Single-entry manipulation
+    // =========================
+    T Get(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+
+    void Set(Int i, Int j, T const& alpha) EL_NO_RELEASE_EXCEPT;
+    void Set(Entry<T> const& entry) EL_NO_RELEASE_EXCEPT;
+
     virtual void Attach(
         Int height, Int width, T* buffer, Int leadingDimension) = 0;
     virtual void LockedAttach(
@@ -274,6 +281,40 @@ inline void AbstractMatrix<T>::SetSize_(
     width_ = width;
     leadingDimension_ = leadingDimension;
 }
+
+// Single-entry manipulation
+// =========================
+
+template<typename T>
+T AbstractMatrix<T>::Get(Int i, Int j) const
+EL_NO_RELEASE_EXCEPT
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<const Matrix<T,Device::CPU>*>(this)->Get(i,j);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<const Matrix<T,Device::GPU>*>(this)->Get(i,j);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+void AbstractMatrix<T>::Set(Int i, Int j, T const& alpha)
+EL_NO_RELEASE_EXCEPT
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<Matrix<T,Device::CPU>*>(this)->Set(i,j, alpha);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<Matrix<T,Device::GPU>*>(this)->Set(i,j, alpha);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+void AbstractMatrix<T>::Set(Entry<T> const& entry)
+EL_NO_RELEASE_EXCEPT
+{ Set(entry.i, entry.j, entry.value); }
 
 // Return a reference to a single entry without error-checking
 // ===========================================================
