@@ -336,8 +336,6 @@ T const& AbstractMatrix<T>::operator()(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
     if ((this->GetDevice() == Device::CPU)) {
-      //      Matrix<T, Device::CPU>* tmp = static_cast<Matrix<T,Device::CPU>>(this);
-      //      return tmp(i,j);
       return (static_cast<const Matrix<T,Device::CPU>*>(this))->operator()(i,j);
     }else if ((this->GetDevice() == Device::GPU)) {
       return (static_cast<const Matrix<T,Device::GPU>*>(this))->operator()(i,j);
