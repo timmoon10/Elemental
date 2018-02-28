@@ -157,6 +157,8 @@ void Walsh( AbstractDistMatrix<T>& A, Int k, bool binary=false );
 template<typename T>
 void Zeros( Matrix<T>& A, Int m, Int n );
 template<typename T>
+void Zeros( AbstractMatrix<T>& A, Int m, Int n );
+template<typename T>
 void Zeros( AbstractDistMatrix<T>& A, Int m, Int n );
 
 // Integral equations

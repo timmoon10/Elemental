@@ -21,6 +21,14 @@ void Zeros( Matrix<T>& A, Int m, Int n )
 }
 
 template<typename T>
+void Zeros( AbstractMatrix<T>& A, Int m, Int n )
+{
+    EL_DEBUG_CSE
+    A.Resize( m, n );
+    Zero( A );
+}
+
+template<typename T>
 void Zeros( AbstractDistMatrix<T>& A, Int m, Int n )
 {
     EL_DEBUG_CSE
