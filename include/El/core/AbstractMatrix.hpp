@@ -62,6 +62,17 @@ public:
         Int height, Int width, Int leadingDimension) const;
     void AssertValidEntry(Int i, Int j) const;
 
+    //
+    // Operator overloading
+    //
+
+    // Return a view
+    AbstractMatrix<T>& operator()(Range<Int> I, Range<Int> J);
+
+    // Return a locked view
+    const AbstractMatrix<T>&
+    operator()(Range<Int> I, Range<Int> J) const;
+
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
     inline T const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
@@ -315,6 +326,37 @@ template<typename T>
 void AbstractMatrix<T>::Set(Entry<T> const& entry)
 EL_NO_RELEASE_EXCEPT
 { Set(entry.i, entry.j, entry.value); }
+
+// Operator overloading
+// ====================
+
+// Return a view
+// -------------
+template<typename T>
+AbstractMatrix<T>&
+AbstractMatrix<T>::operator()(Range<Int> I, Range<Int> J)
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<Matrix<T,Device::CPU>*>(this)->operator()(I,J);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<Matrix<T,Device::GPU>*>(this)->operator()(I,J);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+const AbstractMatrix<T>&
+AbstractMatrix<T>::operator()(Range<Int> I, Range<Int> J) const
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<const Matrix<T,Device::CPU>*>(this)->operator()(I,J);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<const Matrix<T,Device::GPU>*>(this)->operator()(I,J);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
 
 // Return a reference to a single entry without error-checking
 // ===========================================================
