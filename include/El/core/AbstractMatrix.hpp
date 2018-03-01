@@ -45,12 +45,12 @@ public:
     virtual T const* LockedBuffer() const EL_NO_EXCEPT = 0;
     virtual T const* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT = 0;
 
-    // Single-entry manipulation
-    // =========================
-    T Get(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+    // // Copy assignment
+    // AbstractMatrix<T> & operator=(
+    //     AbstractMatrix<T> const& A);
 
-    void Set(Int i, Int j, T const& alpha) EL_NO_RELEASE_EXCEPT;
-    void Set(Entry<T> const& entry) EL_NO_RELEASE_EXCEPT;
+    // // Move assignment
+    // AbstractMatrix<T>& operator=(AbstractMatrix<T>&& A);
 
     virtual void Attach(
         Int height, Int width, T* buffer, Int leadingDimension) = 0;
@@ -80,6 +80,32 @@ public:
         vector<Int> const& I, Range<Int> J) const;
     AbstractMatrix<T>& operator()(
         vector<Int> const& I, vector<Int> const& J) const;
+
+    // Rescaling
+    AbstractMatrix<T> const& operator*=(T const& alpha);
+
+    // Addition/substraction
+    AbstractMatrix<T> const&
+    operator+=(AbstractMatrix<T> const& A);
+
+    AbstractMatrix<T> const&
+    operator-=(AbstractMatrix<T> const& A);
+
+    //
+    // Basic queries
+    //
+
+    // virtual T* Buffer() EL_NO_RELEASE_EXCEPT;
+    // virtual T* Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT;
+    // virtual const T* LockedBuffer() const EL_NO_EXCEPT;
+    // virtual const T* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT;
+
+    // Single-entry manipulation
+    // =========================
+    T Get(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+
+    void Set(Int i, Int j, T const& alpha) EL_NO_RELEASE_EXCEPT;
+    void Set(Entry<T> const& entry) EL_NO_RELEASE_EXCEPT;
 
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
@@ -406,6 +432,167 @@ AbstractMatrix<T>& AbstractMatrix<T>::operator()
       LogicError("Unsupported device type.");
     }
 }
+
+// // Make a copy
+// // -----------
+// template<typename T>
+// AbstractMatrix<T>&
+// AbstractMatrix<T>::operator=(AbstractMatrix<T> const& A)
+// {
+//     if (this->GetDevice() != A.GetDevice())
+//         LogicError("operator= requires matching device types.");
+
+//     if ((this->GetDevice() == Device::CPU)) {
+//       return static_cast<Matrix<T,Device::CPU>*>(this)->operator=(A);
+//     }else if ((this->GetDevice() == Device::GPU)) {
+//       return static_cast<Matrix<T,Device::GPU>*>(this)->operator=(A);
+//     }else {
+//       LogicError("Unsupported device type.");
+//     }
+// }
+
+// // Move assignment
+// // ---------------
+// template<typename T>
+// AbstractMatrix<T>&
+// AbstractMatrix<T>::operator=(AbstractMatrix<T>&& A)
+// {
+//     if (this->GetDevice() != A.GetDevice())
+//         LogicError("operator= requires matching device types.");
+
+//     if ((this->GetDevice() == Device::CPU)) {
+//       return static_cast<Matrix<T,Device::CPU>*>(this)->operator=(A);
+//     }else if ((this->GetDevice() == Device::GPU)) {
+//       return static_cast<Matrix<T,Device::GPU>*>(this)->operator=(A);
+//     }else {
+//       LogicError("Unsupported device type.");
+//     }
+// }
+
+// Rescaling
+// ---------
+template<typename T>
+AbstractMatrix<T> const&
+AbstractMatrix<T>::operator*=(T const& alpha)
+{
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<const Matrix<T,Device::CPU>*>(this)->operator*=(alpha);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<const Matrix<T,Device::GPU>*>(this)->operator*=(alpha);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+// Addition/subtraction
+// --------------------
+template<typename T>
+AbstractMatrix<T> const&
+AbstractMatrix<T>::operator+=(AbstractMatrix<T> const& A)
+{
+    if (this->GetDevice() != A.GetDevice())
+        LogicError("operator= requires matching device types.");
+
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<const Matrix<T,Device::CPU>*>(this)->operator+=(A);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<const Matrix<T,Device::GPU>*>(this)->operator+=(A);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+template<typename T>
+AbstractMatrix<T> const&
+AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
+{
+    if (this->GetDevice() != A.GetDevice())
+        LogicError("operator= requires matching device types.");
+
+    if ((this->GetDevice() == Device::CPU)) {
+      return static_cast<const Matrix<T,Device::CPU>*>(this)->operator-=(A);
+    }else if ((this->GetDevice() == Device::GPU)) {
+      return static_cast<const Matrix<T,Device::GPU>*>(this)->operator-=(A);
+    }else {
+      LogicError("Unsupported device type.");
+    }
+}
+
+// Basic queries
+// =============
+
+// template<typename T>
+// Int AbstractMatrix<T>::do_get_memory_size_() const EL_NO_EXCEPT
+// {
+//     if ((this->GetDevice() == Device::CPU)) {
+//       return static_cast<const Matrix<T,Device::CPU>*>(this)->do_get_memory_size_();
+//     }else if ((this->GetDevice() == Device::GPU)) {
+//       return static_cast<const Matrix<T,Device::GPU>*>(this)->do_get_memory_size_());
+//     }else {
+//       LogicError("Unsupported device type.");
+//     }
+// }
+
+// template <typename T>
+// Device AbstractMatrix<T>::do_get_device_() const EL_NO_EXCEPT
+// {
+//     if ((this->GetDevice() == Device::CPU)) {
+//       return static_cast<const Matrix<T,Device::CPU>*>(this)->do_get_memory_size_();
+//     }else if ((this->GetDevice() == Device::GPU)) {
+//       return static_cast<const Matrix<T,Device::GPU>*>(this)->do_get_memory_size_());
+//     }else {
+//       LogicError("Unsupported device type.");
+//     }
+// }
+
+// template<typename T>
+// T* AbstractMatrix<T>::Buffer() EL_NO_RELEASE_EXCEPT
+// {
+//     if ((this->GetDevice() == Device::CPU)) {
+//       return static_cast<Matrix<T,Device::CPU>*>(this)->Buffer();
+//     }else if ((this->GetDevice() == Device::GPU)) {
+//       return static_cast<Matrix<T,Device::GPU>*>(this)->Buffer();
+//     }else {
+//       LogicError("Unsupported device type.");
+//     }
+// }
+
+// template<typename T>
+// T* AbstractMatrix<T>::Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT
+// {
+//     if ((this->GetDevice() == Device::CPU)) {
+//       return static_cast<Matrix<T,Device::CPU>*>(this)->Buffer(i,j);
+//     }else if ((this->GetDevice() == Device::GPU)) {
+//       return static_cast<Matrix<T,Device::GPU>*>(this)->Buffer(i,j);
+//     }else {
+//       LogicError("Unsupported device type.");
+//     }
+// }
+
+// template<typename T>
+// const T* AbstractMatrix<T>::LockedBuffer() const EL_NO_EXCEPT
+// {
+//     if ((this->GetDevice() == Device::CPU)) {
+//       return static_cast<const Matrix<T,Device::CPU>*>(this)->Buffer();
+//     }else if ((this->GetDevice() == Device::GPU)) {
+//       return static_cast<const Matrix<T,Device::GPU>*>(this)->Buffer();
+//     }else {
+//       LogicError("Unsupported device type.");
+//     }
+// }
+
+// template<typename T>
+// const T*
+// AbstractMatrix<T>::LockedBuffer(Int i, Int j) const EL_NO_EXCEPT
+// {
+//     if ((this->GetDevice() == Device::CPU)) {
+//       return static_cast<const Matrix<T,Device::CPU>*>(this)->Buffer(i,j);
+//     }else if ((this->GetDevice() == Device::GPU)) {
+//       return static_cast<const Matrix<T,Device::GPU>*>(this)->Buffer(i,j);
+//     }else {
+//       LogicError("Unsupported device type.");
+//     }
+// }
 
 // Return a reference to a single entry without error-checking
 // ===========================================================
