@@ -334,11 +334,14 @@ template<typename T>
 T AbstractMatrix<T>::Get(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->Get(i,j);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->Get(i,j);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -347,11 +350,14 @@ template<typename T>
 void AbstractMatrix<T>::Set(Int i, Int j, T const& alpha)
 EL_NO_RELEASE_EXCEPT
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->Set(i,j, alpha);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->Set(i,j, alpha);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -370,11 +376,14 @@ template<typename T>
 AbstractMatrix<T>&
 AbstractMatrix<T>::operator()(Range<Int> I, Range<Int> J)
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->operator()(I,J);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator()(I,J);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -383,11 +392,14 @@ template<typename T>
 const AbstractMatrix<T>&
 AbstractMatrix<T>::operator()(Range<Int> I, Range<Int> J) const
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->operator()(I,J);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->operator()(I,J);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -398,11 +410,14 @@ template<typename T>
 AbstractMatrix<T>& AbstractMatrix<T>::operator()
 (Range<Int> I, vector<Int> const& J) const
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->operator()(I,J);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->operator()(I,J);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -411,11 +426,14 @@ template<typename T>
 AbstractMatrix<T>& AbstractMatrix<T>::operator()
 (vector<Int> const& I, Range<Int> J) const
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->operator()(I,J);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->operator()(I,J);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -424,11 +442,14 @@ template<typename T>
 AbstractMatrix<T>& AbstractMatrix<T>::operator()
 (vector<Int> const& I, vector<Int> const& J) const
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->operator()(I,J);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->operator()(I,J);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -475,11 +496,14 @@ template<typename T>
 AbstractMatrix<T> const&
 AbstractMatrix<T>::operator*=(T const& alpha)
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->operator*=(alpha);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->operator*=(alpha);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -493,11 +517,14 @@ AbstractMatrix<T>::operator+=(AbstractMatrix<T> const& A)
     if (this->GetDevice() != A.GetDevice())
         LogicError("operator= requires matching device types.");
 
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->operator+=(A);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->operator+=(A);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -509,11 +536,14 @@ AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
     if (this->GetDevice() != A.GetDevice())
         LogicError("operator= requires matching device types.");
 
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->operator-=(A);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->operator-=(A);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -600,11 +630,14 @@ template<typename T>
 T const& AbstractMatrix<T>::CRef(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<const Matrix<T,Device::CPU>*>(this)->CRef(i,j);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<const Matrix<T,Device::GPU>*>(this)->CRef(i,j);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -613,11 +646,14 @@ template<typename T>
 T const& AbstractMatrix<T>::operator()(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return (static_cast<const Matrix<T,Device::CPU>*>(this))->operator()(i,j);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return (static_cast<const Matrix<T,Device::GPU>*>(this))->operator()(i,j);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -626,11 +662,14 @@ template<typename T>
 T& AbstractMatrix<T>::Ref(Int i, Int j)
 EL_NO_RELEASE_EXCEPT
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->Ref(i,j);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->Ref(i,j);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -639,11 +678,14 @@ template<typename T>
 T& AbstractMatrix<T>::operator()(Int i, Int j)
 EL_NO_RELEASE_EXCEPT
 {
-    if ((this->GetDevice() == Device::CPU)) {
+    switch(this->GetDevice()) {
+    case Device::CPU:
       return (static_cast<Matrix<T,Device::CPU>*>(this))->operator()(i,j);
-    }else if ((this->GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       return (static_cast<Matrix<T,Device::GPU>*>(this))->operator()(i,j);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
