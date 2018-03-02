@@ -48,11 +48,14 @@ void IndexDependentMap( Matrix<T>& A, function<T(Int,Int,const T&)> func )
 template<typename T>
 void IndexDependentMap( AbstractMatrix<T>& A, function<T(Int,Int,const T&)> func )
 {
-    if ((A.GetDevice() == Device::CPU)) {
+    switch(A.GetDevice()) {
+    case Device::CPU:
       IndexDependentMap(static_cast<Matrix<T,Device::CPU>&>(A), func);
-    }else if ((A.GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       IndexDependentMap(static_cast<Matrix<T,Device::GPU>&>(A), func);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }

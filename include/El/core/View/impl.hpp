@@ -58,13 +58,16 @@ void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B)
     if (A.GetDevice() != B.GetDevice())
         LogicError("View requires matching device types.");
 
-    if ((A.GetDevice() == Device::CPU)) {
+    switch(A.GetDevice()) {
+    case Device::CPU:
       View(static_cast<Matrix<T,Device::CPU>&>(A),
            static_cast<Matrix<T,Device::CPU>&>(B));
-    }else if ((A.GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       View(static_cast<Matrix<T,Device::GPU>&>(A),
            static_cast<Matrix<T,Device::GPU>&>(B));
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -75,13 +78,16 @@ void LockedView(AbstractMatrix<T>& A, const AbstractMatrix<T>& B)
     if (A.GetDevice() != B.GetDevice())
         LogicError("View requires matching device types.");
 
-    if ((A.GetDevice() == Device::CPU)) {
+    switch(A.GetDevice()) {
+    case Device::CPU:
       LockedView(static_cast<Matrix<T,Device::CPU>&>(A),
-                 static_cast<Matrix<T,Device::CPU>&>(B));
-    }else if ((A.GetDevice() == Device::GPU)) {
+                 static_cast<const Matrix<T,Device::CPU>&>(B));
+      break;
+    case Device::GPU:
       LockedView(static_cast<Matrix<T,Device::GPU>&>(A),
-                 static_cast<Matrix<T,Device::GPU>&>(B));
-    }else {
+                 static_cast<const Matrix<T,Device::GPU>&>(B));
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -89,15 +95,22 @@ void LockedView(AbstractMatrix<T>& A, const AbstractMatrix<T>& B)
 template<typename T>
 AbstractMatrix<T>& View(AbstractMatrix<T>& B)
 {
-    if ((B.GetDevice() == Device::CPU)) {
-      Matrix<T,Device::CPU> A;
-      View(static_cast<AbstractMatrix<T>&>(A), B);
-      return A;
-    }else if ((B.GetDevice() == Device::GPU)) {
-      Matrix<T,Device::GPU> A;
-      View(static_cast<AbstractMatrix<T>&>(A), B);
-      return A;
-    }else {
+    switch(B.GetDevice()) {
+    case Device::CPU:
+      {
+        Matrix<T,Device::CPU> A;
+        View(static_cast<AbstractMatrix<T>&>(A), B);
+        return A;
+      }
+      break;
+    case Device::GPU:
+      {
+        Matrix<T,Device::GPU> A;
+        View(static_cast<AbstractMatrix<T>&>(A), B);
+        return A;
+      }
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -105,17 +118,34 @@ AbstractMatrix<T>& View(AbstractMatrix<T>& B)
 template<typename T>
 const AbstractMatrix<T>& LockedView(const AbstractMatrix<T>& B)
 {
-    if ((B.GetDevice() == Device::CPU)) {
-      Matrix<T,Device::CPU> A;
-      LockedView(static_cast<AbstractMatrix<T>&>(A), B);
-      return A;
-    }else if ((B.GetDevice() == Device::GPU)) {
-      Matrix<T,Device::GPU> A;
-      LockedView(static_cast<AbstractMatrix<T>&>(A), B);
-      return A;
-    }else {
+    switch (B.GetDevice()) {
+    case Device::CPU:
+      {
+        Matrix<T,Device::CPU> A;
+        LockedView(static_cast<AbstractMatrix<T>&>(A), B);
+        return A;
+      }
+      break;
+    case Device::GPU:
+      {
+        Matrix<T,Device::GPU> A;
+        LockedView(static_cast<AbstractMatrix<T>&>(A), B);
+        return A;
+      }
+    default:
       LogicError("Unsupported device type.");
     }
+}
+
+template<typename T, Device D>
+const Matrix<T, D> LockedView(const AbstractMatrix<T>& B)
+{
+    if (B.GetDevice() != D)
+        LogicError("View requires matching device types.");
+
+    Matrix<T,D> A;
+    LockedView(static_cast<AbstractMatrix<T>&>(A), B);
+    return A;
 }
 
 // ElementalMatrix
@@ -455,13 +485,16 @@ void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B,
     if (A.GetDevice() != B.GetDevice())
         LogicError("View requires matching device types.");
 
-    if ((A.GetDevice() == Device::CPU)) {
+    switch(A.GetDevice()) {
+    case Device::CPU:
       View(static_cast<Matrix<T,Device::CPU>&>(A),
            static_cast<Matrix<T,Device::CPU>&>(B), I, J);
-    }else if ((A.GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       View(static_cast<Matrix<T,Device::GPU>&>(A),
            static_cast<Matrix<T,Device::GPU>&>(B), I, J);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -473,13 +506,16 @@ void LockedView(AbstractMatrix<T>& A, AbstractMatrix<T> const& B,
     if (A.GetDevice() != B.GetDevice())
         LogicError("View requires matching device types.");
 
-    if ((A.GetDevice() == Device::CPU)) {
+    switch(A.GetDevice()) {
+    case Device::CPU:
       LockedView(static_cast<Matrix<T,Device::CPU>&>(A),
                  static_cast<Matrix<T,Device::CPU>&>(B), I, J);
-    }else if ((A.GetDevice() == Device::GPU)) {
+      break;
+    case Device::GPU:
       LockedView(static_cast<Matrix<T,Device::GPU>&>(A),
                  static_cast<Matrix<T,Device::GPU>&>(B), I, J);
-    }else {
+      break;
+    default:
       LogicError("Unsupported device type.");
     }
 }
@@ -819,6 +855,7 @@ void LockedView
   EL_EXTERN template void LockedView(Matrix<T>& A, const Matrix<T>& B); \
   EL_EXTERN template Matrix<T> View(Matrix<T>& B); \
   EL_EXTERN template Matrix<T> LockedView(const Matrix<T>& B); \
+  EL_EXTERN template const Matrix<T> LockedView(const AbstractMatrix<T>& B); \
   /* ElementalMatrix
      --------------- */ \
   EL_EXTERN template void View \
