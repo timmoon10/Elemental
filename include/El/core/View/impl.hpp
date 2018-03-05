@@ -520,6 +520,19 @@ void LockedView(AbstractMatrix<T>& A, AbstractMatrix<T> const& B,
     }
 }
 
+
+template<typename T, Device D>
+const Matrix<T, D> LockedView(AbstractMatrix<T> const& B,
+                Range<Int> I, Range<Int> J)
+{
+    if (B.GetDevice() != D)
+        LogicError("View requires matching device types.");
+
+    Matrix<T,D> A;
+    LockedView(static_cast<AbstractMatrix<T>&>(A), B, I, J);
+    return A;
+}
+
 // ElementalMatrix
 // ---------------
 
@@ -912,6 +925,8 @@ void LockedView
   (Matrix<T>& B, Range<Int> I, Range<Int> J); \
   EL_EXTERN template Matrix<T> LockedView \
   (const Matrix<T>& B, Range<Int> I, Range<Int> J); \
+  EL_EXTERN template const Matrix<T> LockedView \
+  (const AbstractMatrix<T>& B, Range<Int> I, Range<Int> J); \
   /* ElementalMatrix
      --------------- */ \
   EL_EXTERN template void View \
