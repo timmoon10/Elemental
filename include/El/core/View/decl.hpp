@@ -112,6 +112,20 @@ Matrix<T,D> View(Matrix<T,D>& B, Range<Int> I, Range<Int> J);
 template <typename T, Device D>
 Matrix<T,D> LockedView(const Matrix<T,D>& B, Range<Int> I, Range<Int> J);
 
+// AbstractMatrix
+// --------------
+
+template <typename T>
+void View
+(AbstractMatrix<T>& A,
+  AbstractMatrix<T>& B,
+  Range<Int> I, Range<Int> J);
+template <typename T>
+void LockedView
+(AbstractMatrix<T>& A,
+  const AbstractMatrix<T>& B,
+  Range<Int> I, Range<Int> J);
+
 // ElementalMatrix
 // ---------------
 

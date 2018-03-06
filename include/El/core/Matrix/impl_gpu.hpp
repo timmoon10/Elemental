@@ -592,6 +592,7 @@ void Matrix<Ring, Device::GPU>::Control_
     data_ = buffer;
     viewType_ = static_cast<El::ViewType>(viewType_ & ~LOCKED_VIEW);
 }
+#endif //0
 
 // Return a reference to a single entry without error-checking
 // ===========================================================
@@ -599,7 +600,7 @@ template<typename Ring>
 Ring const& Matrix<Ring, Device::GPU>::CRef(Int i, Int j) const
     EL_NO_RELEASE_EXCEPT
 {
-    return data_[i+j*leadingDimension_];
+    return data_[i+j*this->LDim()];
 }
 
 template<typename Ring>
@@ -608,14 +609,14 @@ Ring const& Matrix<Ring, Device::GPU>::operator()(Int i, Int j) const
 {
     EL_DEBUG_CSE;
     EL_DEBUG_ONLY(AssertValidEntry(i, j))
-        return data_[i+j*leadingDimension_];
+        return data_[i+j*this->LDim()];
 }
 
 template<typename Ring>
 Ring& Matrix<Ring, Device::GPU>::Ref(Int i, Int j)
     EL_NO_RELEASE_EXCEPT
 {
-    return data_[i+j*leadingDimension_];
+    return data_[i+j*this->LDim()];
 }
 
 template<typename Ring>
@@ -628,9 +629,9 @@ Ring& Matrix<Ring, Device::GPU>::operator()(Int i, Int j)
         if (this->Locked())
             LogicError("Cannot modify data of locked matrices");
         )
-        return data_[i+j*leadingDimension_];
+        return data_[i+j*this->LDim()];
 }
-
+#if 0
 // Assertions
 // ==========
 

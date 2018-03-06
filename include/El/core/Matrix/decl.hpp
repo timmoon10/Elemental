@@ -285,6 +285,14 @@ public:
     const Matrix<Ring, Device::GPU>
     operator()(Range<Int> I, Range<Int> J) const;
 
+    // Return a reference to a single entry without error-checking
+    // -----------------------------------------------------------
+    inline Ring const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+    inline Ring const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+
+    inline Ring& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+    inline Ring& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+
 private:
 
     Int do_get_memory_size_() const EL_NO_EXCEPT override;
