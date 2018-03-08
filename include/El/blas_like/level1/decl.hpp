@@ -562,8 +562,10 @@ void DiagonalSolve
 
 // Dot
 // ===
+template<typename T, Device D>
+T Dot( const Matrix<T, D>& A, const Matrix<T, D>& B );
 template<typename T>
-T Dot( const Matrix<T>& A, const Matrix<T>& B );
+T Dot( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B );
 template<typename T>
 T Dot( const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B );
 
@@ -760,8 +762,8 @@ void Hadamard
 
 // HilbertSchmidt
 // ==============
-template<typename T>
-T HilbertSchmidt( const Matrix<T>& A, const Matrix<T>& B );
+template<typename T, Device D>
+T HilbertSchmidt( const Matrix<T, D>& A, const Matrix<T, D>& B );
 template<typename T>
 T HilbertSchmidt
 ( const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& C );

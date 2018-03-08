@@ -14,7 +14,7 @@ namespace El {
 // TODO(poulson): Think about using a more stable accumulation algorithm?
 
 template<typename Ring>
-Ring HilbertSchmidt( const Matrix<Ring>& A, const Matrix<Ring>& B )
+Ring HilbertSchmidt( const Matrix<Ring, Device::CPU>& A, const Matrix<Ring, Device::CPU>& B )
 {
     EL_DEBUG_CSE
     if( A.Height() != B.Height() || A.Width() != B.Width() )
@@ -37,6 +37,12 @@ Ring HilbertSchmidt( const Matrix<Ring>& A, const Matrix<Ring>& B )
                 innerProd += Conj(ABuf[i+j*ALDim])*BBuf[i+j*BLDim];
     }
     return innerProd;
+}
+
+template<typename Ring>
+Ring HilbertSchmidt( const Matrix<Ring, Device::GPU>& A, const Matrix<Ring, Device::GPU>& B )
+{
+    LogicError("HilbertSchmidt not implemented for GPUs.");
 }
 
 template<typename Ring>
