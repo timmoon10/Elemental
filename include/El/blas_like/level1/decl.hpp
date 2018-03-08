@@ -136,8 +136,10 @@ void LocalAxpyTrapezoid
 
 // Broadcast
 // =========
+template<typename T, Device D>
+void Broadcast( Matrix<T, D>& A, mpi::Comm comm, int rank=0 );
 template<typename T>
-void Broadcast( Matrix<T>& A, mpi::Comm comm, int rank=0 );
+void Broadcast( AbstractMatrix<T>& A, mpi::Comm comm, int rank=0 );
 template<typename T>
 void Broadcast( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank=0 );
 

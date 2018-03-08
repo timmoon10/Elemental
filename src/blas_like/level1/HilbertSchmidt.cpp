@@ -42,7 +42,7 @@ Ring HilbertSchmidt( const Matrix<Ring, Device::CPU>& A, const Matrix<Ring, Devi
 template<typename Ring>
 Ring HilbertSchmidt( const Matrix<Ring, Device::GPU>& A, const Matrix<Ring, Device::GPU>& B )
 {
-    LogicError("HilbertSchmidt not implemented for GPUs.");
+    LogicError("HilbertSchmidt is not implemented for GPUs.");
 }
 
 template<typename Ring>
