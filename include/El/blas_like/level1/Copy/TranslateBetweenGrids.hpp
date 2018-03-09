@@ -12,22 +12,32 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+// FIXME (trb 03/06/18) -- Need to do the GPU impl
+template<typename T,Dist U,Dist V,Device D>
 void TranslateBetweenGrids
-( const DistMatrix<T,U,V>& A,
-        DistMatrix<T,U,V>& B )
+( DistMatrix<T,U,V,ELEMENT,D> const& A,
+  DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
+
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
+
     GeneralPurpose( A, B );
 }
 
 // TODO(poulson): Compare against copy::GeneralPurpose
-template<typename T>
+// FIXME (trb 03/06/18) -- Need to do the GPU impl
+template<typename T, Device D>
 void TranslateBetweenGrids
-( const DistMatrix<T,MC,MR>& A,
-        DistMatrix<T,MC,MR>& B )
+( DistMatrix<T,MC,MR,ELEMENT,D> const& A,
+  DistMatrix<T,MC,MR,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
+
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
+
     const Int m = A.Height();
     const Int n = A.Width();
     const Int mLocA = A.LocalHeight();
@@ -218,12 +228,16 @@ void TranslateBetweenGrids
     }
 }
 
-template<typename T>
+template<typename T,Device D>
 void TranslateBetweenGrids
-( const DistMatrix<T,STAR,STAR>& A,
-        DistMatrix<T,STAR,STAR>& B )
+( const DistMatrix<T,STAR,STAR,ELEMENT,D>& A,
+  DistMatrix<T,STAR,STAR,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
+
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
+
     const Int height = A.Height();
     const Int width = A.Width();
     B.Resize( height, width );

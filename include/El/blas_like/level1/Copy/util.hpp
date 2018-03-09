@@ -13,30 +13,59 @@ namespace El {
 namespace copy {
 namespace util {
 
-template<typename T>
+template <typename T, Device D>
+struct InterleaveMatrixImpl;
+
+template <typename T>
+struct InterleaveMatrixImpl<T, Device::CPU>
+{
+    static void Call(Int height, Int width,
+                     T const* A, Int colStrideA, Int rowStrideA,
+                     T* B, Int colStrideB, Int rowStrideB )
+    {
+        if( colStrideA == 1 && colStrideB == 1 )
+        {
+            lapack::Copy( 'F', height, width, A, rowStrideA, B, rowStrideB );
+        }
+        else
+        {
+#ifdef HYDROGEN_HAVE_MKL
+            mkl::omatcopy
+                ( NORMAL, height, width, T(1),
+                  A, rowStrideA, colStrideA,
+                  B, rowStrideB, colStrideB );
+#else
+            for( Int j=0; j<width; ++j )
+                StridedMemCopy
+                    ( &B[j*rowStrideB], colStrideB,
+                      &A[j*rowStrideA], colStrideA, height );
+#endif
+        }
+    }
+};
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T>
+struct InterleaveMatrixImpl<T, Device::GPU>
+{
+    static void Call(Int height, Int width,
+                     T const* A, Int colStrideA, Int rowStrideA,
+                     T* B, Int colStrideB, Int rowStrideB )
+    {
+        LogicError("Not yet implemented");
+    }
+};
+#endif // HYDROGEN_HAVE_CUDA
+
+template<typename T, Device D>
 void InterleaveMatrix
 ( Int height, Int width,
   const T* A, Int colStrideA, Int rowStrideA,
         T* B, Int colStrideB, Int rowStrideB )
 {
-    if( colStrideA == 1 && colStrideB == 1 )
-    {
-        lapack::Copy( 'F', height, width, A, rowStrideA, B, rowStrideB );
-    }
-    else
-    {
-#ifdef HYDROGEN_HAVE_MKL
-        mkl::omatcopy
-        ( NORMAL, height, width, T(1),
-          A, rowStrideA, colStrideA,
-          B, rowStrideB, colStrideB );
-#else
-        for( Int j=0; j<width; ++j )
-            StridedMemCopy
-            ( &B[j*rowStrideB], colStrideB,
-              &A[j*rowStrideA], colStrideA, height );
-#endif
-    }
+    InterleaveMatrixImpl<T,D>::Call(height, width,
+                                    A, colStrideA, rowStrideA,
+                                    B, colStrideB, rowStrideB);
 }
 
 template<typename T>

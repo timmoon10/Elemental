@@ -12,13 +12,17 @@
 namespace El {
 namespace copy {
 
-template<typename T>
+template<typename T,Device D>
 void Gather
-( const ElementalMatrix<T>& A,
-        DistMatrix<T,CIRC,CIRC>& B )
+( ElementalMatrix<T> const& A,
+  DistMatrix<T,CIRC,CIRC,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
+
     if( A.DistSize() == 1 && A.CrossSize() == 1 )
     {
         B.Resize( A.Height(), A.Width() );

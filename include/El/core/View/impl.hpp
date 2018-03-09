@@ -176,18 +176,18 @@ void LockedView
 
 // Return by value
 // ^^^^^^^^^^^^^^^
-template<typename T,Dist U,Dist V,DistWrap wrapType>
-DistMatrix<T,U,V,wrapType> View(DistMatrix<T,U,V,wrapType>& B)
+template<typename T,Dist U,Dist V,DistWrap wrapType,Device D>
+DistMatrix<T,U,V,wrapType,D> View(DistMatrix<T,U,V,wrapType,D>& B)
 {
-    DistMatrix<T,U,V,wrapType> A(B.Grid());
+    DistMatrix<T,U,V,wrapType,D> A(B.Grid());
     View(A, B);
     return A;
 }
 
-template<typename T,Dist U,Dist V,DistWrap wrapType>
-DistMatrix<T,U,V,wrapType> LockedView(const DistMatrix<T,U,V,wrapType>& B)
+template<typename T,Dist U,Dist V,DistWrap wrapType,Device D>
+DistMatrix<T,U,V,wrapType,D> LockedView(const DistMatrix<T,U,V,wrapType,D>& B)
 {
-    DistMatrix<T,U,V,wrapType> A(B.Grid());
+    DistMatrix<T,U,V,wrapType,D> A(B.Grid());
     LockedView(A, B);
     return A;
 }
@@ -629,27 +629,27 @@ void LockedView
 // Return by value
 // ^^^^^^^^^^^^^^^
 
-template<typename T,Dist U,Dist V,DistWrap wrapType>
-DistMatrix<T,U,V,wrapType> View
-(DistMatrix<T,U,V,wrapType>& B, Int i, Int j, Int height, Int width)
+template<typename T,Dist U,Dist V,DistWrap wrapType,Device D>
+DistMatrix<T,U,V,wrapType,D> View
+(DistMatrix<T,U,V,wrapType,D>& B, Int i, Int j, Int height, Int width)
 {
-    DistMatrix<T,U,V,wrapType> A(B.Grid());
+    DistMatrix<T,U,V,wrapType,D> A(B.Grid());
     View(A, B, i, j, height, width);
     return A;
 }
 
-template<typename T,Dist U,Dist V,DistWrap wrapType>
-DistMatrix<T,U,V,wrapType> LockedView
-(const DistMatrix<T,U,V,wrapType>& B, Int i, Int j, Int height, Int width)
+template<typename T,Dist U,Dist V,DistWrap wrapType,Device D>
+DistMatrix<T,U,V,wrapType,D> LockedView
+(const DistMatrix<T,U,V,wrapType,D>& B, Int i, Int j, Int height, Int width)
 {
-    DistMatrix<T,U,V,wrapType> A(B.Grid());
+    DistMatrix<T,U,V,wrapType,D> A(B.Grid());
     LockedView(A, B, i, j, height, width);
     return A;
 }
 
-template<typename T,Dist U,Dist V,DistWrap wrapType>
-DistMatrix<T,U,V,wrapType> View
-(DistMatrix<T,U,V,wrapType>& B, Range<Int> I, Range<Int> J)
+template<typename T,Dist U,Dist V,DistWrap wrapType,Device D>
+DistMatrix<T,U,V,wrapType,D> View
+(DistMatrix<T,U,V,wrapType,D>& B, Range<Int> I, Range<Int> J)
 {
     if (I.end == END)
         I.end = B.Height();
@@ -658,9 +658,9 @@ DistMatrix<T,U,V,wrapType> View
     return View(B, I.beg, J.beg, I.end-I.beg, J.end-J.beg);
 }
 
-template<typename T,Dist U,Dist V,DistWrap wrapType>
-DistMatrix<T,U,V,wrapType> LockedView
-(const DistMatrix<T,U,V,wrapType>& B, Range<Int> I, Range<Int> J)
+template<typename T,Dist U,Dist V,DistWrap wrapType,Device D>
+DistMatrix<T,U,V,wrapType,D> LockedView
+(const DistMatrix<T,U,V,wrapType,D>& B, Range<Int> I, Range<Int> J)
 {
     if (I.end == END)
         I.end = B.Height();

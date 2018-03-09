@@ -105,13 +105,16 @@ void Exchange
     }
 }
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V,Device D>
 void ColwiseVectorExchange
-( const DistMatrix<T,ProductDist<U,V>(),STAR>& A,
-        DistMatrix<T,ProductDist<V,U>(),STAR>& B )
+( DistMatrix<T,ProductDist<U,V>(),STAR,ELEMENT,D> const& A,
+  DistMatrix<T,ProductDist<V,U>(),STAR,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
+
     if( !B.Participating() )
         return;
 
@@ -125,13 +128,16 @@ void ColwiseVectorExchange
     copy::Exchange( A, B, sendRankB, recvRankB, B.DistComm() );
 }
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V,Device D>
 void RowwiseVectorExchange
-( const DistMatrix<T,STAR,ProductDist<U,V>()>& A,
-        DistMatrix<T,STAR,ProductDist<V,U>()>& B )
+( DistMatrix<T,STAR,ProductDist<U,V>(),ELEMENT,D> const& A,
+  DistMatrix<T,STAR,ProductDist<V,U>(),ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
+
     if( !B.Participating() )
         return;
 

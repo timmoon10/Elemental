@@ -24,6 +24,12 @@ void MakeUniform( AbstractMatrix<T>& A, T center, Base<T> radius )
         MakeUniform(static_cast<Matrix<T,Device::CPU>&>(A), center, radius);
         break;
     case Device::GPU:
+    {
+        Matrix<T,Device::CPU> CPU_Mat;
+        MakeUniform(CPU_Mat,center,radius);
+        static_cast<Matrix<T,Device::GPU>&>(A) = CPU_Mat;
+    }
+    break;
     default:
         LogicError("MakeUniform: Bad device.");
     }
@@ -38,7 +44,7 @@ void MakeUniform( Matrix<T>& A, T center, Base<T> radius )
 }
 
 template<typename T>
-void Uniform( Matrix<T>& A, Int m, Int n, T center, Base<T> radius )
+void Uniform( AbstractMatrix<T>& A, Int m, Int n, T center, Base<T> radius )
 {
     EL_DEBUG_CSE
     A.Resize( m, n );
@@ -65,11 +71,13 @@ void Uniform( AbstractDistMatrix<T>& A, Int m, Int n, T center, Base<T> radius )
 
 #define PROTO(T) \
   template void MakeUniform \
+  ( AbstractMatrix<T>& A, T center, Base<T> radius ); \
+  template void MakeUniform \
   ( Matrix<T>& A, T center, Base<T> radius ); \
   template void MakeUniform \
   ( AbstractDistMatrix<T>& A, T center, Base<T> radius ); \
   template void Uniform \
-  ( Matrix<T>& A, Int m, Int n, T center, Base<T> radius ); \
+  ( AbstractMatrix<T>& A, Int m, Int n, T center, Base<T> radius ); \
   template void Uniform \
   ( AbstractDistMatrix<T>& A, Int m, Int n, T center, Base<T> radius );
 

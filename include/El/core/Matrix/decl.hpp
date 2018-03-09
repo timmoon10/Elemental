@@ -285,13 +285,54 @@ public:
     const Matrix<Ring, Device::GPU>
     operator()(Range<Int> I, Range<Int> J) const;
 
+    // Single-entry manipulation
+    // =========================
+
+    // FIXME (trb 03/07/18): This is a phenomenally bad idea. This
+    // access should be granted for kernels only, if we were to
+    // offload these objects directly to device (also probably a bad
+    // idea). As is, if the impls didn't just throw, this would
+    // require a device sync after every call. No. Just no.
+    Ring Get(Int i, Int j=0) const;
+    Base<Ring> GetRealPart(Int i, Int j=0) const;
+    Base<Ring> GetImagPart(Int i, Int j=0) const;
+
+    void Set(Int i, Int j, Ring const& alpha);
+    void Set(Entry<Ring> const& entry);
+
+    void SetRealPart
+    (Int i, Int j, Base<Ring> const& alpha);
+    void SetImagPart
+    (Int i, Int j, Base<Ring> const& alpha);
+
+    void SetRealPart
+    (Entry<Base<Ring>> const& entry);
+    void SetImagPart
+    (Entry<Base<Ring>> const& entry);
+
+    void Update(Int i, Int j, Ring const& alpha);
+    void Update(Entry<Ring> const& entry);
+
+    void UpdateRealPart
+    (Int i, Int j, Base<Ring> const& alpha);
+    void UpdateImagPart
+    (Int i, Int j, Base<Ring> const& alpha);
+
+    void UpdateRealPart
+    (Entry<Base<Ring>> const& entry);
+    void UpdateImagPart
+    (Entry<Base<Ring>> const& entry);
+
+    void MakeReal(Int i, Int j);
+    void Conjugate(Int i, Int j);
+
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
-    inline Ring const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
-    inline Ring const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+    inline Ring const& CRef(Int i, Int j=0) const;
+    inline Ring const& operator()(Int i, Int j=0) const;
 
-    inline Ring& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
-    inline Ring& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+    inline Ring& Ref(Int i, Int j=0);
+    inline Ring& operator()(Int i, Int j=0);
 
 private:
 

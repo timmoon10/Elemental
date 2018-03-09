@@ -20,11 +20,21 @@ void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
 {
     if (A.GetDevice() != B.GetDevice())
         LogicError("Copy: A and B must be on same device for now.");
-    if (A.GetDevice() != Device::CPU)
-        LogicError("Copy not supported for GPU yet.");
-
-    Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
-         static_cast<Matrix<T,Device::CPU>&>(B));
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
+             static_cast<Matrix<T,Device::CPU>&>(B));
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Copy(static_cast<Matrix<T,Device::GPU> const&>(A),
+             static_cast<Matrix<T,Device::GPU>&>(B));
+        break;
+#endif
+    default:
+        LogicError("Copy: Bad device.");
+    }
 }
 
 template<typename T>
@@ -48,6 +58,49 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
         EL_PARALLEL_FOR
         for( Int j=0; j<width; ++j ) {
             MemCopy(&BBuf[j*ldB], &ABuf[j*ldA], height);
+        }
+    }
+}
+
+template<typename T>
+void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize( height, width );
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* ABuf = A.LockedBuffer();
+    T* BBuf = B.Buffer();
+
+    cudaError_t error = cudaGetLastError();
+    if (error != cudaSuccess)
+        RuntimeError("Previously existing error!");
+
+    // Copy all entries if memory is contiguous. Otherwise copy each
+    // column.
+    if( ldA == height && ldB == height )
+    {
+        if ((error = cudaMemcpy(BBuf, ABuf, height*width*sizeof(T),
+                                cudaMemcpyDeviceToDevice)) != cudaSuccess)
+        {
+            RuntimeError("cudaMemcpy error in Copy():\n\n",cudaGetErrorString(error));
+        }
+    }
+    else
+    {
+        // FIXME: Make one kernel
+        for( Int j=0; j<width; ++j )
+        {
+            if ((error = cudaMemcpy(BBuf + j*ldB, ABuf + j*ldA, height*sizeof(T),
+                                    cudaMemcpyDeviceToDevice)) != cudaSuccess)
+            {
+                RuntimeError("cudaMemcpy error in Copy():\n\n",
+                             "BBuf = ", BBuf, "\nABuf = ", ABuf, "\n\n",
+                             cudaGetErrorName(error), " ",
+                             cudaGetErrorString(error));
+            }
         }
     }
 
@@ -275,6 +328,11 @@ void CopyFromNonRoot
     bool includingViewers ); \
   EL_EXTERN template void CopyFromNonRoot \
   ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers );
+
+EL_EXTERN template void Copy
+( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<double,Device::GPU>& A, Matrix<double,Device::GPU>& B );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

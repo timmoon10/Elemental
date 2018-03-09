@@ -299,6 +299,9 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
   BOTH(T,VC,  STAR); \
   BOTH(T,VR,  STAR);
 
+template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

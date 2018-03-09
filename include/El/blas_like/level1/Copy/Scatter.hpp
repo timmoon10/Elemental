@@ -12,13 +12,17 @@
 namespace El {
 namespace copy {
 
-template<typename T>
+// FIXME (trb 03/06/18) -- Need to do the GPU impl
+template<typename T, Device D>
 void Scatter
-( const DistMatrix<T,CIRC,CIRC>& A,
+( const DistMatrix<T,CIRC,CIRC,ELEMENT,D>& A,
         ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
 
     const Int m = A.Height();
     const Int n = A.Width();
@@ -99,10 +103,10 @@ void Scatter
     GeneralPurpose( A, B );
 }
 
-template<typename T>
+template<typename T,Device D>
 void Scatter
-( const DistMatrix<T,CIRC,CIRC>& A,
-        DistMatrix<T,STAR,STAR>& B )
+( DistMatrix<T,CIRC,CIRC,ELEMENT,D> const& A,
+  DistMatrix<T,STAR,STAR,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );

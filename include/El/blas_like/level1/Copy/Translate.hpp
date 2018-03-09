@@ -12,10 +12,10 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V,Device D>
 void Translate
-( const DistMatrix<T,U,V>& A,
-        DistMatrix<T,U,V>& B )
+( DistMatrix<T,U,V,ELEMENT,D> const& A,
+  DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     if( A.Grid() != B.Grid() )
@@ -74,7 +74,7 @@ void Translate
         if( crossRank == root )
         {
             // Pack the local data
-            util::InterleaveMatrix
+            util::InterleaveMatrix<T,D>
             ( A.LocalHeight(), A.LocalWidth(),
               A.LockedBuffer(), 1, A.LDim(),
               buffer.data(),    1, A.LocalHeight() );
@@ -107,7 +107,7 @@ void Translate
         }
         // Unpack
         if( crossRank == B.Root() )
-            util::InterleaveMatrix
+            util::InterleaveMatrix<T,D>
             ( localHeightB, localWidthB,
               buffer.data(), 1, localHeightB,
               B.Buffer(),    1, B.LDim() );

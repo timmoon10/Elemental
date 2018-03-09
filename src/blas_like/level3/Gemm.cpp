@@ -34,8 +34,8 @@ void Gemm(Orientation orientA, Orientation orientB,
              beta,
              static_cast<Matrix<T,Device::CPU>&>(C));
         break;
-    case Device::GPU:
 #ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
         Gemm(orientA, orientB, alpha,
              static_cast<Matrix<T,Device::GPU> const&>(A),
              static_cast<Matrix<T,Device::GPU> const&>(B),

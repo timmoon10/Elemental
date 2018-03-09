@@ -386,7 +386,7 @@ void CopyFromNonRoot( DistMatrix<T,CIRC,CIRC,BLOCK>& B,
 namespace copy {
 namespace util {
 
-template<typename T>
+template<typename T, Device D=Device::CPU>
 void InterleaveMatrix
 ( Int height, Int width,
   const T* A, Int colStrideA, Int rowStrideA,

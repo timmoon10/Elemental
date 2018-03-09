@@ -2,6 +2,8 @@
 #include "El/core/imports/cublas.hpp"
 
 #include <cublas_v2.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 namespace El
 {
@@ -78,6 +80,27 @@ ADD_GEMM_IMPL(double, D)
 
 void InitializeCUDA(int,char*[])
 {
+    int device_count;
+    auto error = cudaGetDeviceCount(&device_count);
+
+    if (error != cudaSuccess)
+        RuntimeError("CUDA initialize error: ", cudaGetErrorString(error));
+
+    if (device_count < 1)
+        RuntimeError("No CUDA devices found!");
+
+    int device_id = 0;
+
+    cudaDeviceProp deviceProp;
+    error = cudaGetDeviceProperties(&deviceProp, device_id);
+
+    if (error != cudaSuccess)
+        RuntimeError("CUDA initialize error: ", cudaGetErrorString(error));
+
+    if (deviceProp.computeMode == cudaComputeModeProhibited)
+        RuntimeError("Device 0 is in ComputeModeProhibited mode. Can't use.");
+
+    cudaSetDevice(0);
 }
 
 }// namespace El
