@@ -23,20 +23,18 @@ void MakeUniform( AbstractMatrix<T>& A, T center, Base<T> radius )
     case Device::CPU:
         MakeUniform(static_cast<Matrix<T,Device::CPU>&>(A), center, radius);
         break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-    {
-        Matrix<T,Device::CPU> CPU_Mat;
-        MakeUniform(CPU_Mat,center,radius);
-        static_cast<Matrix<T,Device::GPU>&>(A) = CPU_Mat;
-    }
-    break;
+        MakeUniform(static_cast<Matrix<T,Device::GPU>&>(A), center, radius);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("MakeUniform: Bad device.");
     }
 }
 
-template<typename T>
-void MakeUniform( Matrix<T>& A, T center, Base<T> radius )
+template<typename T, Device D>
+void MakeUniform( Matrix<T,D>& A, T center, Base<T> radius )
 {
     EL_DEBUG_CSE
     auto sampleBall = [=]() { return SampleBall(center,radius); };
@@ -73,13 +71,18 @@ void Uniform( AbstractDistMatrix<T>& A, Int m, Int n, T center, Base<T> radius )
   template void MakeUniform \
   ( AbstractMatrix<T>& A, T center, Base<T> radius ); \
   template void MakeUniform \
-  ( Matrix<T>& A, T center, Base<T> radius ); \
+  ( Matrix<T,Device::CPU>& A, T center, Base<T> radius );  \
   template void MakeUniform \
   ( AbstractDistMatrix<T>& A, T center, Base<T> radius ); \
   template void Uniform \
   ( AbstractMatrix<T>& A, Int m, Int n, T center, Base<T> radius ); \
   template void Uniform \
   ( AbstractDistMatrix<T>& A, Int m, Int n, T center, Base<T> radius );
+
+#ifdef HYDROGEN_HAVE_CUDA
+template void MakeUniform(Matrix<float,Device::GPU>&, float, Base<float>);
+template void MakeUniform(Matrix<double,Device::GPU>&, double, Base<double>);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

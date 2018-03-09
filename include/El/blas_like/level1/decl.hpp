@@ -580,6 +580,10 @@ template<typename T>
 void EntrywiseFill( Matrix<T>& A, function<T(void)> func );
 template<typename T>
 void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func );
+#ifdef HYDROGEN_HAVE_CUDA
+template<typename T>
+void EntrywiseFill( Matrix<T,Device::GPU>& A, function<T(void)> func );
+#endif // HYDROGEN_HAVE_CUDA
 
 // EntrywiseMap
 // ============
