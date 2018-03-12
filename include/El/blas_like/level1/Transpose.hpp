@@ -9,6 +9,10 @@
 #ifndef EL_BLAS_TRANSPOSE_HPP
 #define EL_BLAS_TRANSPOSE_HPP
 
+#ifdef HYDROGEN_HAVE_CUDA
+#include "GPU/Transpose.hpp"
+#endif
+
 namespace El {
 
 namespace transpose {
@@ -84,9 +88,13 @@ void Transpose(AbstractMatrix<T> const& A, AbstractMatrix<T>& B,
             static_cast<Matrix<T,Device::CPU> const&>(A),
             static_cast<Matrix<T,Device::CPU>&>(B), conjugate);
         break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        LogicError("Transform not supported for GPU.");
+        Transpose(
+            static_cast<Matrix<T,Device::GPU> const&>(A),
+            static_cast<Matrix<T,Device::GPU>&>(B), conjugate);
         break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Bad device for transform.");
     }
@@ -152,6 +160,28 @@ void Transpose( const Matrix<T>& A, Matrix<T>& B, bool conjugate )
     }
 #endif
 }
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T, typename>
+void Transpose(Matrix<T,Device::GPU> const& A,
+               Matrix<T,Device::GPU>& B, bool /* conjugate */)
+{
+    const Int m = A.Height(), n = A.Width();
+    B.Resize(n,m);
+    Transpose_GPU_impl(B.Buffer(), static_cast<unsigned>(B.LDim()),
+                       A.LockedBuffer(),
+                       static_cast<unsigned>(m),
+                       static_cast<unsigned>(n),
+                       static_cast<unsigned>(A.LDim()));
+}
+
+template <typename T, typename, typename>
+void Transpose(Matrix<T,Device::GPU> const& A,
+               Matrix<T,Device::GPU>& B, bool /* conjugate */)
+{
+    LogicError("Bad device type!");
+}
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename T>
 void Transpose
@@ -377,6 +407,15 @@ void Adjoint
   EL_EXTERN template void Adjoint \
   ( const AbstractDistMatrix<T>& A, \
           AbstractDistMatrix<T>& B );
+
+#ifdef HYDROGEN_HAVE_CUDA
+template void Transpose(
+    Matrix<float,Device::GPU> const& A, Matrix<float,Device::GPU>& B,
+    bool conjugate);
+template void Transpose(
+    Matrix<double,Device::GPU> const& A, Matrix<double,Device::GPU>& B,
+    bool conjugate);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

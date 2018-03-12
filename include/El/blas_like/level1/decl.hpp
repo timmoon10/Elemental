@@ -1435,6 +1435,21 @@ void Transpose
 ( const Matrix<T>& A,
         Matrix<T>& B,
   bool conjugate=false );
+#ifdef HYDROGEN_HAVE_CUDA
+template<typename T,typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void Transpose
+( Matrix<T,Device::GPU> const& A,
+  Matrix<T,Device::GPU>& B,
+  bool conjugate=false );
+template<typename T,
+         typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
+         typename=void>
+void Transpose
+( Matrix<T,Device::GPU> const& A,
+  Matrix<T,Device::GPU>& B,
+  bool conjugate=false );
+#endif // HYDROGEN_HAVE_CUDA
+
 template<typename T>
 void Transpose
 ( const ElementalMatrix<T>& A,

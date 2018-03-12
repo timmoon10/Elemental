@@ -39,7 +39,6 @@ void Zero( AbstractMatrix<T>& A )
 #else
         MemZero( ABuf, size );
 #endif
-            MemZero( ABuf, height*width );
             break;
         case Device::GPU:
 #ifdef HYDROGEN_HAVE_CUDA

@@ -93,38 +93,50 @@ struct GemmDispatch
         EL_DEBUG_CSE
         if(orientA == NORMAL && orientB == NORMAL)
         {
-            if(A.Height() != C.Height() ||
-               B.Width()  != C.Width()  ||
-               A.Width()  != B.Height())
-                LogicError("Nonconformal GemmNN");
+            if (A.Height() != C.Height() ||
+                B.Width()  != C.Width()  ||
+                A.Width()  != B.Height())
+                LogicError("Nonconformal GemmNN. Matrix dimensions are:\n"
+                           "  A: ", A.Height(), "x", A.Width(), '\n',
+                           "  B: ", B.Height(), "x", B.Width(), '\n',
+                           "  C: ", C.Height(), "x", C.Width());
         }
-        else if(orientA == NORMAL)
+        else if (orientA == NORMAL)
         {
-            if(A.Height() != C.Height() ||
-               B.Height() != C.Width()  ||
-               A.Width()  != B.Width())
-                LogicError("Nonconformal GemmN(T/C)");
+            if (A.Height() != C.Height() ||
+                B.Height() != C.Width()  ||
+                A.Width()  != B.Width())
+                LogicError("Nonconformal GemmN(T/C). Matrix dimensions are:\n"
+                           "  A: ", A.Height(), "x", A.Width(), '\n',
+                           "  B: ", B.Height(), "x", B.Width(), '\n',
+                           "  C: ", C.Height(), "x", C.Width());
         }
-        else if(orientB == NORMAL)
+        else if (orientB == NORMAL)
         {
-            if(A.Width()  != C.Height() ||
-               B.Width()  != C.Width()  ||
-               A.Height() != B.Height())
-                LogicError("Nonconformal Gemm(T/C)N");
+            if (A.Width()  != C.Height() ||
+                B.Width()  != C.Width()  ||
+                A.Height() != B.Height())
+                LogicError("Nonconformal Gemm(T/C)N. Matrix dimensions are:\n"
+                           "  A: ", A.Height(), "x", A.Width(), '\n',
+                           "  B: ", B.Height(), "x", B.Width(), '\n',
+                           "  C: ", C.Height(), "x", C.Width());
         }
         else
         {
-            if(A.Width()  != C.Height() ||
-               B.Height() != C.Width()  ||
-               A.Height() != B.Width())
-                LogicError("Nonconformal Gemm(T/C)(T/C)");
+            if (A.Width()  != C.Height() ||
+                B.Height() != C.Width()  ||
+                A.Height() != B.Width())
+                LogicError("Nonconformal Gemm(T/C)(T/C). Matrix dimensions are:\n"
+                           "  A: ", A.Height(), "x", A.Width(), '\n',
+                           "  B: ", B.Height(), "x", B.Width(), '\n',
+                           "  C: ", C.Height(), "x", C.Width());
         }
         const char transA = OrientationToChar(orientA);
         const char transB = OrientationToChar(orientB);
         const Int m = C.Height();
         const Int n = C.Width();
         const Int k = (orientA == NORMAL ? A.Width() : A.Height());
-        if(k != 0)
+        if (k != 0)
         {
             BLASHelper<D>::Gemm(
                 transA, transB, m, n, k,

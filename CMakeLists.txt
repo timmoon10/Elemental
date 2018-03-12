@@ -45,8 +45,6 @@ elseif (CXX_COMPILER_HAS_WPEDANTIC_FLAG)
 endif ()
 
 # Configuration options
-option(${PROJECT_NAME}_ENABLE_CUDA "Build with CUDA support." ON)
-
 option(${PROJECT_NAME}_EXPORT_PACKAGE_REGISTRY
   "Export the build directory to the user's CMake package registry." OFF)
 if (NOT ${PROJECT_NAME}_EXPORT_PACKAGE_REGISTRY)
@@ -70,7 +68,7 @@ option(${PROJECT_NAME}_ENABLE_MPC
 
 option(${PROJECT_NAME}_ENABLE_CUDA
   "Search for CUDA support and enable related features if found."
-  OFF)
+  ON)
 
 # Legacy options, with EL_ prefix intact
 option(BINARY_SUBDIRECTORIES "Install binaries into tree based on type" ON)
@@ -224,10 +222,6 @@ if (${PROJECT_NAME}_ENABLE_OPENMP)
     set(${PROJECT_NAME}_ENABLE_OPENMP OFF)
   endif ()
 endif (${PROJECT_NAME}_ENABLE_OPENMP)
-
-if (${PROJECT_NAME}_ENABLE_CUDA)
-  include(FindAndVerifyCUDA)
-endif ()
 
 include(FindAndVerifyMPI)
 include(FindAndVerifyLAPACK)
