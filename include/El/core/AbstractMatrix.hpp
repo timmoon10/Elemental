@@ -66,6 +66,46 @@ public:
     // Operator overloading
     //
 
+    // Type conversion
+    operator Matrix<T, Device::CPU> () { 
+      if(this->GetDevice() != Device::CPU) {
+	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+      }
+      return *static_cast<Matrix<T, Device::CPU>*>(this);
+    }
+    operator Matrix<T, Device::CPU> () const { 
+      if(this->GetDevice() != Device::CPU) {
+	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+      }
+      return *static_cast<const Matrix<T, Device::CPU>*>(this);
+    }
+
+    operator Matrix<T, Device::CPU>& () { 
+      if(this->GetDevice() != Device::CPU) {
+	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+      }
+      return &(*static_cast<Matrix<T, Device::CPU>*>(this));
+    }
+    operator Matrix<T, Device::CPU>& () const { 
+      if(this->GetDevice() != Device::CPU) {
+	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+      }
+      return &(*static_cast<const Matrix<T, Device::CPU>*>(this));
+    }
+
+    operator Matrix<T, Device::GPU> () { 
+      if(this->GetDevice() != Device::GPU) {
+	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+      }
+      return *static_cast<Matrix<T, Device::GPU>*>(this);
+    }
+    operator Matrix<T, Device::GPU> () const { 
+      if(this->GetDevice() != Device::GPU) {
+	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+      }
+      return *static_cast<const Matrix<T, Device::GPU>*>(this);
+    }
+
     // Return a view
     AbstractMatrix<T>& operator()(Range<Int> I, Range<Int> J);
 
@@ -370,6 +410,7 @@ EL_NO_RELEASE_EXCEPT
 // Operator overloading
 // ====================
 
+// BVE FIX ME I don't think that we can have this operator
 // Return a view
 // -------------
 template<typename T>
