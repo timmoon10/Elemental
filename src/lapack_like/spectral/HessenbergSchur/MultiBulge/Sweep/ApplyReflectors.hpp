@@ -17,11 +17,14 @@
 
 // Clang does not seem to define conj or conjf for C++ when including complex.h,
 // but manually providing their prototypes seems to fix the issue...
+// fixme (trb 01/22/2018): Clang preprocessor stuff should be removed ASAP.
+#ifdef __clang__
 extern "C" {
 float _Complex conjf( float _Complex value );
 double _Complex conj( double _Complex value );
 long double _Complex conjl( long double _Complex value );
 }
+#endif // __clang__
 
 namespace El {
 

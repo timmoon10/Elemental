@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.9)
 
 project(Hydrogen C CXX)
 
@@ -47,6 +47,15 @@ endif ()
 # Configuration options
 option(${PROJECT_NAME}_ENABLE_CUDA "Build with CUDA support." ON)
 
+option(${PROJECT_NAME}_EXPORT_PACKAGE_REGISTRY
+  "Export the build directory to the user's CMake package registry." OFF)
+if (NOT ${PROJECT_NAME}_EXPORT_PACKAGE_REGISTRY)
+  set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY ON)
+endif ()
+
+option(CMAKE_POSITION_INDEPENDENT_CODE
+  "Build using position-independent code" ON)
+
 option(${PROJECT_NAME}_ENABLE_TESTING "Build the test suite." ON)
 
 option(${PROJECT_NAME}_ENABLE_QUADMATH
@@ -57,6 +66,10 @@ option(${PROJECT_NAME}_ENABLE_QD
 
 option(${PROJECT_NAME}_ENABLE_MPC
   "Search for MPC(+MPFR+GMP) library and enable related features if found."
+  OFF)
+
+option(${PROJECT_NAME}_ENABLE_CUDA
+  "Search for CUDA support and enable related features if found."
   OFF)
 
 # Legacy options, with EL_ prefix intact
@@ -71,7 +84,12 @@ option(${PROJECT_NAME}_USE_64BIT_INTS
 option(${PROJECT_NAME}_USE_64BIT_BLAS_INTS
   "Use 64-bit integers for BLAS/LAPACK" OFF)
 if (${PROJECT_NAME}_USE_64BIT_BLAS_INTS)
+  set(EL_USE_64BIT_BLAS_INTS ON)
   set(${PROJECT_NAME}_USE_64BIT_INTS ON)
+endif ()
+
+if (${PROJECT_NAME}_USE_64BIT_INTS)
+  set(EL_USE_64BIT_INTS ON)
 endif ()
 
 option(${PROJECT_NAME}_ZERO_INIT "Initialize buffers to zero by default?" OFF)
@@ -84,6 +102,9 @@ mark_as_advanced(${PROJECT_NAME}_ENABLE_VALGRIND)
 #
 # OpenMP
 #
+
+option(${PROJECT_NAME}_ENABLE_OPENMP
+  "Enable OpenMP support in Hydrogen" OFF)
 
 # At one point, a bug was found in IBM's C++ compiler for Blue Gene/P,
 # where OpenMP statements of the form a[i] += alpha b[i], with complex data,
@@ -190,6 +211,24 @@ include(detect/Fortran)
 # Find third-party libraries
 #
 
+if (${PROJECT_NAME}_ENABLE_OPENMP)
+  include(FindAndVerifyOpenMP)
+  if (OpenMP_FOUND)
+    set(EL_HYBRID ON)
+    set(EL_HAVE_OPENMP TRUE)
+  else ()
+    message(WARNING "Requested OpenMP support but OpenMP support was either "
+      "not found or not functional.")
+    set(EL_HYBRID OFF)
+    set(EL_HAVE_OPENMP FALSE)
+    set(${PROJECT_NAME}_ENABLE_OPENMP OFF)
+  endif ()
+endif (${PROJECT_NAME}_ENABLE_OPENMP)
+
+if (${PROJECT_NAME}_ENABLE_CUDA)
+  include(FindAndVerifyCUDA)
+endif ()
+
 include(FindAndVerifyMPI)
 include(FindAndVerifyLAPACK)
 include(FindAndVerifyExtendedPrecision)
@@ -229,6 +268,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+
+if (TARGET OpenMP::OpenMP_CXX)
+  target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+endif ()
 target_link_libraries(${PROJECT_NAME} PUBLIC pmrrr)
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)
