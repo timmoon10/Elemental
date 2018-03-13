@@ -137,8 +137,9 @@ void Copy( const ElementalMatrix<T>& A, DistMatrix<T,U,V>& B )
 
 // Datatype conversions should not be very common, and so it is likely best to
 // avoid explicitly instantiating every combination
-template<typename S,typename T,Dist U,Dist V>
-void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V>& B )
+template<typename S,typename T,Dist U,Dist V,Device D,
+         typename = EnableIf<IsDeviceValidType<T,D>>>
+void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     if( A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V )
@@ -157,11 +158,20 @@ void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V>& B )
             return;
         }
     }
-    DistMatrix<S,U,V> BOrig(A.Grid());
+    DistMatrix<S,U,V,ELEMENT,D> BOrig(A.Grid());
     BOrig.AlignWith( B );
     BOrig = A;
     B.Resize( A.Height(), A.Width() );
     Copy( BOrig.LockedMatrix(), B.Matrix() );
+}
+
+template<typename S,typename T,Dist U,Dist V,Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>,
+         typename=void>
+void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
+{
+    EL_DEBUG_CSE
+    LogicError("Copy: bad data/device combination.");
 }
 
 template<typename T,Dist U,Dist V>
@@ -208,12 +218,14 @@ template<typename S,typename T,
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
-    #define GUARD(CDIST,RDIST,WRAP) \
-        B.ColDist() == CDIST && B.RowDist() == RDIST && B.Wrap() == WRAP && B.GetLocalDevice() == Device::CPU
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-        auto& BCast = static_cast<DistMatrix<T,CDIST,RDIST,ELEMENT>&>(B); \
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                                        \
+        (B.ColDist() == CDIST) && (B.RowDist() == RDIST)                \
+            && (B.Wrap() == WRAP) && (B.GetLocalDevice() == DEVICE)
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                                \
+        auto& BCast =                                                   \
+            static_cast<DistMatrix<T,CDIST,RDIST,ELEMENT,DEVICE>&>(B);  \
         Copy( A, BCast );
-    #include <El/macros/GuardAndPayload.h>
+    #include <El/macros/DeviceGuardAndPayload.h>
 }
 
 template<typename T>

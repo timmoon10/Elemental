@@ -72,6 +72,7 @@ inline cublasOperation_t CharTocuBLASOp(char c)
             m, n, k, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim);      \
         if (ret != CUBLAS_STATUS_SUCCESS)                               \
             RuntimeError("cuBLAS::Gemm failed!");                       \
+        cudaThreadSynchronize();/* FIXME */                             \
     }
 ADD_GEMM_IMPL(float, S)
 ADD_GEMM_IMPL(double, D)

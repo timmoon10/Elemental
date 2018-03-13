@@ -81,6 +81,11 @@ void BasicInstrumentedGemm
     }
 }
 
+template <typename T>
+El::Base<T> tomdiff(T,T) { return 0; }
+
+float tomdiff(float x, float y) { return x-y; }
+
 template<typename T, El::Device D>
 void TestGemm
 (El::Int m, El::Int n, El::Int k, const El::Grid& grid,
@@ -101,6 +106,10 @@ void TestGemm
         El::Uniform(B, k, n);
         El::Uniform(C, m, n);
 
+        // Only used if D == Device::GPU. Must do copy before Gemm,
+        // since Gemm is destructive
+        El::Matrix<T,El::Device::CPU> C_cpu{C};
+
         timer.Start();
         El::Gemm(El::NORMAL, El::NORMAL, alpha, A, B, beta, C);
         const double gemmTime = timer.Stop();
@@ -109,12 +118,51 @@ void TestGemm
             gFlops *= 4;
         El::Output("Sequential: ",gemmTime," secs (",gFlops," GFlop/s)");
         timer.Start();
-    }
-    El::mpi::Barrier(grid.Comm());
-    if (grid.Rank() == 0)
-    {
-        const double rootWaitTime = timer.Stop();
-        El::Output("Root waited for ",rootWaitTime," seconds");
+
+        El::mpi::Barrier(grid.Comm());
+        if (grid.Rank() == 0)
+        {
+            const double rootWaitTime = timer.Stop();
+            El::Output("Root waited for ",rootWaitTime," seconds");
+        }
+
+        // Verify things
+        if (D == El::Device::GPU)
+        {
+            El::Matrix<T,El::Device::CPU> A_cpu(A), B_cpu(B), C_computed(C);
+
+            El::Gemm(El::NORMAL, El::NORMAL, alpha, A_cpu, B_cpu, beta, C_cpu);
+
+            bool error_occurred = false;
+            El::Int first_problem_row = 41389, first_problem_col = 41389;
+            if (C_cpu.Height() != C_computed.Height())
+                error_occurred = true;
+            if (C_cpu.Width() != C_cpu.Width())
+                error_occurred = true;
+
+            for (El::Int row = El::Int{0}; row < C_cpu.Height(); ++row)
+            {
+                for (El::Int col = El::Int{0}; col < C_cpu.Width(); ++col)
+                    if (tomdiff(C_cpu(row,col),C_computed(row,col)) > 1e-3)
+                    {
+                        first_problem_row = row;
+                        first_problem_col = col;
+                        error_occurred = true;;
+                        break;
+                    }
+                if (error_occurred)
+                    break;
+            }
+
+            if (error_occurred)
+                El::RuntimeError("Bad GEMM. Problem: C_cpu(",
+                                 first_problem_row, ",",
+                                 first_problem_col, ") = ",
+                                 C_cpu(first_problem_row, first_problem_col),
+                                 "; C_gpu(i,j) = ",
+                                 C_computed(first_problem_row, first_problem_col));
+        }
+
     }
 
     El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,D> A(grid), B(grid), C(grid);
@@ -184,6 +232,8 @@ int main(int argc, char *argv[])
         (void) testGPU;
 #endif // HYDROGEN_ENABLE_CUDA
 
+        TestGemm<float,El::Device::CPU>
+            (m, n, k, grid, testSequential, instrument);
         if (testCPU)
         {
             TestGemm<float,El::Device::CPU>
