@@ -67,43 +67,81 @@ public:
     //
 
     // Type conversion
-    operator Matrix<T, Device::CPU> () { 
+//     operator Matrix<T, Device::CPU> () {
+//       if(this->GetDevice() != Device::CPU) {
+// 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+//       }
+//       return static_cast<Matrix<T, Device::CPU>>(*this);
+//     }
+//     operator Matrix<T, Device::CPU> () const {
+//       if(this->GetDevice() != Device::CPU) {
+// 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+//       }
+//       return static_cast<const Matrix<T, Device::CPU>>(*this);
+//     }
+
+    operator Matrix<T, Device::CPU>& () {
       if(this->GetDevice() != Device::CPU) {
 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
       }
-      return *static_cast<Matrix<T, Device::CPU>*>(this);
+      return static_cast<Matrix<T, Device::CPU>&>(*this);
     }
-    operator Matrix<T, Device::CPU> () const { 
+    operator Matrix<T, Device::CPU>const& () const {
       if(this->GetDevice() != Device::CPU) {
 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
       }
-      return *static_cast<const Matrix<T, Device::CPU>*>(this);
+      return static_cast<const Matrix<T, Device::CPU>&>(*this);
     }
 
-    operator Matrix<T, Device::CPU>& () { 
+    operator Matrix<T, Device::CPU>* () {
       if(this->GetDevice() != Device::CPU) {
 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
       }
-      return &(*static_cast<Matrix<T, Device::CPU>*>(this));
+      return static_cast<Matrix<T, Device::CPU>*>(this);
     }
-    operator Matrix<T, Device::CPU>& () const { 
+    operator Matrix<T, Device::CPU>const* () const {
       if(this->GetDevice() != Device::CPU) {
 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
       }
-      return &(*static_cast<const Matrix<T, Device::CPU>*>(this));
+      return static_cast<const Matrix<T, Device::CPU>*>(this);
     }
 
-    operator Matrix<T, Device::GPU> () { 
+//     operator Matrix<T, Device::GPU> () {
+//       if(this->GetDevice() != Device::GPU) {
+// 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+//       }
+//       return static_cast<Matrix<T, Device::GPU>>(*this);
+//     }
+//     operator Matrix<T, Device::GPU> () const {
+//       if(this->GetDevice() != Device::GPU) {
+// 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+//       }
+//       return static_cast<const Matrix<T, Device::GPU>>(*this);
+//     }
+
+    operator Matrix<T, Device::GPU>& () {
       if(this->GetDevice() != Device::GPU) {
 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
       }
-      return *static_cast<Matrix<T, Device::GPU>*>(this);
+      return static_cast<Matrix<T, Device::GPU>&>(*this);
     }
-    operator Matrix<T, Device::GPU> () const { 
+    operator Matrix<T, Device::GPU>const& () const {
       if(this->GetDevice() != Device::GPU) {
 	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
       }
-      return *static_cast<const Matrix<T, Device::GPU>*>(this);
+      return static_cast<const Matrix<T, Device::GPU>&>(*this);
+    }
+    operator Matrix<T, Device::GPU>* () {
+      if(this->GetDevice() != Device::GPU) {
+	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+      }
+      return static_cast<Matrix<T, Device::GPU>*>(this);
+    }
+    operator Matrix<T, Device::GPU>const* () const {
+      if(this->GetDevice() != Device::GPU) {
+	LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+      }
+      return static_cast<const Matrix<T, Device::GPU>*>(this);
     }
 
     // Return a view
