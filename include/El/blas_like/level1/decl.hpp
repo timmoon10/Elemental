@@ -449,7 +449,7 @@ void RowStridedPack
   Int rowAlign, Int rowStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void RowStridedUnpack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,

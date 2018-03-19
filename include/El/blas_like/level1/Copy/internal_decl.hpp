@@ -125,6 +125,10 @@ void ColAllGather
 ( const BlockMatrix<T>& A, BlockMatrix<T>& B );
 
 // (U,V) |-> (U,Collect(V))
+template <typename T, Dist U, Dist V>
+void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
+                  DistMatrix<T,U,Collect<V>(),ELEMENT,Device::GPU>& B);
+
 template<typename T>
 void RowAllGather
 ( const ElementalMatrix<T>& A, ElementalMatrix<T>& B );

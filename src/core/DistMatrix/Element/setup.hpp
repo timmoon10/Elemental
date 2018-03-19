@@ -26,33 +26,33 @@ namespace El {
 // ============================
 
 template <typename T, Device D>
-DM::DistMatrix( const El::Grid& grid, int root )
+DM::DistMatrix(const El::Grid& grid, int root)
 : EM(grid,root)
 {
-    if( COLDIST != CIRC || ROWDIST != CIRC )
+    if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
 }
 
 template <typename T, Device D>
-DM::DistMatrix( Int height, Int width, const El::Grid& grid, int root )
+DM::DistMatrix(Int height, Int width, const El::Grid& grid, int root)
 : EM(grid,root)
 {
-    if( COLDIST != CIRC || ROWDIST != CIRC )
+    if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
     this->Resize(height,width);
 }
 
 template <typename T, Device D>
-DM::DistMatrix( const DM& A )
+DM::DistMatrix(const DM& A)
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
-    if( COLDIST != CIRC || ROWDIST != CIRC )
+    if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
-    if( &A != this )
+    if (&A != this)
         *this = A;
     else
         LogicError("Tried to construct DistMatrix with itself");
@@ -60,75 +60,78 @@ DM::DistMatrix( const DM& A )
 
 template <typename T, Device D>
 template<Dist U,Dist V>
-DM::DistMatrix( const DistMatrix<T,U,V,ELEMENT,D>& A )
+DM::DistMatrix(const DistMatrix<T,U,V,ELEMENT,D>& A)
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
-    if( COLDIST != CIRC || ROWDIST != CIRC )
+    if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
-    if( COLDIST != U || ROWDIST != V ||
-        reinterpret_cast<const DM*>(&A) != this )
+    if (COLDIST != U || ROWDIST != V ||
+        reinterpret_cast<const DM*>(&A) != this)
         *this = A;
     else
         LogicError("Tried to construct DistMatrix with itself");
 }
 
 template <typename T, Device D>
-DM::DistMatrix( const AbstractDistMatrix<T>& A )
+DM::DistMatrix(const AbstractDistMatrix<T>& A)
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
-    if( COLDIST != CIRC || ROWDIST != CIRC )
+    if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
-    #define GUARD(CDIST,RDIST,WRAP) \
-      A.ColDist() == CDIST && A.RowDist() == RDIST && A.Wrap() == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP>&>(A); \
-      if( COLDIST != CDIST || ROWDIST != RDIST || ELEMENT != WRAP || \
-          reinterpret_cast<const DM*>(&A) != this ) \
-          *this = ACast; \
-      else \
-          LogicError("Tried to construct DistMatrix with itself");
-    #include "El/macros/GuardAndPayload.h"
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                                  \
+    (A.ColDist() == CDIST) && (A.RowDist() == RDIST) && (A.Wrap() == WRAP) \
+        && (A.GetLocalDevice() == DEVICE)
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                                \
+    auto& ACast =                                                       \
+        static_cast<const DistMatrix<T,CDIST,RDIST,WRAP,DEVICE>&>(A);   \
+    if (COLDIST != CDIST || ROWDIST != RDIST || ELEMENT != WRAP ||      \
+        reinterpret_cast<const DM*>(&A) != this)                        \
+        *this = ACast;                                                  \
+    else                                                                \
+        LogicError("Tried to construct DistMatrix with itself");
+#include "El/macros/DeviceGuardAndPayload.h"
 }
 
 template <typename T, Device D>
-DM::DistMatrix( const ElementalMatrix<T>& A )
+DM::DistMatrix(const ElementalMatrix<T>& A)
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
-    if( COLDIST != CIRC || ROWDIST != CIRC )
+    if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
-    #define GUARD(CDIST,RDIST,WRAP) \
-      A.DistData().colDist == CDIST && A.DistData().rowDist == RDIST && \
-      ELEMENT == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST>&>(A); \
-      if( COLDIST != CDIST || ROWDIST != RDIST || \
-          reinterpret_cast<const DM*>(&A) != this ) \
-          *this = ACast; \
-      else \
-          LogicError("Tried to construct DistMatrix with itself");
-    #include "El/macros/GuardAndPayload.h"
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                                 \
+    (A.DistData().colDist == CDIST) && (A.DistData().rowDist == RDIST) \
+        && (ELEMENT == WRAP) && (A.GetLocalDevice() == DEVICE)
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                                \
+    auto& ACast =                                                       \
+        static_cast<const DistMatrix<T,CDIST,RDIST,ELEMENT,DEVICE>&>(A); \
+    if (COLDIST != CDIST || ROWDIST != RDIST ||                         \
+        reinterpret_cast<const DM*>(&A) != this)                       \
+        *this = ACast;                                                  \
+    else                                                                \
+        LogicError("Tried to construct DistMatrix with itself");
+#include "El/macros/DeviceGuardAndPayload.h"
 }
 
 template <typename T, Device D>
 template<Dist U,Dist V>
-DM::DistMatrix( const DistMatrix<T,U,V,BLOCK,D>& A )
+DM::DistMatrix(const DistMatrix<T,U,V,BLOCK,D>& A)
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
-    if( COLDIST != CIRC || ROWDIST != CIRC )
+    if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
     *this = A;
 }
 
 template <typename T, Device D>
-DM::DistMatrix( DM&& A ) EL_NO_EXCEPT : EM(std::move(A)) { }
+DM::DistMatrix(DM&& A) EL_NO_EXCEPT : EM(std::move(A)) { }
 
 template <typename T, Device D> DM::~DistMatrix() { }
 
@@ -138,18 +141,18 @@ DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>* DM::Copy() const
 
 template <typename T, Device D>
 DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>* DM::Construct
-( const El::Grid& g, int root ) const
+(const El::Grid& g, int root) const
 { return new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>(g,root); }
 
 template <typename T, Device D>
 DistMatrix<T,ROWDIST,COLDIST,ELEMENT,D>* DM::ConstructTranspose
-( const El::Grid& g, int root ) const
+(const El::Grid& g, int root) const
 { return new DistMatrix<T,ROWDIST,COLDIST,ELEMENT,D>(g,root); }
 
 template <typename T, Device D>
 typename DM::diagType*
 DM::ConstructDiagonal
-( const El::Grid& g, int root ) const
+(const El::Grid& g, int root) const
 { return new DistMatrix<T,DiagCol<COLDIST,ROWDIST>(),
                         DiagRow<COLDIST,ROWDIST>(),ELEMENT,D>(g,root); }
 
@@ -159,76 +162,77 @@ DM::ConstructDiagonal
 // Return a view
 // -------------
 template <typename T, Device D>
-DM DM::operator()( Range<Int> I, Range<Int> J )
+DM DM::operator()(Range<Int> I, Range<Int> J)
 {
     EL_DEBUG_CSE
-    return View( *this, I, J );
+    return View(*this, I, J);
 }
 
 template <typename T, Device D>
-const DM DM::operator()( Range<Int> I, Range<Int> J ) const
+const DM DM::operator()(Range<Int> I, Range<Int> J) const
 {
     EL_DEBUG_CSE
-    return LockedView( *this, I, J );
+    return LockedView(*this, I, J);
 }
 
 // Non-contiguous
 // --------------
 template <typename T, Device D>
-DM DM::operator()( Range<Int> I, const vector<Int>& J ) const
+DM DM::operator()(Range<Int> I, const vector<Int>& J) const
 {
     EL_DEBUG_CSE
-    DM ASub( this->Grid() );
-    GetSubmatrix( *this, I, J, ASub );
+    DM ASub(this->Grid());
+    GetSubmatrix(*this, I, J, ASub);
     return ASub;
 }
 
 template <typename T, Device D>
-DM DM::operator()( const vector<Int>& I, Range<Int> J ) const
+DM DM::operator()(const vector<Int>& I, Range<Int> J) const
 {
     EL_DEBUG_CSE
-    DM ASub( this->Grid() );
-    GetSubmatrix( *this, I, J, ASub );
+    DM ASub(this->Grid());
+    GetSubmatrix(*this, I, J, ASub);
     return ASub;
 }
 
 template <typename T, Device D>
-DM DM::operator()( const vector<Int>& I, const vector<Int>& J ) const
+DM DM::operator()(const vector<Int>& I, const vector<Int>& J) const
 {
     EL_DEBUG_CSE
-    DM ASub( this->Grid() );
-    GetSubmatrix( *this, I, J, ASub );
+    DM ASub(this->Grid());
+    GetSubmatrix(*this, I, J, ASub);
     return ASub;
 }
 
 // Copy
 // ----
 template <typename T, Device D>
-DM& DM::operator=( const DM& A )
+DM& DM::operator=(const DM& A)
 {
     EL_DEBUG_CSE
-    copy::Translate( A, *this );
+    copy::Translate(A, *this);
     return *this;
 }
 
 template <typename T, Device D>
-DM& DM::operator=( const AbstractDistMatrix<T>& A )
+DM& DM::operator=(const AbstractDistMatrix<T>& A)
 {
-    EL_DEBUG_CSE
+    EL_DEBUG_CSE;
     // TODO: Use either AllGather or Gather if the distribution of this matrix
     //       is respectively either (STAR,STAR) or (CIRC,CIRC)
-    #define GUARD(CDIST,RDIST,WRAP) \
-      A.ColDist() == CDIST && A.RowDist() == RDIST && A.Wrap() == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-        auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP,D>&>(A); \
-      *this = ACast;
-    #include "El/macros/GuardAndPayload.h"
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                                        \
+    (A.ColDist() == CDIST) && (A.RowDist() == RDIST) && (A.Wrap() == WRAP) \
+        && (A.GetLocalDevice() == DEVICE)
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                                \
+    auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP,DEVICE>&>(A); \
+    *this = ACast;
+#include "El/macros/DeviceGuardAndPayload.h"
     return *this;
 }
 
 template <typename T, Device D>
 template<Dist U,Dist V>
-DM& DM::operator=( const DistMatrix<T,U,V,BLOCK,D>& A )
+DM& DM::operator=(const DistMatrix<T,U,V,BLOCK,D>& A)
 {
     EL_DEBUG_CSE
     // TODO(poulson):
@@ -237,16 +241,16 @@ DM& DM::operator=( const DistMatrix<T,U,V,BLOCK,D>& A )
     //
     // TODO(poulson): Avoid the GeneralPurpose redistribution in more cases
     const bool elemColCompat =
-      ( A.BlockHeight() == 1 || A.ColStride() == 1 );
+      (A.BlockHeight() == 1 || A.ColStride() == 1);
     const bool elemRowCompat =
-      ( A.BlockWidth() == 1 || A.RowStride() == 1 );
-    if( elemColCompat && elemRowCompat )
+      (A.BlockWidth() == 1 || A.RowStride() == 1);
+    if (elemColCompat && elemRowCompat)
     {
         DistMatrix<T,U,V> AElemView(A.Grid());
 #if 0
         AElemView.LockedAttach
-        ( A.Height(), A.Width(), A.Grid(),
-          A.ColAlign(), A.RowAlign(), A.LockedBuffer(), A.LDim(), A.Root() );
+        (A.Height(), A.Width(), A.Grid(),
+          A.ColAlign(), A.RowAlign(), A.LockedBuffer(), A.LDim(), A.Root());
 #else
         throw std::runtime_error("This don't work yet!");
 #endif
@@ -254,63 +258,63 @@ DM& DM::operator=( const DistMatrix<T,U,V,BLOCK,D>& A )
     }
     else
     {
-        copy::GeneralPurpose( A, *this );
+        copy::GeneralPurpose(A, *this);
     }
     return *this;
 }
 
 template <typename T, Device D>
-DM& DM::operator=( DM&& A )
+DM& DM::operator=(DM&& A)
 {
     EL_DEBUG_CSE
-    if( this->Viewing() || A.Viewing() )
-        this->operator=( (const DM&)A );
+    if (this->Viewing() || A.Viewing())
+        this->operator=((const DM&)A);
     else
-        EM::operator=( std::move(A) );
+        EM::operator=(std::move(A));
     return *this;
 }
 
 // Rescaling
 // ---------
 template <typename T, Device D>
-const DM& DM::operator*=( T alpha )
+const DM& DM::operator*=(T alpha)
 {
     EL_DEBUG_CSE
-    Scale( alpha, *this );
+    Scale(alpha, *this);
     return *this;
 }
 
 // Addition/subtraction
 // --------------------
 template <typename T, Device D>
-const DM& DM::operator+=( const EM& A )
+const DM& DM::operator+=(const EM& A)
 {
     EL_DEBUG_CSE
-    Axpy( T(1), A, *this );
+    Axpy(T(1), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
-const DM& DM::operator+=( const ADM& A )
+const DM& DM::operator+=(const ADM& A)
 {
     EL_DEBUG_CSE
-    Axpy( T(1), A, *this );
+    Axpy(T(1), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
-const DM& DM::operator-=( const EM& A )
+const DM& DM::operator-=(const EM& A)
 {
     EL_DEBUG_CSE
-    Axpy( T(-1), A, *this );
+    Axpy(T(-1), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
-const DM& DM::operator-=( const ADM& A )
+const DM& DM::operator-=(const ADM& A)
 {
     EL_DEBUG_CSE
-    Axpy( T(-1), A, *this );
+    Axpy(T(-1), A, *this);
     return *this;
 }
 
@@ -351,14 +355,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if(!grid_->InGrid())
+      if (!grid_->InGrid())
           LogicError("Get should only be called in-grid");
-   )
+  )
     T value;
-    if(CrossRank() == this->Root())
+    if (CrossRank() == this->Root())
     {
         const int owner = this->Owner(i, j);
-        if(owner == DistRank())
+        if (owner == DistRank())
             value = GetLocal(this->LocalRow(i), this->LocalCol(j));
         mpi::Broadcast(value, owner, DistComm());
     }
@@ -373,14 +377,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if(!grid_->InGrid())
+      if (!grid_->InGrid())
           LogicError("Get should only be called in-grid");
-   )
+  )
     Base<T> value;
-    if(CrossRank() == this->Root())
+    if (CrossRank() == this->Root())
     {
         const int owner = this->Owner(i, j);
-        if(owner == DistRank())
+        if (owner == DistRank())
             value = GetLocalRealPart(this->LocalRow(i), this->LocalCol(j));
         mpi::Broadcast(value, owner, DistComm());
     }
@@ -395,16 +399,16 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if(!grid_->InGrid())
+      if (!grid_->InGrid())
           LogicError("Get should only be called in-grid");
-   )
+    )
     Base<T> value;
-    if(IsComplex<T>::value)
+    if (IsComplex<T>::value)
     {
-        if(CrossRank() == this->Root())
+        if (CrossRank() == this->Root())
         {
             const int owner = this->Owner(i, j);
-            if(owner == DistRank())
+            if (owner == DistRank())
                 value = GetLocalRealPart(this->LocalRow(i), this->LocalCol(j));
             mpi::Broadcast(value, owner, DistComm());
         }
@@ -421,7 +425,7 @@ DM::Set(Int i, Int j, T value)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if(this->IsLocal(i,j))
+    if (this->IsLocal(i,j))
         SetLocal(this->LocalRow(i), this->LocalCol(j), value);
 }
 
@@ -437,7 +441,7 @@ DM::SetRealPart(Int i, Int j, Base<T> value)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if(this->IsLocal(i,j))
+    if (this->IsLocal(i,j))
         SetLocalRealPart(this->LocalRow(i), this->LocalCol(j), value);
 }
 
@@ -452,7 +456,7 @@ void DM::SetImagPart(Int i, Int j, Base<T> value)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if(this->IsLocal(i,j))
+    if (this->IsLocal(i,j))
         SetLocalImagPart(this->LocalRow(i), this->LocalCol(j), value);
 }
 
@@ -467,7 +471,7 @@ DM::Update(Int i, Int j, T value)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if(this->IsLocal(i,j))
+    if (this->IsLocal(i,j))
         UpdateLocal(this->LocalRow(i), this->LocalCol(j), value);
 }
 
@@ -483,7 +487,7 @@ DM::UpdateRealPart(Int i, Int j, Base<T> value)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if(this->IsLocal(i,j))
+    if (this->IsLocal(i,j))
         UpdateLocalRealPart(this->LocalRow(i), this->LocalCol(j), value);
 }
 
@@ -498,7 +502,7 @@ void DM::UpdateImagPart(Int i, Int j, Base<T> value)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if(this->IsLocal(i,j))
+    if (this->IsLocal(i,j))
         UpdateLocalImagPart(this->LocalRow(i), this->LocalCol(j), value);
 }
 
@@ -513,7 +517,7 @@ DM::MakeReal(Int i, Int j)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if(this->IsLocal(i,j))
+    if (this->IsLocal(i,j))
         MakeLocalReal(this->LocalRow(i), this->LocalCol(j));
 }
 
@@ -523,7 +527,7 @@ DM::Conjugate(Int i, Int j)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if(this->IsLocal(i,j))
+    if (this->IsLocal(i,j))
         ConjugateLocal(this->LocalRow(i), this->LocalCol(j));
 }
 
@@ -545,7 +549,7 @@ EL_NO_RELEASE_EXCEPT
     // NOTE: We cannot always simply locally update since it can (and has)
     //       lead to the processors in the same redundant communicator having
     //       different results after ProcessQueues()
-    if(RedundantSize() == 1 && this->IsLocal(entry.i,entry.j))
+    if (RedundantSize() == 1 && this->IsLocal(entry.i,entry.j))
         UpdateLocal(this->LocalRow(entry.i), this->LocalCol(entry.j), entry.value);
     else
         remoteUpdates_.push_back(entry);
@@ -572,7 +576,7 @@ void DM::ProcessQueues(bool includeViewers)
     // ====================
     mpi::Comm comm;
     vector<int> sendCounts, owners(totalSend);
-    if(includeViewers)
+    if (includeViewers)
     {
         comm = grid.ViewingComm();
         const int viewingSize = mpi::Size(grid.ViewingComm());
@@ -589,7 +593,7 @@ void DM::ProcessQueues(bool includeViewers)
     }
     else
     {
-        if(!this->Participating())
+        if (!this->Participating())
             return;
         comm = grid.VCComm();
         const int vcSize = mpi::Size(grid.VCComm());
@@ -656,7 +660,7 @@ void DM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     mpi::Comm comm;
     int commSize;
     vector<int> recvCounts, owners(totalRecv);
-    if(includeViewers)
+    if (includeViewers)
     {
         comm = grid.ViewingComm();
         commSize = mpi::Size(comm);
@@ -675,7 +679,7 @@ void DM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     }
     else
     {
-        if(!this->Participating())
+        if (!this->Participating())
             return;
         comm = grid.VCComm();
         commSize = mpi::Size(comm);

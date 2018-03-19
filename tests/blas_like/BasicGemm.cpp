@@ -82,9 +82,16 @@ void BasicInstrumentedGemm
 }
 
 template <typename T>
-El::Base<T> tomdiff(T,T) { return 0; }
+El::Base<T> tomdiff(T,T) noexcept { return 0; }
 
-float tomdiff(float x, float y) { return x-y; }
+float tomdiff(float x, float y) noexcept { return x-y; }
+double tomdiff(double x, double y) noexcept { return x-y; }
+
+template <typename T>
+El::Base<T> tolerance() noexcept { return El::Base<T>(0); }
+
+template <> float tolerance<float>() noexcept { return 1e-3f; }
+template <> double tolerance<double>() noexcept { return 1e-10f; }
 
 template<typename T, El::Device D>
 void TestGemm
@@ -119,13 +126,6 @@ void TestGemm
         El::Output("Sequential: ",gemmTime," secs (",gFlops," GFlop/s)");
         timer.Start();
 
-        El::mpi::Barrier(grid.Comm());
-        if (grid.Rank() == 0)
-        {
-            const double rootWaitTime = timer.Stop();
-            El::Output("Root waited for ",rootWaitTime," seconds");
-        }
-
         // Verify things
         if (D == El::Device::GPU)
         {
@@ -143,7 +143,8 @@ void TestGemm
             for (El::Int row = El::Int{0}; row < C_cpu.Height(); ++row)
             {
                 for (El::Int col = El::Int{0}; col < C_cpu.Width(); ++col)
-                    if (tomdiff(C_cpu(row,col),C_computed(row,col)) > 1e-3)
+                    if (tomdiff(C_cpu(row,col),
+                                C_computed(row,col)) > tolerance<T>())
                     {
                         first_problem_row = row;
                         first_problem_col = col;
@@ -164,11 +165,19 @@ void TestGemm
         }
 
     }
+    El::mpi::Barrier(grid.Comm());
+    if (grid.Rank() == 0)
+    {
+        const double rootWaitTime = timer.Stop();
+        El::Output("Root waited for ",rootWaitTime," seconds");
+    }
 
     El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,D> A(grid), B(grid), C(grid);
     El::Uniform(A, m, k);
     El::Uniform(B, k, n);
     El::Uniform(C, m, n);
+
+    El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,El::Device::CPU> C_cpu{C};
 
     El::mpi::Barrier(grid.Comm());
     if (grid.Rank() == 0)
@@ -176,10 +185,55 @@ void TestGemm
     if (instrument)
         BasicInstrumentedGemm(alpha, A, B, beta, C);
     else
+    {
+        El::Output("Performing non-instrumented Gemm");
         El::Gemm(El::NORMAL, El::NORMAL, alpha, A, B, beta, C);
+    }
+
     El::mpi::Barrier(grid.Comm());
     if (grid.Rank() == 0)
         El::Output("Distributed Gemm: ",timer.Stop()," secs");
+
+    // Verify things
+    if (D == El::Device::GPU)
+    {
+        El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,El::Device::CPU>
+            A_cpu(A), B_cpu(B), C_computed(C);
+
+        El::Gemm(El::NORMAL, El::NORMAL, alpha, A_cpu, B_cpu, beta, C_cpu);
+
+        bool error_occurred = false;
+        El::Int first_problem_row = 41389, first_problem_col = 41389;
+        if (C_cpu.Height() != C_computed.Height())
+            error_occurred = true;
+        if (C_cpu.Width() != C_cpu.Width())
+            error_occurred = true;
+
+        for (El::Int row = El::Int{0}; row < C_cpu.Height(); ++row)
+        {
+            for (El::Int col = El::Int{0}; col < C_cpu.Width(); ++col)
+                if (tomdiff(C_cpu.Matrix()(row,col),
+                            C_computed.Matrix()(row,col)) > tolerance<T>())
+                {
+                    first_problem_row = row;
+                    first_problem_col = col;
+                    error_occurred = true;;
+                    break;
+                }
+            if (error_occurred)
+                break;
+        }
+
+        if (error_occurred)
+            El::RuntimeError("Bad GEMM. Problem: C_cpu(",
+                             first_problem_row, ",",
+                             first_problem_col, ") = ",
+                             C_cpu.Matrix()(first_problem_row, first_problem_col),
+                             "; C_gpu(i,j) = ",
+                             C_computed.Matrix()(first_problem_row, first_problem_col));
+    }
+
+
 }
 
 int main(int argc, char *argv[])

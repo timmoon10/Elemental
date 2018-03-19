@@ -47,6 +47,16 @@ public:
     DistMatrix(const type& A);
     DistMatrix(const absType& A);
     DistMatrix(const elemType& A);
+
+    // Copy from a different device
+    template <Device Dev2>
+    DistMatrix(DistMatrix<Ring,MC,MR,ELEMENT,Dev2> const& A)
+        : ElementalMatrix<Ring>{A.Grid()},
+        matrix_{A.matrix_},
+        remotePulls_{A.remotePulls_},
+        remoteUpdates_{A.remoteUpdates_}
+    {}
+
     template<Dist colDist,Dist rowDist>
     DistMatrix(const DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev>& A);
     template<Dist colDist,Dist rowDist>
