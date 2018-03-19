@@ -219,19 +219,16 @@ inline void AbstractMatrix<T>::Empty_(bool freeMemory)
     do_empty_(freeMemory);
 }
 
-
 template <typename T>
 inline void AbstractMatrix<T>::Resize(Int height, Int width)
 {
     Resize(height, width, Max(leadingDimension_,height));
 }
 
-inline void break_on_me() {}
 template <typename T>
 inline void AbstractMatrix<T>::Resize(
     Int height, Int width, Int leadingDimension)
 {
-    break_on_me();
     EL_DEBUG_CSE
 #ifndef EL_RELEASE
         AssertValidDimensions(height, width, leadingDimension);
@@ -262,7 +259,6 @@ template <typename T>
 inline void AbstractMatrix<T>::Resize_(
     Int height, Int width, Int leadingDimension)
 {
-    break_on_me();
     this->SetSize_(height, width, leadingDimension);
     do_resize_();
 }
