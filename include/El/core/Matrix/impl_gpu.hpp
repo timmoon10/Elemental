@@ -624,8 +624,7 @@ Ring& Matrix<Ring, Device::GPU>::operator()(Int i, Int j)
     EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE;
-    EL_DEBUG_ONLY(
-        AssertValidEntry(i, j);
+    EL_DEBUG_ONLY(AssertValidEntry(i, j));
         if (this->Locked())
             LogicError("Cannot modify data of locked matrices");
         )
