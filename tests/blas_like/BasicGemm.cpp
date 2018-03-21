@@ -209,11 +209,11 @@ void TestGemm
         if (C_cpu.Width() != C_cpu.Width())
             error_occurred = true;
 
-        for (El::Int row = El::Int{0}; row < C_cpu.Height(); ++row)
+        for (El::Int row = El::Int{0}; row < C_cpu.LocalHeight(); ++row)
         {
-            for (El::Int col = El::Int{0}; col < C_cpu.Width(); ++col)
-                if (tomdiff(C_cpu.Matrix()(row,col),
-                            C_computed.Matrix()(row,col)) > tolerance<T>())
+            for (El::Int col = El::Int{0}; col < C_cpu.LocalWidth(); ++col)
+                if (tomdiff(C_cpu.GetLocal(row,col),
+                            C_computed.GetLocal(row,col)) > tolerance<T>())
                 {
                     first_problem_row = row;
                     first_problem_col = col;
