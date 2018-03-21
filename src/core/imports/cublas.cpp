@@ -18,19 +18,30 @@ class cuBLAS_Manager
 {
     cublasHandle_t cublas_handle_;
 public:
-    operator cublasHandle_t() { return cublas_handle_; }
+    operator cublasHandle_t()
+    {
+        if (!initialized_)
+            initialize();
+        return cublas_handle_;
+    }
 
-    cuBLAS_Manager()
+    cuBLAS_Manager() = default;
+
+    void initialize()
     {
         if (cublasCreate(&cublas_handle_) != CUBLAS_STATUS_SUCCESS)
             RuntimeError("cublasCreate() Error!");
+        initialized_ = true;
     }
 
     ~cuBLAS_Manager()
     {
-        if (cublasDestroy(cublas_handle_) != CUBLAS_STATUS_SUCCESS)
-            std::terminate();
+        if (initialized_)
+            if (cublasDestroy(cublas_handle_) != CUBLAS_STATUS_SUCCESS)
+                std::terminate();
     }
+
+    bool initialized_ = false;
 };// class cuBLAS_Manager
 
 inline cublasOperation_t CharTocuBLASOp(char c)
@@ -54,8 +65,37 @@ inline cublasOperation_t CharTocuBLASOp(char c)
 
 }// namespace <anon>
 
-  //cuBLAS_Manager manager_;
+cuBLAS_Manager manager_;
 
+//
+// BLAS 1
+//
+#define ADD_AXPY_IMPL(ScalarType, TypeChar)             \
+    void Axpy(int n, ScalarType const& alpha,           \
+              ScalarType const* X, int incx,            \
+              ScalarType* Y, int incy)                  \
+    {                                                   \
+        auto ret = cublas ## TypeChar ## axpy(          \
+            manager_, n, &alpha, X, incx, Y, incy);     \
+        if (ret != CUBLAS_STATUS_SUCCESS)               \
+            RuntimeError("cuBLAS::Axpy failed!");       \
+        cudaThreadSynchronize(); /* FIXME */            \
+    }
+
+#define ADD_COPY_IMPL(ScalarType, TypeChar)             \
+    void Copy(int n, ScalarType const* X, int incx,     \
+              ScalarType* Y, int incy)                  \
+    {                                                   \
+        auto ret = cublas ## TypeChar ## copy(          \
+            manager_, n, X, incx, Y, incy);             \
+        if (ret != CUBLAS_STATUS_SUCCESS)               \
+            RuntimeError("cuBLAS::Axpy failed!");       \
+        cudaThreadSynchronize(); /* FIXME */            \
+    }
+
+//
+// BLAS 3
+//
 #define ADD_GEMM_IMPL(ScalarType, TypeChar)                             \
     void Gemm(                                                          \
         char transA, char transB, int m, int n, int k,                  \
@@ -65,7 +105,6 @@ inline cublasOperation_t CharTocuBLASOp(char c)
         ScalarType const& beta,                                         \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-      cuBLAS_Manager manager_; \
         auto ret = cublas ## TypeChar ## gemm(                          \
             manager_,                                                   \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
@@ -74,6 +113,15 @@ inline cublasOperation_t CharTocuBLASOp(char c)
             RuntimeError("cuBLAS::Gemm failed!");                       \
         cudaThreadSynchronize();/* FIXME */                             \
     }
+
+// BLAS 1
+ADD_AXPY_IMPL(float, S)
+ADD_AXPY_IMPL(double, D)
+
+ADD_COPY_IMPL(float, S)
+ADD_COPY_IMPL(double, D)
+
+// BLAS 3
 ADD_GEMM_IMPL(float, S)
 ADD_GEMM_IMPL(double, D)
 
