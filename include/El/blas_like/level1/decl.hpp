@@ -91,12 +91,12 @@ void Axpy
 namespace axpy {
 namespace util {
 
-template<typename Ring>
+template<typename Ring,Device=Device::CPU>
 void InterleaveMatrixUpdate
 ( Ring alpha, Int localHeight, Int localWidth,
   const Ring* A, Int colStrideA, Int rowStrideA,
         Ring* B, Int colStrideB, Int rowStrideB );
-template<typename Ring>
+template<typename Ring,Device=Device::CPU>
 void UpdateWithLocalData
 ( Ring alpha, const ElementalMatrix<Ring>& A, DistMatrix<Ring,STAR,STAR>& B );
 
@@ -106,7 +106,7 @@ void UpdateWithLocalData
 // AxpyContract
 // ============
 
-template<typename Ring>
+template<typename Ring,Device D=Device::CPU>
 void AxpyContract
 ( Ring alpha, const ElementalMatrix<Ring>& A, ElementalMatrix<Ring>& B );
 template<typename Ring>
@@ -392,25 +392,25 @@ void InterleaveMatrix
   const T* A, Int colStrideA, Int rowStrideA,
         T* B, Int colStrideB, Int rowStrideB );
 
-template<typename T>
+template<typename T,Device=Device::CPU>
 void ColStridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
 template<typename T>
-void ColStridedColumPack
+void ColStridedColumnPack
 ( Int height,
   Int colAlign, Int colStride,
   const T* A,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void ColStridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
-template<typename T>
+template<typename T, Device = Device::CPU>
 void PartialColStridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
@@ -426,7 +426,7 @@ void PartialColStridedColumnPack
   Int colShiftA,
   const T* A,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void PartialColStridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,
@@ -443,7 +443,7 @@ void PartialColStridedColumnUnpack
   const T* APortions, Int portionSize,
         T* B );
 
-template<typename T>
+template<typename T,Device = Device::CPU>
 void RowStridedPack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -455,7 +455,7 @@ void RowStridedUnpack
   Int rowAlign, Int rowStride,
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void PartialRowStridedPack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -463,7 +463,7 @@ void PartialRowStridedPack
   Int rowShiftA,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void PartialRowStridedUnpack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -472,14 +472,14 @@ void PartialRowStridedUnpack
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
 
-template<typename T>
+template<typename T,Device=Device::CPU>
 void StridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   Int rowAlign, Int rowStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void StridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,

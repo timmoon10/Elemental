@@ -51,11 +51,12 @@ public:
     // Copy from a different device
     template <Device Dev2>
     DistMatrix(DistMatrix<Ring,MC,MR,ELEMENT,Dev2> const& A)
-        : ElementalMatrix<Ring>{A.Grid()},
-        matrix_{A.matrix_},
-        remotePulls_{A.remotePulls_},
-        remoteUpdates_{A.remoteUpdates_}
-    {}
+        : ElementalMatrix<Ring>{A.Grid()}
+    {
+        this->Matrix().FixSize();
+        this->SetShifts();
+        *this = A;
+    }
 
     template<Dist colDist,Dist rowDist>
     DistMatrix(const DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev>& A);
@@ -110,6 +111,10 @@ public:
     type& operator=(const DistMatrix<Ring,CIRC,CIRC,ELEMENT,Dev>& A);
     template<Dist colDist,Dist rowDist>
     type& operator=(const DistMatrix<Ring,colDist,rowDist,BLOCK,Dev>& A);
+
+    // Copy from a different device
+    template <Device Dev2>
+    type& operator=(DistMatrix<Ring,MC,MR,ELEMENT,Dev2> const& A);
 
     // Move assignment
     // ---------------

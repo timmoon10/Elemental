@@ -22,15 +22,15 @@ void GeneralPurpose
 ( const AbstractDistMatrix<T>& A,
         AbstractDistMatrix<T>& B );
 
-template<typename T>
+template<typename T,Device D=Device::CPU>
 void Exchange
 ( const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,
   int sendRank, int recvRank, mpi::Comm comm );
 
-template<typename T,Dist U,Dist V,Device D>
-void Translate( DistMatrix<T,U,V,ELEMENT,D> const& A,
-                DistMatrix<T,U,V,ELEMENT,D>& B );
+template<typename T,Dist U,Dist V,Device D1, Device D2>
+void Translate( DistMatrix<T,U,V,ELEMENT,D1> const& A,
+                DistMatrix<T,U,V,ELEMENT,D2>& B );
 template<typename T,Dist U,Dist V>
 void Translate
 ( const DistMatrix<T,U,V,BLOCK>& A, DistMatrix<T,U,V,BLOCK>& B );
@@ -43,9 +43,10 @@ void TranslateBetweenGrids
 ( DistMatrix<T,STAR,STAR,ELEMENT,D> const& A,
   DistMatrix<T,STAR,STAR,ELEMENT,D>& B );
 // The fallback case that simply throws an exception
-template<typename T,Dist U,Dist V,Device D>
+template<typename T,Dist U,Dist V,Device D1,Device D2>
 void TranslateBetweenGrids
-( const DistMatrix<T,U,V,ELEMENT,D>& A, DistMatrix<T,U,V,ELEMENT,D>& B );
+( const DistMatrix<T,U,V,ELEMENT,D1>& A,
+  DistMatrix<T,U,V,ELEMENT,D2>& B );
 
 // NOTE: Only instantiated for (U,V)=(MC,MR) and (U,V)=(MR,MC)
 template<typename T,Dist U,Dist V,Device D>

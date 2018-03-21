@@ -15,11 +15,42 @@ namespace util {
 
 namespace details
 {
-template <typename T, Device D>
-struct Impl;
+template <typename T, Device D, bool=IsDeviceValidType_v<T,D>()>
+struct Impl
+{
+    template <typename... Ts>
+    static void InterleaveMatrix(Ts&&...)
+    {
+        LogicError("copy::util::Bad device/type combination.");
+    }
+
+    template <typename... Ts>
+    static void RowStridedPack(Ts&&...)
+    {
+        LogicError("copy::util::Bad device/type combination.");
+    }
+
+    template <typename... Ts>
+    static void RowStridedUnpack(Ts&&...)
+    {
+        LogicError("copy::util::Bad device/type combination.");
+    }
+
+    template <typename... Ts>
+    static void PartialRowStridedPack(Ts&&...)
+    {
+        LogicError("copy::util::Bad device/type combination.");
+    }
+
+    template <typename... Ts>
+    static void PartialRowStridedUnpack(Ts&&...)
+    {
+        LogicError("copy::util::Bad device/type combination.");
+    }
+};
 
 template <typename T>
-struct Impl<T, Device::CPU>
+struct Impl<T, Device::CPU, true>
 {
     static void InterleaveMatrix(
         Int height, Int width,
@@ -46,6 +77,22 @@ struct Impl<T, Device::CPU>
         }
     }
 
+    static void RowStridedPack(Int height, Int width,
+                               Int rowAlign, Int rowStride,
+                               T const* A,Int ALDim,
+                               T* BPortions, Int portionSize)
+    {
+        for (Int k=0; k<rowStride; ++k)
+        {
+            const Int rowShift = Shift_(k, rowAlign, rowStride);
+            const Int localWidth = Length_(width, rowShift, rowStride);
+            lapack::Copy
+                ('F', height, localWidth,
+                 &A[rowShift*ALDim],        rowStride*ALDim,
+                 &BPortions[k*portionSize], height);
+        }
+    }
+
     static void RowStridedUnpack
     (Int height, Int width,
       Int rowAlign, Int rowStride,
@@ -62,11 +109,54 @@ struct Impl<T, Device::CPU>
                  &B[rowShift*BLDim],        rowStride*BLDim);
         }
     }
+
+    static void PartialRowStridedPack
+    (Int height, Int width,
+     Int rowAlign, Int rowStride,
+     Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
+     Int rowShiftA,
+     const T* A,         Int ALDim,
+     T* BPortions, Int portionSize)
+    {
+        for (Int k=0; k<rowStrideUnion; ++k)
+        {
+            const Int rowShift =
+                Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
+            const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
+            const Int localWidth = Length_(width, rowShift, rowStride);
+            lapack::Copy
+                ('F', height, localWidth,
+                 &A[rowOffset*ALDim],       rowStrideUnion*ALDim,
+                 &BPortions[k*portionSize], height);
+        }
+    }
+
+    static void PartialRowStridedUnpack
+    (Int height, Int width,
+     Int rowAlign, Int rowStride,
+     Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
+     Int rowShiftB,
+     const T* APortions, Int portionSize,
+     T* B, Int BLDim)
+    {
+        for (Int k=0; k<rowStrideUnion; ++k)
+        {
+            const Int rowShift =
+                Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
+            const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
+            const Int localWidth = Length_(width, rowShift, rowStride);
+            lapack::Copy
+                ('F', height, localWidth,
+                 &APortions[k*portionSize], height,
+                 &B[rowOffset*BLDim],       rowStrideUnion*BLDim);
+        }
+    }
+
 };
 
 #ifdef HYDROGEN_HAVE_CUDA
 template <typename T>
-struct Impl<T, Device::GPU>
+struct Impl<T, Device::GPU, true>
 {
     static void InterleaveMatrix(Int height, Int width,
                      T const* A, Int colStrideA, Int rowStrideA,
@@ -79,7 +169,41 @@ struct Impl<T, Device::GPU>
                          cudaMemcpyDeviceToDevice);
         }
         else
-            LogicError("Not yet implemented");
+        {
+            // FIXME
+            for (Int j = 0; j < width; ++j)
+                cublas::Copy(height,
+                             A+j*rowStrideA, colStrideA,
+                             B+j*rowStrideB, colStrideB);
+        }
+    }
+
+    static void RowStridedPack(Int height, Int width,
+                               Int rowAlign, Int rowStride,
+                               T const* A,Int ALDim,
+                               T* BPortions, Int portionSize)
+    {
+        {
+            cudaError_t error = cudaGetLastError();
+            if (error != cudaSuccess)
+                RuntimeError("Previously existing error: ",
+                             cudaGetErrorString(error));
+        }
+        for (Int k=0; k<rowStride; ++k)
+        {
+            const Int rowShift = Shift_(k, rowAlign, rowStride);
+            const Int localWidth = Length_(width, rowShift, rowStride);
+
+            auto error =
+                cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
+                                  A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
+                                  height*sizeof(T), localWidth,
+                                  cudaMemcpyDeviceToDevice);
+            if (error != cudaSuccess)
+                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
+                             cudaGetErrorString(error));
+        }
+        cudaThreadSynchronize();
     }
 
     static void RowStridedUnpack(Int height, Int width,
@@ -99,15 +223,64 @@ struct Impl<T, Device::GPU>
             const Int localWidth = Length_(width, rowShift, rowStride);
 
             auto error =
-                cudaMemcpy2D(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
-                             APortions+k*portionSize, height*sizeof(T),
-                             height*sizeof(T), localWidth,
-                             cudaMemcpyDeviceToDevice);
+                cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
+                                  APortions+k*portionSize, height*sizeof(T),
+                                  height*sizeof(T), localWidth,
+                                  cudaMemcpyDeviceToDevice);
             if (error != cudaSuccess)
                 RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
                              cudaGetErrorString(error));
         }
         cudaThreadSynchronize();
+    }
+
+    static void PartialRowStridedPack
+    (Int height, Int width,
+     Int rowAlign, Int rowStride,
+     Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
+     Int rowShiftA,
+     const T* A,         Int ALDim,
+     T* BPortions, Int portionSize)
+    {
+        for (Int k=0; k<rowStrideUnion; ++k)
+        {
+            const Int rowShift =
+                Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
+            const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
+            const Int localWidth = Length_(width, rowShift, rowStride);
+
+            auto error = cudaMemcpy2DAsync(
+                BPortions + k*portionSize, height*sizeof(T),
+                A + rowOffset*ALDim, rowStrideUnion*ALDim*sizeof(T),
+                height*sizeof(T), localWidth,
+                cudaMemcpyDeviceToDevice);
+            if (error != cudaSuccess)
+                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
+                             cudaGetErrorString(error));
+        }
+        cudaThreadSynchronize();
+    }
+
+    static void PartialRowStridedUnpack
+    (Int height, Int width,
+     Int rowAlign, Int rowStride,
+     Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
+     Int rowShiftB,
+     const T* APortions, Int portionSize,
+     T* B, Int BLDim)
+    {
+        for (Int k=0; k<rowStrideUnion; ++k)
+        {
+            const Int rowShift =
+                Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
+            const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
+            const Int localWidth = Length_(width, rowShift, rowStride);
+            cudaMemcpy2DAsync(
+                B + rowOffset*BLDim, rowStrideUnion*BLDim*sizeof(T),
+                APortions + k*portionSize, height*sizeof(T),
+                height*sizeof(T), localWidth,
+                cudaMemcpyDeviceToDevice);
+        }
     }
 };
 #endif // HYDROGEN_HAVE_CUDA
@@ -125,7 +298,7 @@ void InterleaveMatrix
                                          B, colStrideB, rowStrideB);
 }
 
-template<typename T>
+template<typename T,Device D>
 void ColStridedPack
 (Int height, Int width,
   Int colAlign, Int colStride,
@@ -136,13 +309,14 @@ void ColStridedPack
     {
         const Int colShift = Shift_(k, colAlign, colStride);
         const Int localHeight = Length_(height, colShift, colStride);
-        InterleaveMatrix
+        InterleaveMatrix<T,D>
         (localHeight, width,
           &A[colShift],              colStride, ALDim,
           &BPortions[k*portionSize], 1,         localHeight);
     }
 }
 
+// FIXME: GPU IMPL
 // TODO(poulson): Use this routine
 template<typename T>
 void ColStridedColumnPack
@@ -161,7 +335,7 @@ void ColStridedColumnPack
     }
 }
 
-template<typename T>
+template<typename T,Device D>
 void ColStridedUnpack
 (Int height, Int width,
   Int colAlign, Int colStride,
@@ -172,7 +346,7 @@ void ColStridedUnpack
     {
         const Int colShift = Shift_(k, colAlign, colStride);
         const Int localHeight = Length_(height, colShift, colStride);
-        InterleaveMatrix
+        InterleaveMatrix<T,D>
         (localHeight, width,
           &APortions[k*portionSize], 1,         localHeight,
           &B[colShift],              colStride, BLDim);
@@ -219,7 +393,7 @@ void BlockedColStridedUnpack
     }
 }
 
-template<typename T>
+template <typename T,Device D>
 void PartialColStridedPack
 (Int height, Int width,
   Int colAlign, Int colStride,
@@ -234,10 +408,10 @@ void PartialColStridedPack
             Shift_(colRankPart+k*colStridePart, colAlign, colStride);
         const Int colOffset = (colShift-colShiftA) / colStridePart;
         const Int localHeight = Length_(height, colShift, colStride);
-        InterleaveMatrix
+        InterleaveMatrix<T,D>
         (localHeight, width,
-          &A[colOffset],             colStrideUnion, ALDim,
-          &BPortions[k*portionSize], 1,              localHeight);
+          A+colOffset,             colStrideUnion, ALDim,
+          BPortions+k*portionSize, 1,              localHeight);
     }
 }
 
@@ -262,7 +436,7 @@ void PartialColStridedColumnPack
     }
 }
 
-template<typename T>
+template<typename T,Device D>
 void PartialColStridedUnpack
 (Int height, Int width,
   Int colAlign, Int colStride,
@@ -277,7 +451,7 @@ void PartialColStridedUnpack
             Shift_(colRankPart+k*colStridePart, colAlign, colStride);
         const Int colOffset = (colShift-colShiftB) / colStridePart;
         const Int localHeight = Length_(height, colShift, colStride);
-        InterleaveMatrix
+        InterleaveMatrix<T,D>
         (localHeight, width,
           &APortions[k*portionSize], 1,              localHeight,
           &B[colOffset],             colStrideUnion, BLDim);
@@ -305,22 +479,15 @@ void PartialColStridedColumnUnpack
     }
 }
 
-template<typename T>
+template<typename T,Device D>
 void RowStridedPack
 (Int height, Int width,
   Int rowAlign, Int rowStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize)
 {
-    for (Int k=0; k<rowStride; ++k)
-    {
-        const Int rowShift = Shift_(k, rowAlign, rowStride);
-        const Int localWidth = Length_(width, rowShift, rowStride);
-        lapack::Copy
-        ('F', height, localWidth,
-          &A[rowShift*ALDim],        rowStride*ALDim,
-          &BPortions[k*portionSize], height);
-    }
+    details::Impl<T,D>::RowStridedPack(height, width, rowAlign, rowStride,
+                                       A, ALDim, BPortions, portionSize);
 }
 
 template<typename T,Device D>
@@ -444,7 +611,7 @@ void BlockedColFilter
     }
 }
 
-template<typename T>
+template<typename T,Device D>
 void PartialRowStridedPack
 (Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -453,19 +620,13 @@ void PartialRowStridedPack
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize)
 {
-    for (Int k=0; k<rowStrideUnion; ++k)
-    {
-        const Int rowShift =
-            Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
-        const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
-        const Int localWidth = Length_(width, rowShift, rowStride);
-        lapack::Copy
-        ('F', height, localWidth,
-          &A[rowOffset*ALDim],       rowStrideUnion*ALDim,
-          &BPortions[k*portionSize], height);
-    }
+    details::Impl<T,D>::PartialRowStridedPack(
+        height, width, rowAlign, rowStride,
+        rowStrideUnion, rowStridePart, rowRankPart, rowShiftA,
+        A, ALDim, BPortions, portionSize);
 }
-template<typename T>
+
+template<typename T,Device D>
 void PartialRowStridedUnpack
 (Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -474,21 +635,14 @@ void PartialRowStridedUnpack
   const T* APortions, Int portionSize,
         T* B,         Int BLDim)
 {
-    for (Int k=0; k<rowStrideUnion; ++k)
-    {
-        const Int rowShift =
-            Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
-        const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
-        const Int localWidth = Length_(width, rowShift, rowStride);
-        lapack::Copy
-        ('F', height, localWidth,
-          &APortions[k*portionSize], height,
-          &B[rowOffset*BLDim],       rowStrideUnion*BLDim);
-    }
+    details::Impl<T,D>::PartialRowStridedUnpack(
+        height, width, rowAlign, rowStride,
+        rowStrideUnion, rowStridePart, rowRankPart, rowShiftB,
+        APortions, portionSize, B, BLDim);
 }
 
 // NOTE: This is implicitly column-major
-template<typename T>
+template<typename T,Device D>
 void StridedPack
 (Int height, Int width,
   Int colAlign, Int colStride,
@@ -504,7 +658,7 @@ void StridedPack
         {
             const Int colShift = Shift_(k, colAlign, colStride);
             const Int localHeight = Length_(height, colShift, colStride);
-            InterleaveMatrix
+            InterleaveMatrix<T,D>
             (localHeight, localWidth,
               &A[colShift+rowShift*ALDim], colStride, rowStride*ALDim,
               &BPortions[(k+l*colStride)*portionSize], 1, localHeight);
@@ -513,7 +667,7 @@ void StridedPack
 }
 
 // NOTE: This is implicitly column-major
-template<typename T>
+template<typename T,Device D>
 void StridedUnpack
 (Int height, Int width,
   Int colAlign, Int colStride,
@@ -529,7 +683,7 @@ void StridedUnpack
         {
             const Int colShift = Shift_(k, colAlign, colStride);
             const Int localHeight = Length_(height, colShift, colStride);
-            InterleaveMatrix
+            InterleaveMatrix<T,D>
             (localHeight, localWidth,
               &APortions[(k+l*colStride)*portionSize], 1, localHeight,
               &B[colShift+rowShift*BLDim], colStride, rowStride*BLDim);

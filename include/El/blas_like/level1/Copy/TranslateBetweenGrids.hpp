@@ -13,15 +13,18 @@ namespace El {
 namespace copy {
 
 // FIXME (trb 03/06/18) -- Need to do the GPU impl
-template<typename T,Dist U,Dist V,Device D>
+template<typename T,Dist U,Dist V,Device D1,Device D2>
 void TranslateBetweenGrids
-( DistMatrix<T,U,V,ELEMENT,D> const& A,
-  DistMatrix<T,U,V,ELEMENT,D>& B )
+( DistMatrix<T,U,V,ELEMENT,D1> const& A,
+  DistMatrix<T,U,V,ELEMENT,D2>& B )
 {
     EL_DEBUG_CSE
 
-    if (D == Device::GPU)
+    if (D1 == Device::GPU)
         LogicError("GPU not implemented.");
+
+    if (D1 != D2)
+        LogicError("Mixed-device implementation not implemented.");
 
     GeneralPurpose( A, B );
 }

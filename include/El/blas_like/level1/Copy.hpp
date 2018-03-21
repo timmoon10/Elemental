@@ -37,6 +37,14 @@ void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
     }
 }
 
+template<typename T, Device D1, Device D2>
+void Copy(const Matrix<T,D1>& A, Matrix<T,D2>& B)
+{
+    // FIXME (trb 03/21/2018)
+    Matrix<T,D2> Acpy(A);
+    Copy(Acpy, B);
+}
+
 template<typename T>
 void Copy( const Matrix<T>& A, Matrix<T>& B )
 {
@@ -92,32 +100,14 @@ void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
     if (error != cudaSuccess)
         RuntimeError("Previously existing error!");
 
-    // Copy all entries if memory is contiguous. Otherwise copy each
-    // column.
-    if( ldA == height && ldB == height )
-    {
-        if ((error = cudaMemcpy(BBuf, ABuf, height*width*sizeof(T),
-                                cudaMemcpyDeviceToDevice)) != cudaSuccess)
-        {
-            RuntimeError("cudaMemcpy error in Copy():\n\n",cudaGetErrorString(error));
-        }
-    }
-    else
-    {
-        // FIXME: Make one kernel
-        for( Int j=0; j<width; ++j )
-        {
-            if ((error = cudaMemcpy(BBuf + j*ldB, ABuf + j*ldA, height*sizeof(T),
-                                    cudaMemcpyDeviceToDevice)) != cudaSuccess)
-            {
-                RuntimeError("cudaMemcpy error in Copy():\n\n",
-                             "BBuf = ", BBuf, "\nABuf = ", ABuf, "\n\n",
-                             cudaGetErrorName(error), " ",
-                             cudaGetErrorString(error));
-            }
-        }
-    }
+    error = cudaMemcpy2D(BBuf, ldB*sizeof(T),
+                         ABuf, ldA*sizeof(T),
+                         height*sizeof(T), width,
+                         cudaMemcpyDeviceToDevice);
 
+    if (error != cudaSuccess)
+        RuntimeError("cudaMemcpy error in Copy():\n\n",
+                     cudaGetErrorString(error));
 }
 
 template<typename S,typename T,
@@ -142,7 +132,10 @@ template<typename S,typename T,Dist U,Dist V,Device D,
 void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
-    if( A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V )
+    if (A.GetLocalDevice() != D)
+        LogicError("Bad device.");
+    if (A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V
+        && A.GetLocalDevice() == D)
     {
         if( !B.RootConstrained() )
             B.SetRoot( A.Root() );

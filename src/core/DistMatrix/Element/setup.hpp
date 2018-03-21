@@ -79,6 +79,9 @@ DM::DistMatrix(const AbstractDistMatrix<T>& A)
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
+
+    if (A.GetLocalDevice() != D)
+        LogicError("No cross-device construction yet!");
     if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
@@ -101,6 +104,8 @@ DM::DistMatrix(const ElementalMatrix<T>& A)
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
+    if (A.GetLocalDevice() != D)
+        LogicError("No cross-device construction yet!");
     if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
@@ -218,6 +223,9 @@ template <typename T, Device D>
 DM& DM::operator=(const AbstractDistMatrix<T>& A)
 {
     EL_DEBUG_CSE;
+    if (A.GetLocalDevice() != D)
+        LogicError("No cross-device construction yet!");
+
     // TODO: Use either AllGather or Gather if the distribution of this matrix
     //       is respectively either (STAR,STAR) or (CIRC,CIRC)
 #define GUARD(CDIST,RDIST,WRAP,DEVICE)                                        \

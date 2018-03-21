@@ -89,29 +89,29 @@ void Cannon_NN
 }
 
 // Normal Normal Gemm that avoids communicating the matrix A
-template<typename T>
-void SUMMA_NNA
+template <Device D, typename T, typename=EnableIf<IsDeviceValidType<T,D>>>
+void SUMMA_NNA_impl
 (T alpha,
-  const AbstractDistMatrix<T>& APre,
-  const AbstractDistMatrix<T>& BPre,
-        AbstractDistMatrix<T>& CPre)
+ AbstractDistMatrix<T> const& APre,
+ AbstractDistMatrix<T> const& BPre,
+ AbstractDistMatrix<T>& CPre)
 {
     EL_DEBUG_CSE
     const Int n = CPre.Width();
     const Int bsize = Blocksize();
     const Grid& g = APre.Grid();
 
-    DistMatrixReadProxy<T,T,MC,MR> AProx(APre);
-    DistMatrixReadProxy<T,T,MC,MR> BProx(BPre);
-    DistMatrixReadWriteProxy<T,T,MC,MR> CProx(CPre);
+    DistMatrixReadProxy<T,T,MC,MR,ELEMENT,D> AProx(APre);
+    DistMatrixReadProxy<T,T,MC,MR,ELEMENT,D> BProx(BPre);
+    DistMatrixReadWriteProxy<T,T,MC,MR,ELEMENT,D> CProx(CPre);
     auto& A = AProx.GetLocked();
     auto& B = BProx.GetLocked();
     auto& C = CProx.Get();
 
     // Temporary distributions
-    DistMatrix<T,VR,STAR> B1_VR_STAR(g);
-    DistMatrix<T,STAR,MR> B1Trans_STAR_MR(g);
-    DistMatrix<T,MC,STAR> D1_MC_STAR(g);
+    DistMatrix<T,VR,STAR,ELEMENT,D> B1_VR_STAR(g);
+    DistMatrix<T,STAR,MR,ELEMENT,D> B1Trans_STAR_MR(g);
+    DistMatrix<T,MC,STAR,ELEMENT,D> D1_MC_STAR(g);
 
     B1_VR_STAR.AlignWith(A);
     B1Trans_STAR_MR.AlignWith(A);
@@ -129,13 +129,47 @@ void SUMMA_NNA
         LocalGemm(NORMAL, TRANSPOSE, alpha, A, B1Trans_STAR_MR, D1_MC_STAR);
 
         // C1[MC,MR] += scattered result of D1[MC,*] summed over grid rows
-        AxpyContract(T(1), D1_MC_STAR, C1);
+        AxpyContract<T,D>(T(1), D1_MC_STAR, C1);
+    }
+}
+
+template <Device D, typename T,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void SUMMA_NNA_impl(T alpha,
+                    AbstractDistMatrix<T> const& APre,
+                    AbstractDistMatrix<T> const& BPre,
+                    AbstractDistMatrix<T>& CPre)
+{
+    LogicError("SUMMA_NNA_impl type-device combo not supported.");
+}
+
+template <typename T>
+void SUMMA_NNA
+(T alpha,
+ AbstractDistMatrix<T> const& APre,
+ AbstractDistMatrix<T> const& BPre,
+ AbstractDistMatrix<T>& CPre)
+{
+    EL_DEBUG_CSE
+
+    switch (CPre.GetLocalDevice())
+    {
+    case Device::CPU:
+        SUMMA_NNA_impl<Device::CPU>(alpha, APre, BPre, CPre);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        SUMMA_NNA_impl<Device::GPU>(alpha, APre, BPre, CPre);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("SUMMA_NNA: Bad device.");
     }
 }
 
 // Normal Normal Gemm that avoids communicating the matrix B
-template<typename T>
-void SUMMA_NNB
+template <Device D, typename T, typename=EnableIf<IsDeviceValidType<T,D>>>
+void SUMMA_NNB_impl
 (T alpha,
   const AbstractDistMatrix<T>& APre,
   const AbstractDistMatrix<T>& BPre,
@@ -146,16 +180,16 @@ void SUMMA_NNB
     const Int bsize = Blocksize();
     const Grid& g = APre.Grid();
 
-    DistMatrixReadProxy<T,T,MC,MR> AProx(APre);
-    DistMatrixReadProxy<T,T,MC,MR> BProx(BPre);
-    DistMatrixReadWriteProxy<T,T,MC,MR> CProx(CPre);
+    DistMatrixReadProxy<T,T,MC,MR,ELEMENT,D> AProx(APre);
+    DistMatrixReadProxy<T,T,MC,MR,ELEMENT,D> BProx(BPre);
+    DistMatrixReadWriteProxy<T,T,MC,MR,ELEMENT,D> CProx(CPre);
     auto& A = AProx.GetLocked();
     auto& B = BProx.GetLocked();
     auto& C = CProx.Get();
 
     // Temporary distributions
-    DistMatrix<T,STAR,MC> A1_STAR_MC(g);
-    DistMatrix<T,MR,STAR> D1Trans_MR_STAR(g);
+    DistMatrix<T,STAR,MC,ELEMENT,D> A1_STAR_MC(g);
+    DistMatrix<T,MR,STAR,ELEMENT,D> D1Trans_MR_STAR(g);
 
     A1_STAR_MC.AlignWith(B);
     D1Trans_MR_STAR.AlignWith(B);
@@ -172,6 +206,40 @@ void SUMMA_NNB
         (TRANSPOSE, TRANSPOSE, alpha, B, A1_STAR_MC, D1Trans_MR_STAR);
 
         TransposeAxpyContract(T(1), D1Trans_MR_STAR, C1);
+    }
+}
+
+template <Device D, typename T,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void SUMMA_NNB_impl(T alpha,
+                    AbstractDistMatrix<T> const& APre,
+                    AbstractDistMatrix<T> const& BPre,
+                    AbstractDistMatrix<T>& CPre)
+{
+    LogicError("SUMMA_NNB_impl type-device combo not supported.");
+}
+
+template <typename T>
+void SUMMA_NNB
+(T alpha,
+ AbstractDistMatrix<T> const& APre,
+ AbstractDistMatrix<T> const& BPre,
+ AbstractDistMatrix<T>& CPre)
+{
+    EL_DEBUG_CSE
+
+    switch (CPre.GetLocalDevice())
+    {
+    case Device::CPU:
+        SUMMA_NNB_impl<Device::CPU>(alpha, APre, BPre, CPre);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        SUMMA_NNB_impl<Device::GPU>(alpha, APre, BPre, CPre);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("SUMMA_NNB: Bad device.");
     }
 }
 
@@ -256,32 +324,32 @@ void SUMMA_NNC
 // Use summations of local multiplications from a 1D distribution of A and B
 // to update blockSize x blockSize submatrices of C
 //
-template<typename T>
-void SUMMA_NNDot
+template <Device D, typename T, typename=EnableIf<IsDeviceValidType<T,D>>>
+void SUMMA_NNDot_impl
 (T alpha,
   const AbstractDistMatrix<T>& APre,
   const AbstractDistMatrix<T>& BPre,
         AbstractDistMatrix<T>& CPre,
-  Int blockSize=2000)
+  Int blockSize)
 {
     EL_DEBUG_CSE
     const Int m = CPre.Height();
     const Int n = CPre.Width();
     const Grid& g = APre.Grid();
 
-    DistMatrixReadProxy<T,T,STAR,VC> AProx(APre);
+    DistMatrixReadProxy<T,T,STAR,VC,ELEMENT,D> AProx(APre);
     auto& A = AProx.GetLocked();
 
     ElementalProxyCtrl BCtrl;
     BCtrl.colConstrain = true;
     BCtrl.colAlign = A.RowAlign();
-    DistMatrixReadProxy<T,T,VC,STAR> BProx(BPre, BCtrl);
+    DistMatrixReadProxy<T,T,VC,STAR,ELEMENT,D> BProx(BPre, BCtrl);
     auto& B = BProx.GetLocked();
 
-    DistMatrixReadWriteProxy<T,T,MC,MR> CProx(CPre);
+    DistMatrixReadWriteProxy<T,T,MC,MR,ELEMENT,D> CProx(CPre);
     auto& C = CProx.Get();
 
-    DistMatrix<T,STAR,STAR> C11_STAR_STAR(g);
+    DistMatrix<T,STAR,STAR,ELEMENT,D> C11_STAR_STAR(g);
     for(Int kOuter=0; kOuter<m; kOuter+=blockSize)
     {
         const Int nbOuter = Min(blockSize,m-kOuter);
@@ -298,11 +366,47 @@ void SUMMA_NNDot
             auto C11 = C(indOuter, indInner);
 
             LocalGemm(NORMAL, NORMAL, alpha, A1, B1, C11_STAR_STAR);
-            AxpyContract(T(1), C11_STAR_STAR, C11);
+            AxpyContract<T,D>(T(1), C11_STAR_STAR, C11);
         }
     }
 }
 
+template <Device D, typename T,
+          typename=DisableIf<IsDeviceValidType<T,D>>,typename=void>
+void SUMMA_NNDot_impl
+(T alpha,
+  const AbstractDistMatrix<T>& APre,
+  const AbstractDistMatrix<T>& BPre,
+        AbstractDistMatrix<T>& CPre,
+  Int blockSize)
+{
+    LogicError("SUMMA_NNDot_impl type-device combo not supported.");
+}
+
+template <typename T>
+void SUMMA_NNDot
+(T alpha,
+  const AbstractDistMatrix<T>& APre,
+  const AbstractDistMatrix<T>& BPre,
+        AbstractDistMatrix<T>& CPre,
+  Int blockSize=2000)
+{
+    EL_DEBUG_CSE
+
+    switch (CPre.GetLocalDevice())
+    {
+    case Device::CPU:
+        SUMMA_NNDot_impl<Device::CPU>(alpha, APre, BPre, CPre, blockSize);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        SUMMA_NNDot_impl<Device::GPU>(alpha, APre, BPre, CPre, blockSize);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("SUMMA_NNDot: Bad device.");
+    }
+}
 
 template<typename T>
 void SUMMA_NN

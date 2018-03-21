@@ -55,18 +55,9 @@ void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
                 const Int portionSize = mpi::Pad(localHeight*maxLocalWidth);
 
                 // FIXME
-                std::unique_ptr<T[],std::function<void(T*)>> buffer{
-                    nullptr, cudaFree};
-                {
-                    T* tmp_buffer;
-                    auto err = cudaMalloc(&tmp_buffer,
-                                          (rowStride+1)*portionSize*sizeof(T));
-                    if (err != cudaSuccess)
-                        RuntimeError("CUDA malloc error.");
-                    buffer.reset(tmp_buffer);
-                }
-                T* sendBuf = buffer.get();
-                T* recvBuf = buffer.get() + portionSize;
+                simple_buffer<T,Device::GPU> buffer((rowStride+1)*portionSize);
+                T* sendBuf = buffer.data();
+                T* recvBuf = buffer.data() + portionSize;
 
                 // Pack
                 util::InterleaveMatrix<T,Device::GPU>
@@ -118,18 +109,9 @@ void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
                 const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
 
                 // FIXME
-                std::unique_ptr<T[],std::function<void(T*)>> buffer{
-                    nullptr, cudaFree};
-                {
-                    T* tmp_buffer;
-                    auto err = cudaMalloc(&tmp_buffer,
-                                          (rowStride+1)*portionSize*sizeof(T));
-                    if (err != cudaSuccess)
-                        RuntimeError("CUDA malloc error.");
-                    buffer.reset(tmp_buffer);
-                }
-                T* firstBuf = buffer.get();
-                T* secondBuf = buffer.get() + portionSize;
+                simple_buffer<T,Device::GPU> buffer((rowStride+1)*portionSize);
+                T* firstBuf = buffer.data();
+                T* secondBuf = buffer.data() + portionSize;
 
                 // Pack
                 util::InterleaveMatrix<T,Device::GPU>

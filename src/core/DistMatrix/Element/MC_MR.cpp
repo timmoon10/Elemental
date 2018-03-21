@@ -25,6 +25,16 @@ namespace El
 
 // Make a copy
 // -----------
+    // Copy from a different device
+template <typename T, Device D>
+template <Device D2>
+DM& DM::operator=(DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2> const& A)
+{
+    EL_DEBUG_CSE;
+    copy::Translate(A, *this);
+    return *this;
+}
+
 template <typename T, Device D>
 DM& DM::operator=(const DistMatrix<T,MC,STAR,ELEMENT,D>& A)
 {
@@ -276,6 +286,10 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
     BOTH(T,STAR,VR  ,Device::CPU);                                      \
     BOTH(T,VC,  STAR,Device::CPU);                                      \
     BOTH(T,VR,  STAR,Device::CPU);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
+    const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>&);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
+    const DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>&);
 
 template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
 SELF(float,CIRC,CIRC,Device::GPU);
@@ -291,6 +305,8 @@ SELF(float,STAR,VC  ,Device::GPU);
 SELF(float,STAR,VR  ,Device::GPU);
 SELF(float,VC,  STAR,Device::GPU);
 SELF(float,VR,  STAR,Device::GPU);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix(
+    const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>&);
 
 template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
 SELF(double,CIRC,CIRC,Device::GPU);
@@ -306,6 +322,8 @@ SELF(double,STAR,VC  ,Device::GPU);
 SELF(double,STAR,VR  ,Device::GPU);
 SELF(double,VC,  STAR,Device::GPU);
 SELF(double,VR,  STAR,Device::GPU);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix(
+    const DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>&);
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
