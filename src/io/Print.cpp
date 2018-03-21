@@ -33,7 +33,7 @@ void Print(AbstractMatrix<T> const& A, string title, ostream& os)
     {
         // Copy to host
         Matrix<T,Device::CPU> A_CPU =
-            static_cast<Matrix<T,Device::CPU> const&>(A);
+            static_cast<Matrix<T,Device::GPU> const&>(A);
         Print(A_CPU, title, os);
     }
     break;
