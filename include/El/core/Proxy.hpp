@@ -236,7 +236,7 @@ public:
     ( const AbstractDistMatrix<T>& A,
       const ElementalProxyCtrl& ctrl=ElementalProxyCtrl() )
     {
-        if( A.ColDist() == U && A.RowDist() == V && A.Wrap() == ELEMENT )
+        if( A.ColDist() == U && A.RowDist() == V && A.Wrap() == ELEMENT && A.GetLocalDevice() == D)
         {
             const bool colMisalign =
               ( ctrl.colConstrain && A.ColAlign() != ctrl.colAlign );
@@ -250,6 +250,7 @@ public:
                 madeCopy_ = false;
                 auto ACast = static_cast<const proxType*>(&A);
                 prox_ = const_cast<proxType*>(ACast);
+
                 return;
             }
         }
