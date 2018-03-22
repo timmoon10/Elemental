@@ -281,6 +281,7 @@ struct Impl<T, Device::GPU, true>
                 height*sizeof(T), localWidth,
                 cudaMemcpyDeviceToDevice);
         }
+        cudaThreadSynchronize();
     }
 };
 #endif // HYDROGEN_HAVE_CUDA
