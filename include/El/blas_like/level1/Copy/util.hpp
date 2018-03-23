@@ -275,11 +275,14 @@ struct Impl<T, Device::GPU, true>
                 Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
             const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
             const Int localWidth = Length_(width, rowShift, rowStride);
-            cudaMemcpy2DAsync(
+            auto error = cudaMemcpy2DAsync(
                 B + rowOffset*BLDim, rowStrideUnion*BLDim*sizeof(T),
                 APortions + k*portionSize, height*sizeof(T),
                 height*sizeof(T), localWidth,
                 cudaMemcpyDeviceToDevice);
+            if (error != cudaSuccess)
+                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
+                             cudaGetErrorString(error));
         }
         cudaThreadSynchronize();
     }
