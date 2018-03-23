@@ -91,12 +91,12 @@ void Axpy
 namespace axpy {
 namespace util {
 
-template<typename Ring>
+template<typename Ring,Device=Device::CPU>
 void InterleaveMatrixUpdate
 ( Ring alpha, Int localHeight, Int localWidth,
   const Ring* A, Int colStrideA, Int rowStrideA,
         Ring* B, Int colStrideB, Int rowStrideB );
-template<typename Ring>
+template<typename Ring,Device=Device::CPU>
 void UpdateWithLocalData
 ( Ring alpha, const ElementalMatrix<Ring>& A, DistMatrix<Ring,STAR,STAR>& B );
 
@@ -106,7 +106,7 @@ void UpdateWithLocalData
 // AxpyContract
 // ============
 
-template<typename Ring>
+template<typename Ring,Device D=Device::CPU>
 void AxpyContract
 ( Ring alpha, const ElementalMatrix<Ring>& A, ElementalMatrix<Ring>& B );
 template<typename Ring>
@@ -388,31 +388,31 @@ void CopyFromNonRoot( DistMatrix<T,CIRC,CIRC,BLOCK>& B,
 namespace copy {
 namespace util {
 
-template<typename T>
+template<typename T, Device D=Device::CPU>
 void InterleaveMatrix
 ( Int height, Int width,
   const T* A, Int colStrideA, Int rowStrideA,
         T* B, Int colStrideB, Int rowStrideB );
 
-template<typename T>
+template<typename T,Device=Device::CPU>
 void ColStridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
 template<typename T>
-void ColStridedColumPack
+void ColStridedColumnPack
 ( Int height,
   Int colAlign, Int colStride,
   const T* A,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void ColStridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
-template<typename T>
+template<typename T, Device = Device::CPU>
 void PartialColStridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
@@ -428,7 +428,7 @@ void PartialColStridedColumnPack
   Int colShiftA,
   const T* A,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void PartialColStridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,
@@ -445,19 +445,19 @@ void PartialColStridedColumnUnpack
   const T* APortions, Int portionSize,
         T* B );
 
-template<typename T>
+template<typename T,Device = Device::CPU>
 void RowStridedPack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void RowStridedUnpack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void PartialRowStridedPack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -465,7 +465,7 @@ void PartialRowStridedPack
   Int rowShiftA,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void PartialRowStridedUnpack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -474,14 +474,14 @@ void PartialRowStridedUnpack
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
 
-template<typename T>
+template<typename T,Device=Device::CPU>
 void StridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   Int rowAlign, Int rowStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void StridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,
@@ -584,6 +584,10 @@ template<typename T>
 void EntrywiseFill( Matrix<T>& A, function<T(void)> func );
 template<typename T>
 void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func );
+#ifdef HYDROGEN_HAVE_CUDA
+template<typename T>
+void EntrywiseFill( Matrix<T,Device::GPU>& A, function<T(void)> func );
+#endif // HYDROGEN_HAVE_CUDA
 
 // EntrywiseMap
 // ============
@@ -1435,6 +1439,21 @@ void Transpose
 ( const Matrix<T>& A,
         Matrix<T>& B,
   bool conjugate=false );
+#ifdef HYDROGEN_HAVE_CUDA
+template<typename T,typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void Transpose
+( Matrix<T,Device::GPU> const& A,
+  Matrix<T,Device::GPU>& B,
+  bool conjugate=false );
+template<typename T,
+         typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
+         typename=void>
+void Transpose
+( Matrix<T,Device::GPU> const& A,
+  Matrix<T,Device::GPU>& B,
+  bool conjugate=false );
+#endif // HYDROGEN_HAVE_CUDA
+
 template<typename T>
 void Transpose
 ( const ElementalMatrix<T>& A,

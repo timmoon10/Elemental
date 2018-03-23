@@ -12,13 +12,16 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V,Device D>
 void PartialColAllGather
-( const DistMatrix<T,        U,   V>& A,
-        DistMatrix<T,Partial<U>(),V>& B )
+( DistMatrix<T,U,V,ELEMENT,D> const& A,
+  DistMatrix<T,Partial<U>(),V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
 
     const Int height = A.Height();
     const Int width = A.Width();

@@ -208,12 +208,12 @@ template <typename T>
 inline void AbstractMatrix<T>::Empty(bool freeMemory)
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-        if (this->FixedSize())
-            LogicError("Cannot empty a fixed-size matrix");
-        )
+        EL_DEBUG_ONLY(
+            if (this->FixedSize())
+                LogicError("Cannot empty a fixed-size matrix");
+            )
 
-    this->Empty_(freeMemory);
+        this->Empty_(freeMemory);
 }
 
 template <typename T>
@@ -224,22 +224,19 @@ inline void AbstractMatrix<T>::Empty_(bool freeMemory)
     do_empty_(freeMemory);
 }
 
-
 template <typename T>
 inline void AbstractMatrix<T>::Resize(Int height, Int width)
 {
     Resize(height, width, Max(leadingDimension_,height));
 }
 
-inline void break_on_me() {}
 template <typename T>
 inline void AbstractMatrix<T>::Resize(
     Int height, Int width, Int leadingDimension)
 {
-    break_on_me();
     EL_DEBUG_CSE
 #ifndef EL_RELEASE
-    AssertValidDimensions(height, width, leadingDimension);
+        AssertValidDimensions(height, width, leadingDimension);
     if (this->FixedSize() &&
         (height != height_ || width != this->Width() ||
          leadingDimension != leadingDimension_))
@@ -267,7 +264,6 @@ template <typename T>
 inline void AbstractMatrix<T>::Resize_(
     Int height, Int width, Int leadingDimension)
 {
-    break_on_me();
     this->SetSize_(height, width, leadingDimension);
     do_resize_();
 }
@@ -286,8 +282,8 @@ inline void AbstractMatrix<T>::AssertValidDimensions(
     Int height, Int width, Int leadingDimension) const
 {
     EL_DEBUG_CSE
-    if (height < 0 || width < 0)
-        LogicError("Height and width must be non-negative");
+        if (height < 0 || width < 0)
+            LogicError("Height and width must be non-negative");
     if (leadingDimension < height)
         LogicError("Leading dimension must be no less than height");
     if (leadingDimension == 0)
@@ -298,14 +294,14 @@ template <typename T>
 inline void AbstractMatrix<T>::AssertValidEntry(Int i, Int j) const
 {
     EL_DEBUG_CSE
-    if (i == END) i = height_ - 1;
+        if (i == END) i = height_ - 1;
     if (j == END) j = width_ - 1;
     if (i < 0 || j < 0)
         LogicError("Indices must be non-negative");
     if (i >= height_ || j >= width_)
         LogicError
-        ("Out of bounds: (",i,",",j,") of ",height_," x ",
-         width_," Matrix");
+            ("Out of bounds: (",i,",",j,") of ",height_," x ",
+             width_," Matrix");
 }
 
 template <typename T>
@@ -320,8 +316,8 @@ AbstractMatrix<T>::AbstractMatrix(
     : viewType_{view}, height_{height}, width_{width}, leadingDimension_{ldim}
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertValidDimensions(height, width, ldim))
-}
+        EL_DEBUG_ONLY(AssertValidDimensions(height, width, ldim))
+        }
 
 template <typename T>
 inline void AbstractMatrix<T>::SetSize_(
@@ -337,39 +333,38 @@ inline void AbstractMatrix<T>::SetSize_(
 
 template<typename T>
 T AbstractMatrix<T>::Get(Int i, Int j) const
-EL_NO_RELEASE_EXCEPT
+    EL_NO_RELEASE_EXCEPT
 {
-    switch(this->GetDevice()) {
+    switch(this->GetDevice())
+    {
     case Device::CPU:
-      return static_cast<const Matrix<T,Device::CPU>*>(this)->Get(i,j);
-      break;
+        return static_cast<const Matrix<T,Device::CPU>*>(this)->Get(i,j);
     case Device::GPU:
-      return static_cast<const Matrix<T,Device::GPU>*>(this)->Get(i,j);
-      break;
+        return static_cast<const Matrix<T,Device::GPU>*>(this)->Get(i,j);
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
+        return T{};
     }
 }
 
 template<typename T>
 void AbstractMatrix<T>::Set(Int i, Int j, T const& alpha)
-EL_NO_RELEASE_EXCEPT
+    EL_NO_RELEASE_EXCEPT
 {
-    switch(this->GetDevice()) {
+    switch(this->GetDevice())
+    {
     case Device::CPU:
-      return static_cast<Matrix<T,Device::CPU>*>(this)->Set(i,j, alpha);
-      break;
+        static_cast<Matrix<T,Device::CPU>*>(this)->Set(i,j, alpha);
     case Device::GPU:
-      return static_cast<Matrix<T,Device::GPU>*>(this)->Set(i,j, alpha);
-      break;
+        static_cast<Matrix<T,Device::GPU>*>(this)->Set(i,j, alpha);
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
     }
 }
 
 template<typename T>
 void AbstractMatrix<T>::Set(Entry<T> const& entry)
-EL_NO_RELEASE_EXCEPT
+    EL_NO_RELEASE_EXCEPT
 { Set(entry.i, entry.j, entry.value); }
 
 // Operator overloading
@@ -389,7 +384,7 @@ AbstractMatrix<T>::operator*=(T const& alpha)
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator*=(alpha);
       break;
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
     }
 }
 
@@ -410,7 +405,7 @@ AbstractMatrix<T>::operator+=(AbstractMatrix<T> const& A)
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator+=(A);
       break;
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
     }
 }
 
@@ -429,7 +424,7 @@ AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator-=(A);
       break;
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
     }
 }
 
@@ -513,65 +508,61 @@ AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
 // ===========================================================
 template<typename T>
 T const& AbstractMatrix<T>::CRef(Int i, Int j) const
-EL_NO_RELEASE_EXCEPT
+    EL_NO_RELEASE_EXCEPT
 {
-    switch(this->GetDevice()) {
+    switch(this->GetDevice())
+    {
     case Device::CPU:
-      return static_cast<const Matrix<T,Device::CPU>*>(this)->CRef(i,j);
-      break;
+        return static_cast<Matrix<T,Device::CPU> const*>(this)->CRef(i,j);
     case Device::GPU:
-      return static_cast<const Matrix<T,Device::GPU>*>(this)->CRef(i,j);
-      break;
+        return static_cast<Matrix<T,Device::GPU> const*>(this)->CRef(i,j);
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
     }
 }
 
 template<typename T>
 T const& AbstractMatrix<T>::operator()(Int i, Int j) const
-EL_NO_RELEASE_EXCEPT
+    EL_NO_RELEASE_EXCEPT
 {
-    switch(this->GetDevice()) {
+    switch(this->GetDevice())
+    {
     case Device::CPU:
-      return (static_cast<const Matrix<T,Device::CPU>*>(this))->operator()(i,j);
-      break;
+        return static_cast<Matrix<T,Device::CPU> const*>(this)->operator()(i,j);
     case Device::GPU:
-      return (static_cast<const Matrix<T,Device::GPU>*>(this))->operator()(i,j);
-      break;
+        return static_cast<Matrix<T,Device::GPU> const*>(this)->operator()(i,j);
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
     }
 }
 
 template<typename T>
 T& AbstractMatrix<T>::Ref(Int i, Int j)
-EL_NO_RELEASE_EXCEPT
+    EL_NO_RELEASE_EXCEPT
 {
-    switch(this->GetDevice()) {
+    switch(this->GetDevice())
+    {
     case Device::CPU:
-      return static_cast<Matrix<T,Device::CPU>*>(this)->Ref(i,j);
-      break;
+        return static_cast<Matrix<T,Device::CPU>*>(this)->Ref(i,j);
     case Device::GPU:
-      return static_cast<Matrix<T,Device::GPU>*>(this)->Ref(i,j);
-      break;
+        return static_cast<Matrix<T,Device::GPU>*>(this)->Ref(i,j);
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
     }
 }
 
 template<typename T>
 T& AbstractMatrix<T>::operator()(Int i, Int j)
-EL_NO_RELEASE_EXCEPT
+    EL_NO_RELEASE_EXCEPT
 {
-    switch(this->GetDevice()) {
+    switch(this->GetDevice())
+    {
     case Device::CPU:
-      return (static_cast<Matrix<T,Device::CPU>*>(this))->operator()(i,j);
-      break;
+        return (static_cast<Matrix<T,Device::CPU>*>(this))->operator()(i,j);
     case Device::GPU:
-      return (static_cast<Matrix<T,Device::GPU>*>(this))->operator()(i,j);
-      break;
+        return (static_cast<Matrix<T,Device::GPU>*>(this))->operator()(i,j);
     default:
-      LogicError("Unsupported device type.");
+        LogicError("Unsupported device type.");
     }
 }
 

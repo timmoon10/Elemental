@@ -252,34 +252,64 @@ int DM::PartialUnionColRank() const EL_NO_EXCEPT
 // Instantiate {Int,Real,Complex<Real>} for each Real in {float,double}
 // ####################################################################
 
-#define SELF(T,U,V) \
-  template DistMatrix<T,COLDIST,ROWDIST>::DistMatrix \
-  (const DistMatrix<T,U,V>& A);
-#define OTHER(T,U,V) \
-  template DistMatrix<T,COLDIST,ROWDIST>::DistMatrix \
-  (const DistMatrix<T,U,V,BLOCK>& A); \
-  template DistMatrix<T,COLDIST,ROWDIST>& \
-           DistMatrix<T,COLDIST,ROWDIST>::operator= \
-           (const DistMatrix<T,U,V,BLOCK>& A)
-#define BOTH(T,U,V) \
-  SELF(T,U,V) \
-  OTHER(T,U,V)
+#define SELF(T,U,V,D) \
+  template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>::DistMatrix \
+  (const DistMatrix<T,U,V,ELEMENT,D>& A)
+#define OTHER(T,U,V,D) \
+  template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>::DistMatrix \
+  (const DistMatrix<T,U,V,BLOCK,D>& A); \
+  template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>& \
+           DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>::operator= \
+           (const DistMatrix<T,U,V,BLOCK,D>& A)
+#define BOTH(T,U,V,D) \
+    SELF(T,U,V,D);    \
+    OTHER(T,U,V,D)
 #define PROTO(T) \
-  template class DistMatrix<T,COLDIST,ROWDIST>; \
-  BOTH(T,CIRC,CIRC); \
-  BOTH(T,MC,  MR ); \
-  BOTH(T,MC,  STAR); \
-  BOTH(T,MD,  STAR); \
-  BOTH(T,MR,  MC ); \
-  BOTH(T,MR,  STAR); \
-  BOTH(T,STAR,MC ); \
-  BOTH(T,STAR,MD ); \
-  BOTH(T,STAR,MR ); \
-  BOTH(T,STAR,STAR); \
-  OTHER(T,STAR,VC ); \
-  BOTH(T,STAR,VR ); \
-  BOTH(T,VC,  STAR); \
-  BOTH(T,VR,  STAR);
+    template class DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>;      \
+  BOTH(T,CIRC,CIRC,Device::CPU); \
+  BOTH(T,MC,  MR ,Device::CPU); \
+  BOTH(T,MC,  STAR,Device::CPU); \
+  BOTH(T,MD,  STAR,Device::CPU); \
+  BOTH(T,MR,  MC ,Device::CPU); \
+  BOTH(T,MR,  STAR,Device::CPU); \
+  BOTH(T,STAR,MC ,Device::CPU); \
+  BOTH(T,STAR,MD ,Device::CPU); \
+  BOTH(T,STAR,MR ,Device::CPU); \
+  BOTH(T,STAR,STAR,Device::CPU); \
+  OTHER(T,STAR,VC ,Device::CPU); \
+  BOTH(T,STAR,VR ,Device::CPU); \
+  BOTH(T,VC,  STAR,Device::CPU); \
+  BOTH(T,VR,  STAR,Device::CPU);
+
+template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+SELF(float,CIRC,CIRC,Device::GPU);
+SELF(float,MC,  MR ,Device::GPU);
+SELF(float,MC,  STAR,Device::GPU);
+SELF(float,MD,  STAR,Device::GPU);
+SELF(float,MR,  MC ,Device::GPU);
+SELF(float,MR,  STAR,Device::GPU);
+SELF(float,STAR,MC ,Device::GPU);
+SELF(float,STAR,MD ,Device::GPU);
+SELF(float,STAR,MR ,Device::GPU);
+SELF(float,STAR,STAR,Device::GPU);
+SELF(float,STAR,VR ,Device::GPU);
+SELF(float,VC,  STAR,Device::GPU);
+SELF(float,VR,  STAR,Device::GPU);
+
+template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+SELF(double,CIRC,CIRC,Device::GPU);
+SELF(double,MC,  MR ,Device::GPU);
+SELF(double,MC,  STAR,Device::GPU);
+SELF(double,MD,  STAR,Device::GPU);
+SELF(double,MR,  MC ,Device::GPU);
+SELF(double,MR,  STAR,Device::GPU);
+SELF(double,STAR,MC ,Device::GPU);
+SELF(double,STAR,MD ,Device::GPU);
+SELF(double,STAR,MR ,Device::GPU);
+SELF(double,STAR,STAR,Device::GPU);
+SELF(double,STAR,VR ,Device::GPU);
+SELF(double,VC,  STAR,Device::GPU);
+SELF(double,VR,  STAR,Device::GPU);
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

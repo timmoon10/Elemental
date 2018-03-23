@@ -16,7 +16,7 @@ Base<Field> FrobeniusNorm(AbstractMatrix<Field> const& A)
     switch (A.GetDevice())
     {
     case Device::CPU:
-        return FrobeniusNorm(static_cast<Matrix<Field,Device::GPU> const&>(A));
+        return FrobeniusNorm(static_cast<Matrix<Field,Device::CPU> const&>(A));
         break;
     case Device::GPU:
         // FIXME: This can't be toooooo hard to write
@@ -118,15 +118,33 @@ Base<Field> FrobeniusNorm( const AbstractDistMatrix<Field>& A )
         Real localScale=0, localScaledSquare=1;
         const Int localHeight = A.LocalHeight();
         const Int localWidth = A.LocalWidth();
-        const Matrix<Field>& ALoc =
-            dynamic_cast<Matrix<Field,Device::CPU> const&>(A.LockedMatrix());
-        for( Int jLoc=0; jLoc<localWidth; ++jLoc )
-            for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-                UpdateScaledSquare
-                ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
-
+        if (A.GetLocalDevice() == Device::CPU)
+        {
+            const Matrix<Field>& ALoc =
+                static_cast<Matrix<Field,Device::CPU> const&>(A.LockedMatrix());
+            for( Int jLoc=0; jLoc<localWidth; ++jLoc )
+                for( Int iLoc=0; iLoc<localHeight; ++iLoc )
+                    UpdateScaledSquare
+                        ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
+        }
+#ifdef HYDROGEN_HAVE_CUDA
+        // FIXME
+        else if (A.GetLocalDevice() == Device::GPU)
+        {
+            Matrix<Field,Device::CPU> ALoc =
+                static_cast<Matrix<Field,Device::GPU> const&>(A.LockedMatrix());
+            for( Int jLoc=0; jLoc<localWidth; ++jLoc )
+                for( Int iLoc=0; iLoc<localHeight; ++iLoc )
+                    UpdateScaledSquare
+                        ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
+        }
+#endif// HYDROGEN_HAVE_CUDA
+        else
+        {
+            LogicError("Frobenius Norm: Bad device.");
+        }
         norm = NormFromScaledSquare
-          ( localScale, localScaledSquare, A.DistComm() );
+            ( localScale, localScaledSquare, A.DistComm() );
     }
     mpi::Broadcast( norm, A.Root(), A.CrossComm() );
     return norm;

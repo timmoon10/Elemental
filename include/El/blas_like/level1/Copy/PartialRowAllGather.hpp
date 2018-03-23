@@ -13,29 +13,15 @@ namespace El {
 namespace copy {
 
 // (U,V) |-> (U,Partial(V))
-template<typename T>
-void PartialRowAllGather
+template<Device D, typename T>
+void PartialRowAllGather_impl
 ( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
 {
-    EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      if( B.ColDist() != A.ColDist() ||
-          B.RowDist() != Partial(A.RowDist()) )
-          LogicError("Incompatible distributions");
-    )
-    AssertSameGrids( A, B );
-
     const Int height = A.Height();
     const Int width = A.Width();
     B.AlignRowsAndResize
     ( Mod(A.RowAlign(),B.RowStride()), height, width, false, false );
-    if( !A.Participating() )
-        return;
 
-    EL_DEBUG_ONLY(
-      if( A.LocalHeight() != height )
-          LogicError("This routine assumes columns are not distributed");
-    )
     const Int rowStride = A.RowStride();
     const Int rowStrideUnion = A.PartialUnionRowStride();
     const Int rowStridePart = A.PartialRowStride();
@@ -53,13 +39,12 @@ void PartialRowAllGather
         }
         else
         {
-            vector<T> buffer;
-            FastResize( buffer, (rowStrideUnion+1)*portionSize );
-            T* firstBuf = &buffer[0];
-            T* secondBuf = &buffer[portionSize];
+            simple_buffer<T,D> buffer((rowStrideUnion+1)*portionSize);
+            T* firstBuf = buffer.data();
+            T* secondBuf = buffer.data() + portionSize;
 
             // Pack
-            util::InterleaveMatrix
+            util::InterleaveMatrix<T,D>
             ( height, A.LocalWidth(),
               A.LockedBuffer(), 1, A.LDim(),
               firstBuf,         1, height );
@@ -70,7 +55,7 @@ void PartialRowAllGather
               A.PartialUnionRowComm() );
 
             // Unpack
-            util::PartialRowStridedUnpack
+            util::PartialRowStridedUnpack<T,D>
             ( height, width,
               A.RowAlign(), rowStride,
               rowStrideUnion, rowStridePart, rowRankPart,
@@ -85,13 +70,12 @@ void PartialRowAllGather
         if( A.Grid().Rank() == 0 )
             cerr << "Unaligned PartialRowAllGather" << endl;
 #endif
-        vector<T> buffer;
-        FastResize( buffer, (rowStrideUnion+1)*portionSize );
-        T* firstBuf = &buffer[0];
-        T* secondBuf = &buffer[portionSize];
+        simple_buffer<T,D> buffer((rowStrideUnion+1)*portionSize);
+        T* firstBuf = buffer.data();
+        T* secondBuf = buffer.data() + portionSize;
 
         // Perform a SendRecv to match the row alignments
-        util::InterleaveMatrix
+        util::InterleaveMatrix<T,D>
         ( height, A.LocalWidth(),
           A.LockedBuffer(), 1, A.LDim(),
           secondBuf,        1, height );
@@ -107,13 +91,48 @@ void PartialRowAllGather
           secondBuf, portionSize, A.PartialUnionRowComm() );
 
         // Unpack
-        util::PartialRowStridedUnpack
+        util::PartialRowStridedUnpack<T,D>
         ( height, width,
           A.RowAlign()+rowDiff, rowStride,
           rowStrideUnion, rowStridePart, rowRankPart,
           B.RowShift(),
           secondBuf, portionSize,
           B.Buffer(), B.LDim() );
+    }
+}
+
+template<typename T>
+void PartialRowAllGather
+( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
+{
+    EL_DEBUG_CSE
+    EL_DEBUG_ONLY(
+      if( B.ColDist() != A.ColDist() ||
+          B.RowDist() != Partial(A.RowDist()) )
+          LogicError("Incompatible distributions");
+    )
+    AssertSameGrids( A, B );
+
+    if( !A.Participating() )
+        return;
+
+    EL_DEBUG_ONLY(
+        if( A.LocalHeight() != A.Height() )
+          LogicError("This routine assumes columns are not distributed");
+    )
+
+    switch (A.GetLocalDevice())
+    {
+    case Device::CPU:
+        PartialRowAllGather_impl<Device::CPU>(A,B);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        PartialRowAllGather_impl<Device::GPU>(A,B);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("PartialRowAllGather: Bad device.");
     }
 }
 

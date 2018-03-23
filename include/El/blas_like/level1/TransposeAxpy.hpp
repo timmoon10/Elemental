@@ -28,7 +28,11 @@ void TransposeAxpy(
                       conjugate);
         break;
     case Device::GPU:
-        LogicError("TransposeAxpy not supported for GPUs");
+        TransposeAxpy(alphaS,
+                      static_cast<Matrix<T,Device::GPU> const&>(X),
+                      static_cast<Matrix<T,Device::GPU>&>(Y),
+                      conjugate);
+
         break;
     default:
         LogicError("Bad device for TransposeAxpy");
@@ -98,6 +102,75 @@ void TransposeAxpy
                     blas::Axpy( nX, alpha, &XBuf[i], ldX, &YBuf[i*ldY], 1 );
         }
     }
+}
+
+template <typename T, typename S,
+          typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void TransposeAxpy(S alphaS,
+                   Matrix<T,Device::GPU> const& X,
+                   Matrix<T,Device::GPU>& Y,
+                   bool conjugate)
+{
+    EL_DEBUG_CSE
+    const T alpha = T(alphaS);
+    const Int mX = X.Height();
+    const Int nX = X.Width();
+    const Int nY = Y.Width();
+    const Int ldX = X.LDim();
+    const Int ldY = Y.LDim();
+    const T* XBuf = X.LockedBuffer();
+    T* YBuf = Y.Buffer();
+
+#ifndef EL_RELEASE
+    if (conjugate)
+        std::cerr << "TransposeAxpy: Conjugate not supported on GPU.\n"
+                  << "  However, the type should be real anyway." << std::endl;
+#endif // !EL_RELEASE
+
+    // If X and Y are vectors, we can allow one to be a column and the other
+    // to be a row. Otherwise we force X and Y to be the same dimension.
+    if( mX == 1 || nX == 1 )
+    {
+        const Int lengthX = ( nX==1 ? mX : nX );
+        const Int incX = ( nX==1 ? 1  : ldX );
+        const Int incY = ( nY==1 ? 1  : ldY );
+#ifndef EL_RELEASE
+        const Int mY = Y.Height();
+        const Int lengthY = ( nY==1 ? mY : nY );
+        if( lengthX != lengthY )
+            LogicError("Nonconformal TransposeAxpy");
+#endif // !EL_RELEASE
+
+        cublas::Axpy( lengthX, alpha, XBuf, incX, YBuf, incY );
+    }
+    else
+    {
+        EL_DEBUG_ONLY(
+          const Int mY = Y.Height();
+          if( mX != nY || nX != mY )
+              LogicError("Nonconformal TransposeAxpy");
+        )
+        if( nX <= mX )
+        {
+            for( Int j=0; j<nX; ++j )
+                cublas::Axpy( mX, alpha, &XBuf[j*ldX], 1, &YBuf[j], ldY );
+        }
+        else
+        {
+            for( Int i=0; i<mX; ++i )
+                cublas::Axpy( nX, alpha, &XBuf[i], ldX, &YBuf[i*ldY], 1 );
+        }
+    }
+}
+
+template <typename T, typename S,
+          typename=DisableIf<IsDeviceValidType<T,Device::GPU>>, typename=void>
+void TransposeAxpy (S alphaS,
+                    Matrix<T,Device::GPU> const& X,
+                    Matrix<T,Device::GPU>& Y,
+                    bool conjugate )
+{
+    LogicError("TransposeAxpy: Bad type/device combo.");
 }
 
 template<typename T,typename S>

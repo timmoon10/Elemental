@@ -9,30 +9,105 @@
 #ifndef EL_BLAS_AXPY_UTIL_HPP
 #define EL_BLAS_AXPY_UTIL_HPP
 
-namespace El {
-namespace axpy {
-namespace util {
+namespace El
+{
+namespace axpy
+{
+namespace util
+{
+namespace details
+{
 
-template<typename T>
+template <typename T,Device D> struct Impl;
+
+template <typename T>
+struct Impl<T,Device::CPU>
+{
+    static void InterleaveMatrixUpdate(
+        T alpha, Int height, Int width,
+        T const* A, Int colStrideA, Int rowStrideA,
+        T* B, Int colStrideB, Int rowStrideB )
+    {
+        // TODO: Add OpenMP parallelization and/or optimize
+        for( Int j=0; j<width; ++j )
+            blas::Axpy
+                ( height, alpha,
+                  &A[rowStrideA*j], colStrideA,
+                  &B[rowStrideB*j], colStrideB );
+    }
+};// struct Impl<T,Device::CPU>
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T>
+struct Impl<T,Device::GPU>
+{
+    static void InterleaveMatrixUpdate(
+        T alpha, Int height, Int width,
+        T const* A, Int colStrideA, Int rowStrideA,
+        T* B, Int colStrideB, Int rowStrideB )
+    {
+        LogicError("Not implemented.");
+    }
+};// struct Impl<T,Device::GPU>
+
+template <>
+struct Impl<float,Device::GPU>
+{
+    static void InterleaveMatrixUpdate(
+        float alpha, Int height, Int width,
+        float const* A, Int colStrideA, Int rowStrideA,
+        float* B, Int colStrideB, Int rowStrideB )
+    {
+        // FIXME: Make one kernel
+        for (Int j=0; j < width; ++j)
+        {
+            cublas::Axpy(height, alpha,
+                         A + rowStrideA*j, colStrideA,
+                         B + rowStrideB*j, colStrideB);
+        }
+    }
+};// struct Impl<float,Device::GPU>
+
+template <>
+struct Impl<double,Device::GPU>
+{
+    static void InterleaveMatrixUpdate(
+        double alpha, Int height, Int width,
+        double const* A, Int colStrideA, Int rowStrideA,
+        double* B, Int colStrideB, Int rowStrideB )
+    {
+        // FIXME: Make one kernel
+        for (Int j=0; j < width; ++j)
+        {
+            cublas::Axpy(height, alpha,
+                         A + rowStrideA*j, colStrideA,
+                         B + rowStrideB*j, colStrideB);
+        }
+    }
+};// struct Impl<double,Device::GPU>
+#endif // HYDROGEN_HAVE_CUDA
+}// namespace details
+
+template<typename T, Device D>
 void InterleaveMatrixUpdate
 ( T alpha, Int height, Int width,
   const T* A, Int colStrideA, Int rowStrideA,
         T* B, Int colStrideB, Int rowStrideB )
 {
-    // TODO: Add OpenMP parallelization and/or optimize
-    for( Int j=0; j<width; ++j )
-        blas::Axpy
-        ( height, alpha,
-          &A[rowStrideA*j], colStrideA,
-          &B[rowStrideB*j], colStrideB );
+    details::Impl<T,D>::InterleaveMatrixUpdate(
+        alpha, height, width,A, colStrideA, rowStrideA, B, colStrideB, rowStrideB);
 }
 
-template<typename T>
+template<typename T,Device D>
 void UpdateWithLocalData
-( T alpha, const ElementalMatrix<T>& A, DistMatrix<T,STAR,STAR>& B )
+( T alpha, const ElementalMatrix<T>& A, DistMatrix<T,STAR,STAR,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
-    axpy::util::InterleaveMatrixUpdate
+
+    if (A.GetLocalDevice() != D)
+        LogicError("axpy::util::UpdateWithLocalData: Bad device.");
+
+    axpy::util::InterleaveMatrixUpdate<T,D>
     ( alpha, A.LocalHeight(), A.LocalWidth(),
       A.LockedBuffer(),
       1,             A.LDim(),

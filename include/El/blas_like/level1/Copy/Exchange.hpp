@@ -12,7 +12,7 @@
 namespace El {
 namespace copy {
 
-template<typename T>
+template<typename T,Device D>
 void Exchange
 ( const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,
@@ -20,6 +20,10 @@ void Exchange
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(AssertSameGrids( A, B ))
+
+    if ((A.GetLocalDevice() != D) || (A.GetLocalDevice() != B.GetLocalDevice()))
+        LogicError("Device error.");
+
     const int myRank = mpi::Rank( comm );
     EL_DEBUG_ONLY(
       if( myRank == sendRank && myRank != recvRank )
@@ -53,9 +57,8 @@ void Exchange
     else if( contigB )
     {
         // Pack A's data
-        vector<T> buf;
-        FastResize( buf, sendSize );
-        copy::util::InterleaveMatrix
+        simple_buffer<T,D> buf(sendSize);
+        copy::util::InterleaveMatrix<T,D>
         ( localHeightA, localWidthA,
           A.LockedBuffer(), 1, A.LDim(),
           buf.data(),       1, localHeightA );
@@ -68,14 +71,13 @@ void Exchange
     else if( contigA )
     {
         // Exchange with the partner
-        vector<T> buf;
-        FastResize( buf, recvSize );
+        simple_buffer<T,D> buf(recvSize);
         mpi::SendRecv
         ( A.LockedBuffer(), sendSize, sendRank,
           buf.data(),       recvSize, recvRank, comm );
 
         // Unpack
-        copy::util::InterleaveMatrix
+        copy::util::InterleaveMatrix<T,D>
         ( localHeightB, localWidthB,
           buf.data(), 1, localHeightB,
           B.Buffer(), 1, B.LDim() );
@@ -83,35 +85,34 @@ void Exchange
     else
     {
         // Pack A's data
-        vector<T> sendBuf;
-        FastResize( sendBuf, sendSize );
-        copy::util::InterleaveMatrix
+        simple_buffer<T,D> sendBuf(sendSize);
+        copy::util::InterleaveMatrix<T,D>
         ( localHeightA, localWidthA,
           A.LockedBuffer(), 1, A.LDim(),
           sendBuf.data(),   1, localHeightA );
 
         // Exchange with the partner
-        vector<T> recvBuf;
-        FastResize( recvBuf, recvSize );
+        simple_buffer<T,D> recvBuf(recvSize);
         mpi::SendRecv
         ( sendBuf.data(), sendSize, sendRank,
           recvBuf.data(), recvSize, recvRank, comm );
 
         // Unpack
-        copy::util::InterleaveMatrix
+        copy::util::InterleaveMatrix<T,D>
         ( localHeightB, localWidthB,
           recvBuf.data(), 1, localHeightB,
           B.Buffer(),     1, B.LDim() );
     }
 }
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V,Device D>
 void ColwiseVectorExchange
-( const DistMatrix<T,ProductDist<U,V>(),STAR>& A,
-        DistMatrix<T,ProductDist<V,U>(),STAR>& B )
+( DistMatrix<T,ProductDist<U,V>(),STAR,ELEMENT,D> const& A,
+  DistMatrix<T,ProductDist<V,U>(),STAR,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+
     if( !B.Participating() )
         return;
 
@@ -122,16 +123,17 @@ void ColwiseVectorExchange
     const Int recvRankB =
       (recvRankA/A.PartialColStride())+
       (recvRankA%A.PartialColStride())*A.PartialUnionColStride();
-    copy::Exchange( A, B, sendRankB, recvRankB, B.DistComm() );
+    copy::Exchange<T,D>( A, B, sendRankB, recvRankB, B.DistComm() );
 }
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V,Device D>
 void RowwiseVectorExchange
-( const DistMatrix<T,STAR,ProductDist<U,V>()>& A,
-        DistMatrix<T,STAR,ProductDist<V,U>()>& B )
+( DistMatrix<T,STAR,ProductDist<U,V>(),ELEMENT,D> const& A,
+  DistMatrix<T,STAR,ProductDist<V,U>(),ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+
     if( !B.Participating() )
         return;
 
@@ -142,7 +144,7 @@ void RowwiseVectorExchange
     const Int recvRankB =
       (recvRankA/A.PartialRowStride())+
       (recvRankA%A.PartialRowStride())*A.PartialUnionRowStride();
-    copy::Exchange( A, B, sendRankB, recvRankB, B.DistComm() );
+    copy::Exchange<T,D>( A, B, sendRankB, recvRankB, B.DistComm() );
 }
 
 } // namespace copy

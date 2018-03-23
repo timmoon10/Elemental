@@ -12,13 +12,17 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+// FIXME (trb 03/06/18) -- Need to do the GPU impl
+template<typename T,Dist U,Dist V,Device D>
 void ColAllToAllPromote
-( const DistMatrix<T,        U,                     V   >& A,
-        DistMatrix<T,Partial<U>(),PartialUnionRow<U,V>()>& B )
+( const DistMatrix<T,U,V,ELEMENT,D>& A,
+  DistMatrix<T,Partial<U>(),PartialUnionRow<U,V>(),ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
 
     const Int height = A.Height();
     const Int width = A.Width();

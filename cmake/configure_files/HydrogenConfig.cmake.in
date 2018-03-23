@@ -25,6 +25,11 @@ if (NOT MPI_CXX_COMPILER)
   set(MPI_CXX_COMPILER "${HYDROGEN_MPI_CXX_COMPILER}")
 endif ()
 
+set(_OpenMP_DIR "@OpenMP_DIR@")
+if (NOT OpenMP_DIR)
+  set(OpenMP_DIR "${_OpenMP_DIR}")
+endif ()
+include (modules/FindAndVerifyOpenMP)
 # FIXME: I should do verification to make sure all found features are
 #   the same.
 include (modules/FindAndVerifyMPI)
@@ -87,8 +92,13 @@ endif (_HYDROGEN_HAVE_MPC)
 include("modules/FindAndVerifyExtendedPrecision")
 
 # LAPACK
-if (NOT LAPACK_LIBRARIES)
-  set(LAPACK_LIBRARIES "@LAPACK_LIBRARIES@")
+set(_HYDROGEN_HAVE_OPENBLAS @HYDROGEN_HAVE_OPENBLAS@)
+if (_HYDROGEN_HAVE_OPENBLAS)
+  set(BLAS_openblas_LIBRARY "@BLAS_openblas_LIBRARY@"
+    CACHE PATH "Path to a library")
+  set(LAPACK_openblas_LIBRARY "@LAPACK_openblas_LIBRARY@"
+    CACHE PATH "Path to a library")
+  set(BLA_VENDOR "OpenBLAS")
 endif ()
 
 include("modules/FindAndVerifyLAPACK")
@@ -103,7 +113,7 @@ endforeach (_DIR "${_TMP_INCLUDE_DIRS}")
 set(_TMP_LIBRARY_DIRS "@PACKAGE_LIB_INSTALL_DIR@")
 foreach (_DIR ${_TMP_LIBRARY_DIRS})
   set_and_check(_LIBRARY_DIR "${_DIR}")
-  list(APPEND HYDROGEN_LIBRARY_DIRS "${_LIBRARY_DIR}")  
+  list(APPEND HYDROGEN_LIBRARY_DIRS "${_LIBRARY_DIR}")
 endforeach (_DIR ${_TMP_LIBRARY_DIRS})
 
 if (NOT TARGET H::Hydrogen)

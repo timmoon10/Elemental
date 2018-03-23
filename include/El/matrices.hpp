@@ -581,12 +581,12 @@ void ThreeValued( AbstractDistMatrix<T>& A, Int m, Int n, double p=2./3. );
 // -------
 // Draw each entry from a uniform PDF over a closed ball.
 template<typename T>
-void MakeUniform( Matrix<T>& A, T center=0, Base<T> radius=1 );
+void MakeUniform( AbstractMatrix<T>& A, T center=0, Base<T> radius=1 );
 template<typename T>
 void MakeUniform( AbstractDistMatrix<T>& A, T center=0, Base<T> radius=1 );
 
 template<typename T>
-void Uniform( Matrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
+void Uniform( AbstractMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
 template<typename T>
 void Uniform
 ( AbstractDistMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );

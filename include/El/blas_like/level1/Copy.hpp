@@ -20,11 +20,29 @@ void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
 {
     if (A.GetDevice() != B.GetDevice())
         LogicError("Copy: A and B must be on same device for now.");
-    if (A.GetDevice() != Device::CPU)
-        LogicError("Copy not supported for GPU yet.");
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
+             static_cast<Matrix<T,Device::CPU>&>(B));
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Copy(static_cast<Matrix<T,Device::GPU> const&>(A),
+             static_cast<Matrix<T,Device::GPU>&>(B));
+        break;
+#endif
+    default:
+        LogicError("Copy: Bad device.");
+    }
+}
 
-    Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
-         static_cast<Matrix<T,Device::CPU>&>(B));
+template<typename T, Device D1, Device D2>
+void Copy(const Matrix<T,D1>& A, Matrix<T,D2>& B)
+{
+    // FIXME (trb 03/21/2018)
+    Matrix<T,D2> Acpy(A);
+    Copy(Acpy, B);
 }
 
 template<typename T>
@@ -33,24 +51,63 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
     EL_DEBUG_CSE
     const Int height = A.Height();
     const Int width = A.Width();
+    const Int size = height * width;
+    B.Resize( height, width );
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* EL_RESTRICT ABuf = A.LockedBuffer();
+          T* EL_RESTRICT BBuf = B.Buffer();
+
+    if( ldA == height && ldB == height )
+    {
+#ifdef _OPENMP
+        #pragma omp parallel
+        {
+            const Int numThreads = omp_get_num_threads();
+            const Int thread = omp_get_thread_num();
+            const Int chunk = (size + numThreads - 1) / numThreads;
+            const Int start = Min(chunk * thread, size);
+            const Int end = Min(chunk * (thread + 1), size);
+            MemCopy( &BBuf[start], &ABuf[start], end - start );
+        }
+#else
+        MemCopy( BBuf, ABuf, size );
+#endif
+    }
+    else
+    {
+        EL_PARALLEL_FOR
+        for( Int j=0; j<width; ++j )
+        {
+            MemCopy(&BBuf[j*ldB], &ABuf[j*ldA], height);
+        }
+    }
+}
+
+template<typename T>
+void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
     B.Resize( height, width );
     const Int ldA = A.LDim();
     const Int ldB = B.LDim();
     const T* ABuf = A.LockedBuffer();
-          T* BBuf = B.Buffer();
+    T* BBuf = B.Buffer();
 
-    // Copy all entries if memory is contiguous. Otherwise copy each
-    // column.
-    if( ldA == height && ldB == height ) {
-        MemCopy( BBuf, ABuf, height*width );
-    }
-    else {
-        EL_PARALLEL_FOR
-        for( Int j=0; j<width; ++j ) {
-            MemCopy(&BBuf[j*ldB], &ABuf[j*ldA], height);
-        }
-    }
+    cudaError_t error = cudaGetLastError();
+    if (error != cudaSuccess)
+        RuntimeError("Previously existing error!");
 
+    error = cudaMemcpy2D(BBuf, ldB*sizeof(T),
+                         ABuf, ldA*sizeof(T),
+                         height*sizeof(T), width,
+                         cudaMemcpyDeviceToDevice);
+
+    if (error != cudaSuccess)
+        RuntimeError("cudaMemcpy error in Copy():\n\n",
+                     cudaGetErrorString(error));
 }
 
 template<typename S,typename T,
@@ -70,11 +127,15 @@ void Copy( const ElementalMatrix<T>& A, DistMatrix<T,U,V>& B )
 
 // Datatype conversions should not be very common, and so it is likely best to
 // avoid explicitly instantiating every combination
-template<typename S,typename T,Dist U,Dist V>
-void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V>& B )
+template<typename S,typename T,Dist U,Dist V,Device D,
+         typename = EnableIf<IsDeviceValidType<T,D>>>
+void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
-    if( A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V )
+    if (A.GetLocalDevice() != D)
+        LogicError("Bad device.");
+    if (A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V
+        && A.GetLocalDevice() == D)
     {
         if( !B.RootConstrained() )
             B.SetRoot( A.Root() );
@@ -90,11 +151,20 @@ void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V>& B )
             return;
         }
     }
-    DistMatrix<S,U,V> BOrig(A.Grid());
+    DistMatrix<S,U,V,ELEMENT,D> BOrig(A.Grid());
     BOrig.AlignWith( B );
     BOrig = A;
     B.Resize( A.Height(), A.Width() );
     Copy( BOrig.LockedMatrix(), B.Matrix() );
+}
+
+template<typename S,typename T,Dist U,Dist V,Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>,
+         typename=void>
+void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
+{
+    EL_DEBUG_CSE
+    LogicError("Copy: bad data/device combination.");
 }
 
 template<typename T,Dist U,Dist V>
@@ -141,12 +211,14 @@ template<typename S,typename T,
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
-    #define GUARD(CDIST,RDIST,WRAP) \
-        B.ColDist() == CDIST && B.RowDist() == RDIST && B.Wrap() == WRAP && B.GetLocalDevice() == Device::CPU
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-        auto& BCast = static_cast<DistMatrix<T,CDIST,RDIST,ELEMENT>&>(B); \
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                                        \
+        (B.ColDist() == CDIST) && (B.RowDist() == RDIST)                \
+            && (B.Wrap() == WRAP) && (B.GetLocalDevice() == DEVICE)
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                                \
+        auto& BCast =                                                   \
+            static_cast<DistMatrix<T,CDIST,RDIST,ELEMENT,DEVICE>&>(B);  \
         Copy( A, BCast );
-    #include <El/macros/GuardAndPayload.h>
+    #include <El/macros/DeviceGuardAndPayload.h>
 }
 
 template<typename T>
@@ -275,6 +347,11 @@ void CopyFromNonRoot
     bool includingViewers ); \
   EL_EXTERN template void CopyFromNonRoot \
   ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers );
+
+EL_EXTERN template void Copy
+( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<double,Device::GPU>& A, Matrix<double,Device::GPU>& B );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

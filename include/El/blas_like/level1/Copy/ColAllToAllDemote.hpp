@@ -12,10 +12,10 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V,Device D>
 void ColAllToAllDemote
-( const DistMatrix<T,Partial<U>(),PartialUnionRow<U,V>()>& A,
-        DistMatrix<T,        U,                     V   >& B )
+( DistMatrix<T,Partial<U>(),PartialUnionRow<U,V>(),ELEMENT,D> const& A,
+  DistMatrix<T,        U,                     V   ,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
@@ -51,13 +51,12 @@ void ColAllToAllDemote
         }
         else
         {
-            vector<T> buffer;
-            FastResize( buffer, 2*colStrideUnion*portionSize );
-            T* firstBuf  = &buffer[0];
-            T* secondBuf = &buffer[colStrideUnion*portionSize];
+            simple_buffer<T,D> buffer(2*colStrideUnion*portionSize);
+            T* firstBuf  = buffer.data();
+            T* secondBuf = buffer.data() + colStrideUnion*portionSize;
 
             // Pack
-            util::PartialColStridedPack
+            util::PartialColStridedPack<T,D>
             ( height, localWidthA,
               colAlign, colStride,
               colStrideUnion, colStridePart, colRankPart,
@@ -71,7 +70,7 @@ void ColAllToAllDemote
               secondBuf, portionSize, B.PartialUnionColComm() );
 
             // Unpack
-            util::RowStridedUnpack
+            util::RowStridedUnpack<T,D>
             ( localHeightB, width,
               rowAlignA, colStrideUnion,
               secondBuf, portionSize,
@@ -87,13 +86,12 @@ void ColAllToAllDemote
         const Int sendColRankPart = Mod( colRankPart+colDiff, colStridePart );
         const Int recvColRankPart = Mod( colRankPart-colDiff, colStridePart );
 
-        vector<T> buffer;
-        FastResize( buffer, 2*colStrideUnion*portionSize );
-        T* firstBuf  = &buffer[0];
-        T* secondBuf = &buffer[colStrideUnion*portionSize];
+        simple_buffer<T,D> buffer(2*colStrideUnion*portionSize);
+        T* firstBuf  = buffer.data();
+        T* secondBuf = buffer.data() + colStrideUnion*portionSize;
 
         // Pack
-        util::PartialColStridedPack
+        util::PartialColStridedPack<T,D>
         ( height, localWidthA,
           colAlign, colStride,
           colStrideUnion, colStridePart, sendColRankPart,
@@ -113,7 +111,7 @@ void ColAllToAllDemote
           B.PartialColComm() );
 
         // Unpack
-        util::RowStridedUnpack
+        util::RowStridedUnpack<T,D>
         ( localHeightB, width,
           rowAlignA, colStrideUnion,
           secondBuf, portionSize,

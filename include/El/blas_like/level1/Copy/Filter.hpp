@@ -12,13 +12,17 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+// FIXME (trb 03/06/18) -- Need to do the GPU impl
+template<typename T,Dist U,Dist V,Device D>
 void Filter
-( const DistMatrix<T,Collect<U>(),Collect<V>()>& A,
-        DistMatrix<T,        U,           V   >& B )
+( DistMatrix<T,Collect<U>(),Collect<V>(),ELEMENT,D> const& A,
+  DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
+
+    if (D == Device::GPU)
+        LogicError("GPU not implemented.");
 
     B.Resize( A.Height(), A.Width() );
     if( !B.Participating() )
