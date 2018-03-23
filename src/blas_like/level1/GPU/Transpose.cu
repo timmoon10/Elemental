@@ -57,8 +57,9 @@ void Transpose_GPU_impl(
     T* dest, unsigned dest_ldim,
     T const* src, unsigned height, unsigned width, unsigned ldim)
 {
-    dim3 grid{Max<unsigned>(width/BLOCK_DIM,1),
-            Max<unsigned>(height/BLOCK_DIM,1), 1};
+    dim3 grid{Max<unsigned>(width/BLOCK_DIM,1) + (width % BLOCK_DIM ? 1 : 0),
+            Max<unsigned>(height/BLOCK_DIM,1) + (height % BLOCK_DIM ? 1 : 0),
+            1};
     dim3 threads{BLOCK_DIM,BLOCK_DIM,1};
     transpose_kernel<<<grid,threads>>>(
         dest, dest_ldim, src, height, width, ldim);
