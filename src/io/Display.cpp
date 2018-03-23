@@ -36,8 +36,8 @@ void Display(AbstractMatrix<Real> const& A, std::string title)
 #ifdef HYDROGEN_HAVE_CUDA
     {
         // Copy to the CPU
-        Matrix<Real,Device::CPU> A_CPU
-            = static_cast<Matrix<Real,Device::GPU> const&>(A);
+        Matrix<Real,Device::CPU> A_CPU{
+            static_cast<Matrix<Real,Device::GPU> const&>(A)};
         Display(A_CPU, title);
     }
     break;

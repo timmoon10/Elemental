@@ -131,8 +131,8 @@ Base<Field> FrobeniusNorm( const AbstractDistMatrix<Field>& A )
         // FIXME
         else if (A.GetLocalDevice() == Device::GPU)
         {
-            Matrix<Field,Device::CPU> ALoc =
-                static_cast<Matrix<Field,Device::GPU> const&>(A.LockedMatrix());
+            Matrix<Field,Device::CPU> ALoc{
+                static_cast<Matrix<Field,Device::GPU> const&>(A.LockedMatrix())};
             for( Int jLoc=0; jLoc<localWidth; ++jLoc )
                 for( Int iLoc=0; iLoc<localHeight; ++iLoc )
                     UpdateScaledSquare

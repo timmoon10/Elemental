@@ -379,10 +379,8 @@ AbstractMatrix<T>::operator*=(T const& alpha)
     switch(this->GetDevice()) {
     case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->operator*=(alpha);
-      break;
     case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator*=(alpha);
-      break;
     default:
         LogicError("Unsupported device type.");
     }
@@ -400,10 +398,8 @@ AbstractMatrix<T>::operator+=(AbstractMatrix<T> const& A)
     switch(this->GetDevice()) {
     case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->operator+=(A);
-      break;
     case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator+=(A);
-      break;
     default:
         LogicError("Unsupported device type.");
     }
@@ -419,10 +415,8 @@ AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
     switch(this->GetDevice()) {
     case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->operator-=(A);
-      break;
     case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator-=(A);
-      break;
     default:
         LogicError("Unsupported device type.");
     }

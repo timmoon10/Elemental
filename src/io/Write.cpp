@@ -31,8 +31,7 @@ void Write(AbstractMatrix<T> const& A, string basename,
 #ifdef HYDROGEN_HAVE_CUDA
     {
         // Copy to the CPU
-        Matrix<T,Device::CPU> A_CPU
-            = static_cast<Matrix<T,Device::GPU> const&>(A);
+        Matrix<T,Device::CPU> A_CPU{static_cast<Matrix<T,Device::GPU> const&>(A)};
         Write(A_CPU, basename, format, title);
     }
     break;

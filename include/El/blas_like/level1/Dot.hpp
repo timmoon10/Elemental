@@ -24,18 +24,20 @@ T Dot( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B )
     if (A.GetDevice() != B.GetDevice())
         LogicError("Dot requires matching device types.");
 
+    T sum(0);
     switch(A.GetDevice()) {
     case Device::CPU:
-      return Dot(static_cast<const Matrix<T,Device::CPU>&>(A),
-		 static_cast<const Matrix<T,Device::CPU>&>(B));
+      sum = Dot(static_cast<const Matrix<T,Device::CPU>&>(A),
+                static_cast<const Matrix<T,Device::CPU>&>(B));
       break;
     case Device::GPU:
-      return Dot(static_cast<const Matrix<T,Device::GPU>&>(A),
-		 static_cast<const Matrix<T,Device::GPU>&>(B));
+      sum = Dot(static_cast<const Matrix<T,Device::GPU>&>(A),
+                static_cast<const Matrix<T,Device::GPU>&>(B));
       break;
     default:
       LogicError("Unsupported device type.");
     }
+    return sum;
 }
 
 template<typename T>

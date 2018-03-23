@@ -61,10 +61,10 @@ void Broadcast( AbstractMatrix<T>& A, mpi::Comm comm, int rank )
 {
     switch(A.GetDevice()) {
     case Device::CPU:
-      return Broadcast(static_cast<Matrix<T,Device::CPU>&>(A), comm, rank);
-      break;
+        Broadcast(static_cast<Matrix<T,Device::CPU>&>(A), comm, rank);
+        break;
     case Device::GPU:
-      return Broadcast(static_cast<Matrix<T,Device::GPU>&>(A), comm, rank);
+      Broadcast(static_cast<Matrix<T,Device::GPU>&>(A), comm, rank);
       break;
     default:
       LogicError("Unsupported device type.");
