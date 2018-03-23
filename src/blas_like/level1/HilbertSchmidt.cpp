@@ -13,8 +13,8 @@ namespace El {
 
 // TODO(poulson): Think about using a more stable accumulation algorithm?
 
-template<typename Ring>
-Ring HilbertSchmidt( const Matrix<Ring>& A, const Matrix<Ring>& B )
+template<typename Ring, Device D>
+Ring HilbertSchmidt( const Matrix<Ring, D>& A, const Matrix<Ring, D>& B )
 {
     EL_DEBUG_CSE
     if( A.Height() != B.Height() || A.Width() != B.Width() )
@@ -87,7 +87,9 @@ Ring HilbertSchmidt
 
 #define PROTO(Ring) \
   template Ring HilbertSchmidt \
-  ( const Matrix<Ring>& A, const Matrix<Ring>& B ); \
+  ( const Matrix<Ring, El::Device::CPU>& A, const Matrix<Ring, El::Device::CPU>& B );       \
+  template Ring HilbertSchmidt \
+  ( const Matrix<Ring, El::Device::GPU>& A, const Matrix<Ring, El::Device::GPU>& B );       \
   template Ring HilbertSchmidt \
   ( const AbstractDistMatrix<Ring>& A, const AbstractDistMatrix<Ring>& B );
 

@@ -12,7 +12,7 @@
 namespace El {
 
 template<typename T>
-void Broadcast( Matrix<T>& A, mpi::Comm comm, int rank )
+void Broadcast( Matrix<T, Device::CPU>& A, mpi::Comm comm, int rank )
 {
     EL_DEBUG_CSE
     const int commSize = mpi::Size( comm );
@@ -47,6 +47,27 @@ void Broadcast( Matrix<T>& A, mpi::Comm comm, int rank )
             ( height,        width,
               buf.data(), 1, height,
               A.Buffer(), 1, A.LDim() );
+    }
+}
+
+template<typename T>
+void Broadcast( Matrix<T, Device::GPU>& A, mpi::Comm comm, int rank )
+{
+    LogicError("Broadcast is not implemented for GPUs.");
+}
+
+template<typename T>
+void Broadcast( AbstractMatrix<T>& A, mpi::Comm comm, int rank )
+{
+    switch(A.GetDevice()) {
+    case Device::CPU:
+      return Broadcast(static_cast<Matrix<T,Device::CPU>&>(A), comm, rank);
+      break;
+    case Device::GPU:
+      return Broadcast(static_cast<Matrix<T,Device::GPU>&>(A), comm, rank);
+      break;
+    default:
+      LogicError("Unsupported device type.");
     }
 }
 
@@ -100,6 +121,8 @@ void Broadcast( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank )
 #define PROTO(T) \
   EL_EXTERN template void Broadcast \
   ( Matrix<T>& A, mpi::Comm comm, int rank ); \
+  EL_EXTERN template void Broadcast \
+  ( AbstractMatrix<T>& A, mpi::Comm comm, int rank ); \
   EL_EXTERN template void Broadcast \
   ( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank );
 

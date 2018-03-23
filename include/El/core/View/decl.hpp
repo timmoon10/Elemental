@@ -28,6 +28,14 @@ Matrix<T,D> View(Matrix<T,D>& B);
 template <typename T, Device D>
 Matrix<T,D> LockedView(const Matrix<T,D>& B);
 
+// Abstract Sequential Matrix
+// --------------------------
+
+template<typename T>
+void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B);
+template<typename T>
+void LockedView(AbstractMatrix<T>& A, const AbstractMatrix<T>& B);
+
 // ElementalMatrix
 // ---------------
 
@@ -112,8 +120,8 @@ Matrix<T,D> View(Matrix<T,D>& B, Range<Int> I, Range<Int> J);
 template <typename T, Device D>
 Matrix<T,D> LockedView(const Matrix<T,D>& B, Range<Int> I, Range<Int> J);
 
-// AbstractMatrix
-// --------------
+// Abstract Sequential Matrix
+// --------------------------
 
 template <typename T>
 void View

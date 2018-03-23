@@ -11,11 +11,31 @@
 
 namespace El {
 
-template<typename T>
-T Dot( const Matrix<T>& A, const Matrix<T>& B )
+template<typename T, Device D>
+T Dot( const Matrix<T, D>& A, const Matrix<T, D>& B )
 {
     EL_DEBUG_CSE
     return HilbertSchmidt( A, B );
+}
+
+template<typename T>
+T Dot( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B )
+{
+    if (A.GetDevice() != B.GetDevice())
+        LogicError("Dot requires matching device types.");
+
+    switch(A.GetDevice()) {
+    case Device::CPU:
+      return Dot(static_cast<const Matrix<T,Device::CPU>&>(A),
+		 static_cast<const Matrix<T,Device::CPU>&>(B));
+      break;
+    case Device::GPU:
+      return Dot(static_cast<const Matrix<T,Device::GPU>&>(A),
+		 static_cast<const Matrix<T,Device::GPU>&>(B));
+      break;
+    default:
+      LogicError("Unsupported device type.");
+    }
 }
 
 template<typename T>
@@ -83,6 +103,8 @@ T Dotu( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B )
 #define PROTO(T) \
   EL_EXTERN template T Dot \
   ( const Matrix<T>& A, const Matrix<T>& B ); \
+  EL_EXTERN template T Dot \
+  ( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B ); \
   EL_EXTERN template T Dot \
   ( const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B ); \
   EL_EXTERN template T Dotu \

@@ -52,6 +52,9 @@ Matrix<T,D> LockedView(const Matrix<T,D>& B)
     return A;
 }
 
+// Abstract Sequential Matrix
+// --------------------------
+
 template<typename T>
 void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B)
 {
@@ -90,59 +93,6 @@ void LockedView(AbstractMatrix<T>& A, const AbstractMatrix<T>& B)
     default:
         LogicError("Unsupported device type.");
     }
-}
-
-template<typename T>
-AbstractMatrix<T>& View(AbstractMatrix<T>& B)
-{
-    switch(B.GetDevice()) {
-    case Device::CPU:
-    {
-        Matrix<T,Device::CPU> A;
-        View(static_cast<AbstractMatrix<T>&>(A), B);
-        return A;
-    }
-    case Device::GPU:
-    {
-        Matrix<T,Device::GPU> A;
-        View(static_cast<AbstractMatrix<T>&>(A), B);
-        return A;
-    }
-    default:
-        LogicError("Unsupported device type.");
-    }
-}
-
-template<typename T>
-const AbstractMatrix<T>& LockedView(const AbstractMatrix<T>& B)
-{
-    switch (B.GetDevice()) {
-    case Device::CPU:
-    {
-        Matrix<T,Device::CPU> A;
-        LockedView(static_cast<AbstractMatrix<T>&>(A), B);
-        return A;
-    }
-    case Device::GPU:
-    {
-        Matrix<T,Device::GPU> A;
-        LockedView(static_cast<AbstractMatrix<T>&>(A), B);
-        return A;
-    }
-    default:
-        LogicError("Unsupported device type.");
-    }
-}
-
-template<typename T, Device D>
-const Matrix<T, D> LockedView(const AbstractMatrix<T>& B)
-{
-    if (B.GetDevice() != D)
-        LogicError("View requires matching device types.");
-
-    Matrix<T,D> A;
-    LockedView(static_cast<AbstractMatrix<T>&>(A), B);
-    return A;
 }
 
 // ElementalMatrix
@@ -472,8 +422,8 @@ Matrix<T,D> LockedView(Matrix<T,D> const& B, Range<Int> I, Range<Int> J)
     return LockedView(B, I.beg, J.beg, I.end-I.beg, J.end-J.beg);
 }
 
-// AbstractMatrix
-// --------------
+// Abstract Sequential Matrix
+// --------------------------
 
 template<typename T>
 void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B,
@@ -505,29 +455,16 @@ void LockedView(AbstractMatrix<T>& A, AbstractMatrix<T> const& B,
 
     switch(A.GetDevice()) {
     case Device::CPU:
-        LockedView(static_cast<Matrix<T,Device::CPU>&>(A),
-                   static_cast<Matrix<T,Device::CPU> const&>(B), I, J);
-        break;
+      LockedView(static_cast<Matrix<T,Device::CPU>&>(A),
+                 static_cast<const Matrix<T,Device::CPU>&>(B), I, J);
+      break;
     case Device::GPU:
-        LockedView(static_cast<Matrix<T,Device::GPU>&>(A),
-                   static_cast<Matrix<T,Device::GPU> const&>(B), I, J);
-        break;
+      LockedView(static_cast<Matrix<T,Device::GPU>&>(A),
+                 static_cast<const Matrix<T,Device::GPU>&>(B), I, J);
+      break;
     default:
         LogicError("Unsupported device type.");
     }
-}
-
-
-template<typename T, Device D>
-const Matrix<T, D> LockedView(AbstractMatrix<T> const& B,
-                              Range<Int> I, Range<Int> J)
-{
-    if (B.GetDevice() != D)
-        LogicError("View requires matching device types.");
-
-    Matrix<T,D> A;
-    LockedView(static_cast<AbstractMatrix<T>&>(A), B, I, J);
-    return A;
 }
 
 // ElementalMatrix
@@ -856,131 +793,142 @@ void LockedView
 # define EL_EXTERN extern
 #endif
 
-#define PROTO(T)                                \
-    /* View an entire matrix
-       ===================== */ \
-/* Sequential matrix
-   ----------------- */ \
-EL_EXTERN template void View(Matrix<T>& A, Matrix<T>& B); \
-EL_EXTERN template void LockedView(Matrix<T>& A, const Matrix<T>& B); \
-EL_EXTERN template Matrix<T> View(Matrix<T>& B); \
-EL_EXTERN template Matrix<T> LockedView(const Matrix<T>& B); \
-EL_EXTERN template const Matrix<T> LockedView(const AbstractMatrix<T>& B); \
-/* ElementalMatrix
-   --------------- */ \
-EL_EXTERN template void View \
-(ElementalMatrix<T>& A, ElementalMatrix<T>& B); \
-EL_EXTERN template void LockedView \
-(ElementalMatrix<T>& A, const ElementalMatrix<T>& B); \
-/* BlockMatrix
-   ----------- */ \
-EL_EXTERN template void View \
-(BlockMatrix<T>& A, BlockMatrix<T>& B); \
-EL_EXTERN template void LockedView \
-(BlockMatrix<T>& A, const BlockMatrix<T>& B); \
-/* Mixed
-   ----- */ \
-EL_EXTERN template void View \
-(BlockMatrix<T>& A, ElementalMatrix<T>& B); \
-EL_EXTERN template void LockedView \
-(BlockMatrix<T>& A, const ElementalMatrix<T>& B); \
-EL_EXTERN template void View \
-(ElementalMatrix<T>& A, BlockMatrix<T>& B); \
-EL_EXTERN template void LockedView \
-(ElementalMatrix<T>& A, const BlockMatrix<T>& B); \
-/* AbstractDistMatrix
-   ------------------ */ \
-EL_EXTERN template void View \
-(AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B); \
-EL_EXTERN template void LockedView \
-(AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B); \
-/* View a submatrix
-   ================ */ \
-EL_EXTERN template void View \
-(Matrix<T>& A, \
- Matrix<T>& B, \
- Int i, Int j, \
- Int height, Int width); \
-EL_EXTERN template void LockedView \
-(      Matrix<T>& A, \
-       const Matrix<T>& B, \
-       Int i, Int j, \
-       Int height, Int width); \
-EL_EXTERN template void View \
-(Matrix<T>& A, \
- Matrix<T>& B, \
- Range<Int> I, Range<Int> J); \
-EL_EXTERN template void LockedView \
-(      Matrix<T>& A, \
-       const Matrix<T>& B, \
-       Range<Int> I, Range<Int> J); \
-EL_EXTERN template Matrix<T> View \
-(Matrix<T>& B, Int i, Int j, Int height, Int width); \
-EL_EXTERN template Matrix<T> LockedView \
-(const Matrix<T>& B, Int i, Int j, Int height, Int width); \
-EL_EXTERN template Matrix<T> View \
-(Matrix<T>& B, Range<Int> I, Range<Int> J); \
-EL_EXTERN template Matrix<T> LockedView \
-(const Matrix<T>& B, Range<Int> I, Range<Int> J); \
-EL_EXTERN template const Matrix<T> LockedView \
-(const AbstractMatrix<T>& B, Range<Int> I, Range<Int> J); \
-/* ElementalMatrix
-   --------------- */ \
-EL_EXTERN template void View \
-(ElementalMatrix<T>& A, \
- ElementalMatrix<T>& B, \
- Int i, Int j, Int height, Int width); \
-EL_EXTERN template void LockedView \
-(      ElementalMatrix<T>& A, \
-       const ElementalMatrix<T>& B, \
-       Int i, Int j, Int height, Int width); \
-EL_EXTERN template void View \
-(ElementalMatrix<T>& A, \
- ElementalMatrix<T>& B,  \
- Range<Int> I, Range<Int> J); \
-EL_EXTERN template void LockedView \
-(      ElementalMatrix<T>& A, \
-       const ElementalMatrix<T>& B, \
-       Range<Int> I, Range<Int> J); \
-/* BlockMatrix
-   ----------- */ \
-EL_EXTERN template void View \
-(BlockMatrix<T>& A, \
- BlockMatrix<T>& B, \
- Int i, \
- Int j, \
- Int height, \
- Int width); \
-EL_EXTERN template void LockedView \
-(      BlockMatrix<T>& A, \
-       const BlockMatrix<T>& B, \
-       Int i, Int j, Int height, Int width); \
-EL_EXTERN template void View \
-(BlockMatrix<T>& A, \
- BlockMatrix<T>& B, \
- Range<Int> I, Range<Int> J); \
-EL_EXTERN template void LockedView \
-(      BlockMatrix<T>& A, \
-       const BlockMatrix<T>& B, \
-       Range<Int> I, Range<Int> J); \
-/* AbstractDistMatrix
-   ------------------ */ \
-EL_EXTERN template void View \
-(AbstractDistMatrix<T>& A, \
- AbstractDistMatrix<T>& B, \
- Int i, Int j, Int height, Int width); \
-EL_EXTERN template void LockedView \
-(      AbstractDistMatrix<T>& A, \
-       const AbstractDistMatrix<T>& B, \
-       Int i, Int j, Int height, Int width); \
-EL_EXTERN template void View \
-(AbstractDistMatrix<T>& A, \
- AbstractDistMatrix<T>& B, \
- Range<Int> I, Range<Int> J); \
-EL_EXTERN template void LockedView \
-(      AbstractDistMatrix<T>& A, \
-       const AbstractDistMatrix<T>& B, \
-       Range<Int> I, Range<Int> J);
+#define PROTO(T) \
+  /* View an entire matrix
+     ===================== */ \
+  /* Sequential matrix
+     ----------------- */ \
+  EL_EXTERN template void View(Matrix<T>& A, Matrix<T>& B); \
+  EL_EXTERN template void LockedView(Matrix<T>& A, const Matrix<T>& B); \
+  EL_EXTERN template Matrix<T> View(Matrix<T>& B); \
+  EL_EXTERN template Matrix<T> LockedView(const Matrix<T>& B); \
+  /* Abstract Sequential Matrix
+     -------------------------- */ \
+  EL_EXTERN template void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B); \
+  EL_EXTERN template void LockedView(AbstractMatrix<T>& A, const AbstractMatrix<T>& B); \
+  /* ElementalMatrix
+     --------------- */ \
+  EL_EXTERN template void View \
+  (ElementalMatrix<T>& A, ElementalMatrix<T>& B); \
+  EL_EXTERN template void LockedView \
+  (ElementalMatrix<T>& A, const ElementalMatrix<T>& B); \
+  /* BlockMatrix
+     ----------- */ \
+  EL_EXTERN template void View \
+  (BlockMatrix<T>& A, BlockMatrix<T>& B); \
+  EL_EXTERN template void LockedView \
+  (BlockMatrix<T>& A, const BlockMatrix<T>& B); \
+  /* Mixed
+     ----- */ \
+  EL_EXTERN template void View \
+  (BlockMatrix<T>& A, ElementalMatrix<T>& B); \
+  EL_EXTERN template void LockedView \
+  (BlockMatrix<T>& A, const ElementalMatrix<T>& B); \
+  EL_EXTERN template void View \
+  (ElementalMatrix<T>& A, BlockMatrix<T>& B); \
+  EL_EXTERN template void LockedView \
+  (ElementalMatrix<T>& A, const BlockMatrix<T>& B); \
+  /* AbstractDistMatrix
+     ------------------ */ \
+  EL_EXTERN template void View \
+  (AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B); \
+  EL_EXTERN template void LockedView \
+  (AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B); \
+  /* View a submatrix
+     ================ */ \
+  EL_EXTERN template void View \
+  (Matrix<T>& A, \
+    Matrix<T>& B, \
+    Int i, Int j, \
+    Int height, Int width); \
+  EL_EXTERN template void LockedView \
+  (      Matrix<T>& A, \
+    const Matrix<T>& B, \
+    Int i, Int j, \
+    Int height, Int width); \
+  EL_EXTERN template void View \
+  (Matrix<T>& A, \
+    Matrix<T>& B, \
+    Range<Int> I, Range<Int> J); \
+  EL_EXTERN template void LockedView \
+  (      Matrix<T>& A, \
+    const Matrix<T>& B, \
+    Range<Int> I, Range<Int> J); \
+  EL_EXTERN template Matrix<T> View \
+  (Matrix<T>& B, Int i, Int j, Int height, Int width); \
+  EL_EXTERN template Matrix<T> LockedView \
+  (const Matrix<T>& B, Int i, Int j, Int height, Int width); \
+  EL_EXTERN template Matrix<T> View \
+  (Matrix<T>& B, Range<Int> I, Range<Int> J); \
+  EL_EXTERN template Matrix<T> LockedView \
+  (const Matrix<T>& B, Range<Int> I, Range<Int> J); \
+  /* Abstract Sequential Matrix
+     -------------------------- */ \
+  EL_EXTERN template void View \
+  (AbstractMatrix<T>& A, \
+    AbstractMatrix<T>& B, \
+    Range<Int> I, Range<Int> J); \
+  EL_EXTERN template void LockedView \
+  (AbstractMatrix<T>& A, \
+    AbstractMatrix<T> const& B, \
+    Range<Int> I, Range<Int> J); \
+  /* ElementalMatrix
+     --------------- */ \
+  EL_EXTERN template void View \
+  (ElementalMatrix<T>& A, \
+    ElementalMatrix<T>& B, \
+    Int i, Int j, Int height, Int width); \
+  EL_EXTERN template void LockedView \
+  (      ElementalMatrix<T>& A, \
+    const ElementalMatrix<T>& B, \
+    Int i, Int j, Int height, Int width); \
+  EL_EXTERN template void View \
+  (ElementalMatrix<T>& A, \
+    ElementalMatrix<T>& B,  \
+    Range<Int> I, Range<Int> J); \
+  EL_EXTERN template void LockedView \
+  (      ElementalMatrix<T>& A, \
+    const ElementalMatrix<T>& B, \
+    Range<Int> I, Range<Int> J); \
+  /* BlockMatrix
+     ----------- */ \
+  EL_EXTERN template void View \
+  (BlockMatrix<T>& A, \
+    BlockMatrix<T>& B, \
+    Int i, \
+    Int j, \
+    Int height, \
+    Int width); \
+  EL_EXTERN template void LockedView \
+  (      BlockMatrix<T>& A, \
+    const BlockMatrix<T>& B, \
+    Int i, Int j, Int height, Int width); \
+  EL_EXTERN template void View \
+  (BlockMatrix<T>& A, \
+    BlockMatrix<T>& B, \
+    Range<Int> I, Range<Int> J); \
+  EL_EXTERN template void LockedView \
+  (      BlockMatrix<T>& A, \
+    const BlockMatrix<T>& B, \
+    Range<Int> I, Range<Int> J); \
+  /* AbstractDistMatrix
+     ------------------ */ \
+  EL_EXTERN template void View \
+  (AbstractDistMatrix<T>& A, \
+    AbstractDistMatrix<T>& B, \
+    Int i, Int j, Int height, Int width); \
+  EL_EXTERN template void LockedView \
+  (      AbstractDistMatrix<T>& A, \
+    const AbstractDistMatrix<T>& B, \
+    Int i, Int j, Int height, Int width); \
+  EL_EXTERN template void View \
+  (AbstractDistMatrix<T>& A, \
+    AbstractDistMatrix<T>& B, \
+    Range<Int> I, Range<Int> J); \
+  EL_EXTERN template void LockedView \
+  (      AbstractDistMatrix<T>& A, \
+    const AbstractDistMatrix<T>& B, \
+    Range<Int> I, Range<Int> J);
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
