@@ -759,7 +759,8 @@ void GetSubmatrix
 // Hadamard
 // ========
 template<typename T>
-void Hadamard( const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C );
+void Hadamard( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B,
+               AbstractMatrix<T>& C );
 template<typename T>
 void Hadamard
 ( const AbstractDistMatrix<T>& A,
