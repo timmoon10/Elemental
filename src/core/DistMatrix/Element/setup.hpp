@@ -168,12 +168,14 @@ DM::ConstructWithNewDevice(Device D2) const
     switch (D2)
     {
     case Device::CPU:
-        return new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>(
-            this->Grid(), this->Root());
+        return std::unique_ptr<absType>{
+            new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>(
+                this->Grid(), this->Root())};
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        return new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>(
-            this->Grid(), this->Root());
+        return std::unique_ptr<absType>{
+            new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>(
+                this->Grid(), this->Root())};
 #endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unkown device type.");
