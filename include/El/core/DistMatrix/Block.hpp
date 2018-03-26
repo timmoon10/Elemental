@@ -40,6 +40,13 @@ public:
     virtual type* ConstructDiagonal
     (const El::Grid& grid, int root) const override = 0;
 
+    std::unique_ptr<absType> ConstructWithNewDevice(Device D2) const override
+    {
+        LogicError(
+            "ConstructWithNewDevice not yet implemented for Block matrices!");
+        return nullptr; // silence compiler
+    }
+
     // Assignment and reconfiguration
     // ==============================
     void Empty(bool freeMemory=true) override;
