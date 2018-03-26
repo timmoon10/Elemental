@@ -20,8 +20,8 @@ void PartialColAllGather
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
 
-    if (D == Device::GPU)
-        LogicError("GPU not implemented.");
+    if (D != Device::CPU)
+        LogicError("PartialColAllGather: Device not implemented.");
 
     const Int height = A.Height();
     const Int width = A.Width();

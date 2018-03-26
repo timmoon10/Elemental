@@ -59,11 +59,22 @@ void RowwiseVectorExchange
   DistMatrix<T,STAR,ProductDist<V,U>(),ELEMENT,D>& B );
 
 // NOTE: Only instantiated for (U,V)=(MC,MR) and (U,V)=(MR,MC)
-template<typename T,Dist U,Dist V,Device D>
+template<typename T,Dist U,Dist V,Device D,
+         typename=EnableIf<IsDeviceValidType<T,D>>>
+void TransposeDist( DistMatrix<T,U,V,ELEMENT,D> const& A,
+                    DistMatrix<T,V,U,ELEMENT,D>& B );
+template<typename T,Dist U,Dist V,Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>,typename=void>
 void TransposeDist( DistMatrix<T,U,V,ELEMENT,D> const& A,
                     DistMatrix<T,V,U,ELEMENT,D>& B );
 
-template<typename T,Dist U,Dist V,Device D>
+template<typename T,Dist U,Dist V,Device D,
+         typename=EnableIf<IsDeviceValidType<T,D>>>
+void Filter
+( DistMatrix<T,Collect<U>(),Collect<V>(),ELEMENT,D> const& A,
+  DistMatrix<T,U,V,ELEMENT,D>& B );
+template<typename T,Dist U,Dist V,Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>,typename=void>
 void Filter
 ( DistMatrix<T,Collect<U>(),Collect<V>(),ELEMENT,D> const& A,
   DistMatrix<T,U,V,ELEMENT,D>& B );

@@ -12,8 +12,7 @@
 namespace El {
 namespace copy {
 
-// FIXME (trb 03/06/18) -- Need to do the GPU impl
-template<typename T,Dist U,Dist V,Device D>
+template<typename T,Dist U,Dist V,Device D,typename>
 void Filter
 ( DistMatrix<T,Collect<U>(),Collect<V>(),ELEMENT,D> const& A,
   DistMatrix<T,U,V,ELEMENT,D>& B )
@@ -21,19 +20,24 @@ void Filter
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
 
-    if (D == Device::GPU)
-        LogicError("GPU not implemented.");
-
     B.Resize( A.Height(), A.Width() );
     if( !B.Participating() )
         return;
 
     const Int colShift = B.ColShift();
     const Int rowShift = B.RowShift();
-    util::InterleaveMatrix
+    util::InterleaveMatrix<T,D>
     ( B.LocalHeight(), B.LocalWidth(),
       A.LockedBuffer(colShift,rowShift), B.ColStride(), B.RowStride()*A.LDim(),
       B.Buffer(),                        1,             B.LDim() );
+}
+
+template<typename T,Dist U,Dist V,Device D,typename,typename>
+void Filter
+( DistMatrix<T,Collect<U>(),Collect<V>(),ELEMENT,D> const& A,
+  DistMatrix<T,U,V,ELEMENT,D>& B )
+{
+    LogicError("Filter: Bad device/type combination.");
 }
 
 template<typename T,Dist U,Dist V>

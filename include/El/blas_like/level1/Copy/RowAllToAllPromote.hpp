@@ -21,9 +21,6 @@ void RowAllToAllPromote
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
 
-    if (D == Device::GPU)
-        LogicError("GPU not implemented.");
-
     const Int height = A.Height();
     const Int width = A.Width();
     B.AlignRowsAndResize
@@ -51,13 +48,12 @@ void RowAllToAllPromote
         }
         else
         {
-            vector<T> buffer;
-            FastResize( buffer, 2*rowStrideUnion*portionSize );
-            T* firstBuf  = &buffer[0];
-            T* secondBuf = &buffer[rowStrideUnion*portionSize];
+            simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize);
+            T* firstBuf  = buffer.data();
+            T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
             // Pack
-            util::ColStridedPack
+            util::ColStridedPack<T,D>
             ( height, A.LocalWidth(),
               B.ColAlign(), rowStrideUnion,
               A.LockedBuffer(), A.LDim(),
@@ -69,7 +65,7 @@ void RowAllToAllPromote
               secondBuf, portionSize, A.PartialUnionRowComm() );
 
             // Unpack
-            util::PartialRowStridedUnpack
+            util::PartialRowStridedUnpack<T,D>
             ( B.LocalHeight(), width,
               rowAlign, rowStride,
               rowStrideUnion, rowStridePart, rowRankPart,
@@ -87,13 +83,12 @@ void RowAllToAllPromote
         const Int sendRowRankPart = Mod( rowRankPart+rowDiff, rowStridePart );
         const Int recvRowRankPart = Mod( rowRankPart-rowDiff, rowStridePart );
 
-        vector<T> buffer;
-        FastResize( buffer, 2*rowStrideUnion*portionSize );
-        T* firstBuf  = &buffer[0];
-        T* secondBuf = &buffer[rowStrideUnion*portionSize];
+        simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize);
+        T* firstBuf  = buffer.data();
+        T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
         // Pack
-        util::ColStridedPack
+        util::ColStridedPack<T,D>
         ( height, A.LocalWidth(),
           B.ColAlign(), rowStrideUnion,
           A.LockedBuffer(), A.LDim(),
@@ -111,7 +106,7 @@ void RowAllToAllPromote
           secondBuf, portionSize, A.PartialUnionRowComm() );
 
         // Unpack
-        util::PartialRowStridedUnpack
+        util::PartialRowStridedUnpack<T,D>
         ( B.LocalHeight(), width,
           rowAlign, rowStride,
           rowStrideUnion, rowStridePart, recvRowRankPart,
