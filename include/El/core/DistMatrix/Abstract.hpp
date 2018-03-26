@@ -213,6 +213,7 @@ public:
     virtual type* Construct(const El::Grid& grid, int root) const = 0;
     virtual type* ConstructTranspose(const El::Grid& grid, int root) const = 0;
     virtual type* ConstructDiagonal(const El::Grid& grid, int root) const = 0;
+    virtual std::unique_ptr<type> ConstructWithNewDevice(Device D2) const = 0;
     // TODO(poulson): ConstructPartialCol and friends?
 
     virtual void AlignWith(

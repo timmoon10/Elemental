@@ -19,6 +19,10 @@ void Cannon_NN
         AbstractDistMatrix<T>& CPre)
 {
     EL_DEBUG_CSE
+
+    if (APre.GetLocalDevice() != Device::CPU)
+        LogicError("Cannon_NN not implemented for device!");
+
     const Grid& g = APre.Grid();
     if (g.Height() != g.Width())
         LogicError("Process grid must be square for Cannon's");

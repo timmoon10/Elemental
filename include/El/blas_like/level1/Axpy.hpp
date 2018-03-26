@@ -14,18 +14,32 @@
 namespace El {
 
 template <typename T, typename S>
-void Axpy( S alphaS, AbstractMatrix<T> const& X, AbstractMatrix<T>& Y)
+void Axpy(S alphaS, AbstractMatrix<T> const& X, AbstractMatrix<T>& Y)
 {
-    if ((X.GetDevice() != Device::CPU) && (Y.GetDevice() != Device::CPU))
-        LogicError("TODO Axpy not supported for non-CPU devices.");
+    if (X.GetDevice() != Y.GetDevice())
+        LogicError("Axpy: Incompatible devices!");
 
-    Axpy(alphaS,
-         static_cast<Matrix<T,Device::CPU> const&>(X),
-         static_cast<Matrix<T,Device::CPU>&>(Y));
+    switch (X.GetDevice())
+    {
+    case Device::CPU:
+        Axpy(alphaS,
+             static_cast<Matrix<T,Device::CPU> const&>(X),
+             static_cast<Matrix<T,Device::CPU>&>(Y));
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Axpy(alphaS,
+             static_cast<Matrix<T,Device::GPU> const&>(X),
+             static_cast<Matrix<T,Device::GPU>&>(Y));
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Axpy: Bad device.");
+    }
 }
 
 template<typename T,typename S>
-void Axpy( S alphaS, const Matrix<T>& X, Matrix<T>& Y )
+void Axpy(S alphaS, const Matrix<T,Device::CPU>& X, Matrix<T,Device::CPU>& Y)
 {
     EL_DEBUG_CSE;
 
@@ -41,38 +55,38 @@ void Axpy( S alphaS, const Matrix<T>& X, Matrix<T>& Y )
 
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
-    if( mX == 1 || nX == 1 )
+    if (mX == 1 || nX == 1)
     {
-        const Int XLength = ( nX==1 ? mX : nX );
-        const Int XStride = ( nX==1 ? 1  : ldX );
-        const Int YStride = ( nY==1 ? 1  : ldY );
+        const Int XLength = (nX==1 ? mX : nX);
+        const Int XStride = (nX==1 ? 1  : ldX);
+        const Int YStride = (nY==1 ? 1  : ldY);
         EL_DEBUG_ONLY(
           const Int mY = Y.Height();
-          const Int YLength = ( nY==1 ? mY : nY );
-          if( XLength != YLength )
+          const Int YLength = (nY==1 ? mY : nY);
+          if (XLength != YLength)
               LogicError("Nonconformal Axpy");
-        )
+       )
         EL_PARALLEL_FOR
-        for( Int i=0; i<XLength; ++i )
+        for(Int i=0; i<XLength; ++i)
             YBuf[i*YStride] += alpha*XBuf[i*XStride];
     }
     else
     {
         // Iterate over single loop if X and Y are both contiguous in
         // memory. Otherwise iterate over double loop.
-        if( ldX == mX && ldY == mX )
+        if (ldX == mX && ldY == mX)
         {
             EL_PARALLEL_FOR
-            for( Int i=0; i<mX*nX; ++i )
+            for(Int i=0; i<mX*nX; ++i)
                 YBuf[i] += alpha*XBuf[i];
         }
         else
         {
             EL_PARALLEL_FOR
-            for( Int j=0; j<nX; ++j )
+            for(Int j=0; j<nX; ++j)
             {
                 EL_SIMD
-                for( Int i=0; i<mX; ++i )
+                for(Int i=0; i<mX; ++i)
                 {
                     YBuf[i+j*ldY] += alpha*XBuf[i+j*ldX];
                 }
@@ -81,94 +95,148 @@ void Axpy( S alphaS, const Matrix<T>& X, Matrix<T>& Y )
     }
 }
 
+template<typename T,typename S,
+         typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
+         typename=void>
+void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
+{
+    LogicError("Axpy: Invalid type-device combination.");
+}
+
+template<typename T,typename S,
+         typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
+{
+    EL_DEBUG_CSE;
+
+    const T alpha = T(alphaS);
+    const Int mX = X.Height();
+    const Int nX = X.Width();
+    const Int nY = Y.Width();
+    const Int ldX = X.LDim();
+    const Int ldY = Y.LDim();
+    const T* XBuf = X.LockedBuffer();
+          T* YBuf = Y.Buffer();
+
+    // If X and Y are vectors, we can allow one to be a column and the other
+    // to be a row. Otherwise we force X and Y to be the same dimension.
+    if (mX == 1 || nX == 1)
+    {
+        const Int XLength = (nX==1 ? mX : nX);
+        const Int XStride = (nX==1 ? 1  : ldX);
+        const Int YStride = (nY==1 ? 1  : ldY);
+#ifndef EL_RELEASE
+        const Int mY = Y.Height();
+        const Int YLength = (nY==1 ? mY : nY);
+        if (XLength != YLength)
+            LogicError("Nonconformal Axpy");
+#endif // !EL_RELEASE
+        cublas::Axpy(XLength, alpha, XBuf, XStride, YBuf, YStride);
+    }
+    else
+    {
+        // Iterate over single loop if X and Y are both contiguous in
+        // memory. Otherwise iterate over double loop.
+        if (ldX == mX && ldY == mX)
+        {
+            cublas::Axpy(mX*nX, alpha, XBuf, 1, YBuf, 1);
+        }
+        else
+        {
+            for(Int j=0; j<nX; ++j)
+                cublas::Axpy(mX, alpha, XBuf + j*ldX, 1, YBuf + j*ldY, 1);
+        }
+    }
+}
+
 template<typename T,typename S>
-void Axpy( S alphaS, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y )
+void Axpy(S alphaS, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y)
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertSameGrids( X, Y ))
+    EL_DEBUG_ONLY(AssertSameGrids(X, Y))
     const T alpha = T(alphaS);
 
     const DistData& XDistData = X.DistData();
     const DistData& YDistData = Y.DistData();
 
-    if( XDistData == YDistData )
+    if (XDistData == YDistData)
     {
-        Axpy( alpha, X.LockedMatrix(), Y.Matrix() );
+        Axpy(alpha, X.LockedMatrix(), Y.Matrix());
     }
     else
     {
         // TODO(poulson):
         // Consider what happens if one is a row vector and the other
         // is a column vector...
-        unique_ptr<ElementalMatrix<T>> XCopy( Y.Construct(Y.Grid(),Y.Root()) );
-        XCopy->AlignWith( YDistData );
-        Copy( X, *XCopy );
-        Axpy( alpha, XCopy->LockedMatrix(), Y.Matrix() );
+        unique_ptr<ElementalMatrix<T>> XCopy(Y.Construct(Y.Grid(),Y.Root()));
+        XCopy->AlignWith(YDistData);
+        Copy(X, *XCopy);
+        Axpy(alpha, XCopy->LockedMatrix(), Y.Matrix());
     }
 }
 
 template<typename T,typename S>
-void Axpy( S alphaS, const BlockMatrix<T>& X, BlockMatrix<T>& Y )
+void Axpy(S alphaS, const BlockMatrix<T>& X, BlockMatrix<T>& Y)
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertSameGrids( X, Y ))
+    EL_DEBUG_ONLY(AssertSameGrids(X, Y))
     const T alpha = T(alphaS);
 
     const DistData XDistData = X.DistData();
     const DistData YDistData = Y.DistData();
 
-    if( XDistData == YDistData )
+    if (XDistData == YDistData)
     {
-        Axpy( alpha, X.LockedMatrix(), Y.Matrix() );
+        Axpy(alpha, X.LockedMatrix(), Y.Matrix());
     }
     else
     {
         unique_ptr<BlockMatrix<T>>
-          XCopy( Y.Construct(Y.Grid(),Y.Root()) );
-        XCopy->AlignWith( YDistData );
-        Copy( X, *XCopy );
-        Axpy( alpha, XCopy->LockedMatrix(), Y.Matrix() );
+          XCopy(Y.Construct(Y.Grid(),Y.Root()));
+        XCopy->AlignWith(YDistData);
+        Copy(X, *XCopy);
+        Axpy(alpha, XCopy->LockedMatrix(), Y.Matrix());
     }
 }
 
 template<typename T,typename S>
-void Axpy( S alphaS, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y )
+void Axpy(S alphaS, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y)
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertSameGrids( X, Y ))
+    EL_DEBUG_ONLY(AssertSameGrids(X, Y))
     const T alpha = T(alphaS);
 
-    if( X.Wrap() == ELEMENT && Y.Wrap() == ELEMENT )
+    if (X.Wrap() == ELEMENT && Y.Wrap() == ELEMENT)
     {
         const auto& XCast = static_cast<const ElementalMatrix<T>&>(X);
               auto& YCast = static_cast<      ElementalMatrix<T>&>(Y);
-        Axpy( alpha, XCast, YCast );
+        Axpy(alpha, XCast, YCast);
     }
-    else if( X.Wrap() == BLOCK && Y.Wrap() == BLOCK )
+    else if (X.Wrap() == BLOCK && Y.Wrap() == BLOCK)
     {
         const auto& XCast = static_cast<const BlockMatrix<T>&>(X);
               auto& YCast = static_cast<      BlockMatrix<T>&>(Y);
-        Axpy( alpha, XCast, YCast );
+        Axpy(alpha, XCast, YCast);
     }
-    else if( X.Wrap() == ELEMENT )
+    else if (X.Wrap() == ELEMENT)
     {
         const auto& XCast = static_cast<const ElementalMatrix<T>&>(X);
               auto& YCast = static_cast<      BlockMatrix<T>&>(Y);
         unique_ptr<BlockMatrix<T>>
-          XCopy( YCast.Construct(Y.Grid(),Y.Root()) );
-        XCopy->AlignWith( YCast.DistData() );
-        Copy( XCast, *XCopy );
-        Axpy( alpha, XCopy->LockedMatrix(), Y.Matrix() );
+          XCopy(YCast.Construct(Y.Grid(),Y.Root()));
+        XCopy->AlignWith(YCast.DistData());
+        Copy(XCast, *XCopy);
+        Axpy(alpha, XCopy->LockedMatrix(), Y.Matrix());
     }
     else
     {
         const auto& XCast = static_cast<const BlockMatrix<T>&>(X);
               auto& YCast = static_cast<      ElementalMatrix<T>&>(Y);
         unique_ptr<ElementalMatrix<T>>
-          XCopy( YCast.Construct(Y.Grid(),Y.Root()) );
-        XCopy->AlignWith( YCast.DistData() );
-        Copy( XCast, *XCopy );
-        Axpy( alpha, XCopy->LockedMatrix(), Y.Matrix() );
+          XCopy(YCast.Construct(Y.Grid(),Y.Root()));
+        XCopy->AlignWith(YCast.DistData());
+        Copy(XCast, *XCopy);
+        Axpy(alpha, XCopy->LockedMatrix(), Y.Matrix());
     }
 }
 
@@ -180,15 +248,15 @@ void Axpy( S alphaS, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y )
 
 #define PROTO(T) \
   EL_EXTERN template void Axpy \
-  ( T alpha, const AbstractMatrix<T>& X, AbstractMatrix<T>& Y ); \
+  (T alpha, const AbstractMatrix<T>& X, AbstractMatrix<T>& Y); \
   EL_EXTERN template void Axpy \
-  ( T alpha, const Matrix<T>& X, Matrix<T>& Y ); \
+  (T alpha, const Matrix<T>& X, Matrix<T>& Y); \
   EL_EXTERN template void Axpy \
-  ( T alpha, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y ); \
+  (T alpha, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y); \
   EL_EXTERN template void Axpy \
-  ( T alpha, const BlockMatrix<T>& X, BlockMatrix<T>& Y ); \
+  (T alpha, const BlockMatrix<T>& X, BlockMatrix<T>& Y); \
   EL_EXTERN template void Axpy \
-  ( T alpha, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y );
+  (T alpha, const AbstractDistMatrix<T>& X, AbstractDistMatrix<T>& Y);
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

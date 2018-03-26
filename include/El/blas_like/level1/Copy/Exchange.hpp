@@ -21,7 +21,7 @@ void Exchange
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(AssertSameGrids( A, B ))
 
-    if ((A.GetLocalDevice() != D) || (A.GetLocalDevice() != B.GetLocalDevice()))
+    if (A.GetLocalDevice() != B.GetLocalDevice())
         LogicError("Device error.");
 
     const int myRank = mpi::Rank( comm );

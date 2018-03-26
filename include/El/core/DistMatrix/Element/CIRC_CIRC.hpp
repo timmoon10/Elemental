@@ -61,6 +61,7 @@ public:
     (const El::Grid& grid, int root) const override;
     diagType* ConstructDiagonal
     (const El::Grid& grid, int root) const override;
+    std::unique_ptr<absType> ConstructWithNewDevice(Device D2) const override;
 
     // Operator overloading
     // ====================
