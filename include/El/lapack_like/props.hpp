@@ -147,8 +147,8 @@ Base<F> HermitianNorm
 
 // Entrywise norm
 // --------------
-template<typename F>
-Base<F> EntrywiseNorm( const Matrix<F>& A, Base<F> p=1 );
+template<typename F, Device D>
+Base<F> EntrywiseNorm( const Matrix<F, D>& A, Base<F> p=1 );
 template<typename F>
 Base<F> EntrywiseNorm( const AbstractDistMatrix<F>& A, Base<F> p=1 );
 
