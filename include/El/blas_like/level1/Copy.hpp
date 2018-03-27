@@ -150,12 +150,23 @@ void Copy( const Matrix<S>& A, Matrix<T>& B )
     EntrywiseMap( A, B, MakeFunction(Caster<S,T>::Cast) );
 }
 
-template<typename T,Dist U,Dist V>//,Device D>
+template<typename T,Dist U,Dist V,Device D,
+         typename = EnableIf<IsDeviceValidType<T,D>>>
 void Copy(const ElementalMatrix<T>& A,
-          DistMatrix<T,U,V,ELEMENT,Device::CPU>& B)
+          DistMatrix<T,U,V,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
     B = A;
+}
+
+template<typename T,Dist U,Dist V,Device D,
+         typename = DisableIf<IsDeviceValidType<T,D>>,
+         typename = void>
+void Copy(const ElementalMatrix<T>& A,
+          DistMatrix<T,U,V,ELEMENT,D>& B)
+{
+    EL_DEBUG_CSE
+    LogicError("Copy: bad data/device combination.");
 }
 
 // Datatype conversions should not be very common, and so it is likely best to
