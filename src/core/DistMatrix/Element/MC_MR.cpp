@@ -25,15 +25,6 @@ namespace El
 
 // Make a copy
 // -----------
-    // Copy from a different device
-template <typename T, Device D>
-template <Device D2>
-DM& DM::operator=(DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2> const& A)
-{
-    EL_DEBUG_CSE;
-    copy::Translate(A, *this);
-    return *this;
-}
 
 template <typename T, Device D>
 DM& DM::operator=(const DistMatrix<T,MC,STAR,ELEMENT,D>& A)
