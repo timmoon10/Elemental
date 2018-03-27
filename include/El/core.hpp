@@ -287,6 +287,7 @@ class DistMatrix;
 #include <El/core/Grid.hpp>
 #include <El/core/DistMatrix.hpp>
 #include <El/core/Proxy.hpp>
+#include <El/core/ProxyDevice.hpp>
 
 // Implement the intertwined parts of the library
 #include <El/core/Element/impl.hpp>
