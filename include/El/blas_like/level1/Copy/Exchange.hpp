@@ -12,8 +12,8 @@
 namespace El {
 namespace copy {
 
-template<typename T,Device D>
-void Exchange
+template<typename T,Device D,typename=EnableIf<IsDeviceValidType<T,D>>>
+void Exchange_impl
 ( const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,
   int sendRank, int recvRank, mpi::Comm comm )
@@ -21,8 +21,6 @@ void Exchange
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(AssertSameGrids( A, B ))
 
-    if (A.GetLocalDevice() != B.GetLocalDevice())
-        LogicError("Device error.");
 
     const int myRank = mpi::Rank( comm );
     EL_DEBUG_ONLY(
@@ -105,6 +103,39 @@ void Exchange
     }
 }
 
+template<typename T,Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>,typename=void>
+void Exchange_impl
+( const ElementalMatrix<T>& A,
+        ElementalMatrix<T>& B,
+  int sendRank, int recvRank, mpi::Comm comm )
+{
+    LogicError("Exchange: Bad Device/type combo.");
+}
+
+template<typename T>
+void Exchange
+( const ElementalMatrix<T>& A,
+        ElementalMatrix<T>& B,
+  int sendRank, int recvRank, mpi::Comm comm )
+{
+    if (A.GetLocalDevice() != B.GetLocalDevice())
+        LogicError("Exchange: Device error.");
+    switch (A.GetLocalDevice())
+    {
+    case Device::CPU:
+        Exchange_impl<T,Device::CPU>(A,B,sendRank,recvRank,comm);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Exchange_impl<T,Device::GPU>(A,B,sendRank,recvRank,comm);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Exchange: Bad device.");
+    }
+}
+
 template<typename T,Dist U,Dist V,Device D>
 void ColwiseVectorExchange
 ( DistMatrix<T,ProductDist<U,V>(),STAR,ELEMENT,D> const& A,
@@ -123,7 +154,7 @@ void ColwiseVectorExchange
     const Int recvRankB =
       (recvRankA/A.PartialColStride())+
       (recvRankA%A.PartialColStride())*A.PartialUnionColStride();
-    copy::Exchange<T,D>( A, B, sendRankB, recvRankB, B.DistComm() );
+    copy::Exchange_impl<T,D>( A, B, sendRankB, recvRankB, B.DistComm() );
 }
 
 template<typename T,Dist U,Dist V,Device D>
@@ -144,7 +175,7 @@ void RowwiseVectorExchange
     const Int recvRankB =
       (recvRankA/A.PartialRowStride())+
       (recvRankA%A.PartialRowStride())*A.PartialUnionRowStride();
-    copy::Exchange<T,D>( A, B, sendRankB, recvRankB, B.DistComm() );
+    copy::Exchange_impl<T,D>( A, B, sendRankB, recvRankB, B.DistComm() );
 }
 
 } // namespace copy
