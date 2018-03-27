@@ -74,6 +74,7 @@ public:
         else
         {
             proxy_ = A.ConstructWithNewDevice(D).release();
+            Copy(A,*proxy_);
             owned_ = true;
         }
     }
