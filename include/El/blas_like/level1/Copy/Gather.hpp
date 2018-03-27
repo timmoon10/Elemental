@@ -14,27 +14,28 @@ namespace copy {
 
 template<typename T,Device D>
 void Gather
-( ElementalMatrix<T> const& A,
-  DistMatrix<T,CIRC,CIRC,ELEMENT,D>& B )
+(ElementalMatrix<T> const& A,
+  DistMatrix<T,CIRC,CIRC,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
-    AssertSameGrids( A, B );
+    AssertSameGrids(A, B);
 
-    if (D == Device::GPU)
-        LogicError("GPU not implemented.");
+    if (A.GetLocalDevice() != D)
+        LogicError("Gather: Inter-device gather not implemented.");
 
-    if( A.DistSize() == 1 && A.CrossSize() == 1 )
+    if(A.DistSize() == 1 && A.CrossSize() == 1)
     {
-        B.Resize( A.Height(), A.Width() );
-        if( B.CrossRank() == B.Root() )
-            Copy( A.LockedMatrix(), B.Matrix() );
+        B.Resize(A.Height(), A.Width());
+        if(B.CrossRank() == B.Root())
+            Copy(static_cast<Matrix<T,D> const&>(A.LockedMatrix()),
+                  B.Matrix());
         return;
     }
 
     const Int height = A.Height();
     const Int width = A.Width();
-    B.SetGrid( A.Grid() );
-    B.Resize( height, width );
+    B.SetGrid(A.Grid());
+    B.Resize(height, width);
 
     // Gather the colShifts and rowShifts
     // ==================================
@@ -43,73 +44,72 @@ void Gather
     myShifts[1] = A.RowShift();
     vector<Int> shifts;
     const Int crossSize = B.CrossSize();
-    if( B.CrossRank() == B.Root() )
-        shifts.resize( 2*crossSize );
-    mpi::Gather( myShifts, 2, shifts.data(), 2, B.Root(), B.CrossComm() );
+    if(B.CrossRank() == B.Root())
+        shifts.resize(2*crossSize);
+    mpi::Gather(myShifts, 2, shifts.data(), 2, B.Root(), B.CrossComm());
 
     // Gather the payload data
     // =======================
-    const bool irrelevant = ( A.RedundantRank()!=0 || A.CrossRank()!=A.Root() );
-    int totalSend = ( irrelevant ? 0 : A.LocalHeight()*A.LocalWidth() );
+    const bool irrelevant = (A.RedundantRank()!=0 || A.CrossRank()!=A.Root());
+    int totalSend = (irrelevant ? 0 : A.LocalHeight()*A.LocalWidth());
     vector<int> recvCounts, recvOffsets;
-    if( B.CrossRank() == B.Root() )
-        recvCounts.resize( crossSize );
-    mpi::Gather( &totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm() );
-    int totalRecv = Scan( recvCounts, recvOffsets );
-    vector<T> sendBuf, recvBuf;
-    FastResize( sendBuf, totalSend );
-    FastResize( recvBuf, totalRecv );
-    if( !irrelevant )
-        copy::util::InterleaveMatrix
-        ( A.LocalHeight(), A.LocalWidth(),
+    if(B.CrossRank() == B.Root())
+        recvCounts.resize(crossSize);
+    mpi::Gather(&totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm());
+    int totalRecv = Scan(recvCounts, recvOffsets);
+
+    simple_buffer<T,D> sendBuf(totalSend), recvBuf(totalRecv);
+    if(!irrelevant)
+        copy::util::InterleaveMatrix<T,D>
+        (A.LocalHeight(), A.LocalWidth(),
           A.LockedBuffer(), 1, A.LDim(),
-          sendBuf.data(),   1, A.LocalHeight() );
+          sendBuf.data(),   1, A.LocalHeight());
     mpi::Gather
-    ( sendBuf.data(), totalSend,
+    (sendBuf.data(), totalSend,
       recvBuf.data(), recvCounts.data(), recvOffsets.data(),
-      B.Root(), B.CrossComm() );
+      B.Root(), B.CrossComm());
 
     // Unpack
     // ======
-    if( B.Root() == B.CrossRank() )
+    if(B.Root() == B.CrossRank())
     {
-        for( Int q=0; q<crossSize; ++q )
+        for(Int q=0; q<crossSize; ++q)
         {
-            if( recvCounts[q] == 0 )
+            if(recvCounts[q] == 0)
                 continue;
             const Int colShift = shifts[2*q+0];
             const Int rowShift = shifts[2*q+1];
             const Int colStride = A.ColStride();
             const Int rowStride = A.RowStride();
-            const Int localHeight = Length( height, colShift, colStride );
-            const Int localWidth = Length( width, rowShift, rowStride );
-            copy::util::InterleaveMatrix
-            ( localHeight, localWidth,
-              &recvBuf[recvOffsets[q]],    1,         localHeight,
-              B.Buffer(colShift,rowShift), colStride, rowStride*B.LDim() );
+            const Int localHeight = Length(height, colShift, colStride);
+            const Int localWidth = Length(width, rowShift, rowStride);
+            copy::util::InterleaveMatrix<T,D>
+            (localHeight, localWidth,
+             recvBuf.data()+recvOffsets[q],    1,         localHeight,
+              B.Buffer(colShift,rowShift), colStride, rowStride*B.LDim());
         }
     }
 }
 
 template<typename T>
 void Gather
-( const BlockMatrix<T>& A,
-        DistMatrix<T,CIRC,CIRC,BLOCK>& B )
+(const BlockMatrix<T>& A,
+        DistMatrix<T,CIRC,CIRC,BLOCK>& B)
 {
     EL_DEBUG_CSE
-    AssertSameGrids( A, B );
-    if( A.DistSize() == 1 && A.CrossSize() == 1 )
+    AssertSameGrids(A, B);
+    if(A.DistSize() == 1 && A.CrossSize() == 1)
     {
-        B.Resize( A.Height(), A.Width() );
-        if( B.CrossRank() == B.Root() )
-            Copy( A.LockedMatrix(), B.Matrix() );
+        B.Resize(A.Height(), A.Width());
+        if(B.CrossRank() == B.Root())
+            Copy(A.LockedMatrix(), B.Matrix());
         return;
     }
 
     const Int height = A.Height();
     const Int width = A.Width();
-    B.SetGrid( A.Grid() );
-    B.Resize( height, width );
+    B.SetGrid(A.Grid());
+    B.Resize(height, width);
 
     // Gather the colShifts and rowShifts
     // ==================================
@@ -118,31 +118,31 @@ void Gather
     myShifts[1] = A.RowShift();
     vector<Int> shifts;
     const Int crossSize = B.CrossSize();
-    if( B.CrossRank() == B.Root() )
-        shifts.resize( 2*crossSize );
-    mpi::Gather( myShifts, 2, shifts.data(), 2, B.Root(), B.CrossComm() );
+    if(B.CrossRank() == B.Root())
+        shifts.resize(2*crossSize);
+    mpi::Gather(myShifts, 2, shifts.data(), 2, B.Root(), B.CrossComm());
 
     // Gather the payload data
     // =======================
-    const bool irrelevant = ( A.RedundantRank()!=0 || A.CrossRank()!=A.Root() );
-    int totalSend = ( irrelevant ? 0 : A.LocalHeight()*A.LocalWidth() );
+    const bool irrelevant = (A.RedundantRank()!=0 || A.CrossRank()!=A.Root());
+    int totalSend = (irrelevant ? 0 : A.LocalHeight()*A.LocalWidth());
     vector<int> recvCounts, recvOffsets;
-    if( B.CrossRank() == B.Root() )
-        recvCounts.resize( crossSize );
-    mpi::Gather( &totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm() );
-    int totalRecv = Scan( recvCounts, recvOffsets );
+    if(B.CrossRank() == B.Root())
+        recvCounts.resize(crossSize);
+    mpi::Gather(&totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm());
+    int totalRecv = Scan(recvCounts, recvOffsets);
     vector<T> sendBuf, recvBuf;
-    FastResize( sendBuf, totalSend );
-    FastResize( recvBuf, totalRecv );
-    if( !irrelevant )
+    FastResize(sendBuf, totalSend);
+    FastResize(recvBuf, totalRecv);
+    if(!irrelevant)
         copy::util::InterleaveMatrix
-        ( A.LocalHeight(), A.LocalWidth(),
+        (A.LocalHeight(), A.LocalWidth(),
           A.LockedBuffer(), 1, A.LDim(),
-          sendBuf.data(),   1, A.LocalHeight() );
+          sendBuf.data(),   1, A.LocalHeight());
     mpi::Gather
-    ( sendBuf.data(), totalSend,
+    (sendBuf.data(), totalSend,
       recvBuf.data(), recvCounts.data(), recvOffsets.data(),
-      B.Root(), B.CrossComm() );
+      B.Root(), B.CrossComm());
 
     // Unpack
     // ======
@@ -150,31 +150,31 @@ void Gather
     const Int nb = A.BlockWidth();
     const Int colCut = A.ColCut();
     const Int rowCut = A.RowCut();
-    if( B.Root() == B.CrossRank() )
+    if(B.Root() == B.CrossRank())
     {
-        for( Int q=0; q<crossSize; ++q )
+        for(Int q=0; q<crossSize; ++q)
         {
-            if( recvCounts[q] == 0 )
+            if(recvCounts[q] == 0)
                 continue;
             const Int colShift = shifts[2*q+0];
             const Int rowShift = shifts[2*q+1];
             const Int colStride = A.ColStride();
             const Int rowStride = A.RowStride();
             const Int localHeight =
-              BlockedLength( height, colShift, mb, colCut, colStride );
+              BlockedLength(height, colShift, mb, colCut, colStride);
             const Int localWidth =
-              BlockedLength( width, rowShift, nb, rowCut, rowStride );
+              BlockedLength(width, rowShift, nb, rowCut, rowStride);
             const T* data = &recvBuf[recvOffsets[q]];
-            for( Int jLoc=0; jLoc<localWidth; ++jLoc )
+            for(Int jLoc=0; jLoc<localWidth; ++jLoc)
             {
                 const Int jBefore = rowShift*nb - rowCut;
-                const Int jLocAdj = ( rowShift==0 ? jLoc+rowCut : jLoc );
+                const Int jLocAdj = (rowShift==0 ? jLoc+rowCut : jLoc);
                 const Int numFilledLocalBlocks = jLocAdj / nb;
                 const Int jMid = numFilledLocalBlocks*nb*rowStride;
                 const Int jPost = jLocAdj-numFilledLocalBlocks*nb;
                 const Int j = jBefore + jMid + jPost;
                 const T* sourceCol = &data[jLoc*localHeight];
-                for( Int iLoc=0; iLoc<localHeight; ++iLoc )
+                for(Int iLoc=0; iLoc<localHeight; ++iLoc)
                 {
                     const Int iBefore = colShift*mb - colCut;
                     const Int iLocAdj = (colShift==0 ? iLoc+colCut : iLoc);

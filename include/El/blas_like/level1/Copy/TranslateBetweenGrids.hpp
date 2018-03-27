@@ -20,11 +20,12 @@ void TranslateBetweenGrids
 {
     EL_DEBUG_CSE
 
-    if (D1 == Device::GPU)
-        LogicError("GPU not implemented.");
+    if (D1 != Device::CPU)
+        LogicError("TranslateBetweenGrids: Device not implemented.");
 
     if (D1 != D2)
-        LogicError("Mixed-device implementation not implemented.");
+        LogicError("TranslateBetweenGrids: ",
+                   "Mixed-device implementation not implemented.");
 
     GeneralPurpose( A, B );
 }
@@ -38,8 +39,9 @@ void TranslateBetweenGrids
 {
     EL_DEBUG_CSE
 
-    if (D == Device::GPU)
-        LogicError("GPU not implemented.");
+    if (D != Device::CPU)
+        LogicError("TranslateBetweenGrids<MC,MR,ELEMENT>: "
+                   "Device not implemented.");
 
     const Int m = A.Height();
     const Int n = A.Width();
@@ -238,8 +240,9 @@ void TranslateBetweenGrids
 {
     EL_DEBUG_CSE
 
-    if (D == Device::GPU)
-        LogicError("GPU not implemented.");
+    if (D != Device::CPU)
+        LogicError("TranslateBetweenGrids<STAR,STAR,ELEMENT>: "
+                   "Device not implemented.");
 
     const Int height = A.Height();
     const Int width = A.Width();

@@ -47,6 +47,12 @@ struct Impl
     {
         LogicError("copy::util::Bad device/type combination.");
     }
+
+    template <typename... Ts>
+    static void PartialColStridedColumnPack(Ts&&...)
+    {
+        LogicError("copy::util::Bad device/type combination.");
+    }
 };
 
 template <typename T>
@@ -149,6 +155,26 @@ struct Impl<T, Device::CPU, true>
                 ('F', height, localWidth,
                  &APortions[k*portionSize], height,
                  &B[rowOffset*BLDim],       rowStrideUnion*BLDim);
+        }
+    }
+
+    static void PartialColStridedColumnPack
+    (Int height,
+     Int colAlign, Int colStride,
+     Int colStrideUnion, Int colStridePart, Int colRankPart,
+     Int colShiftA,
+     const T* A,
+     T* BPortions, Int portionSize)
+    {
+        for (Int k=0; k<colStrideUnion; ++k)
+        {
+            const Int colShift =
+                Shift_(colRankPart+k*colStridePart, colAlign, colStride);
+            const Int colOffset = (colShift-colShiftA) / colStridePart;
+            const Int localHeight = Length_(height, colShift, colStride);
+            StridedMemCopy
+                (&BPortions[k*portionSize], 1,
+                 &A[colOffset],             colStrideUnion, localHeight);
         }
     }
 
@@ -286,6 +312,32 @@ struct Impl<T, Device::GPU, true>
         }
         cudaThreadSynchronize();
     }
+
+    static void PartialColStridedColumnPack
+    (Int height,
+     Int colAlign, Int colStride,
+     Int colStrideUnion, Int colStridePart, Int colRankPart,
+     Int colShiftA,
+     const T* A,
+     T* BPortions, Int portionSize)
+    {
+        for (Int k=0; k<colStrideUnion; ++k)
+        {
+            const Int colShift =
+                Shift_(colRankPart+k*colStridePart, colAlign, colStride);
+            const Int colOffset = (colShift-colShiftA) / colStridePart;
+            const Int localHeight = Length_(height, colShift, colStride);
+
+            LogicError("PartialColStridedColumnPack<T,GPU>: Not implemented.");
+#if 0
+            StridedMemCopy
+                (&BPortions[k*portionSize], 1,
+                 &A[colOffset],             colStrideUnion, localHeight);
+#endif
+        }
+        cudaThreadSynchronize();
+    }
+
 };
 #endif // HYDROGEN_HAVE_CUDA
 

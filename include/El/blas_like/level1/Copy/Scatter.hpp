@@ -21,8 +21,8 @@ void Scatter
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
 
-    if (D == Device::GPU)
-        LogicError("GPU not implemented.");
+    if (D != Device::CPU)
+        LogicError("Scatter: Device not implemented.");
 
     const Int m = A.Height();
     const Int n = A.Width();
