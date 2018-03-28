@@ -17,16 +17,18 @@ Base<Field> FrobeniusNorm(AbstractMatrix<Field> const& A)
     {
     case Device::CPU:
         return FrobeniusNorm(static_cast<Matrix<Field,Device::CPU> const&>(A));
-        break;
     case Device::GPU:
-        // FIXME: This can't be toooooo hard to write
+    {
+        AbstractMatrixReadDeviceProxy<Field,Device::CPU> ALocProxy{A};
+        return FrobeniusNorm(ALocProxy.GetLocked());
+    }
     default:
         LogicError("FrobeniusNorm: Bad Device.");
     }
 }
 
 template<typename Field>
-Base<Field> FrobeniusNorm( const Matrix<Field>& A )
+Base<Field> FrobeniusNorm(const Matrix<Field>& A)
 {
     EL_DEBUG_CSE
     typedef Base<Field> Real;
@@ -34,17 +36,17 @@ Base<Field> FrobeniusNorm( const Matrix<Field>& A )
     Real scaledSquare = 1;
     const Int width = A.Width();
     const Int height = A.Height();
-    for( Int j=0; j<width; ++j )
-        for( Int i=0; i<height; ++i )
-            UpdateScaledSquare( A(i,j), scale, scaledSquare );
+    for (Int j=0; j<width; ++j)
+        for (Int i=0; i<height; ++i)
+            UpdateScaledSquare(A(i,j), scale, scaledSquare);
     return scale*Sqrt(scaledSquare);
 }
 
 template<typename Field>
-Base<Field> HermitianFrobeniusNorm( UpperOrLower uplo, const Matrix<Field>& A )
+Base<Field> HermitianFrobeniusNorm(UpperOrLower uplo, const Matrix<Field>& A)
 {
     EL_DEBUG_CSE
-    if( A.Height() != A.Width() )
+    if (A.Height() != A.Width())
         LogicError("Hermitian matrices must be square.");
 
     typedef Base<Field> Real;
@@ -52,55 +54,55 @@ Base<Field> HermitianFrobeniusNorm( UpperOrLower uplo, const Matrix<Field>& A )
     Real scaledSquare = 1;
     const Int height = A.Height();
     const Int width = A.Width();
-    if( uplo == UPPER )
+    if (uplo == UPPER)
     {
-        for( Int j=0; j<width; ++j )
+        for (Int j=0; j<width; ++j)
         {
-            for( Int i=0; i<j; ++i )
+            for (Int i=0; i<j; ++i)
             {
-                UpdateScaledSquare( A(i,j), scale, scaledSquare );
-                UpdateScaledSquare( A(i,j), scale, scaledSquare );
+                UpdateScaledSquare(A(i,j), scale, scaledSquare);
+                UpdateScaledSquare(A(i,j), scale, scaledSquare);
             }
-            UpdateScaledSquare( A(j,j), scale, scaledSquare );
+            UpdateScaledSquare(A(j,j), scale, scaledSquare);
         }
     }
     else
     {
-        for( Int j=0; j<width; ++j )
+        for (Int j=0; j<width; ++j)
         {
-            for( Int i=j+1; i<height; ++i )
+            for (Int i=j+1; i<height; ++i)
             {
-                UpdateScaledSquare( A(i,j), scale, scaledSquare );
-                UpdateScaledSquare( A(i,j), scale, scaledSquare );
+                UpdateScaledSquare(A(i,j), scale, scaledSquare);
+                UpdateScaledSquare(A(i,j), scale, scaledSquare);
             }
-            UpdateScaledSquare( A(j,j), scale, scaledSquare );
+            UpdateScaledSquare(A(j,j), scale, scaledSquare);
         }
     }
     return scale*Sqrt(scaledSquare);
 }
 
 template<typename Field>
-Base<Field> SymmetricFrobeniusNorm( UpperOrLower uplo, const Matrix<Field>& A )
+Base<Field> SymmetricFrobeniusNorm(UpperOrLower uplo, const Matrix<Field>& A)
 {
     EL_DEBUG_CSE
-    return HermitianFrobeniusNorm( uplo, A );
+    return HermitianFrobeniusNorm(uplo, A);
 }
 
 template<typename Real>
 Real NormFromScaledSquare
-( Real localScale, Real localScaledSquare, mpi::Comm comm )
+(Real localScale, Real localScaledSquare, mpi::Comm comm)
 {
     // Find the maximum relative scale
-    const Real scale = mpi::AllReduce( localScale, mpi::MAX, comm );
+    const Real scale = mpi::AllReduce(localScale, mpi::MAX, comm);
 
-    if( scale != Real(0) )
+    if (scale != Real(0))
     {
         // Equilibrate our local scaled sum to the maximum scale
         Real relScale = localScale/scale;
         localScaledSquare *= relScale*relScale;
 
         // The scaled square is now the sum of the local contributions
-        const Real scaledSquare = mpi::AllReduce( localScaledSquare, comm );
+        const Real scaledSquare = mpi::AllReduce(localScaledSquare, comm);
         return scale*Sqrt(scaledSquare);
     }
     else
@@ -108,59 +110,44 @@ Real NormFromScaledSquare
 }
 
 template<typename Field>
-Base<Field> FrobeniusNorm( const AbstractDistMatrix<Field>& A )
+Base<Field> FrobeniusNorm(const AbstractDistMatrix<Field>& A)
 {
     EL_DEBUG_CSE
     typedef Base<Field> Real;
     Real norm;
-    if( A.Participating() )
+    if (A.Participating())
     {
         Real localScale=0, localScaledSquare=1;
         const Int localHeight = A.LocalHeight();
         const Int localWidth = A.LocalWidth();
-        if (A.GetLocalDevice() == Device::CPU)
-        {
-            const Matrix<Field>& ALoc =
-                static_cast<Matrix<Field,Device::CPU> const&>(A.LockedMatrix());
-            for( Int jLoc=0; jLoc<localWidth; ++jLoc )
-                for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-                    UpdateScaledSquare
-                        ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
-        }
-#ifdef HYDROGEN_HAVE_CUDA
-        // FIXME
-        else if (A.GetLocalDevice() == Device::GPU)
-        {
-            Matrix<Field,Device::CPU> ALoc{
-                static_cast<Matrix<Field,Device::GPU> const&>(A.LockedMatrix())};
-            for( Int jLoc=0; jLoc<localWidth; ++jLoc )
-                for( Int iLoc=0; iLoc<localHeight; ++iLoc )
-                    UpdateScaledSquare
-                        ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
-        }
-#endif// HYDROGEN_HAVE_CUDA
-        else
-        {
-            LogicError("Frobenius Norm: Bad device.");
-        }
+
+        AbstractMatrixReadDeviceProxy<Field,Device::CPU>
+            ALocProxy{A.LockedMatrix()};
+
+        auto const& ALoc = ALocProxy.GetLocked();
+
+        for (Int jLoc=0; jLoc<localWidth; ++jLoc)
+            for (Int iLoc=0; iLoc<localHeight; ++iLoc)
+                UpdateScaledSquare
+                    (ALoc(iLoc,jLoc), localScale, localScaledSquare);
         norm = NormFromScaledSquare
-            ( localScale, localScaledSquare, A.DistComm() );
+            (localScale, localScaledSquare, A.DistComm());
     }
-    mpi::Broadcast( norm, A.Root(), A.CrossComm() );
+    mpi::Broadcast(norm, A.Root(), A.CrossComm());
     return norm;
 }
 
 template<typename Field>
 Base<Field> HermitianFrobeniusNorm
-( UpperOrLower uplo, const AbstractDistMatrix<Field>& A )
+(UpperOrLower uplo, const AbstractDistMatrix<Field>& A)
 {
     EL_DEBUG_CSE
-    if( A.Height() != A.Width() )
+    if (A.Height() != A.Width())
         LogicError("Hermitian matrices must be square.");
 
     typedef Base<Field> Real;
     Real norm;
-    if( A.Participating() )
+    if (A.Participating())
     {
         Real localScale = 0;
         Real localScaledSquare = 1;
@@ -168,67 +155,67 @@ Base<Field> HermitianFrobeniusNorm
         const Int localHeight = A.LocalHeight();
         const Matrix<Field>& ALoc =
             dynamic_cast<Matrix<Field,Device::CPU> const&>(A.LockedMatrix());
-        if( uplo == UPPER )
+        if (uplo == UPPER)
         {
-            for( Int jLoc=0; jLoc<localWidth; ++jLoc )
+            for (Int jLoc=0; jLoc<localWidth; ++jLoc)
             {
                 const Int j = A.GlobalCol(jLoc);
                 const Int numUpperRows = A.LocalRowOffset(j+1);
-                for( Int iLoc=0; iLoc<numUpperRows; ++iLoc )
+                for (Int iLoc=0; iLoc<numUpperRows; ++iLoc)
                 {
                     const Int i = A.GlobalRow(iLoc);
                     UpdateScaledSquare
-                    ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
-                    if( i != j )
+                    (ALoc(iLoc,jLoc), localScale, localScaledSquare);
+                    if (i != j)
                         UpdateScaledSquare
-                        ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
+                        (ALoc(iLoc,jLoc), localScale, localScaledSquare);
                 }
             }
         }
         else
         {
-            for( Int jLoc=0; jLoc<localWidth; ++jLoc )
+            for (Int jLoc=0; jLoc<localWidth; ++jLoc)
             {
                 const Int j = A.GlobalCol(jLoc);
                 const Int numStrictlyUpperRows = A.LocalRowOffset(j);
-                for( Int iLoc=numStrictlyUpperRows; iLoc<localHeight; ++iLoc )
+                for (Int iLoc=numStrictlyUpperRows; iLoc<localHeight; ++iLoc)
                 {
                     const Int i = A.GlobalRow(iLoc);
                     UpdateScaledSquare
-                    ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
-                    if( i != j )
+                    (ALoc(iLoc,jLoc), localScale, localScaledSquare);
+                    if (i != j)
                         UpdateScaledSquare
-                        ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
+                        (ALoc(iLoc,jLoc), localScale, localScaledSquare);
                 }
             }
         }
 
         norm = NormFromScaledSquare
-          ( localScale, localScaledSquare, A.DistComm() );
+          (localScale, localScaledSquare, A.DistComm());
     }
-    mpi::Broadcast( norm, A.Root(), A.CrossComm() );
+    mpi::Broadcast(norm, A.Root(), A.CrossComm());
     return norm;
 }
 
 template<typename Field>
 Base<Field> SymmetricFrobeniusNorm
-( UpperOrLower uplo, const AbstractDistMatrix<Field>& A )
+(UpperOrLower uplo, const AbstractDistMatrix<Field>& A)
 {
     EL_DEBUG_CSE
-    return HermitianFrobeniusNorm( uplo, A );
+    return HermitianFrobeniusNorm(uplo, A);
 }
 
 #define PROTO(Field) \
-  template Base<Field> FrobeniusNorm( const Matrix<Field>& A ); \
-  template Base<Field> FrobeniusNorm ( const AbstractDistMatrix<Field>& A ); \
+  template Base<Field> FrobeniusNorm(const Matrix<Field>& A); \
+  template Base<Field> FrobeniusNorm (const AbstractDistMatrix<Field>& A); \
   template Base<Field> HermitianFrobeniusNorm \
-  ( UpperOrLower uplo, const Matrix<Field>& A ); \
+  (UpperOrLower uplo, const Matrix<Field>& A); \
   template Base<Field> HermitianFrobeniusNorm \
-  ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A ); \
+  (UpperOrLower uplo, const AbstractDistMatrix<Field>& A); \
   template Base<Field> SymmetricFrobeniusNorm \
-  ( UpperOrLower uplo, const Matrix<Field>& A ); \
+  (UpperOrLower uplo, const Matrix<Field>& A); \
   template Base<Field> SymmetricFrobeniusNorm \
-  ( UpperOrLower uplo, const AbstractDistMatrix<Field>& A );
+  (UpperOrLower uplo, const AbstractDistMatrix<Field>& A);
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

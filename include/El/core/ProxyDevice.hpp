@@ -14,18 +14,19 @@ public:
     AbstractMatrixReadDeviceProxy(AbstractMatrix<T> const& A)
     {
         if (A.GetDevice() == D)
-            proxy_ = const_cast<AbstractMatrix<T>*>(&A);
+            proxy_ =
+                static_cast<proxy_type*>(const_cast<AbstractMatrix<T>*>(&A));
         else
         {
             switch (A.GetDevice())
             {
             case Device::CPU:
-                proxy_ = new Matrix<T,D>{
+                proxy_ = new proxy_type{
                     static_cast<Matrix<T,Device::CPU> const&>(A)};
                 break;
 #ifdef HYDROGEN_HAVE_CUDA
             case Device::GPU:
-                proxy_ = new Matrix<T,D>{
+                proxy_ = new proxy_type{
                     static_cast<Matrix<T,Device::GPU> const&>(A)};
                 break;
 #endif // HYDROGEN_HAVE_CUDA
