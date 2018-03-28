@@ -27,15 +27,6 @@ template <> struct IsDeviceValidType<double,Device::GPU> : std::true_type {};
 template <typename T, Device D>
 constexpr bool IsDeviceValidType_v() { return IsDeviceValidType<T,D>::value; }
 
-struct BadDeviceDispatch
-{
-    template <typename... Ts>
-    static void Call(Ts&&...)
-    {
-        LogicError("Bad device type!");
-    }
-};// struct BadDeviceDispatch
-
 template <typename T, Device D> class simple_buffer;
 
 template <typename T>

@@ -43,7 +43,14 @@ void Gemm
   T alpha, const AbstractMatrix<T>& A, const AbstractMatrix<T>& B,
   AbstractMatrix<T>& C );
 
-template <typename T, Device D>
+template <typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
+void Gemm
+( Orientation orientA, Orientation orientB,
+  T alpha, const Matrix<T,D>& A, const Matrix<T,D>& B,
+  T beta, Matrix<T,D>& C );
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
 void Gemm
 ( Orientation orientA, Orientation orientB,
   T alpha, const Matrix<T,D>& A, const Matrix<T,D>& B,
