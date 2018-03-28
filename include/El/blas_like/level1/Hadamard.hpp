@@ -18,15 +18,6 @@
 namespace El
 {
 
-struct HadamardDispatch
-{
-    template <typename... Ts>
-    static void Call(Ts&&... args)
-    {
-        Hadamard_GPU_impl(std::forward<Ts>(args)...);
-    }
-};// FillDispatch
-
 template<typename T>
 void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
               AbstractMatrix<T>& C )
@@ -80,18 +71,12 @@ void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
         {
-            constexpr bool valid_type =
-                IsDeviceValidType_v<T,Device::GPU>();
-            using Dispatcher =
-                typename std::conditional<valid_type,
-                                          HadamardDispatch,
-                                          BadDeviceDispatch>::type;
             if (CBuf == BBuf)
-                Dispatcher::Call(CBuf, ABuf, CBuf, height*width);
+                Hadamard_GPU_impl(CBuf, ABuf, CBuf, height*width);
             else if (CBuf == ABuf)
-                Dispatcher::Call(CBuf, BBuf, CBuf, height*width);
+                Hadamard_GPU_impl(CBuf, BBuf, CBuf, height*width);
             else
-                Dispatcher::Call(ABuf, BBuf, CBuf, height*width);
+                Hadamard_GPU_impl(ABuf, BBuf, CBuf, height*width);
         }
         break;
 #endif // HYDROGEN_HAVE_CUDA
@@ -119,16 +104,9 @@ void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
         {
-            constexpr bool valid_type =
-                IsDeviceValidType_v<T,Device::GPU>();
-            using Dispatcher =
-                typename std::conditional<valid_type,
-                                          HadamardDispatch,
-                                          BadDeviceDispatch>::type;
-
             for (Int j = 0; j < width; ++j)
                 // FIXME: probably faster to do whole thing on GPU
-                Dispatcher::Call(ABuf + j*ALDim, BBuf + j*ALDim,
+                Hadamard_GPU_impl(ABuf + j*ALDim, BBuf + j*ALDim,
                                  CBuf + j*ALDim, height);
         }
         break;

@@ -1,3 +1,5 @@
+#include <El-lite.hpp>
+#include <El/blas_like/level1.hpp>
 #include <El/blas_like/level1/GPU/Hadamard.hpp>
 
 #include <thrust/device_ptr.h>
@@ -8,7 +10,7 @@
 namespace El
 {
 
-template <typename T>
+template <typename T,typename>
 void Hadamard_GPU_impl(
     T const* Input0, T const* Input1, T* Output, size_t size)
 {
