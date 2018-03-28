@@ -83,90 +83,83 @@ struct BLASHelper<Device::GPU>
 };// struct BLASHelper<T,Device::GPU>
 #endif // HYDROGEN_HAVE_CUDA
 
-struct GemmDispatch
-{
-    template <typename T, Device D>
-    static void Call(Orientation orientA, Orientation orientB,
-                     T alpha, Matrix<T,D> const& A, Matrix<T,D> const& B,
-                     T beta, Matrix<T,D>& C)
-    {
-        EL_DEBUG_CSE
-        if(orientA == NORMAL && orientB == NORMAL)
-        {
-            if (A.Height() != C.Height() ||
-                B.Width()  != C.Width()  ||
-                A.Width()  != B.Height())
-                LogicError("Nonconformal GemmNN. Matrix dimensions are:\n"
-                           "  A: ", A.Height(), "x", A.Width(), '\n',
-                           "  B: ", B.Height(), "x", B.Width(), '\n',
-                           "  C: ", C.Height(), "x", C.Width());
-        }
-        else if (orientA == NORMAL)
-        {
-            if (A.Height() != C.Height() ||
-                B.Height() != C.Width()  ||
-                A.Width()  != B.Width())
-                LogicError("Nonconformal GemmN(T/C). Matrix dimensions are:\n"
-                           "  A: ", A.Height(), "x", A.Width(), '\n',
-                           "  B: ", B.Height(), "x", B.Width(), '\n',
-                           "  C: ", C.Height(), "x", C.Width());
-        }
-        else if (orientB == NORMAL)
-        {
-            if (A.Width()  != C.Height() ||
-                B.Width()  != C.Width()  ||
-                A.Height() != B.Height())
-                LogicError("Nonconformal Gemm(T/C)N. Matrix dimensions are:\n"
-                           "  A: ", A.Height(), "x", A.Width(), '\n',
-                           "  B: ", B.Height(), "x", B.Width(), '\n',
-                           "  C: ", C.Height(), "x", C.Width());
-        }
-        else
-        {
-            if (A.Width()  != C.Height() ||
-                B.Height() != C.Width()  ||
-                A.Height() != B.Width())
-                LogicError("Nonconformal Gemm(T/C)(T/C). Matrix dimensions are:\n"
-                           "  A: ", A.Height(), "x", A.Width(), '\n',
-                           "  B: ", B.Height(), "x", B.Width(), '\n',
-                           "  C: ", C.Height(), "x", C.Width());
-        }
-        const char transA = OrientationToChar(orientA);
-        const char transB = OrientationToChar(orientB);
-        const Int m = C.Height();
-        const Int n = C.Width();
-        const Int k = (orientA == NORMAL ? A.Width() : A.Height());
-        if (k != 0)
-        {
-            BLASHelper<D>::Gemm(
-                transA, transB, m, n, k,
-                alpha, A.LockedBuffer(), A.LDim(),
-                B.LockedBuffer(), B.LDim(),
-                beta, C.Buffer(), C.LDim());
-        }
-        else
-        {
-            Scale(beta, C);
-        }
-    }
-};// struct GemmDispatch
-
 }// namespace <anon>
 
-template<typename T, Device D>
+template<typename T, Device D, typename>
 void Gemm
 (Orientation orientA, Orientation orientB,
   T alpha, Matrix<T,D> const& A, Matrix<T,D> const& B,
   T beta, Matrix<T,D>& C)
 {
-    constexpr bool valid_type = IsDeviceValidType_v<T,D>();
-    using Dispatcher = typename std::conditional<valid_type,
-                                                 GemmDispatch,
-                                                 BadDeviceDispatch>::type;
 
-    Dispatcher::Call(orientA, orientB, alpha, A, B, beta, C);
+    EL_DEBUG_CSE
+    if(orientA == NORMAL && orientB == NORMAL)
+    {
+        if (A.Height() != C.Height() ||
+            B.Width()  != C.Width()  ||
+            A.Width()  != B.Height())
+            LogicError("Nonconformal GemmNN. Matrix dimensions are:\n"
+                       "  A: ", A.Height(), "x", A.Width(), '\n',
+                       "  B: ", B.Height(), "x", B.Width(), '\n',
+                       "  C: ", C.Height(), "x", C.Width());
+    }
+    else if (orientA == NORMAL)
+    {
+        if (A.Height() != C.Height() ||
+            B.Height() != C.Width()  ||
+            A.Width()  != B.Width())
+            LogicError("Nonconformal GemmN(T/C). Matrix dimensions are:\n"
+                       "  A: ", A.Height(), "x", A.Width(), '\n',
+                       "  B: ", B.Height(), "x", B.Width(), '\n',
+                       "  C: ", C.Height(), "x", C.Width());
+    }
+    else if (orientB == NORMAL)
+    {
+        if (A.Width()  != C.Height() ||
+            B.Width()  != C.Width()  ||
+            A.Height() != B.Height())
+            LogicError("Nonconformal Gemm(T/C)N. Matrix dimensions are:\n"
+                       "  A: ", A.Height(), "x", A.Width(), '\n',
+                       "  B: ", B.Height(), "x", B.Width(), '\n',
+                       "  C: ", C.Height(), "x", C.Width());
+    }
+    else
+    {
+        if (A.Width()  != C.Height() ||
+            B.Height() != C.Width()  ||
+            A.Height() != B.Width())
+            LogicError("Nonconformal Gemm(T/C)(T/C). Matrix dimensions are:\n"
+                       "  A: ", A.Height(), "x", A.Width(), '\n',
+                       "  B: ", B.Height(), "x", B.Width(), '\n',
+                       "  C: ", C.Height(), "x", C.Width());
+    }
+    const char transA = OrientationToChar(orientA);
+    const char transB = OrientationToChar(orientB);
+    const Int m = C.Height();
+    const Int n = C.Width();
+    const Int k = (orientA == NORMAL ? A.Width() : A.Height());
+    if (k != 0)
+    {
+        BLASHelper<D>::Gemm(
+            transA, transB, m, n, k,
+            alpha, A.LockedBuffer(), A.LDim(),
+            B.LockedBuffer(), B.LDim(),
+            beta, C.Buffer(), C.LDim());
+    }
+    else
+    {
+        Scale(beta, C);
+    }
+
 }
 
+template<typename T, Device D, typename, typename>
+void Gemm
+(Orientation, Orientation, T, Matrix<T,D> const&, Matrix<T,D> const&,
+  T, Matrix<T,D>&)
+{
+    LogicError("Gemm: Bad device/type combination.");
+}
 
 template <typename T, Device D>
 void Gemm (
