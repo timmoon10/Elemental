@@ -68,6 +68,11 @@ void AdjointAxpyContract
 // =========
 template<typename T>
 void AllReduce( AbstractMatrix<T>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
+template<typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
+void AllReduce( Matrix<T,D>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
+template<typename T, Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>,typename=void>
+void AllReduce( Matrix<T,D>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
 template<typename T>
 void AllReduce( AbstractDistMatrix<T>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
 

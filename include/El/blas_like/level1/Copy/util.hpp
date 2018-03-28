@@ -13,6 +13,8 @@ namespace El {
 namespace copy {
 namespace util {
 
+
+
 namespace details
 {
 template <typename T, Device D, bool=IsDeviceValidType_v<T,D>()>
@@ -328,6 +330,7 @@ struct Impl<T, Device::GPU, true>
             const Int colOffset = (colShift-colShiftA) / colStridePart;
             const Int localHeight = Length_(height, colShift, colStride);
 
+            (void)colOffset;
             LogicError("PartialColStridedColumnPack<T,GPU>: Not implemented.");
 #if 0
             StridedMemCopy
@@ -341,7 +344,62 @@ struct Impl<T, Device::GPU, true>
 };
 #endif // HYDROGEN_HAVE_CUDA
 
+template <Device SrcD, Device DestD> struct InterDevice;
+
+template <>
+struct InterDevice<Device::CPU,Device::GPU>
+{
+    template <typename T>
+    static void MemCopy2D(T * EL_RESTRICT const dest, Int const dest_ldim,
+                   T const* EL_RESTRICT const src, Int const src_ldim,
+                   Int const height, Int const width)
+    {
+        auto error = cudaMemcpy2D(
+            dest, dest_ldim*sizeof(T),
+            src, src_ldim*sizeof(T),
+            height*sizeof(T), width,
+            cudaMemcpyHostToDevice);
+        if (error != cudaSuccess)
+            RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
+                         cudaGetErrorString(error));
+    }
+};// InterDevice<CPU,GPU>
+
+template <>
+struct InterDevice<Device::GPU,Device::CPU>
+{
+    template <typename T>
+    static void MemCopy2D(T * EL_RESTRICT const dest, Int const dest_ldim,
+                   T const* EL_RESTRICT const src, Int const src_ldim,
+                   Int const height, Int const width)
+    {
+        auto error = cudaMemcpy2D(
+            dest, dest_ldim*sizeof(T),
+            src, src_ldim*sizeof(T),
+            height*sizeof(T), width,
+            cudaMemcpyDeviceToHost);
+        if (error != cudaSuccess)
+            RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
+                         cudaGetErrorString(error));
+    }
+};// InterDevice<CPU,GPU>
+
 }// namespace details
+
+
+template <Device SrcD, Device DestD, typename T>
+void InterDeviceMemCopy2D(
+    T * EL_RESTRICT const dest, Int const dest_ldim,
+    T const* EL_RESTRICT const src, Int const src_ldim,
+    Int const height, Int const width)
+{
+#ifndef EL_RELEASE
+    if ((dest_ldim < height) || (src_ldim < height))
+        LogicError("InterDeviceMemCopy2D: Bad ldim/height.");
+#endif // !EL_RELEASE
+    details::InterDevice<SrcD,DestD>::MemCopy2D(
+        dest, dest_ldim, src, src_ldim, height, width);
+}
 
 template<typename T, Device D>
 void InterleaveMatrix

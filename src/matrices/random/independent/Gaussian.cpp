@@ -30,12 +30,18 @@ void MakeGaussian(AbstractMatrix<F>& A, F mean, Base<F> stddev)
 }
 
 // Draw each entry from a normal PDF
-template<typename F, Device D>
-void MakeGaussian( Matrix<F, D>& A, F mean, Base<F> stddev )
+template<typename F,Device D,typename>
+void MakeGaussian( Matrix<F,D>& A, F mean, Base<F> stddev )
 {
     EL_DEBUG_CSE
     auto sampleNormal = [=]() { return SampleNormal(mean,stddev); };
     EntrywiseFill( A, function<F()>(sampleNormal) );
+}
+
+template<typename F, Device D, typename, typename>
+void MakeGaussian( Matrix<F,D>& A, F mean, Base<F> stddev )
+{
+    LogicError("MakeGaussian: Bad type/device combination.");
 }
 
 template<typename F>
@@ -76,13 +82,13 @@ void Gaussian
   template void MakeGaussian \
   ( AbstractMatrix<F>& A, F mean, Base<F> stddev ); \
   template void MakeGaussian \
-  ( Matrix<F, El::Device::CPU>& A, F mean, Base<F> stddev ); \
+  ( Matrix<F,Device::CPU>& A, F mean, Base<F> stddev );    \
   template void MakeGaussian \
-  ( Matrix<F, El::Device::GPU>& A, F mean, Base<F> stddev ); \
+  ( Matrix<F,Device::GPU>& A, F mean, Base<F> stddev );    \
   template void MakeGaussian \
   ( AbstractDistMatrix<F>& A, F mean, Base<F> stddev ); \
   template void Gaussian \
-  ( Matrix<F>& A, Int m, Int n, F mean, Base<F> stddev ); \
+  ( AbstractMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev ); \
   template void Gaussian \
   ( AbstractDistMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev );
 

@@ -11,19 +11,10 @@
 
 #ifdef HYDROGEN_HAVE_CUDA
 #include "GPU/Fill.hpp"
-#include <thrust/device_ptr.h>
 #endif
 
 namespace El
 {
-struct FillDispatch
-{
-    template <typename... Ts>
-    static void Call(Ts&&... args)
-    {
-        Fill_GPU_impl(std::forward<Ts>(args)...);
-    }
-};// FillDispatch
 
 template<typename T>
 void Fill( AbstractMatrix<T>& A, T alpha )
@@ -42,6 +33,7 @@ void Fill( AbstractMatrix<T>& A, T alpha )
         {
         case Device::CPU:
         {
+            EL_PARALLEL_FOR
             for( Int i=0; i<m*n; ++i )
             {
                 ABuf[i] = alpha;
@@ -51,12 +43,7 @@ void Fill( AbstractMatrix<T>& A, T alpha )
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
         {
-            constexpr bool valid_type = IsDeviceValidType_v<T,Device::GPU>();
-            using Dispatcher =
-                typename std::conditional<valid_type,
-                                          FillDispatch,
-                                          BadDeviceDispatch>::type;
-            Dispatcher::Call(ABuf, m*n, alpha);
+            Fill_GPU_impl(ABuf, m*n, alpha);
         }
         break;
 #endif // HYDROGEN_HAVE_CUDA
@@ -82,12 +69,7 @@ void Fill( AbstractMatrix<T>& A, T alpha )
             case Device::GPU:
             {
                 // FIXME: probably faster to do both loops on GPU!
-                constexpr bool valid_type = IsDeviceValidType_v<T,Device::GPU>();
-                using Dispatcher =
-                    typename std::conditional<valid_type,
-                                              FillDispatch,
-                                              BadDeviceDispatch>::type;
-                Dispatcher::Call(ABuf + j*ALDim, m, alpha);
+                Fill_GPU_impl(ABuf, m*n, alpha);
             }
             break;
 #endif // HYDROGEN_HAVE_CUDA

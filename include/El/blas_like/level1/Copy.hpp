@@ -23,26 +23,58 @@ void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
     switch (A.GetDevice())
     {
     case Device::CPU:
-        Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
-             static_cast<Matrix<T,Device::CPU>&>(B));
+        switch (B.GetDevice())
+        {
+        case Device::CPU:
+            Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
+                 static_cast<Matrix<T,Device::CPU>&>(B));
+            break;
+#ifdef HYDROGEN_HAVE_CUDA
+        case Device::GPU:
+            Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
+                 static_cast<Matrix<T,Device::GPU>&>(B));
+            break;
+#endif // HYDROGEN_HAVE_CUDA
+        default:
+            LogicError("Copy: Bad device.");
+        }
         break;
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        Copy(static_cast<Matrix<T,Device::GPU> const&>(A),
-             static_cast<Matrix<T,Device::GPU>&>(B));
+        switch (B.GetDevice())
+        {
+        case Device::CPU:
+            Copy(static_cast<Matrix<T,Device::GPU> const&>(A),
+                 static_cast<Matrix<T,Device::CPU>&>(B));
+            break;
+        case Device::GPU:
+            Copy(static_cast<Matrix<T,Device::GPU> const&>(A),
+                 static_cast<Matrix<T,Device::GPU>&>(B));
+            break;
+        default:
+            LogicError("Copy: Bad device.");
+        }
         break;
-#endif
+#endif //  HYDROGEN_HAVE_CUDA
     default:
         LogicError("Copy: Bad device.");
     }
 }
 
-template<typename T, Device D1, Device D2>
-void Copy(const Matrix<T,D1>& A, Matrix<T,D2>& B)
+template<typename T, Device SrcD, Device DestD>
+void Copy(const Matrix<T,SrcD>& A, Matrix<T,DestD>& B)
 {
-    // FIXME (trb 03/21/2018)
-    Matrix<T,D2> Acpy(A);
-    Copy(Acpy, B);
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize(height, width);
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* EL_RESTRICT ABuf = A.LockedBuffer();
+    T* EL_RESTRICT BBuf = B.Buffer();
+
+    copy::util::InterDeviceMemCopy2D<SrcD,DestD>(
+        BBuf, ldB, ABuf, ldA, height, width);
 }
 
 template<typename T>
@@ -118,11 +150,23 @@ void Copy( const Matrix<S>& A, Matrix<T>& B )
     EntrywiseMap( A, B, MakeFunction(Caster<S,T>::Cast) );
 }
 
-template<typename T,Dist U,Dist V>
-void Copy( const ElementalMatrix<T>& A, DistMatrix<T,U,V>& B )
+template<typename T,Dist U,Dist V,Device D,
+         typename = EnableIf<IsDeviceValidType<T,D>>>
+void Copy(const ElementalMatrix<T>& A,
+          DistMatrix<T,U,V,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
     B = A;
+}
+
+template<typename T,Dist U,Dist V,Device D,
+         typename = DisableIf<IsDeviceValidType<T,D>>,
+         typename = void>
+void Copy(const ElementalMatrix<T>& A,
+          DistMatrix<T,U,V,ELEMENT,D>& B)
+{
+    EL_DEBUG_CSE
+    LogicError("Copy: bad data/device combination.");
 }
 
 // Datatype conversions should not be very common, and so it is likely best to

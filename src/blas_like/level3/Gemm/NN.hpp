@@ -446,7 +446,13 @@ void SUMMA_NN
     {
     case GEMM_DEFAULT:
         if (weightAwayFromDot*m <= sumDim && weightAwayFromDot*n <= sumDim)
+        {
+            // FIXME (trb 03/27/18): There's a correctness issue with
+            // this method. This exception is for your own safety.
+            RuntimeError("GEMM_DEFAULT selected NNDot.");
+
             SUMMA_NNDot(alpha, A, B, C, blockSizeDot);
+        }
         else if (m <= n && weightTowardsC*m <= sumDim)
             SUMMA_NNB(alpha, A, B, C);
         else if (n <= m && weightTowardsC*n <= sumDim)

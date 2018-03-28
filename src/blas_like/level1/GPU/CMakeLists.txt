@@ -1,6 +1,4 @@
 set_full_path(THIS_DIR_SOURCES
-  AllReduce.cu
-  BasicInterleaveMatrix.cu
   Fill.cu
   Hadamard.cu
   Scale.cu

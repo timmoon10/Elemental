@@ -9,7 +9,7 @@
 namespace El
 {
 
-template <typename T>
+template <typename T, typename>
 void Fill_GPU_impl(
     T* buffer, size_t size, T const& value)
 {

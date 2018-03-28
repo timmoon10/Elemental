@@ -1,3 +1,5 @@
+#include <El-lite.hpp>
+#include <El/blas_like/level1.hpp>
 #include <El/blas_like/level1/GPU/Scale.hpp>
 
 #include <thrust/device_ptr.h>
@@ -23,7 +25,7 @@ public:
 
 }// namespace <anon>
 
-template <typename T, typename S>
+template <typename T, typename S, typename>
 void Scale_GPU_impl(
     T* Input, T* Output, size_t size, S const& alpha)
 {

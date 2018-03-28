@@ -22,7 +22,7 @@ void GeneralPurpose
 ( const AbstractDistMatrix<T>& A,
         AbstractDistMatrix<T>& B );
 
-template<typename T,Device D=Device::CPU>
+template<typename T>
 void Exchange
 ( const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,

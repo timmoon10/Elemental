@@ -316,6 +316,9 @@ SELF(float,STAR,VR  ,Device::GPU);
 SELF(float,VC,  STAR,Device::GPU);
 SELF(float,VR,  STAR,Device::GPU);
 
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix
+   (const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>& A);
+
 template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
 SELF(double,CIRC,CIRC,Device::GPU);
 SELF(double,MC,  MR  ,Device::GPU);

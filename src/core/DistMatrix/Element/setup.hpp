@@ -74,6 +74,21 @@ DM::DistMatrix(const DistMatrix<T,U,V,ELEMENT,D>& A)
         LogicError("Tried to construct DistMatrix with itself");
 }
 
+template <typename T,Device D>
+template <Device D2, typename>
+DM::DistMatrix(DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2> const& A)
+    : EM(A.Grid())
+{
+    EL_DEBUG_CSE
+    if (COLDIST != CIRC || ROWDIST != CIRC)
+        this->Matrix().FixSize();
+    this->SetShifts();
+    if (reinterpret_cast<const DM*>(&A) != this)
+        *this = A;
+    else
+        LogicError("Tried to construct DistMatrix with itself");
+}
+
 template <typename T, Device D>
 DM::DistMatrix(const AbstractDistMatrix<T>& A)
 : EM(A.Grid())
@@ -235,6 +250,15 @@ DM DM::operator()(const vector<Int>& I, const vector<Int>& J) const
 // ----
 template <typename T, Device D>
 DM& DM::operator=(const DM& A)
+{
+    EL_DEBUG_CSE
+    copy::Translate(A, *this);
+    return *this;
+}
+
+template <typename T, Device D>
+template <Device D2, typename>
+DM& DM::operator=(DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2> const& A)
 {
     EL_DEBUG_CSE
     copy::Translate(A, *this);
