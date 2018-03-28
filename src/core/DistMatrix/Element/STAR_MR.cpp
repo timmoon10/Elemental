@@ -187,13 +187,13 @@ template <typename T, Device D>
 DM& DM::operator=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE
-    #define GUARD(CDIST,RDIST,WRAP) \
+    #define GUARD(CDIST,RDIST,WRAP,DEVICE) \
       A.DistData().colDist == CDIST && A.DistData().rowDist == RDIST && \
-      ELEMENT == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,ELEMENT,D>&>(A); \
+      ELEMENT == WRAP && A.GetLocalDevice() == DEVICE
+    #define PAYLOAD(CDIST,RDIST,WRAP,DEVICE) \
+      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,ELEMENT,DEVICE>&>(A); \
       *this = ACast;
-    #include "El/macros/GuardAndPayload.h"
+    #include "El/macros/DeviceGuardAndPayload.h"
     return *this;
 }
 
