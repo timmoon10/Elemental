@@ -88,6 +88,10 @@ void Gaussian
   template void MakeGaussian \
   ( AbstractDistMatrix<F>& A, F mean, Base<F> stddev ); \
   template void Gaussian \
+  ( Matrix<F,Device::CPU>& A, Int m, Int n, F mean, Base<F> stddev );  \
+  template void Gaussian \
+  ( Matrix<F,Device::GPU>& A, Int m, Int n, F mean, Base<F> stddev );  \
+  template void Gaussian \
   ( AbstractMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev ); \
   template void Gaussian \
   ( AbstractDistMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev );
