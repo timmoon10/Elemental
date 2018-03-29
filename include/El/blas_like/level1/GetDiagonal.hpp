@@ -97,13 +97,13 @@ void GetDiagonal
 ( const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& d, Int offset )
 {
     // Manual dynamic dispatch
-    #define GUARD(CDIST,RDIST,WRAP) \
+    #define GUARD(CDIST,RDIST,WRAP,DEVICE) \
       A.DistData().colDist == CDIST && A.DistData().rowDist == RDIST && \
-      A.Wrap() == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
+      A.Wrap() == WRAP && A.GetLocalDevice() == DEVICE
+    #define PAYLOAD(CDIST,RDIST,WRAP,DEVICE) \
       auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP>&>(A); \
       GetDiagonal( ACast, d, offset );
-    #include <El/macros/GuardAndPayload.h>
+    #include <El/macros/DeviceGuardAndPayload.h>
 }
 
 template<typename T>
@@ -111,13 +111,13 @@ void GetRealPartOfDiagonal
 ( const AbstractDistMatrix<T>& A, AbstractDistMatrix<Base<T>>& d, Int offset )
 {
     // Manual dynamic dispatch
-    #define GUARD(CDIST,RDIST,WRAP) \
+    #define GUARD(CDIST,RDIST,WRAP,DEVICE) \
       A.DistData().colDist == CDIST && A.DistData().rowDist == RDIST && \
-      A.Wrap() == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
+      A.Wrap() == WRAP && A.GetLocalDevice() == DEVICE
+    #define PAYLOAD(CDIST,RDIST,WRAP,DEVICE) \
       auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP>&>(A); \
       GetRealPartOfDiagonal( ACast, d, offset );
-    #include <El/macros/GuardAndPayload.h>
+    #include <El/macros/DeviceGuardAndPayload.h>
 }
 
 template<typename T>
@@ -125,13 +125,13 @@ void GetImagPartOfDiagonal
 ( const AbstractDistMatrix<T>& A, AbstractDistMatrix<Base<T>>& d, Int offset )
 {
     // Manual dynamic dispatch
-    #define GUARD(CDIST,RDIST,WRAP) \
+    #define GUARD(CDIST,RDIST,WRAP,DEVICE) \
       A.DistData().colDist == CDIST && A.DistData().rowDist == RDIST && \
-      A.Wrap() == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP>&>(A); \
+      A.Wrap() == WRAP && A.GetLocalDevice() == DEVICE
+    #define PAYLOAD(CDIST,RDIST,WRAP,DEVICE) \
+      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,WRAP,DEVICE>&>(A); \
       GetImagPartOfDiagonal( ACast, d, offset );
-    #include <El/macros/GuardAndPayload.h>
+    #include <El/macros/DeviceGuardAndPayload.h>
 }
 
 template<typename T,Dist U,Dist V>

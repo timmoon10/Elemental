@@ -97,15 +97,15 @@ void EntrywiseMap
     else
     {
         B.Resize( A.Height(), A.Width() );
-        #define GUARD(CDIST,RDIST,WRAP) \
+        #define GUARD(CDIST,RDIST,WRAP,DEVICE) \
           B.DistData().colDist == CDIST && B.DistData().rowDist == RDIST && \
           B.Wrap() == WRAP
-        #define PAYLOAD(CDIST,RDIST,WRAP) \
-          DistMatrix<S,CDIST,RDIST,WRAP> AProx(B.Grid()); \
+        #define PAYLOAD(CDIST,RDIST,WRAP,DEVICE) \
+          DistMatrix<S,CDIST,RDIST,WRAP,DEVICE> AProx(B.Grid());    \
           AProx.AlignWith( B.DistData() ); \
           Copy( A, AProx ); \
           EntrywiseMap( AProx.Matrix(), B.Matrix(), func );
-        #include <El/macros/GuardAndPayload.h>
+        #include <El/macros/DeviceGuardAndPayload.h>
         #undef GUARD
         #undef PAYLOAD
     }
