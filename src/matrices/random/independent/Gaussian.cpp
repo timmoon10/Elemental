@@ -53,6 +53,14 @@ void MakeGaussian( AbstractDistMatrix<F>& A, F mean, Base<F> stddev )
     Broadcast( A, A.RedundantComm(), 0 );
 }
 
+template<typename F, Device D>
+void Gaussian( Matrix<F, D>& A, Int m, Int n, F mean, Base<F> stddev )
+{
+    EL_DEBUG_CSE
+    A.Resize( m, n );
+    MakeGaussian( A, mean, stddev );
+}
+
 template<typename F>
 void Gaussian( AbstractMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev )
 {
@@ -79,6 +87,10 @@ void Gaussian
   ( Matrix<F,Device::GPU>& A, F mean, Base<F> stddev );    \
   template void MakeGaussian \
   ( AbstractDistMatrix<F>& A, F mean, Base<F> stddev ); \
+  template void Gaussian \
+  ( Matrix<F,Device::CPU>& A, Int m, Int n, F mean, Base<F> stddev );  \
+  template void Gaussian \
+  ( Matrix<F,Device::GPU>& A, Int m, Int n, F mean, Base<F> stddev );  \
   template void Gaussian \
   ( AbstractMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev ); \
   template void Gaussian \

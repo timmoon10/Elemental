@@ -342,7 +342,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if(!grid_->InGrid())
+       if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
    )
     T value;
@@ -364,7 +364,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if(!grid_->InGrid())
+      if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
    )
     Base<T> value;
@@ -386,7 +386,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      if(!grid_->InGrid())
+      if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
    )
     Base<T> value;

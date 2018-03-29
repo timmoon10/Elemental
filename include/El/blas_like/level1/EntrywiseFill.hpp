@@ -12,7 +12,7 @@
 namespace El {
 
 template<typename T>
-void EntrywiseFill( Matrix<T>& A, function<T(void)> func )
+void EntrywiseFill( Matrix<T, Device::CPU>& A, function<T(void)> func )
 {
     EL_DEBUG_CSE
     const Int m = A.Height();
@@ -22,17 +22,19 @@ void EntrywiseFill( Matrix<T>& A, function<T(void)> func )
             A(i,j) = func();
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
 // FIXME: Make proper kernel
 template <typename T>
 void EntrywiseFill(Matrix<T,Device::GPU> &A, function<T(void)> func)
 {
+#ifdef HYDROGEN_HAVE_CUDA
     EL_DEBUG_CSE
     Matrix<T,Device::CPU> CPU_Mat(A.Height(),A.Width(),A.LDim());
     EntrywiseFill(CPU_Mat, std::move(func));
     A = CPU_Mat;
-}
+#else // HYDROGEN_HAVE_CUDA
+    LogicError("Hydrogen compiled without CUDA support");
 #endif // HYDROGEN_HAVE_CUDA
+}
 
 template<typename T>
 void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func )
@@ -46,7 +48,7 @@ void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func )
 
 #define PROTO(T) \
   EL_EXTERN template void EntrywiseFill \
-  ( Matrix<T>& A, function<T(void)> func ); \
+  ( Matrix<T,Device::CPU>& A, function<T(void)> func );  \
   EL_EXTERN template void EntrywiseFill \
   ( AbstractDistMatrix<T>& A, function<T(void)> func );
 

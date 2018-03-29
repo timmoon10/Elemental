@@ -550,7 +550,6 @@ void Bernoulli( AbstractDistMatrix<T>& A, Int m, Int n, double p=0.5 );
 template<typename Field>
 void MakeGaussian
 ( AbstractMatrix<Field>& A, Field mean=0, Base<Field> stddev=1 );
-
 template<typename Field,Device Dev,
          typename=EnableIf<IsDeviceValidType<Field,Dev>>>
 void MakeGaussian
@@ -567,6 +566,10 @@ void MakeGaussian
 template<typename Field>
 void Gaussian
 ( AbstractMatrix<Field>& A, Int m, Int n,
+  Field mean=0, Base<Field> stddev=1 );
+template<typename Field, Device Dev>
+void Gaussian
+( Matrix<Field, Dev>& A, Int m, Int n,
   Field mean=0, Base<Field> stddev=1 );
 template<typename Field>
 void Gaussian
