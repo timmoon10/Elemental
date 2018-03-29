@@ -129,12 +129,12 @@ void DiagonalScale
         AbstractDistMatrix<T>& A )
 {
     EL_DEBUG_CSE
-    #define GUARD(CDIST,RDIST,WRAP) \
-      A.ColDist() == CDIST && A.RowDist() == RDIST && A.Wrap() == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-        auto& ACast = static_cast<DistMatrix<T,CDIST,RDIST,WRAP>&>(A); \
+    #define GUARD(CDIST,RDIST,WRAP,DEVICE) \
+      A.ColDist() == CDIST && A.RowDist() == RDIST && A.Wrap() == WRAP && A.GetLocalDevice() == DEVICE
+    #define PAYLOAD(CDIST,RDIST,WRAP,DEVICE) \
+        auto& ACast = static_cast<DistMatrix<T,CDIST,RDIST,WRAP,DEVICE>&>(A); \
         DiagonalScale( side, orientation, d, ACast );
-    #include <El/macros/GuardAndPayload.h>
+    #include <El/macros/DeviceGuardAndPayload.h>
 }
 
 
