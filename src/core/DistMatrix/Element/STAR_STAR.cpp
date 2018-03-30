@@ -256,7 +256,16 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
   BOTH(T,VR,  STAR);
 
 template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix(
+    const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>&);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
+    const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>&);
+
 template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix(
+    const DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>&);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
+    const DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>&);
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

@@ -129,7 +129,7 @@ DM& DM::operator=(const DistMatrix<T,STAR,VC,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
     DistMatrix<T,STAR,VR,ELEMENT,D> A_STAR_VR(A);
-    DistMatrix<T> A_MC_MR(this->Grid());
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignColsWith(*this);
     A_MC_MR = A_STAR_VR;
     A_STAR_VR.Empty();

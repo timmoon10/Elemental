@@ -12,6 +12,15 @@ template <typename T> using DevicePtr = T*;
 
 enum class Device : unsigned char { CPU, GPU };
 
+template <Device D>
+std::string DeviceName();
+
+template <> inline std::string DeviceName<Device::CPU>()
+{ return "CPU"; }
+
+template <> inline std::string DeviceName<Device::GPU>()
+{ return "GPU"; }
+
 // A trait to determine if the given (scalar) type is valid for a
 // given device type.
 template <typename T, Device D>
@@ -27,6 +36,11 @@ template <> struct IsDeviceValidType<double,Device::GPU> : std::true_type {};
 template <typename T, Device D>
 constexpr bool IsDeviceValidType_v() { return IsDeviceValidType<T,D>::value; }
 
+// Predicate to test if two devices are the same
+template <Device D1, Device D2>
+using SameDevice = EnumSame<Device,D1,D2>;
+
+// A simple data management class for temporary contiguous memory blocks
 template <typename T, Device D> class simple_buffer;
 
 template <typename T>

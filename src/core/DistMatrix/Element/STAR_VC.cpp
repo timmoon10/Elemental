@@ -37,7 +37,7 @@ template <typename T, Device D>
 DM& DM::operator=(const DistMatrix<T,MC,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T> A_MC_MR(A);
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(A);
     DistMatrix<T,STAR,VR,ELEMENT,D> A_STAR_VR(A_MC_MR);
     A_MC_MR.Empty();
     *this = A_STAR_VR;
@@ -100,8 +100,8 @@ template <typename T, Device D>
 DM& DM::operator=(const DistMatrix<T,VC,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T> A_MC_MR(A);
-    DistMatrix<T> A_STAR_VR(A_MC_MR);
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(A);
+    DistMatrix<T,MC,MR,ELEMENT,D> A_STAR_VR(A_MC_MR);
     A_MC_MR.Empty();
     *this = A_STAR_VR;
     return *this;
