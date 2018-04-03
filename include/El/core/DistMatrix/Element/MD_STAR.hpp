@@ -58,7 +58,12 @@ public:
                                                 IsDeviceValidType<Ring,Dev2>>>>
     DistMatrix(DistMatrix<Ring,MD,STAR,ELEMENT,Dev2> const& A);
 
-    // Move constructor
+    template <Dist colDist, Dist rowDist, Device Dev2,
+              typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
+                                    IsDeviceValidType<Ring,Dev2>>>>
+    DistMatrix(DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev2> const& A);
+
+    // Move Constructor
     DistMatrix(type&& A) EL_NO_EXCEPT;
 
     // Destructor
@@ -113,7 +118,12 @@ public:
                                                 IsDeviceValidType<Ring,Dev2>>>>
     type& operator=(DistMatrix<Ring,MD,STAR,ELEMENT,Dev2> const& A);
 
-    // Move assignment
+    template <Dist colDist, Dist rowDist, Device Dev2,
+              typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
+                                    IsDeviceValidType<Ring,Dev2>>>>
+    type& operator=(DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev2> const& A);
+
+    // Move Assignment
     // ---------------
     type& operator=(type&& A);
 

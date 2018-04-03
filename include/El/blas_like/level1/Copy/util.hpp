@@ -9,14 +9,15 @@
 #ifndef EL_BLAS_COPY_UTIL_HPP
 #define EL_BLAS_COPY_UTIL_HPP
 
-namespace El {
-namespace copy {
-namespace util {
-
-
-
+namespace El
+{
+namespace copy
+{
+namespace util
+{
 namespace details
 {
+
 template <typename T, Device D, bool=IsDeviceValidType_v<T,D>()>
 struct Impl
 {

@@ -35,13 +35,13 @@ template<typename T,Dist U,Dist V>
 void Translate
 ( const DistMatrix<T,U,V,BLOCK>& A, DistMatrix<T,U,V,BLOCK>& B );
 
-template<typename T,Device D>
+template<typename T,Device D1,Device D2>
 void TranslateBetweenGrids
-( const DistMatrix<T,MC,MR,ELEMENT,D>& A, DistMatrix<T,MC,MR,ELEMENT,D>& B );
-template<typename T,Device D>
+( const DistMatrix<T,MC,MR,ELEMENT,D1>& A, DistMatrix<T,MC,MR,ELEMENT,D2>& B );
+template<typename T,Device D1,Device D2>
 void TranslateBetweenGrids
-( DistMatrix<T,STAR,STAR,ELEMENT,D> const& A,
-  DistMatrix<T,STAR,STAR,ELEMENT,D>& B );
+( DistMatrix<T,STAR,STAR,ELEMENT,D1> const& A,
+  DistMatrix<T,STAR,STAR,ELEMENT,D2>& B );
 // The fallback case that simply throws an exception
 template<typename T,Dist U,Dist V,Device D1,Device D2>
 void TranslateBetweenGrids
