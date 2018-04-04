@@ -176,8 +176,6 @@ template<typename S,typename T,Dist U,Dist V,Device D,
 void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
-    if (A.GetLocalDevice() != D)
-        LogicError("Bad device.");
     if (A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V
         && A.GetLocalDevice() == D)
     {
@@ -254,10 +252,6 @@ template<typename S,typename T,
          typename/*=EnableIf<CanCast<S,T>>*/>
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B )
 {
-    if ((A.GetLocalDevice() != B.GetLocalDevice()) &&
-        (A.ColDist() != B.ColDist() || A.RowDist() != B.RowDist()))
-        LogicError("Cannot inter-device copy to a new distribution. Yet.");
-
     EL_DEBUG_CSE
 #define GUARD(CDIST,RDIST,WRAP,DEVICE)                                        \
         (B.ColDist() == CDIST) && (B.RowDist() == RDIST)                \
