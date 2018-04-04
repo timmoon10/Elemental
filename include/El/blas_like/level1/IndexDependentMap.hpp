@@ -52,9 +52,11 @@ void IndexDependentMap( AbstractMatrix<T>& A, function<T(Int,Int,const T&)> func
     case Device::CPU:
       IndexDependentMap(static_cast<Matrix<T,Device::CPU>&>(A), func);
       break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
       IndexDependentMap(static_cast<Matrix<T,Device::GPU>&>(A), func);
       break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
       LogicError("Unsupported device type.");
     }
