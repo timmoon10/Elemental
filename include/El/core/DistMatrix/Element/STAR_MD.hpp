@@ -53,10 +53,17 @@ public:
     DistMatrix(const DistMatrix<Ring,colDist,rowDist,BLOCK,Dev>& A);
 
     // Copy from a different device
-    template <Device Dev2,typename=typename std::enable_if<(Dev!=Dev2)&&(IsDeviceValidType<Ring,Dev>::value)&&(IsDeviceValidType<Ring,Dev2>::value)>::type>
+    template <Device Dev2,typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
+                                                IsDeviceValidType<Ring,Dev>,
+                                                IsDeviceValidType<Ring,Dev2>>>>
     DistMatrix(DistMatrix<Ring,STAR,MD,ELEMENT,Dev2> const& A);
 
-    // Move constructor
+    template <Dist colDist, Dist rowDist, Device Dev2,
+              typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
+                                    IsDeviceValidType<Ring,Dev2>>>>
+    DistMatrix(DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev2> const& A);
+
+    // Move Constructor
     DistMatrix(type&& A) EL_NO_EXCEPT;
 
     // Destructor
@@ -106,10 +113,17 @@ public:
     template<Dist colDist,Dist rowDist>
     type& operator=(const DistMatrix<Ring,colDist,rowDist,BLOCK,Dev>& A);
 
-    template <Device Dev2,typename=typename std::enable_if<(Dev!=Dev2)&&(IsDeviceValidType<Ring,Dev>::value)&&(IsDeviceValidType<Ring,Dev2>::value)>::type>
+    template <Device Dev2,typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
+                                                IsDeviceValidType<Ring,Dev>,
+                                                IsDeviceValidType<Ring,Dev2>>>>
     type& operator=(DistMatrix<Ring,STAR,MD,ELEMENT,Dev2> const& A);
 
-    // Move assignment
+    template <Dist colDist, Dist rowDist, Device Dev2,
+              typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
+                                    IsDeviceValidType<Ring,Dev2>>>>
+    type& operator=(DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev2> const& A);
+
+    // Move Assignment
     // ---------------
     type& operator=(type&& A);
 

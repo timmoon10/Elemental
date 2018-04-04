@@ -83,7 +83,7 @@ DM& DM::operator=(const DistMatrix<T,MR,STAR,ELEMENT,D>& A)
     DistMatrix<T,VC,STAR,ELEMENT,D> A_VC_STAR(A_VR_STAR);
     A_VR_STAR.Empty();
 
-    DistMatrix<T> A_MC_MR(this->Grid());
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignRowsWith(*this);
     A_MC_MR = A_VC_STAR;
     A_VC_STAR.Empty();
@@ -112,7 +112,7 @@ DM& DM::operator=(const DistMatrix<T,STAR,MC,ELEMENT,D>& A)
         A_STAR_VR = A_STAR_VC;
         A_STAR_VC.Empty();
 
-        DistMatrix<T> A_MC_MR(A_STAR_VR);
+        DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(A_STAR_VR);
         A_STAR_VR.Empty();
 
         *this = A_MC_MR;
@@ -147,7 +147,7 @@ DM& DM::operator=(const DistMatrix<T,VR,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
     DistMatrix<T,VC,STAR,ELEMENT,D> A_VC_STAR(A);
-    DistMatrix<T> A_MC_MR(this->Grid());
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignRowsWith(*this);
     A_MC_MR = A_VC_STAR;
     A_VC_STAR.Empty();

@@ -67,7 +67,7 @@ template <typename T, Device D>
 DM& DM::operator=(const DistMatrix<T,STAR,MR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T> A_MC_MR(A);
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(A);
     DistMatrix<T,VC,STAR,ELEMENT,D> A_VC_STAR(A_MC_MR);
     A_MC_MR.Empty();
 
