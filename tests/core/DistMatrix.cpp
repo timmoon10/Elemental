@@ -23,8 +23,10 @@ Check(DistMatrix<T,AColDist,ARowDist,ELEMENT,ADevice>& A,
 
     OutputFromRoot
     (g.Comm(),
-     "Testing [",DistToString(AColDist),",",DistToString(ARowDist),"]",
-     " <- [",DistToString(BColDist),",",DistToString(BRowDist),"]");
+     "Testing [",DistToString(AColDist),",",DistToString(ARowDist),
+     ",",DeviceName<ADevice>(),"]",
+     " <- [",DistToString(BColDist),",",DistToString(BRowDist),
+     ",",DeviceName<BDevice>(),"]");
     Int colAlign = SampleUniform<Int>(0,A.ColStride());
     Int rowAlign = SampleUniform<Int>(0,A.RowStride());
     mpi::Broadcast(colAlign, 0, g.Comm());
@@ -93,9 +95,16 @@ void CheckAll_device(DistMatrix<T,U,V,ELEMENT,D>& A, bool print)
       Check(A_MC_STAR, A, print);
     }
 
+    if (D == Device::CPU)
     {
       DistMatrix<T,MD,STAR,ELEMENT,CopyD> A_MD_STAR(A.Grid());
       Check(A_MD_STAR, A, print);
+    }
+    else
+    {
+        OutputFromRoot(
+            A.Grid().Comm(), "Skipping (MD,STAR) on device \"",
+            DeviceName<D>(), "\"...");
     }
 
     {
@@ -113,9 +122,16 @@ void CheckAll_device(DistMatrix<T,U,V,ELEMENT,D>& A, bool print)
       Check(A_STAR_MC, A, print);
     }
 
+    if (D == Device::CPU)
     {
       DistMatrix<T,STAR,MD,ELEMENT,CopyD> A_STAR_MD(A.Grid());
       Check(A_STAR_MD, A, print);
+    }
+    else
+    {
+        OutputFromRoot(
+            A.Grid().Comm(), "Skipping (STAR,MD) on device \"",
+            DeviceName<D>(), "\"...");
     }
 
     {
@@ -184,17 +200,26 @@ void DistMatrixTest_device(Int m, Int n, Grid const& grid, bool print)
     CheckAll<T,CIRC,CIRC,D>(m, n, grid, print);
     CheckAll<T,MC,  MR  ,D>(m, n, grid, print);
     CheckAll<T,MC,  STAR,D>(m, n, grid, print);
-    CheckAll<T,MD,  STAR,D>(m, n, grid, print);
     CheckAll<T,MR,  MC  ,D>(m, n, grid, print);
     CheckAll<T,MR,  STAR,D>(m, n, grid, print);
     CheckAll<T,STAR,MC  ,D>(m, n, grid, print);
-    CheckAll<T,STAR,MD  ,D>(m, n, grid, print);
     CheckAll<T,STAR,MR  ,D>(m, n, grid, print);
     CheckAll<T,STAR,STAR,D>(m, n, grid, print);
     CheckAll<T,STAR,VC  ,D>(m, n, grid, print);
     CheckAll<T,STAR,VR  ,D>(m, n, grid, print);
     CheckAll<T,VC,  STAR,D>(m, n, grid, print);
     CheckAll<T,VR,  STAR,D>(m, n, grid, print);
+    if (D == Device::CPU)
+    {
+        CheckAll<T,MD,  STAR,D>(m, n, grid, print);
+        CheckAll<T,STAR,MD  ,D>(m, n, grid, print);
+    }
+    else
+    {
+        OutputFromRoot(
+            grid.Comm(), "Skipping (MD,STAR) and (STAR,MD) on device \"",
+            DeviceName<D>(), "\"...");
+    }
 }
 
 template <typename T, Device D,
