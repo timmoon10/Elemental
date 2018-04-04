@@ -13,8 +13,8 @@ namespace El {
 namespace copy {
 
 // (U,V) |-> (Collect(U),V)
-template<typename T>
-void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
+template <Device D, typename T>
+void ColAllGather_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
@@ -57,13 +57,12 @@ void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
                 const Int localWidth = A.LocalWidth();
                 const Int portionSize = mpi::Pad( maxLocalHeight*localWidth );
 
-                vector<T> buffer;
-                FastResize( buffer, (colStride+1)*portionSize );
-                T* sendBuf = &buffer[0];
-                T* recvBuf = &buffer[portionSize];
+                simple_buffer<T,D> buffer((colStride+1)*portionSize);
+                T* sendBuf = buffer.data();
+                T* recvBuf = buffer.data() + portionSize;
 
                 // Pack
-                util::InterleaveMatrix
+                util::InterleaveMatrix<T,D>
                 ( A.LocalHeight(), localWidth,
                   A.LockedBuffer(), 1, A.LDim(),
                   sendBuf,          1, A.LocalHeight() );
@@ -73,7 +72,7 @@ void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
                 ( sendBuf, portionSize, recvBuf, portionSize, A.ColComm() );
 
                 // Unpack
-                util::ColStridedUnpack
+                util::ColStridedUnpack<T,D>
                 ( height, localWidth, A.ColAlign(), colStride,
                   recvBuf,    portionSize,
                   B.Buffer(), B.LDim() );
@@ -91,17 +90,20 @@ void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
             if( height == 1 )
             {
                 const Int localWidthB = B.LocalWidth();
-                vector<T> buffer;
+                simple_buffer<T,D> buffer;
                 T* bcastBuf;
 
                 if( A.ColRank() == A.ColAlign() )
                 {
                     const Int localWidth = A.LocalWidth();
-                    FastResize( buffer, localWidth+localWidthB );
-                    T* sendBuf = &buffer[0];
-                    bcastBuf   = &buffer[localWidth];
+                    buffer.allocate(localWidth+localWidthB);
+                    T* sendBuf = buffer.data();
+                    bcastBuf   = buffer.data() + localWidth;
 
                     // Pack
+                    if (D == Device::GPU)
+                        LogicError("ColAllGather: No GPU this path.");
+
                     StridedMemCopy
                     ( sendBuf, 1, A.LockedBuffer(), A.LDim(), localWidth );
 
@@ -112,7 +114,7 @@ void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
                 }
                 else
                 {
-                    FastResize( buffer, localWidthB );
+                    buffer.allocate(localWidthB);
                     bcastBuf = buffer.data();
                 }
 
@@ -121,6 +123,8 @@ void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
                 ( bcastBuf, localWidthB, A.ColAlign(), A.ColComm() );
 
                 // Unpack
+                if (D == Device::GPU)
+                    LogicError("ColAllGather: No GPU this path.");
                 StridedMemCopy
                 ( B.Buffer(), B.LDim(), bcastBuf, 1, localWidthB );
             }
@@ -132,13 +136,12 @@ void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
                 const Int portionSize =
                     mpi::Pad( maxLocalHeight*maxLocalWidth );
 
-                vector<T> buffer;
-                FastResize( buffer, (colStride+1)*portionSize );
-                T* firstBuf  = &buffer[0];
-                T* secondBuf = &buffer[portionSize];
+                simple_buffer<T,D> buffer((colStride+1)*portionSize);
+                T* firstBuf  = buffer.data();
+                T* secondBuf = buffer.data() + portionSize;
 
                 // Pack
-                util::InterleaveMatrix
+                util::InterleaveMatrix<T,D>
                 ( A.LocalHeight(), A.LocalWidth(),
                   A.LockedBuffer(), 1, A.LDim(),
                   secondBuf,        1, A.LocalHeight() );
@@ -154,7 +157,7 @@ void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
                   secondBuf, portionSize, A.ColComm() );
 
                 // Unpack the contents of each member of the column team
-                util::ColStridedUnpack
+                util::ColStridedUnpack<T,D>
                 ( height, B.LocalWidth(), A.ColAlign(), colStride,
                   secondBuf,  portionSize,
                   B.Buffer(), B.LDim() );
@@ -166,6 +169,30 @@ void ColAllGather( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
     // and the second phase broadcasts over the cross communicator.
     if( A.Grid().InGrid() && A.CrossComm() != mpi::COMM_SELF )
         El::Broadcast( B, A.CrossComm(), A.Root() );
+}
+
+template <typename T>
+void ColAllGather
+( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
+{
+    EL_DEBUG_CSE
+    if (A.GetLocalDevice() != B.GetLocalDevice())
+        LogicError(
+            "ColAllGather: For now, A and B must be on same device.");
+
+    switch (A.GetLocalDevice())
+    {
+    case Device::CPU:
+        ColAllGather_impl<Device::CPU>(A,B);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        ColAllGather_impl<Device::GPU>(A,B);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("ColAllGather: Bad device.");
+    }
 }
 
 template<typename T>
