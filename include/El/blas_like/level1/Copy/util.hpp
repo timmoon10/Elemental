@@ -347,6 +347,7 @@ struct Impl<T, Device::GPU, true>
 
 template <Device SrcD, Device DestD> struct InterDevice;
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <>
 struct InterDevice<Device::CPU,Device::GPU>
 {
@@ -384,6 +385,7 @@ struct InterDevice<Device::GPU,Device::CPU>
                          cudaGetErrorString(error));
     }
 };// InterDevice<CPU,GPU>
+#endif // HYDROGEN_HAVE_CUDA
 
 }// namespace details
 
