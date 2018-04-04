@@ -386,6 +386,7 @@ struct InterDevice<Device::GPU,Device::CPU>
     }
 };// InterDevice<CPU,GPU>
 #endif // HYDROGEN_HAVE_CUDA
+
 }// namespace details
 
 

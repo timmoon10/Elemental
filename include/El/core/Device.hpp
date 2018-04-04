@@ -1,8 +1,10 @@
 #ifndef EL_CORE_DEVICE_HPP_
 #define EL_CORE_DEVICE_HPP_
 
+#ifdef HYDROGEN_HAVE_CUDA
 #include <cuda.h>
 #include <cuda_runtime.h>
+#endif // HYDROGEN_HAVE_CUDA
 
 namespace El
 {
@@ -85,6 +87,7 @@ public:
     T* data() noexcept { return data_; }
     T const* data() const noexcept { return data_; }
 
+#ifdef HYDROGEN_HAVE_CUDA
     void shallowCopyIfPossible(simple_buffer<T,Device::GPU>& A)
     {
         // Shallow copy not possible
@@ -99,6 +102,7 @@ public:
                 cudaGetErrorString(error));
         }
     }
+#endif // HYDROGEN_HAVE_CUDA
 
     void shallowCopyIfPossible(simple_buffer<T,Device::CPU>& A)
     {

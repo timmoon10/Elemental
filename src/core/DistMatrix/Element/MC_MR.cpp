@@ -278,6 +278,7 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
     BOTH(T,VC,  STAR,Device::CPU);                                      \
     BOTH(T,VR,  STAR,Device::CPU);
 
+#ifdef HYDROGEN_HAVE_CUDA
 // Inter-device copy ctors
 template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
     const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>&);
@@ -323,6 +324,7 @@ INSTGPU(double,VC,  STAR);
 INSTGPU(double,VR,  STAR);
 template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix(
     const DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>&);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

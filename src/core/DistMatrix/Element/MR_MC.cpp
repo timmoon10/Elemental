@@ -272,6 +272,7 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
     BOTH(T,VC,  STAR,Device::CPU);                                      \
     BOTH(T,VR,  STAR,Device::CPU);
 
+#ifdef HYDROGEN_HAVE_CUDA
 #define INSTGPU(T,U,V)                                                  \
     template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
     (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
@@ -307,6 +308,7 @@ INSTGPU(double,STAR,VC );
 INSTGPU(double,STAR,VR );
 INSTGPU(double,VC,  STAR);
 INSTGPU(double,VR,  STAR);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
