@@ -492,10 +492,12 @@ void AxpyContract
     const BlockMatrix<T>& A, \
           BlockMatrix<T>& B );
 
+#ifdef HYDROGEN_HAVE_CUDA
 EL_EXTERN template void AxpyContract<float,Device::GPU>(
     float, ElementalMatrix<float> const&, ElementalMatrix<float>&);
 EL_EXTERN template void AxpyContract<double,Device::GPU>(
     double, ElementalMatrix<double> const&, ElementalMatrix<double>&);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

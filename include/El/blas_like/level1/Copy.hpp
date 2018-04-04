@@ -116,6 +116,7 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
     }
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template<typename T>
 void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
 {
@@ -141,6 +142,7 @@ void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
         RuntimeError("cudaMemcpy error in Copy():\n\n",
                      cudaGetErrorString(error));
 }
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename S,typename T,
          typename/*=EnableIf<CanCast<S,T>>*/>
@@ -176,8 +178,6 @@ template<typename S,typename T,Dist U,Dist V,Device D,
 void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
-    if (A.GetLocalDevice() != D)
-        LogicError("Bad device.");
     if (A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V
         && A.GetLocalDevice() == D)
     {
@@ -254,10 +254,6 @@ template<typename S,typename T,
          typename/*=EnableIf<CanCast<S,T>>*/>
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B )
 {
-    if ((A.GetLocalDevice() != B.GetLocalDevice()) &&
-        (A.ColDist() != B.ColDist() || A.RowDist() != B.RowDist()))
-        LogicError("Cannot inter-device copy to a new distribution. Yet.");
-
     EL_DEBUG_CSE
 #define GUARD(CDIST,RDIST,WRAP,DEVICE)                                        \
         (B.ColDist() == CDIST) && (B.RowDist() == RDIST)                \
@@ -396,10 +392,12 @@ void CopyFromNonRoot
   EL_EXTERN template void CopyFromNonRoot \
   ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers );
 
+#ifdef HYDROGEN_HAVE_CUDA
 EL_EXTERN template void Copy
 ( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
 EL_EXTERN template void Copy
 ( const Matrix<double,Device::GPU>& A, Matrix<double,Device::GPU>& B );
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

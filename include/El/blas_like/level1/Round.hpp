@@ -20,9 +20,11 @@ void Round(AbstractMatrix<T>& A)
     case Device::CPU:
         Round(static_cast<Matrix<T,Device::CPU>&>(A));
         break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         Round(static_cast<Matrix<T,Device::GPU>&>(A));
         break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Invalid device type.");
     }

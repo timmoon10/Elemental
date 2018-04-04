@@ -61,7 +61,7 @@ public:
     // Assign by copying data from a GPU
     Matrix<Ring, Device::CPU> & operator=(
         Matrix<Ring, Device::GPU> const& A);
-#endif
+#endif // HYDROGEN_HAVE_CUDA
 
     // Move assignment
     Matrix<Ring, Device::CPU>& operator=(Matrix<Ring, Device::CPU>&& A);
@@ -220,6 +220,7 @@ private:
     int RowAlign() const EL_NO_EXCEPT;
 };
 
+#ifdef HYDROGEN_HAVE_CUDA
 // GPU version
 template <typename Ring>
 class Matrix<Ring, Device::GPU> : public AbstractMatrix<Ring>
@@ -363,6 +364,7 @@ private:
     DevicePtr<Ring> data_=nullptr;
 
 };// class Matrix<Ring,Device::GPU>
+#endif // HYDROGEN_HAVE_CUDA
 
 } // namespace El
 
