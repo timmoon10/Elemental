@@ -10,7 +10,13 @@ namespace El
 // Special typedef to help distinguish host/device memory
 template <typename T> using DevicePtr = T*;
 
-enum class Device : unsigned char { CPU, GPU };
+enum class Device : unsigned char
+{
+    CPU
+#ifdef HYDROGEN_HAVE_CUDA
+    , GPU
+#endif
+};
 
 template <Device D>
 std::string DeviceName();
@@ -18,8 +24,10 @@ std::string DeviceName();
 template <> inline std::string DeviceName<Device::CPU>()
 { return "CPU"; }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <> inline std::string DeviceName<Device::GPU>()
 { return "GPU"; }
+#endif
 
 // A trait to determine if the given (scalar) type is valid for a
 // given device type.
@@ -29,8 +37,10 @@ struct IsDeviceValidType : std::false_type {};
 template <typename T>
 struct IsDeviceValidType<T,Device::CPU> : std::true_type {};
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <> struct IsDeviceValidType< float,Device::GPU> : std::true_type {};
 template <> struct IsDeviceValidType<double,Device::GPU> : std::true_type {};
+#endif
 
 // Constexpr function wrapping the value above
 template <typename T, Device D>

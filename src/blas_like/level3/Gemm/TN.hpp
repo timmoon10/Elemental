@@ -301,7 +301,7 @@ void SUMMA_TNDot_impl
             auto C11 = C(indOuter, indInner);
 
             LocalGemm(orientA, NORMAL, alpha, A1, B1, C11_STAR_STAR);
-            AxpyContract<T,D>(T(1), C11_STAR_STAR, C11);
+            AxpyContract(T(1), C11_STAR_STAR, C11);
         }
     }
 }

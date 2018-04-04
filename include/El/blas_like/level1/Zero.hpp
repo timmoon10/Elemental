@@ -40,8 +40,8 @@ void Zero( AbstractMatrix<T>& A )
         MemZero( ABuf, size );
 #endif
             break;
-        case Device::GPU:
 #ifdef HYDROGEN_HAVE_CUDA
+        case Device::GPU:
             if (cudaMemset(ABuf,0x0,height*width*sizeof(T)) != cudaSuccess)
                 RuntimeError("Something wrong with cudaMemset");
             break;
@@ -60,8 +60,8 @@ void Zero( AbstractMatrix<T>& A )
             case Device::CPU:
                 MemZero( &ABuf[j*ALDim], height );
                 break;
-            case Device::GPU:
 #ifdef HYDROGEN_HAVE_CUDA
+            case Device::GPU:
                 if (cudaMemset(ABuf+j*ALDim,0x0,height*sizeof(T)) != cudaSuccess)
                     RuntimeError("Something wrong with cudaMemset");
                 break;

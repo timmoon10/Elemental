@@ -30,34 +30,34 @@ void ContractDispatch
         B.AlignAndResize
         (A.ColAlign(), A.RowAlign(), A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract<T,D>(T(1), A, B);
+        AxpyContract(T(1), A, B);
     }
     else if(A.ColDist() == Partial(U) && A.RowDist() == V)
     {
         B.AlignAndResize
         (A.ColAlign(), A.RowAlign(), A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract<T,D>(T(1), A, B);
+        AxpyContract(T(1), A, B);
     }
     else if(A.ColDist() == U && A.RowDist() == Collect(V))
     {
         B.AlignColsAndResize
         (A.ColAlign(), A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract<T,D>(T(1), A, B);
+        AxpyContract(T(1), A, B);
     }
     else if(A.ColDist() == Collect(U) && A.RowDist() == V)
     {
         B.AlignRowsAndResize
         (A.RowAlign(), A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract<T,D>(T(1), A, B);
+        AxpyContract(T(1), A, B);
     }
     else if(A.ColDist() == Collect(U) && A.RowDist() == Collect(V))
     {
         B.Resize(A.Height(), A.Width());
         Zero(B.Matrix());
-        AxpyContract<T,D>(T(1), A, B);
+        AxpyContract(T(1), A, B);
     }
     else
         LogicError("Incompatible distributions");

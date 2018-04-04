@@ -111,7 +111,7 @@ void UpdateWithLocalData
 // AxpyContract
 // ============
 
-template<typename Ring,Device D=Device::CPU>
+template<typename Ring>
 void AxpyContract
 ( Ring alpha, const ElementalMatrix<Ring>& A, ElementalMatrix<Ring>& B );
 template<typename Ring>

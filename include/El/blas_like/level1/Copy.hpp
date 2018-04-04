@@ -116,6 +116,7 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
     }
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template<typename T>
 void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
 {
@@ -141,6 +142,7 @@ void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
         RuntimeError("cudaMemcpy error in Copy():\n\n",
                      cudaGetErrorString(error));
 }
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename S,typename T,
          typename/*=EnableIf<CanCast<S,T>>*/>
@@ -396,10 +398,12 @@ void CopyFromNonRoot
   EL_EXTERN template void CopyFromNonRoot \
   ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers );
 
+#ifdef HYDROGEN_HAVE_CUDA
 EL_EXTERN template void Copy
 ( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
 EL_EXTERN template void Copy
 ( const Matrix<double,Device::GPU>& A, Matrix<double,Device::GPU>& B );
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

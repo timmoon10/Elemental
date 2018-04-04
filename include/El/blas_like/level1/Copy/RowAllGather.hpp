@@ -14,18 +14,10 @@ namespace El
 namespace copy
 {
 
-// FIXME (trb 03/16/2018): This is duplicated code; condense into one template
-template <typename T, Dist U, Dist V>
-void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
-                  DistMatrix<T,U,Collect<V>(),ELEMENT,Device::GPU>& B)
+// (U,V) |-> (U,Collect(V))
+template<Device D, typename T>
+void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
 {
-    EL_DEBUG_CSE
-#ifndef EL_RELEASE
-    if ((A.ColDist() != B.ColDist()) || (Collect(A.RowDist()) != B.RowDist()))
-        LogicError("Incompatible distributions");
-#endif // EL_RELEASE
-
-    AssertSameGrids(A, B);
     const Int height = A.Height();
     const Int width = A.Width();
     B.AlignColsAndResize(A.ColAlign(), height, width, false, false);
@@ -53,14 +45,12 @@ void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
                 const Int maxLocalWidth = MaxLength(width,rowStride);
 
                 const Int portionSize = mpi::Pad(localHeight*maxLocalWidth);
-
-                // FIXME
-                simple_buffer<T,Device::GPU> buffer((rowStride+1)*portionSize);
+                simple_buffer<T,D> buffer((rowStride+1)*portionSize);
                 T* sendBuf = buffer.data();
                 T* recvBuf = buffer.data() + portionSize;
 
                 // Pack
-                util::InterleaveMatrix<T,Device::GPU>
+                util::InterleaveMatrix<T,D>
                 (localHeight, A.LocalWidth(),
                   A.LockedBuffer(), 1, A.LDim(),
                   sendBuf,          1, localHeight);
@@ -70,7 +60,7 @@ void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
                 (sendBuf, portionSize, recvBuf, portionSize, A.RowComm());
 
                 // Unpack
-                util::RowStridedUnpack<T,Device::GPU>
+                util::RowStridedUnpack<T,D>
                 (localHeight, width, A.RowAlign(), rowStride,
                   recvBuf, portionSize,
                   B.Buffer(), B.LDim());
@@ -107,14 +97,12 @@ void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
                 const Int maxLocalWidth = MaxLength(width,rowStride);
 
                 const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
-
-                // FIXME
-                simple_buffer<T,Device::GPU> buffer((rowStride+1)*portionSize);
+                simple_buffer<T,D> buffer((rowStride+1)*portionSize);
                 T* firstBuf = buffer.data();
                 T* secondBuf = buffer.data() + portionSize;
 
                 // Pack
-                util::InterleaveMatrix<T,Device::GPU>
+                util::InterleaveMatrix<T,D>
                 (localHeight, localWidthA,
                   A.LockedBuffer(), 1, A.LDim(),
                   secondBuf,        1, localHeight);
@@ -130,7 +118,7 @@ void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
                   secondBuf, portionSize, A.RowComm());
 
                 // Unpack
-                util::RowStridedUnpack<T,Device::GPU>
+                util::RowStridedUnpack<T,D>
                 (localHeightB, width, A.RowAlign(), rowStride,
                   secondBuf, portionSize,
                   B.Buffer(), B.LDim());
@@ -142,137 +130,37 @@ void RowAllGather(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
     // and the second phase broadcasts over the cross communicator.
     if (A.Grid().InGrid() && A.CrossComm() != mpi::COMM_SELF)
         El::Broadcast(B, A.CrossComm(), A.Root());
-
 }
 
-// (U,V) |-> (U,Collect(V))
-template<typename T>
-void RowAllGather(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
+template <typename T>
+void RowAllGather
+( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
 {
+    EL_DEBUG_CSE
+    if (A.GetLocalDevice() != B.GetLocalDevice())
+        LogicError(
+            "RowAllGather: For now, A and B must be on same device.");
+
     EL_DEBUG_CSE
 #ifndef EL_RELEASE
     if ((A.ColDist() != B.ColDist()) || (Collect(A.RowDist()) != B.RowDist()))
         LogicError("Incompatible distributions");
 #endif // EL_RELEASE
 
-    if (A.GetLocalDevice() != Device::CPU)
-        LogicError("RowAllGather: Bad device!");
-
     AssertSameGrids(A, B);
-    const Int height = A.Height();
-    const Int width = A.Width();
-    B.AlignColsAndResize(A.ColAlign(), height, width, false, false);
-
-    if (A.Participating())
+    switch (A.GetLocalDevice())
     {
-        const Int colDiff = B.ColAlign() - A.ColAlign();
-        if (colDiff == 0)
-        {
-            if (A.RowStride() == 1)
-            {
-                Copy(A.LockedMatrix(), B.Matrix());
-            }
-            else if (width == 1)
-            {
-                if (A.RowRank() == A.RowAlign())
-                    B.Matrix() = A.LockedMatrix();
-                mpi::Broadcast
-                (B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm());
-            }
-            else
-            {
-                const Int rowStride = A.RowStride();
-                const Int localHeight = A.LocalHeight();
-                const Int maxLocalWidth = MaxLength(width,rowStride);
-
-                const Int portionSize = mpi::Pad(localHeight*maxLocalWidth);
-                vector<T> buffer;
-                FastResize(buffer, (rowStride+1)*portionSize);
-                T* sendBuf = &buffer[0];
-                T* recvBuf = &buffer[portionSize];
-
-                // Pack
-                util::InterleaveMatrix
-                (localHeight, A.LocalWidth(),
-                  A.LockedBuffer(), 1, A.LDim(),
-                  sendBuf,          1, localHeight);
-
-                // Communicate
-                mpi::AllGather
-                (sendBuf, portionSize, recvBuf, portionSize, A.RowComm());
-
-                // Unpack
-                util::RowStridedUnpack
-                (localHeight, width, A.RowAlign(), rowStride,
-                  recvBuf, portionSize,
-                  B.Buffer(), B.LDim());
-            }
-        }
-        else
-        {
-#ifdef EL_UNALIGNED_WARNINGS
-            if (A.Grid().Rank() == 0)
-                Output("Unaligned RowAllGather");
-#endif
-            const Int sendColRank = Mod(A.ColRank()+colDiff, A.ColStride());
-            const Int recvColRank = Mod(A.ColRank()-colDiff, A.ColStride());
-
-            if (width == 1)
-            {
-                if (A.RowRank() == A.RowAlign())
-                    mpi::SendRecv
-                    (A.LockedBuffer(), A.LocalHeight(), sendColRank,
-                      B.Buffer(),       B.LocalHeight(), recvColRank,
-                      A.ColComm());
-
-                // Perform the row broadcast
-                mpi::Broadcast
-                (B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm());
-            }
-            else
-            {
-                const Int rowStride = A.RowStride();
-                const Int localHeight = A.LocalHeight();
-                const Int localWidthA = A.LocalWidth();
-                const Int localHeightB = B.LocalHeight();
-                const Int maxLocalHeight = MaxLength(height,A.ColStride());
-                const Int maxLocalWidth = MaxLength(width,rowStride);
-
-                const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
-                vector<T> buffer;
-                FastResize(buffer, (rowStride+1)*portionSize);
-                T* firstBuf = &buffer[0];
-                T* secondBuf = &buffer[portionSize];
-
-                // Pack
-                util::InterleaveMatrix
-                (localHeight, localWidthA,
-                  A.LockedBuffer(), 1, A.LDim(),
-                  secondBuf,        1, localHeight);
-
-                // Realign
-                mpi::SendRecv
-                (secondBuf, portionSize, sendColRank,
-                  firstBuf,  portionSize, recvColRank, A.ColComm());
-
-                // Perform the row AllGather
-                mpi::AllGather
-                (firstBuf,  portionSize,
-                  secondBuf, portionSize, A.RowComm());
-
-                // Unpack
-                util::RowStridedUnpack
-                (localHeightB, width, A.RowAlign(), rowStride,
-                  secondBuf, portionSize,
-                  B.Buffer(), B.LDim());
-            }
-        }
+    case Device::CPU:
+        RowAllGather_impl<Device::CPU>(A,B);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        RowAllGather_impl<Device::GPU>(A,B);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("RowAllGather: Bad device.");
     }
-    // Consider a A[STAR,MD] -> B[STAR,STAR] redistribution, where only the
-    // owning team of the MD distribution of A participates in the initial phase
-    // and the second phase broadcasts over the cross communicator.
-    if (A.Grid().InGrid() && A.CrossComm() != mpi::COMM_SELF)
-        El::Broadcast(B, A.CrossComm(), A.Root());
 }
 
 template<typename T>

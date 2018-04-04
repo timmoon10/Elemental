@@ -50,7 +50,7 @@ void SUMMA_NTA_impl(
         LocalGemm(NORMAL, NORMAL, alpha, A, B1Trans_MR_STAR, D1_MC_STAR);
 
         // C1[MC,MR] += scattered result of D1[MC,*] summed over grid rows
-        AxpyContract<T,D>(T(1), D1_MC_STAR, C1);
+        AxpyContract(T(1), D1_MC_STAR, C1);
     }
 }
 
@@ -304,7 +304,7 @@ void SUMMA_NTDot_impl
             auto C11 = C(indOuter, indInner);
 
             LocalGemm(NORMAL, orientB, alpha, A1, B1, C11_STAR_STAR);
-            AxpyContract<T,D>(T(1), C11_STAR_STAR, C11);
+            AxpyContract(T(1), C11_STAR_STAR, C11);
         }
     }
 }
