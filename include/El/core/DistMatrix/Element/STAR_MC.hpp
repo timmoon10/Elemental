@@ -277,6 +277,14 @@ public:
 
 private:
 
+    template <Device D2, typename=EnableIf<IsDeviceValidType<Ring,D2>>>
+    std::unique_ptr<absType> ConstructWithNewDevice_impl_() const;
+
+    template <Device D2,
+              typename=DisableIf<IsDeviceValidType<Ring,D2>>,
+              typename=void>
+    std::unique_ptr<absType> ConstructWithNewDevice_impl_() const;
+
     void do_empty_data_() override;
 
     template<typename S,Dist U,Dist V,DistWrap wrap,Device D>

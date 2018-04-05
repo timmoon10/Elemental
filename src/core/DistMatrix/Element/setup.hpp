@@ -195,20 +195,35 @@ DM::ConstructDiagonal
                         DiagRow<COLDIST,ROWDIST>(),ELEMENT,D>(g,root); }
 
 template <typename T, Device D>
+template <Device D2, typename>
+std::unique_ptr<typename DM::absType>
+DM::ConstructWithNewDevice_impl_() const
+{
+    return std::unique_ptr<absType>{
+        new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2>(
+            this->Grid(), this->Root())};
+}
+
+template <typename T, Device D>
+template <Device D2, typename, typename>
+std::unique_ptr<typename DM::absType>
+DM::ConstructWithNewDevice_impl_() const
+{
+    LogicError("DistMatrix::ConstructWithNewDevice: Incompatible type/device.");
+    return nullptr;//silence warnings
+}
+
+template <typename T, Device D>
 std::unique_ptr<typename DM::absType>
 DM::ConstructWithNewDevice(Device D2) const
 {
     switch (D2)
     {
     case Device::CPU:
-        return std::unique_ptr<absType>{
-            new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>(
-                this->Grid(), this->Root())};
+        return ConstructWithNewDevice_impl_<Device::CPU>();
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        return std::unique_ptr<absType>{
-            new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>(
-                this->Grid(), this->Root())};
+        return ConstructWithNewDevice_impl_<Device::GPU>();
 #endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unkown device type.");
