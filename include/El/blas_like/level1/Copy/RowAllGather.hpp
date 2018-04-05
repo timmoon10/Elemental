@@ -141,7 +141,6 @@ void RowAllGather
         LogicError(
             "RowAllGather: For now, A and B must be on same device.");
 
-    EL_DEBUG_CSE
 #ifndef EL_RELEASE
     if ((A.ColDist() != B.ColDist()) || (Collect(A.RowDist()) != B.RowDist()))
         LogicError("Incompatible distributions");
