@@ -101,7 +101,7 @@ void ColAllGather_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
                     bcastBuf   = buffer.data() + localWidth;
 
                     // Pack
-                    if (D == Device::GPU)
+                    if (D != Device::CPU)
                         LogicError("ColAllGather: No GPU this path.");
 
                     StridedMemCopy
@@ -123,7 +123,7 @@ void ColAllGather_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
                 ( bcastBuf, localWidthB, A.ColAlign(), A.ColComm() );
 
                 // Unpack
-                if (D == Device::GPU)
+                if (D != Device::CPU)
                     LogicError("ColAllGather: No GPU this path.");
                 StridedMemCopy
                 ( B.Buffer(), B.LDim(), bcastBuf, 1, localWidthB );

@@ -13,12 +13,15 @@ namespace El {
 
 // TODO(poulson): Think about using a more stable accumulation algorithm?
 
-template<typename Ring, Device D>
-Ring HilbertSchmidt( const Matrix<Ring, D>& A, const Matrix<Ring, D>& B )
+template <typename Ring>
+Ring HilbertSchmidt( const AbstractMatrix<Ring>& A, const AbstractMatrix<Ring>& B )
 {
     EL_DEBUG_CSE
     if( A.Height() != B.Height() || A.Width() != B.Width() )
         LogicError("Matrices must be the same size");
+    if (A.GetDevice() != Device::CPU || A.GetDevice() != B.GetDevice())
+        LogicError("HilbertSchmidt not supported for this device.");
+
     Ring innerProd(0);
     const Int width = A.Width();
     const Int height = A.Height();
@@ -87,9 +90,7 @@ Ring HilbertSchmidt
 
 #define PROTO(Ring) \
   template Ring HilbertSchmidt \
-  ( const Matrix<Ring, El::Device::CPU>& A, const Matrix<Ring, El::Device::CPU>& B );       \
-  template Ring HilbertSchmidt \
-  ( const Matrix<Ring, El::Device::GPU>& A, const Matrix<Ring, El::Device::GPU>& B );       \
+  ( const AbstractMatrix<Ring>& A, const AbstractMatrix<Ring>& B );       \
   template Ring HilbertSchmidt \
   ( const AbstractDistMatrix<Ring>& A, const AbstractDistMatrix<Ring>& B );
 
