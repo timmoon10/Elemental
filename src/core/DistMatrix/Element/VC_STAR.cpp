@@ -285,6 +285,9 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
 #define INSTGPU(T,U,V)                                                  \
     template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
     (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>&         \
+    DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=        \
+    (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
     template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
     (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&)
 
@@ -302,6 +305,12 @@ INSTGPU(float,STAR,STAR);
 INSTGPU(float,STAR,VC );
 INSTGPU(float,STAR,VR );
 INSTGPU(float,VR,  STAR);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
 
 template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
 INSTGPU(double,CIRC,CIRC);
@@ -317,6 +326,12 @@ INSTGPU(double,STAR,STAR);
 INSTGPU(double,STAR,VC );
 INSTGPU(double,STAR,VR );
 INSTGPU(double,VR,  STAR);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
 #endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
