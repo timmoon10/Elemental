@@ -66,10 +66,12 @@ void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B)
         View(static_cast<Matrix<T,Device::CPU>&>(A),
              static_cast<Matrix<T,Device::CPU>&>(B));
         break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         View(static_cast<Matrix<T,Device::GPU>&>(A),
              static_cast<Matrix<T,Device::GPU>&>(B));
         break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
@@ -86,10 +88,12 @@ void LockedView(AbstractMatrix<T>& A, const AbstractMatrix<T>& B)
         LockedView(static_cast<Matrix<T,Device::CPU>&>(A),
                    static_cast<const Matrix<T,Device::CPU>&>(B));
         break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         LockedView(static_cast<Matrix<T,Device::GPU>&>(A),
                    static_cast<const Matrix<T,Device::GPU>&>(B));
         break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
@@ -437,10 +441,12 @@ void View(AbstractMatrix<T>& A, AbstractMatrix<T>& B,
         View(static_cast<Matrix<T,Device::CPU>&>(A),
              static_cast<Matrix<T,Device::CPU>&>(B), I, J);
         break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         View(static_cast<Matrix<T,Device::GPU>&>(A),
              static_cast<Matrix<T,Device::GPU>&>(B), I, J);
         break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
@@ -458,10 +464,12 @@ void LockedView(AbstractMatrix<T>& A, AbstractMatrix<T> const& B,
       LockedView(static_cast<Matrix<T,Device::CPU>&>(A),
                  static_cast<const Matrix<T,Device::CPU>&>(B), I, J);
       break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
       LockedView(static_cast<Matrix<T,Device::GPU>&>(A),
                  static_cast<const Matrix<T,Device::GPU>&>(B), I, J);
       break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }

@@ -25,8 +25,8 @@ void Read(AbstractMatrix<T>& A,
     case Device::CPU:
         Read(static_cast<Matrix<T,Device::CPU>&>(A), filename, format);
         break;
-    case Device::GPU:
 #ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
     {
         Matrix<T,Device::CPU> A_CPU;
         Read(A_CPU, filename, format);

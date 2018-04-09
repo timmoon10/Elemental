@@ -14,7 +14,7 @@ namespace El {
 namespace axpy_contract {
 
 // (Partial(U),V) -> (U,V)
-template<typename T,Device D=Device::CPU>
+template<typename T, Device D>
 void PartialColScatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -130,7 +130,7 @@ void PartialRowScatter
 }
 
 // (Collect(U),V) -> (U,V)
-template <typename T, Device D=Device::CPU>
+template <typename T, Device D>
 void ColScatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -238,7 +238,7 @@ void ColScatter
 }
 
 // (U,Collect(V)) -> (U,V)
-template <typename T, Device D=Device::CPU>
+template <typename T, Device D>
 void RowScatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -387,7 +387,7 @@ void RowScatter
 }
 
 // (Collect(U),Collect(V)) -> (U,V)
-template <typename T, Device D=Device::CPU>
+template <typename T, Device D>
 void Scatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -437,8 +437,8 @@ void Scatter
 
 } // namespace axpy_contract
 
-template <typename T, Device D>
-void AxpyContract
+template <Device D, typename T, typename=EnableIf<IsDeviceValidType<T,D>>>
+void AxpyContract_impl
 ( T alpha,
   const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B )
@@ -465,6 +465,40 @@ void AxpyContract
         LogicError("Incompatible distributions");
 }
 
+template <Device D, typename T,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void AxpyContract_impl
+( T alpha,
+  const ElementalMatrix<T>& A,
+        ElementalMatrix<T>& B )
+{
+    LogicError("AxpyContract: Bad device/type combination.");
+}
+
+template <typename T>
+void AxpyContract
+( T alpha,
+  const ElementalMatrix<T>& A,
+        ElementalMatrix<T>& B )
+{
+    EL_DEBUG_CSE
+    if (A.GetLocalDevice() != B.GetLocalDevice())
+        LogicError("AxpyContract: Bad device.");
+
+    switch (A.GetLocalDevice())
+    {
+    case Device::CPU:
+        AxpyContract_impl<Device::CPU>(alpha,A,B);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        AxpyContract_impl<Device::GPU>(alpha,A,B);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("AxpyContract: Bad device type.");
+    }
+}
 template<typename T>
 void AxpyContract
 ( T alpha,
@@ -491,13 +525,6 @@ void AxpyContract
   ( T alpha, \
     const BlockMatrix<T>& A, \
           BlockMatrix<T>& B );
-
-#ifdef HYDROGEN_HAVE_CUDA
-EL_EXTERN template void AxpyContract<float,Device::GPU>(
-    float, ElementalMatrix<float> const&, ElementalMatrix<float>&);
-EL_EXTERN template void AxpyContract<double,Device::GPU>(
-    double, ElementalMatrix<double> const&, ElementalMatrix<double>&);
-#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

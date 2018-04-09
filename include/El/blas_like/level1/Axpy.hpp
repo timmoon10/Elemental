@@ -95,6 +95,7 @@ void Axpy(S alphaS, const Matrix<T,Device::CPU>& X, Matrix<T,Device::CPU>& Y)
     }
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template<typename T,typename S,
          typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
          typename=void>
@@ -148,6 +149,7 @@ void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
         }
     }
 }
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename T,typename S>
 void Axpy(S alphaS, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y)

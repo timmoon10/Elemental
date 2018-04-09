@@ -116,11 +116,11 @@ public:
 
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
-    inline T const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
-    inline T const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+    virtual T const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT = 0;
+    virtual T const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT = 0;
 
-    inline T& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
-    inline T& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+    virtual T& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT = 0;
+    virtual T& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT = 0;
 
 protected:
 
@@ -512,6 +512,7 @@ AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
 
 // Return a reference to a single entry without error-checking
 // ===========================================================
+#if 0
 template<typename T>
 T const& AbstractMatrix<T>::CRef(Int i, Int j) const
     EL_NO_RELEASE_EXCEPT
@@ -543,6 +544,7 @@ T const& AbstractMatrix<T>::operator()(Int i, Int j) const
 #endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
+        throw std::logic_error("");
     }
 }
 
@@ -579,6 +581,6 @@ T& AbstractMatrix<T>::operator()(Int i, Int j)
         LogicError("Unsupported device type.");
     }
 }
-
+#endif // 0
 }// namespace El
 #endif // HYDROGEN_ABSTRACTMATRIX_HPP_

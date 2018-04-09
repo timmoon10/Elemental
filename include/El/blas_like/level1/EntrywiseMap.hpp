@@ -12,7 +12,7 @@
 namespace El {
 
 template<typename T>
-void EntrywiseMap( AbstractMatrix<T>& A, function<T(const T&)> func )
+void EntrywiseMap(AbstractMatrix<T>& A, function<T(const T&)> func)
 {
     EL_DEBUG_CSE
 
@@ -26,10 +26,10 @@ void EntrywiseMap( AbstractMatrix<T>& A, function<T(const T&)> func )
 
     // Iterate over single loop if memory is contiguous. Otherwise
     // iterate over double loop.
-    if( ALDim == m )
+    if (ALDim == m)
     {
         EL_PARALLEL_FOR
-        for( Int i=0; i<m*n; ++i )
+        for(Int i=0; i<m*n; ++i)
         {
             ABuf[i] = func(ABuf[i]);
         }
@@ -37,10 +37,10 @@ void EntrywiseMap( AbstractMatrix<T>& A, function<T(const T&)> func )
     else
     {
         EL_PARALLEL_FOR
-        for( Int j=0; j<n; ++j )
+        for(Int j=0; j<n; ++j)
         {
             EL_SIMD
-            for( Int i=0; i<m; ++i )
+            for(Int i=0; i<m; ++i)
             {
                 ABuf[i+j*ALDim] = func(ABuf[i+j*ALDim]);
             }
@@ -49,12 +49,12 @@ void EntrywiseMap( AbstractMatrix<T>& A, function<T(const T&)> func )
 }
 
 template<typename T>
-void EntrywiseMap( AbstractDistMatrix<T>& A, function<T(const T&)> func )
-{ EntrywiseMap( A.Matrix(), func ); }
+void EntrywiseMap(AbstractDistMatrix<T>& A, function<T(const T&)> func)
+{ EntrywiseMap(A.Matrix(), func); }
 
 template<typename S,typename T>
 void EntrywiseMap
-( const AbstractMatrix<S>& A, AbstractMatrix<T>& B, function<T(const S&)> func )
+(const AbstractMatrix<S>& A, AbstractMatrix<T>& B, function<T(const S&)> func)
 {
     EL_DEBUG_CSE
 
@@ -63,48 +63,67 @@ void EntrywiseMap
 
     const Int m = A.Height();
     const Int n = A.Width();
-    B.Resize( m, n );
+    B.Resize(m, n);
     const S* ABuf = A.LockedBuffer();
     T* BBuf = B.Buffer();
     const Int ALDim = A.LDim();
     const Int BLDim = B.LDim();
     EL_PARALLEL_FOR
-    for( Int j=0; j<n; ++j )
+    for(Int j=0; j<n; ++j)
     {
         EL_SIMD
-        for( Int i=0; i<m; ++i )
+        for(Int i=0; i<m; ++i)
         {
             BBuf[i+j*BLDim] = func(ABuf[i+j*ALDim]);
         }
     }
 }
 
+template <Dist U, Dist V, DistWrap W, Device D, typename S, typename T,
+          typename=EnableIf<IsDeviceValidType<S,D>>>
+void EntrywiseMap_payload(
+    AbstractDistMatrix<S> const& A,
+    AbstractDistMatrix<T>& B,
+    function<T(const S&)> func)
+{
+    DistMatrix<S,U,V,W,D> AProx(B.Grid());
+    AProx.AlignWith(B.DistData());
+    Copy(A, AProx);
+    EntrywiseMap(AProx.Matrix(), B.Matrix(), func);
+}
+
+template <Dist U, Dist V, DistWrap W, Device D, typename S, typename T,
+          typename=DisableIf<IsDeviceValidType<S,D>>, typename=void>
+void EntrywiseMap_payload(
+    AbstractDistMatrix<S> const&,
+    AbstractDistMatrix<T>&,
+    function<T(const S&)>)
+{
+    LogicError("EntrywiseMap: Bad device/type combination.");
+}
 
 template<typename S,typename T>
 void EntrywiseMap
-( const AbstractDistMatrix<S>& A,
+(const AbstractDistMatrix<S>& A,
         AbstractDistMatrix<T>& B,
-        function<T(const S&)> func )
+        function<T(const S&)> func)
 {
-    if( A.DistData().colDist == B.DistData().colDist &&
+    if (A.DistData().colDist == B.DistData().colDist &&
         A.DistData().rowDist == B.DistData().rowDist &&
-        A.Wrap() == B.Wrap() )
+        A.Wrap() == B.Wrap())
     {
-        B.AlignWith( A.DistData() );
-        B.Resize( A.Height(), A.Width() );
-        EntrywiseMap( A.LockedMatrix(), B.Matrix(), func );
+        B.AlignWith(A.DistData());
+        B.Resize(A.Height(), A.Width());
+        EntrywiseMap(A.LockedMatrix(), B.Matrix(), func);
     }
     else
     {
-        B.Resize( A.Height(), A.Width() );
+        B.Resize(A.Height(), A.Width());
         #define GUARD(CDIST,RDIST,WRAP,DEVICE) \
           B.DistData().colDist == CDIST && B.DistData().rowDist == RDIST && \
-          B.Wrap() == WRAP
+              B.Wrap() == WRAP && B.GetLocalDevice() == DEVICE
         #define PAYLOAD(CDIST,RDIST,WRAP,DEVICE) \
-          DistMatrix<S,CDIST,RDIST,WRAP,DEVICE> AProx(B.Grid());    \
-          AProx.AlignWith( B.DistData() ); \
-          Copy( A, AProx ); \
-          EntrywiseMap( AProx.Matrix(), B.Matrix(), func );
+            EntrywiseMap_payload<CDIST,RDIST,WRAP,DEVICE>(A,B,func);
         #include <El/macros/DeviceGuardAndPayload.h>
         #undef GUARD
         #undef PAYLOAD
@@ -119,19 +138,19 @@ void EntrywiseMap
 
 #define PROTO(T) \
   EL_EXTERN template void EntrywiseMap \
-  ( AbstractMatrix<T>& A, \
-    function<T(const T&)> func ); \
+  (AbstractMatrix<T>& A, \
+    function<T(const T&)> func); \
   EL_EXTERN template void EntrywiseMap \
-  ( AbstractDistMatrix<T>& A, \
-    function<T(const T&)> func ); \
+  (AbstractDistMatrix<T>& A, \
+    function<T(const T&)> func); \
   EL_EXTERN template void EntrywiseMap \
-  ( const AbstractMatrix<T>& A, \
+  (const AbstractMatrix<T>& A, \
           AbstractMatrix<T>& B, \
-          function<T(const T&)> func ); \
+          function<T(const T&)> func); \
   EL_EXTERN template void EntrywiseMap \
-  ( const AbstractDistMatrix<T>& A, \
+  (const AbstractDistMatrix<T>& A, \
           AbstractDistMatrix<T>& B, \
-          function<T(const T&)> func );
+          function<T(const T&)> func);
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

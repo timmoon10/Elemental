@@ -99,7 +99,7 @@ void TestGemm
   bool testSequential, bool instrument)
 {
     El::Output(
-        "Starting TestGemm for device: ", D==El::Device::CPU ? "CPU" : "GPU");
+        "Starting TestGemm for device: ", El::DeviceName<D>());
 
     El::Timer timer;
 
@@ -127,7 +127,7 @@ void TestGemm
         timer.Start();
 
         // Verify things
-        if (D == El::Device::GPU)
+        if (D != El::Device::CPU)
         {
             El::Matrix<T,El::Device::CPU> A_cpu(A), B_cpu(B), C_computed(C);
 
@@ -195,7 +195,7 @@ void TestGemm
         El::Output("Distributed Gemm: ",timer.Stop()," secs");
 
     // Verify things
-    if (D == El::Device::GPU)
+    if (D != El::Device::CPU)
     {
         El::DistMatrix<T,El::MC,El::MR,El::ELEMENT,El::Device::CPU>
             A_cpu(A), B_cpu(B), C_computed(C);

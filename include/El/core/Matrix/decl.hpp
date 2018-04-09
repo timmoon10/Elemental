@@ -155,11 +155,11 @@ public:
 
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
-    inline Ring const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
-    inline Ring const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+    inline Ring const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT override;
+    inline Ring const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT override;
 
-    inline Ring& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
-    inline Ring& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+    inline Ring& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT override;
+    inline Ring& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT override;
 
 private:
     // Member variables
@@ -329,11 +329,11 @@ public:
 
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
-    inline Ring const& CRef(Int i, Int j=0) const;
-    inline Ring const& operator()(Int i, Int j=0) const;
+    inline Ring const& CRef(Int i, Int j=0) const override;
+    inline Ring const& operator()(Int i, Int j=0) const override;
 
-    inline Ring& Ref(Int i, Int j=0);
-    inline Ring& operator()(Int i, Int j=0);
+    inline Ring& Ref(Int i, Int j=0) override;
+    inline Ring& operator()(Int i, Int j=0) override;
 
 private:
 

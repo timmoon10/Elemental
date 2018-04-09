@@ -12,22 +12,6 @@
 
 namespace El {
 
-template <typename F>
-void MakeGaussian(AbstractMatrix<F>& A, F mean, Base<F> stddev)
-{
-    EL_DEBUG_CSE
-    switch (A.GetDevice())
-    {
-    case Device::CPU:
-        MakeGaussian(static_cast<Matrix<F,Device::CPU>&>(A), mean, stddev);
-        break;
-    case Device::GPU:
-        MakeGaussian(static_cast<Matrix<F,Device::GPU>&>(A), mean, stddev);
-        break;
-    default:
-        LogicError("MakeGaussian: Bad device.");
-    }
-}
 
 // Draw each entry from a normal PDF
 template<typename F,Device D,typename>
@@ -44,6 +28,25 @@ void MakeGaussian( Matrix<F,D>& A, F mean, Base<F> stddev )
     LogicError("MakeGaussian: Bad type/device combination.");
 }
 
+template <typename F>
+void MakeGaussian(AbstractMatrix<F>& A, F mean, Base<F> stddev)
+{
+    EL_DEBUG_CSE
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        MakeGaussian(static_cast<Matrix<F,Device::CPU>&>(A), mean, stddev);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        MakeGaussian(static_cast<Matrix<F,Device::GPU>&>(A), mean, stddev);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("MakeGaussian: Bad device.");
+    }
+}
+
 template<typename F>
 void MakeGaussian( AbstractDistMatrix<F>& A, F mean, Base<F> stddev )
 {
@@ -51,14 +54,6 @@ void MakeGaussian( AbstractDistMatrix<F>& A, F mean, Base<F> stddev )
     if( A.RedundantRank() == 0 )
         MakeGaussian( A.Matrix(), mean, stddev );
     Broadcast( A, A.RedundantComm(), 0 );
-}
-
-template<typename F, Device D>
-void Gaussian( Matrix<F, D>& A, Int m, Int n, F mean, Base<F> stddev )
-{
-    EL_DEBUG_CSE
-    A.Resize( m, n );
-    MakeGaussian( A, mean, stddev );
 }
 
 template<typename F>
@@ -82,15 +77,7 @@ void Gaussian
   template void MakeGaussian \
   ( AbstractMatrix<F>& A, F mean, Base<F> stddev ); \
   template void MakeGaussian \
-  ( Matrix<F,Device::CPU>& A, F mean, Base<F> stddev );    \
-  template void MakeGaussian \
-  ( Matrix<F,Device::GPU>& A, F mean, Base<F> stddev );    \
-  template void MakeGaussian \
   ( AbstractDistMatrix<F>& A, F mean, Base<F> stddev ); \
-  template void Gaussian \
-  ( Matrix<F,Device::CPU>& A, Int m, Int n, F mean, Base<F> stddev );  \
-  template void Gaussian \
-  ( Matrix<F,Device::GPU>& A, Int m, Int n, F mean, Base<F> stddev );  \
   template void Gaussian \
   ( AbstractMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev ); \
   template void Gaussian \
