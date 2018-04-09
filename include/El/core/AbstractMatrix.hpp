@@ -62,13 +62,13 @@ public:
     // Type conversion
     operator Matrix<T, Device::CPU>& () {
       if(this->GetDevice() != Device::CPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+        LogicError("Illegal conversion from AbstractMatrix to incompatible CPU Matrix ref");
       }
       return static_cast<Matrix<T, Device::CPU>&>(*this);
     }
     operator Matrix<T, Device::CPU>const& () const {
       if(this->GetDevice() != Device::CPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+        LogicError("Illegal conversion from AbstractMatrix to incompatible const CPU Matrix ref");
       }
       return static_cast<const Matrix<T, Device::CPU>&>(*this);
     }
@@ -76,13 +76,13 @@ public:
 #ifdef HYDROGEN_HAVE_CUDA
     operator Matrix<T, Device::GPU>& () {
       if(this->GetDevice() != Device::GPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+        LogicError("Illegal conversion from AbstractMatrix to incompatible GPU Matrix ref");
       }
       return static_cast<Matrix<T, Device::GPU>&>(*this);
     }
     operator Matrix<T, Device::GPU>const& () const {
       if(this->GetDevice() != Device::GPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+        LogicError("Illegal conversion from AbstractMatrix to incompatible const GPU Matrix ref");
       }
       return static_cast<const Matrix<T, Device::GPU>&>(*this);
     }
