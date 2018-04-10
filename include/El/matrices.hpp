@@ -567,10 +567,6 @@ template<typename Field>
 void Gaussian
 ( AbstractMatrix<Field>& A, Int m, Int n,
   Field mean=0, Base<Field> stddev=1 );
-template<typename Field, Device Dev>
-void Gaussian
-( Matrix<Field, Dev>& A, Int m, Int n,
-  Field mean=0, Base<Field> stddev=1 );
 template<typename Field>
 void Gaussian
 ( AbstractDistMatrix<Field>& A, Int m, Int n,
