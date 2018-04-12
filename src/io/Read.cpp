@@ -54,7 +54,7 @@ void Read
     if( format == AUTO )
         format = DetectFormat( filename );
 
-    if( A.ColStride() == 1 && A.RowStride() == 1 )
+    if(( A.ColStride() == 1 && A.RowStride() == 1 ) && !(A.ColDist() == STAR || A.RowDist() == STAR))
     {
         if( A.CrossRank() == A.Root() && A.RedundantRank() == 0 )
         {
