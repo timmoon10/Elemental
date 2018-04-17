@@ -134,6 +134,8 @@ void Jordan( AbstractDistMatrix<T>& J, Int n, T lambda );
 template<typename T>
 void Ones( Matrix<T>& A, Int m, Int n );
 template<typename T>
+void Ones( AbstractMatrix<T>& A, Int m, Int n );
+template<typename T>
 void Ones( AbstractDistMatrix<T>& A, Int m, Int n );
 
 // Toeplitz
