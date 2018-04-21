@@ -59,7 +59,7 @@ struct MemHelper<G,Device::GPU>
 
     static void MemZero( G* buffer, size_t numEntries)
     {
-        cudaMemset(buffer, 0, numEntries);
+        cudaMemset(buffer, 0, numEntries * sizeof(G));
     }
 };
 #endif // HYDROGEN_HAVE_CUDA
