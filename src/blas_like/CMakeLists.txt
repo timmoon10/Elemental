@@ -5,7 +5,7 @@ set_full_path(THIS_DIR_SOURCES
 
 # Add the subdirectories
 add_subdirectory(level1)
-#add_subdirectory(level2)
+add_subdirectory(level2)
 add_subdirectory(level3)
 
 # Propagate the files up the tree
