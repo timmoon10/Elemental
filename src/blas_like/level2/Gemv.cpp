@@ -14,12 +14,81 @@
 
 namespace El {
 
-template<typename T>
+template <typename T>
+void Gemv(Orientation orientA,
+          T alpha, AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
+          T beta, AbstractMatrix<T>& C)
+{
+    if ((A.GetDevice() != B.GetDevice()) || (A.GetDevice() != C.GetDevice()))
+        LogicError("Must call gemm with matrices on same device.");
+
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Gemv(orientA, alpha,
+             static_cast<Matrix<T,Device::CPU> const&>(A),
+             static_cast<Matrix<T,Device::CPU> const&>(B),
+             beta,
+             static_cast<Matrix<T,Device::CPU>&>(C));
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Gemv(orientA, alpha,
+             static_cast<Matrix<T,Device::GPU> const&>(A),
+             static_cast<Matrix<T,Device::GPU> const&>(B),
+             beta,
+             static_cast<Matrix<T,Device::GPU>&>(C));
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Bad device type.");
+    }
+}
+
+template <typename T>
+void Gemv(Orientation orientA,
+          T alpha, AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
+          AbstractMatrix<T>& C)
+{
+    Gemv(orientA, alpha, A, B, T{0}, C);
+}
+
+namespace
+{
+
+template <Device D> struct BLASHelper;
+
+template <>
+struct BLASHelper<Device::CPU>
+{
+    template <typename... Ts>
+    static void Gemv(Ts&&... args)
+    {
+        blas::Gemv(std::forward<Ts>(args)...);
+    }
+};// struct BLASHelper<T,Device::CPU>
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <>
+struct BLASHelper<Device::GPU>
+{
+    template <typename... Ts>
+    static void Gemv(Ts&&... args)
+    {
+        cublas::Gemv(std::forward<Ts>(args)...);
+    }
+};// struct BLASHelper<T,Device::GPU>
+#endif // HYDROGEN_HAVE_CUDA
+
+}// namespace <anon>
+
+
+template<typename T, Device D, typename>
 void Gemv
 ( Orientation orientation,
-  T alpha, const Matrix<T>& A,
-           const Matrix<T>& x,
-  T beta,        Matrix<T>& y )
+  T alpha, const Matrix<T,D>& A,
+           const Matrix<T,D>& x,
+  T beta,        Matrix<T,D>& y )
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
@@ -55,7 +124,7 @@ void Gemv
     {
         if( yDim != 0 )
         {
-            blas::Gemv
+          BLASHelper<D>::Gemv
             ( transChar, m, n,
               alpha, A.LockedBuffer(), A.LDim(), x.LockedBuffer(), incx,
               beta,  y.Buffer(), incy );
@@ -67,12 +136,20 @@ void Gemv
     }
 }
 
-template<typename T>
+template<typename T, Device D, typename, typename>
+void Gemv
+(Orientation, T, Matrix<T,D> const&, Matrix<T,D> const&,
+  T, Matrix<T,D>&)
+{
+    LogicError("Gemv: Bad device/type combination.");
+}
+
+template<typename T, Device D>
 void Gemv
 ( Orientation orientation,
-  T alpha, const Matrix<T>& A,
-           const Matrix<T>& x,
-                 Matrix<T>& y )
+  T alpha, const Matrix<T,D>& A,
+           const Matrix<T,D>& x,
+           Matrix<T,D>& y )
 {
     EL_DEBUG_CSE
     if( orientation == NORMAL )
@@ -232,17 +309,36 @@ void Gemv
     Gemv( orientation, alpha, A, x, T(0), y );
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
+template void Gemv(Orientation orientA,
+                   float alpha,
+                   Matrix<float,Device::GPU> const& A,
+                   Matrix<float,Device::GPU> const& B,
+                   float beta,
+                   Matrix<float,Device::GPU>& C);
+template void Gemv(Orientation orientA,
+                   double alpha,
+                   Matrix<double,Device::GPU> const& A,
+                   Matrix<double,Device::GPU> const& B,
+                   double beta,
+                   Matrix<double,Device::GPU>& C);
+#endif // HYDROGEN_HAVE_CUDA
+
 #define PROTO(T) \
+  template void Gemv                                   \
+  (Orientation, T,                                     \
+   AbstractMatrix<T> const&, AbstractMatrix<T> const&, \
+   T, AbstractMatrix<T>&);                             \
   template void Gemv \
   ( Orientation orientation, \
-    T alpha, const Matrix<T>& A, \
-             const Matrix<T>& x, \
-    T beta,        Matrix<T>& y ); \
+    T alpha, const Matrix<T,Device::CPU>& A,       \
+             const Matrix<T,Device::CPU>& x, \
+    T beta,        Matrix<T,Device::CPU>& y ); \
   template void Gemv \
   ( Orientation orientation, \
-    T alpha, const Matrix<T>& A, \
-             const Matrix<T>& x, \
-                   Matrix<T>& y ); \
+    T alpha, const Matrix<T,Device::CPU>& A, \
+             const Matrix<T,Device::CPU>& x, \
+                   Matrix<T,Device::CPU>& y ); \
   template void Gemv \
   ( Orientation orientation, \
     T alpha, const AbstractDistMatrix<T>& A, \
