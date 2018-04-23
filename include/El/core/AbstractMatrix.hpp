@@ -392,6 +392,7 @@ AbstractMatrix<T>::operator*=(T const& alpha)
     default:
         LogicError("Unsupported device type.");
     }
+    return *this;// silence compiler warning
 }
 
 // Addition/subtraction
@@ -413,6 +414,7 @@ AbstractMatrix<T>::operator+=(AbstractMatrix<T> const& A)
     default:
         LogicError("Unsupported device type.");
     }
+    return *this;// silence compiler warning
 }
 
 template<typename T>
@@ -432,6 +434,7 @@ AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
     default:
         LogicError("Unsupported device type.");
     }
+    return *this;// silence compiler warning
 }
 
 // Basic queries
