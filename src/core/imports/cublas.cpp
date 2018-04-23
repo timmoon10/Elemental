@@ -94,6 +94,27 @@ cuBLAS_Manager manager_;
     }
 
 //
+// BLAS 2
+//
+#define ADD_GEMV_IMPL(ScalarType, TypeChar)                             \
+    void Gemv(                                                          \
+        char transA, int m, int n,                                      \
+        ScalarType const& alpha,                                        \
+        ScalarType const* A, int ALDim,                                 \
+        ScalarType const* B, int BLDim,                                 \
+        ScalarType const& beta,                                         \
+        ScalarType* C, int CLDim )                                      \
+    {                                                                   \
+        auto ret = cublas ## TypeChar ## gemv(                          \
+            manager_,                                                   \
+            CharTocuBLASOp(transA),                                     \
+            m, n, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim);         \
+        if (ret != CUBLAS_STATUS_SUCCESS)                               \
+            RuntimeError("cuBLAS::Gemv failed!");                       \
+        cudaThreadSynchronize();/* FIXME */                             \
+    }
+
+//
 // BLAS 3
 //
 #define ADD_GEMM_IMPL(ScalarType, TypeChar)                             \
@@ -120,6 +141,10 @@ ADD_AXPY_IMPL(double, D)
 
 ADD_COPY_IMPL(float, S)
 ADD_COPY_IMPL(double, D)
+
+// BLAS 2
+ADD_GEMV_IMPL(float, S)
+ADD_GEMV_IMPL(double, D)
 
 // BLAS 3
 ADD_GEMM_IMPL(float, S)

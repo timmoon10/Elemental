@@ -23,6 +23,19 @@ namespace cublas
               ScalarType* Y, int incy);
 
 //
+// BLAS 2 Routines
+//
+
+#define ADD_GEMV_DECL(ScalarType)                                       \
+    void Gemv(                                                          \
+        char transA, BlasInt m, BlasInt n,                              \
+        ScalarType const& alpha,                                        \
+        ScalarType const* A, BlasInt ALDim,                             \
+        ScalarType const* x, BlasInt xLDim,                             \
+        ScalarType const& beta,                                         \
+        ScalarType* y, BlasInt yLDim);
+
+//
 // BLAS 3 Routines
 //
 
@@ -40,6 +53,10 @@ ADD_AXPY_DECL(float)
 ADD_AXPY_DECL(double)
 ADD_COPY_DECL(float)
 ADD_COPY_DECL(double)
+
+// BLAS 2
+ADD_GEMV_DECL(float)
+ADD_GEMV_DECL(double)
 
 // BLAS 3
 ADD_GEMM_DECL(float)
