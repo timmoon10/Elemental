@@ -42,8 +42,7 @@ void Zero( AbstractMatrix<T>& A )
             break;
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
-            if (cudaMemset(ABuf,0x0,height*width*sizeof(T)) != cudaSuccess)
-                RuntimeError("Something wrong with cudaMemset");
+            EL_CHECK_CUDA(cudaMemset(ABuf,0x0,height*width*sizeof(T)));
             break;
 #endif // HYDROGEN_HAVE_CUDA
         default:
@@ -62,8 +61,7 @@ void Zero( AbstractMatrix<T>& A )
                 break;
 #ifdef HYDROGEN_HAVE_CUDA
             case Device::GPU:
-                if (cudaMemset(ABuf+j*ALDim,0x0,height*sizeof(T)) != cudaSuccess)
-                    RuntimeError("Something wrong with cudaMemset");
+                EL_CHECK_CUDA(cudaMemset(ABuf+j*ALDim,0x0,height*sizeof(T)));
                 break;
 #endif // HYDROGEN_HAVE_CUDA
             default:

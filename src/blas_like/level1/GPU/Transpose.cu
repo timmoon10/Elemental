@@ -63,7 +63,6 @@ void Transpose_GPU_impl(
     dim3 threads{BLOCK_DIM,BLOCK_DIM,1};
     transpose_kernel<<<grid,threads>>>(
         dest, dest_ldim, src, height, width, ldim);
-    cudaThreadSynchronize(); // FIXME Sync here or...??
 }
 
 template void Transpose_GPU_impl(
