@@ -25,7 +25,7 @@ struct CudaError : std::runtime_error
     {}
 };// struct CudaError
 
-#define FORCE_CHECK_CUDA(cuda_call)                                     \
+#define EL_FORCE_CHECK_CUDA(cuda_call)                                  \
     do                                                                  \
     {                                                                   \
         const cudaError_t cuda_status = cuda_call;                      \
@@ -37,12 +37,21 @@ struct CudaError : std::runtime_error
     } while (0)
 
 #ifdef EL_RELEASE
-#define CHECK_CUDA(cuda_call) cuda_call
-#define CHECK_CUDNN(cudnn_call) cudnn_call
+#define EL_CHECK_CUDA(cuda_call) cuda_call
+#define EL_CHECK_CUDNN(cudnn_call) cudnn_call
 #else
-#define CHECK_CUDA(cuda_call) FORCE_CHECK_CUDA(cuda_call)
-#define CHECK_CUDNN(cudnn_call) FORCE_CHECK_CUDNN(cudnn_call)
+#define EL_CHECK_CUDA(cuda_call)                   \
+  do {                                             \
+    EL_FORCE_CHECK_CUDA(cuda_call);                \
+    EL_FORCE_CHECK_CUDA(cudaDeviceSynchronize());  \
+  } while (0)
+#define EL_CHECK_CUDNN(cudnn_call)                \
+  do {                                            \
+    EL_FORCE_CHECK_CUDNN(cudnn_call);             \
+    EL_FORCE_CHECK_CUDA(cudaDeviceSynchronize()); \
+  } while (0)
 #endif // #ifdef LBANN_DEBUG
+
 
 void InitializeCUDA(int,char*[]);
 
