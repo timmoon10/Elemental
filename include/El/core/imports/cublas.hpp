@@ -4,8 +4,6 @@
 namespace El
 {
 
-void InitializeCUDA(int,char*[]);
-
 namespace cublas
 {
 
