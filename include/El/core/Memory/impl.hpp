@@ -15,6 +15,9 @@
 #ifdef HYDROGEN_HAVE_CUDA
 #include <cuda_runtime.h>
 #endif // HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_CUB
+#include "cub/util_allocator.cuh"
+#endif // HYDROGEN_HAVE_CUB
 
 #include "El/hydrogen_config.h"
 #include "decl.hpp"
@@ -44,23 +47,74 @@ struct MemHelper<G,Device::CPU>
 
 #ifdef HYDROGEN_HAVE_CUDA
 
+#ifdef HYDROGEN_HAVE_CUB
+// GPU memory pool
+cub::CachingDeviceAllocator cubMemPool(2);
+#endif // HYDROGEN_HAVE_CUB
+
 // GPU impls are just a smidge longer
 template <typename G>
 struct MemHelper<G,Device::GPU>
 {
+
     static G* New( size_t size)
     {
         G* dptr = nullptr;
-        cudaMalloc(&dptr, size*sizeof(G));
+#ifdef HYDROGEN_HAVE_CUB
+        cudaStream_t stream = 0; // TODO: non-default stream
+        auto error = cubMemPool.DeviceAllocate(&dptr,
+                                               size * sizeof(G),
+                                               stream);
+        if (error != cudaSuccess)
+        {
+            RuntimeError("CUB memory pool failed to allocate GPU memory ",
+                         "with message: \"", cudaGetErrorString(error), "\"");
+        }
+#else
+        auto error = cudaMalloc(&dptr, size * sizeof(G));
+        if (error != cudaSuccess)
+        {
+            RuntimeError("cudaMalloc failed with message: \"",
+                         cudaGetErrorString(error), "\"");
+        }
+#endif // HYDROGEN_HAVE_CUB
         return dptr;
     }
 
-    static void Delete( G*& ptr) { cudaFree(ptr); ptr = nullptr; }
+    static void Delete( G*& ptr)
+    { 
+#ifdef HYDROGEN_HAVE_CUB
+        auto error = cubMemPool.DeviceFree(dptr);
+        if (error != cudaSuccess)
+        {
+            RuntimeError("CUB memory pool failed to deallocate GPU memory ",
+                         "with message: \"", cudaGetErrorString(error), "\"");
+        }
+#else
+        auto error = cudaFree(ptr);
+        if (error != cudaSuccess)
+        {
+            RuntimeError("cudaFree failed with message: \"",
+                         cudaGetErrorString(error), "\"");
+        }
+#endif // HYDROGEN_HAVE_CUB
+        ptr = nullptr;
+    }
 
     static void MemZero( G* buffer, size_t numEntries)
     {
-        cudaMemset(buffer, 0, numEntries * sizeof(G));
+        cudaStream_t stream = 0; // TODO: non-default stream
+        auto error = cudaMemsetAsync(buffer,
+                                     0,
+                                     numEntries * sizeof(G),
+                                     stream);
+        if (error != cudaSuccess)
+        {
+            RuntimeError("cudaMemset failed with message: \"",
+                         cudaGetErrorString(error), "\"");
+        }
     }
+
 };
 #endif // HYDROGEN_HAVE_CUDA
 } // namespace <anonymous>
