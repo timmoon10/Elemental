@@ -1,4 +1,5 @@
 #include "El-lite.hpp"
+#include "El/core/imports/cuda.hpp"
 #include "El/core/imports/cublas.hpp"
 
 #include <cublas_v2.h>
@@ -75,22 +76,16 @@ cuBLAS_Manager manager_;
               ScalarType const* X, int incx,            \
               ScalarType* Y, int incy)                  \
     {                                                   \
-        auto ret = cublas ## TypeChar ## axpy(          \
-            manager_, n, &alpha, X, incx, Y, incy);     \
-        if (ret != CUBLAS_STATUS_SUCCESS)               \
-            RuntimeError("cuBLAS::Axpy failed!");       \
-        cudaThreadSynchronize(); /* FIXME */            \
+      EL_CHECK_CUDA(cublas ## TypeChar ## axpy(         \
+            manager_, n, &alpha, X, incx, Y, incy));    \
     }
 
 #define ADD_COPY_IMPL(ScalarType, TypeChar)             \
     void Copy(int n, ScalarType const* X, int incx,     \
               ScalarType* Y, int incy)                  \
     {                                                   \
-        auto ret = cublas ## TypeChar ## copy(          \
-            manager_, n, X, incx, Y, incy);             \
-        if (ret != CUBLAS_STATUS_SUCCESS)               \
-            RuntimeError("cuBLAS::Axpy failed!");       \
-        cudaThreadSynchronize(); /* FIXME */            \
+      EL_CHECK_CUDA(cublas ## TypeChar ## copy(         \
+            manager_, n, X, incx, Y, incy));            \
     }
 
 //
@@ -105,13 +100,10 @@ cuBLAS_Manager manager_;
         ScalarType const& beta,                                         \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-        auto ret = cublas ## TypeChar ## gemv(                          \
+      EL_CHECK_CUDA(cublas ## TypeChar ## gemv(                         \
             manager_,                                                   \
             CharTocuBLASOp(transA),                                     \
-            m, n, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim);         \
-        if (ret != CUBLAS_STATUS_SUCCESS)                               \
-            RuntimeError("cuBLAS::Gemv failed!");                       \
-        cudaThreadSynchronize();/* FIXME */                             \
+            m, n, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));        \
     }
 
 //
@@ -126,13 +118,10 @@ cuBLAS_Manager manager_;
         ScalarType const& beta,                                         \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-        auto ret = cublas ## TypeChar ## gemm(                          \
+      EL_CHECK_CUDA(cublas ## TypeChar ## gemm(                         \
             manager_,                                                   \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
-            m, n, k, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim);      \
-        if (ret != CUBLAS_STATUS_SUCCESS)                               \
-            RuntimeError("cuBLAS::Gemm failed!");                       \
-        cudaThreadSynchronize();/* FIXME */                             \
+            m, n, k, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));     \
     }
 
 // BLAS 1

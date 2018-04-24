@@ -223,16 +223,11 @@ struct Impl<T, Device::GPU, true>
             const Int rowShift = Shift_(k, rowAlign, rowStride);
             const Int localWidth = Length_(width, rowShift, rowStride);
 
-            auto error =
-                cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
-                                  A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
-                                  height*sizeof(T), localWidth,
-                                  cudaMemcpyDeviceToDevice);
-            if (error != cudaSuccess)
-                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                             cudaGetErrorString(error));
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
+                                            A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
+                                            height*sizeof(T), localWidth,
+                                            cudaMemcpyDeviceToDevice));
         }
-        cudaThreadSynchronize();
     }
 
     static void RowStridedUnpack(Int height, Int width,
@@ -251,16 +246,11 @@ struct Impl<T, Device::GPU, true>
             const Int rowShift = Shift_(k, rowAlign, rowStride);
             const Int localWidth = Length_(width, rowShift, rowStride);
 
-            auto error =
-                cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
-                                  APortions+k*portionSize, height*sizeof(T),
-                                  height*sizeof(T), localWidth,
-                                  cudaMemcpyDeviceToDevice);
-            if (error != cudaSuccess)
-                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                             cudaGetErrorString(error));
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
+                                            APortions+k*portionSize, height*sizeof(T),
+                                            height*sizeof(T), localWidth,
+                                            cudaMemcpyDeviceToDevice));
         }
-        cudaThreadSynchronize();
     }
 
     static void PartialRowStridedPack
@@ -278,16 +268,12 @@ struct Impl<T, Device::GPU, true>
             const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
             const Int localWidth = Length_(width, rowShift, rowStride);
 
-            auto error = cudaMemcpy2DAsync(
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(
                 BPortions + k*portionSize, height*sizeof(T),
                 A + rowOffset*ALDim, rowStrideUnion*ALDim*sizeof(T),
                 height*sizeof(T), localWidth,
-                cudaMemcpyDeviceToDevice);
-            if (error != cudaSuccess)
-                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                             cudaGetErrorString(error));
+                cudaMemcpyDeviceToDevice));
         }
-        cudaThreadSynchronize();
     }
 
     static void PartialRowStridedUnpack
@@ -304,16 +290,12 @@ struct Impl<T, Device::GPU, true>
                 Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
             const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
             const Int localWidth = Length_(width, rowShift, rowStride);
-            auto error = cudaMemcpy2DAsync(
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(
                 B + rowOffset*BLDim, rowStrideUnion*BLDim*sizeof(T),
                 APortions + k*portionSize, height*sizeof(T),
                 height*sizeof(T), localWidth,
-                cudaMemcpyDeviceToDevice);
-            if (error != cudaSuccess)
-                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                             cudaGetErrorString(error));
+                cudaMemcpyDeviceToDevice));
         }
-        cudaThreadSynchronize();
     }
 
     static void PartialColStridedColumnPack
@@ -339,7 +321,6 @@ struct Impl<T, Device::GPU, true>
                  &A[colOffset],             colStrideUnion, localHeight);
 #endif
         }
-        cudaThreadSynchronize();
     }
 
 };
@@ -356,14 +337,11 @@ struct InterDevice<Device::CPU,Device::GPU>
                    T const* EL_RESTRICT const src, Int const src_ldim,
                    Int const height, Int const width)
     {
-        auto error = cudaMemcpy2D(
+      EL_CHECK_CUDA(cudaMemcpy2D(
             dest, dest_ldim*sizeof(T),
             src, src_ldim*sizeof(T),
             height*sizeof(T), width,
-            cudaMemcpyHostToDevice);
-        if (error != cudaSuccess)
-            RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                         cudaGetErrorString(error));
+            cudaMemcpyHostToDevice));
     }
 };// InterDevice<CPU,GPU>
 
@@ -375,14 +353,11 @@ struct InterDevice<Device::GPU,Device::CPU>
                    T const* EL_RESTRICT const src, Int const src_ldim,
                    Int const height, Int const width)
     {
-        auto error = cudaMemcpy2D(
+      EL_CHECK_CUDA(cudaMemcpy2D(
             dest, dest_ldim*sizeof(T),
             src, src_ldim*sizeof(T),
             height*sizeof(T), width,
-            cudaMemcpyDeviceToHost);
-        if (error != cudaSuccess)
-            RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                         cudaGetErrorString(error));
+            cudaMemcpyDeviceToHost));
     }
 };// InterDevice<CPU,GPU>
 #endif // HYDROGEN_HAVE_CUDA
