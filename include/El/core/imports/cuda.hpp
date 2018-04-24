@@ -12,20 +12,17 @@ namespace El
  */
 struct CudaError : std::runtime_error
 {
-    CudaError(cudaError_t cuda_error, char const* file, int line)
+    std::string build_error_string_(
+        cudaError_t cuda_error, char const* file, int line)
     {
         std::ostringstream oss;
         oss << "CUDA error at " << file << ":" << line << "\n\n"
                   << "Error: " << cudaGetErrorString(cuda_error) << '\n';
-        what_msg_ = oss.str();
+        return oss.str();
     }
-
-    char const* what() const noexcept override
-    {
-        return what_msg_.c_str();
-    }
-
-    std::string what_msg_;
+    CudaError(cudaError_t cuda_error, char const* file, int line)
+        : std::runtime_error{build_error_string_(cuda_error,file,line)}
+    {}
 };// struct CudaError
 
 #define FORCE_CHECK_CUDA(cuda_call)                                     \
@@ -35,7 +32,7 @@ struct CudaError : std::runtime_error
         if (cuda_status != cudaSuccess)                                 \
         {                                                               \
             cudaDeviceReset();                                          \
-            throw lbann::lbann_exception(cuda_status,__FILE__,__LINE__); \
+            throw CudaError(cuda_status,__FILE__,__LINE__);             \
         }                                                               \
     } while (0)
 
@@ -50,3 +47,5 @@ struct CudaError : std::runtime_error
 void InitializeCUDA(int,char*[]);
 
 }// namespace El
+
+#endif // HYDROGEN_IMPORTS_CUDA_HPP_
