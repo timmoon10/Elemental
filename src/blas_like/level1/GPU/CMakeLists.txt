@@ -1,4 +1,5 @@
 set_full_path(THIS_DIR_SOURCES
+  Axpy.cu
   Fill.cu
   Hadamard.cu
   )
