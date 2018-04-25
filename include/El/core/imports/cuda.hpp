@@ -53,7 +53,7 @@ struct CudaError : std::runtime_error
 #endif // #ifdef EL_RELEASE
 
 
-void InitializeCUDA(int,char*[]);
+void InitializeCUDA(int,char*[],int requested_device_id = -1);
 
 }// namespace El
 
