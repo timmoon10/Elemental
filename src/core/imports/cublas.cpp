@@ -141,7 +141,7 @@ ADD_GEMM_IMPL(double, D)
 
 }// namespace cublas
 
-void InitializeCUDA(int,char*[])
+void InitializeCUDA(int,char*[], int requested_device_id)
 {
     int device_count;
     auto error = cudaGetDeviceCount(&device_count);
@@ -152,7 +152,10 @@ void InitializeCUDA(int,char*[])
     if (device_count < 1)
         RuntimeError("No CUDA devices found!");
 
-    int device_id = 0;
+    int device_id = requested_device_id;
+    if(requested_device_id < 0) {
+      device_id = 0;
+    }
 
     cudaDeviceProp deviceProp;
     error = cudaGetDeviceProperties(&deviceProp, device_id);
@@ -161,9 +164,10 @@ void InitializeCUDA(int,char*[])
         RuntimeError("CUDA initialize error: ", cudaGetErrorString(error));
 
     if (deviceProp.computeMode == cudaComputeModeProhibited)
-        RuntimeError("Device 0 is in ComputeModeProhibited mode. Can't use.");
+        RuntimeError(std::string {} + "Device " + std::to_string(device_id)
+                     + " is in ComputeModeProhibited mode. Can't use.");
 
-    cudaSetDevice(0);
+    cudaSetDevice(device_id);
 }
 
 }// namespace El

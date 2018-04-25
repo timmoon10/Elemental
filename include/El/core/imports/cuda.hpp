@@ -53,7 +53,7 @@ struct CudaError : std::runtime_error
 #endif // #ifdef LBANN_DEBUG
 
 
-void InitializeCUDA(int,char*[]);
+void InitializeCUDA(int,char*[],int requested_device_id = -1);
 
 }// namespace El
 

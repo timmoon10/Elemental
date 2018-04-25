@@ -139,6 +139,10 @@ void Initialize( int& argc, char**& argv )
 
     ::args = new Args( argc, argv );
 
+#ifdef HYDROGEN_HAVE_CUDA
+    InitializeCUDA(argc,argv,0);
+#endif
+
     ::numElemInits = 1;
     if( !mpi::Initialized() )
     {
@@ -173,10 +177,6 @@ void Initialize( int& argc, char**& argv )
         }
 #endif
     }
-
-#ifdef HYDROGEN_HAVE_CUDA
-    InitializeCUDA(argc,argv);
-#endif
 
 #ifdef EL_HAVE_QT5
     InitializeQt5( argc, argv );
