@@ -9,6 +9,10 @@
 #ifndef EL_BLAS_COPY_UTIL_HPP
 #define EL_BLAS_COPY_UTIL_HPP
 
+#ifdef HYDROGEN_HAVE_CUDA
+#include "../GPU/Copy.hpp"
+#endif
+
 namespace El
 {
 namespace copy
@@ -199,11 +203,9 @@ struct Impl<T, Device::GPU, true>
         }
         else
         {
-            // FIXME
-            for (Int j = 0; j < width; ++j)
-                cublas::Copy(height,
-                             A+j*rowStrideA, colStrideA,
-                             B+j*rowStrideB, colStrideB);
+            Copy_GPU_impl(height, width,
+                          A, colStrideA, rowStrideA,
+                          B, colStrideB, rowStrideB);
             cudaDeviceSynchronize();
         }
     }
