@@ -1,13 +1,12 @@
 #include <El-lite.hpp>
 #include <El/blas_like/level1.hpp>
-#include <El/blas_like/level1/GPU/Axpy.hpp>
+#include <El/blas_like/level1/GPU/Copy.hpp>
 
 namespace
 {
 
 template <typename T>
-__global__ void Axpy_kernel( size_t height, size_t width,
-                             T alpha,
+__global__ void Copy_kernel( size_t height, size_t width,
                              T const* X, size_t colStrideX, size_t rowStrideX,
                              T* Y, size_t colStrideY, size_t rowStrideY )
 {
@@ -16,7 +15,7 @@ __global__ void Axpy_kernel( size_t height, size_t width,
     for (size_t pos = tid; pos < height * width; pos += numThreads) {
         const size_t i = pos % height;
         const size_t j = pos / height;
-        Y[i*colStrideY+j*rowStrideY] += alpha * X[i*colStrideX+j*rowStrideX];
+        Y[i*colStrideY+j*rowStrideY] = X[i*colStrideX+j*rowStrideX];
     }
 }
 
@@ -26,9 +25,8 @@ namespace El
 {
 
 template <typename T, typename>
-void Axpy_GPU_impl(
+void Copy_GPU_impl(
     size_t height, size_t width,
-    T const& alpha,
     T const* X, size_t colStrideX, size_t rowStrideX,
     T* Y, size_t colStrideY, size_t rowStrideY )
 {
@@ -37,16 +35,14 @@ void Axpy_GPU_impl(
     const size_t blockDim = 256;
     const size_t gridDim = (size + blockDim - 1) / blockDim;
     cudaStream_t stream = 0; // TODO: non-default stream
-    Axpy_kernel<T><<<gridDim, blockDim, 0, stream>>>(
-        height, width, alpha,
+    Copy_kernel<T><<<gridDim, blockDim, 0, stream>>>(
+        height, width,
         X, colStrideX, rowStrideX, Y, colStrideY, rowStrideY );
 }
 
-template void Axpy_GPU_impl(
-    size_t, size_t, float const&,
-    float const*, size_t, size_t, float*, size_t, size_t);
-template void Axpy_GPU_impl(
-    size_t, size_t, double const&,
-    double const*, size_t, size_t, double*, size_t, size_t);
+template void Copy_GPU_impl(
+    size_t, size_t, float const*, size_t, size_t, float*, size_t, size_t);
+template void Copy_GPU_impl(
+    size_t, size_t, double const*, size_t, size_t, double*, size_t, size_t);
 
 }// namespace El
