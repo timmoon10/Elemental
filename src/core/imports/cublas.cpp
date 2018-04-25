@@ -76,7 +76,7 @@ cuBLAS_Manager manager_;
               ScalarType const* X, int incx,            \
               ScalarType* Y, int incy)                  \
     {                                                   \
-      EL_CHECK_CUDA(cublas ## TypeChar ## axpy(         \
+        EL_CHECK_CUBLAS(cublas ## TypeChar ## axpy(     \
             manager_, n, &alpha, X, incx, Y, incy));    \
     }
 
@@ -84,7 +84,7 @@ cuBLAS_Manager manager_;
     void Copy(int n, ScalarType const* X, int incx,     \
               ScalarType* Y, int incy)                  \
     {                                                   \
-      EL_CHECK_CUDA(cublas ## TypeChar ## copy(         \
+      EL_CHECK_CUBLAS(cublas ## TypeChar ## copy(       \
             manager_, n, X, incx, Y, incy));            \
     }
 
@@ -100,7 +100,7 @@ cuBLAS_Manager manager_;
         ScalarType const& beta,                                         \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-      EL_CHECK_CUDA(cublas ## TypeChar ## gemv(                         \
+      EL_CHECK_CUBLAS(cublas ## TypeChar ## gemv(                       \
             manager_,                                                   \
             CharTocuBLASOp(transA),                                     \
             m, n, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));        \
@@ -118,7 +118,7 @@ cuBLAS_Manager manager_;
         ScalarType const& beta,                                         \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-      EL_CHECK_CUDA(cublas ## TypeChar ## gemm(                         \
+        EL_CHECK_CUBLAS(cublas ## TypeChar ## gemm(                     \
             manager_,                                                   \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
             m, n, k, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));     \

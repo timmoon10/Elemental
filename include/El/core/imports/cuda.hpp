@@ -50,7 +50,7 @@ struct CudaError : std::runtime_error
     EL_FORCE_CHECK_CUDNN(cudnn_call);             \
     EL_FORCE_CHECK_CUDA(cudaDeviceSynchronize()); \
   } while (0)
-#endif // #ifdef LBANN_DEBUG
+#endif // #ifdef EL_RELEASE
 
 
 void InitializeCUDA(int,char*[]);

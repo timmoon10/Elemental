@@ -204,6 +204,7 @@ struct Impl<T, Device::GPU, true>
                 cublas::Copy(height,
                              A+j*rowStrideA, colStrideA,
                              B+j*rowStrideB, colStrideB);
+            cudaDeviceSynchronize();
         }
     }
 
@@ -228,6 +229,7 @@ struct Impl<T, Device::GPU, true>
                                             height*sizeof(T), localWidth,
                                             cudaMemcpyDeviceToDevice));
         }
+        cudaDeviceSynchronize();
     }
 
     static void RowStridedUnpack(Int height, Int width,
@@ -251,6 +253,7 @@ struct Impl<T, Device::GPU, true>
                                             height*sizeof(T), localWidth,
                                             cudaMemcpyDeviceToDevice));
         }
+        cudaDeviceSynchronize();
     }
 
     static void PartialRowStridedPack
@@ -274,6 +277,7 @@ struct Impl<T, Device::GPU, true>
                 height*sizeof(T), localWidth,
                 cudaMemcpyDeviceToDevice));
         }
+        cudaDeviceSynchronize();
     }
 
     static void PartialRowStridedUnpack
@@ -296,6 +300,7 @@ struct Impl<T, Device::GPU, true>
                 height*sizeof(T), localWidth,
                 cudaMemcpyDeviceToDevice));
         }
+        cudaDeviceSynchronize();
     }
 
     static void PartialColStridedColumnPack
@@ -321,6 +326,7 @@ struct Impl<T, Device::GPU, true>
                  &A[colOffset],             colStrideUnion, localHeight);
 #endif
         }
+        cudaDeviceSynchronize();
     }
 
 };

@@ -4,6 +4,47 @@
 namespace El
 {
 
+/** \class CudaError
+ *  \brief Exception class for CUDA errors.
+ */
+struct cublasError : std::runtime_error
+{
+    std::string build_error_string_(
+        char const* file, int line)
+    {
+        std::ostringstream oss;
+        oss << "cuBLAS error at " << file << ":" << line << "\n\n";
+        return oss.str();
+    }
+    cublasError(char const* file, int line)
+        : std::runtime_error{build_error_string_(file,line)}
+    {}
+};// struct cublasError
+
+#define EL_FORCE_CHECK_CUBLAS(cublas_call)                              \
+    do                                                                  \
+    {                                                                   \
+        const cublasStatus_t cublas_status = cublas_call;               \
+        if (cublas_status != CUBLAS_STATUS_SUCCESS)                     \
+        {                                                               \
+            cudaDeviceReset();                                          \
+            throw cublasError(__FILE__,__LINE__);                       \
+        }                                                               \
+    } while (0)
+
+
+#ifdef EL_RELEASE
+#define EL_CHECK_CUBLAS(cublas_call) cublas_call
+#else
+#define EL_CHECK_CUBLAS(cublas_call)                   \
+    do                                                 \
+    {                                                  \
+        EL_FORCE_CHECK_CUBLAS(cublas_call);            \
+        EL_FORCE_CHECK_CUDA(cudaDeviceSynchronize());  \
+    } while (0)
+#endif // #ifdef EL_RELEASE
+
+
 namespace cublas
 {
 
