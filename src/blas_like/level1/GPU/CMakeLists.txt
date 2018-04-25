@@ -1,8 +1,7 @@
 set_full_path(THIS_DIR_SOURCES
+  Axpy.cu
   Fill.cu
   Hadamard.cu
-  Scale.cu
-  Transpose.cu
   )
 
 # Propagate the files up the tree

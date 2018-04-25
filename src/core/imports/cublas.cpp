@@ -124,6 +124,25 @@ cuBLAS_Manager manager_;
             m, n, k, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));     \
     }
 
+//
+// BLAS-like Extension
+//
+#define ADD_GEAM_IMPL(ScalarType, TypeChar)                             \
+    void Geam(                                                          \
+        char transA, char transB,                                       \
+        int m, int n,                                                   \
+        ScalarType const& alpha,                                        \
+        ScalarType const* A, int ALDim,                                 \
+        ScalarType const& beta,                                         \
+        ScalarType const* B, int BLDim,                                 \
+        ScalarType* C, int CLDim )                                      \
+    {                                                                   \
+      EL_CHECK_CUDA(cublas ## TypeChar ## geam(                         \
+            manager_,                                                   \
+            CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
+            m, n, &alpha, A, ALDim, &beta, B, BLDim, C, CLDim));        \
+    }
+
 // BLAS 1
 ADD_AXPY_IMPL(float, S)
 ADD_AXPY_IMPL(double, D)
@@ -138,6 +157,10 @@ ADD_GEMV_IMPL(double, D)
 // BLAS 3
 ADD_GEMM_IMPL(float, S)
 ADD_GEMM_IMPL(double, D)
+
+// BLAS-like extension
+ADD_GEAM_IMPL(float, S)
+ADD_GEAM_IMPL(double, D)
 
 }// namespace cublas
 
