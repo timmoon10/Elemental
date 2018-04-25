@@ -11,6 +11,10 @@
 
 #include <El/blas_like/level1/Axpy/util.hpp>
 
+#ifdef HYDROGEN_HAVE_CUDA
+#include "GPU/Geam.hpp"
+#endif // HYDROGEN_HAVE_CUDA
+
 namespace El {
 
 template <typename T, typename S>
@@ -136,17 +140,9 @@ void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
     }
     else
     {
-        // Iterate over single loop if X and Y are both contiguous in
-        // memory. Otherwise iterate over double loop.
-        if (ldX == mX && ldY == mX)
-        {
-            cublas::Axpy(mX*nX, alpha, XBuf, 1, YBuf, 1);
-        }
-        else
-        {
-            for(Int j=0; j<nX; ++j)
-                cublas::Axpy(mX, alpha, XBuf + j*ldX, 1, YBuf + j*ldY, 1);
-        }
+        CublasGeam('N', 'N', mX, nX,
+                   alpha, XBuf, ldX,
+                   T(1), YBuf, ldY, YBuf, ldY);
     }
 }
 #endif // HYDROGEN_HAVE_CUDA

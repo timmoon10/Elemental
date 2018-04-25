@@ -51,22 +51,24 @@ void Zero( AbstractMatrix<T>& A )
     }
     else
     {
-        EL_PARALLEL_FOR
-        for( Int j=0; j<width; ++j )
+        switch (A.GetDevice())
         {
-            switch (A.GetDevice())
+        case Device::CPU:
+            EL_PARALLEL_FOR
+            for( Int j=0; j<width; ++j )
             {
-            case Device::CPU:
                 MemZero( &ABuf[j*ALDim], height );
-                break;
-#ifdef HYDROGEN_HAVE_CUDA
-            case Device::GPU:
-                EL_CHECK_CUDA(cudaMemset(ABuf+j*ALDim,0x0,height*sizeof(T)));
-                break;
-#endif // HYDROGEN_HAVE_CUDA
-            default:
-                LogicError("Bad device type for Zero");
             }
+            break;
+#ifdef HYDROGEN_HAVE_CUDA
+        case Device::GPU:
+            EL_CHECK_CUDA(cudaMemset2D( ABuf, ALDim*sizeof(T), 0x0,
+                                        height*sizeof(T), width ));
+
+            break;
+#endif // HYDROGEN_HAVE_CUDA
+        default:
+            LogicError("Bad device type for Zero");
         }
     }
 

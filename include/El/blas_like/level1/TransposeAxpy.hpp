@@ -9,6 +9,10 @@
 #ifndef EL_BLAS_TRANSPOSEAXPY_HPP
 #define EL_BLAS_TRANSPOSEAXPY_HPP
 
+#ifdef HYDROGEN_HAVE_CUDA
+#include "GPU/Geam.hpp"
+#endif // HYDROGEN_HAVE_CUDA
+
 namespace El {
 
 template <typename T, typename S>
@@ -153,16 +157,9 @@ void TransposeAxpy(S alphaS,
           if( mX != nY || nX != mY )
               LogicError("Nonconformal TransposeAxpy");
         )
-        if( nX <= mX )
-        {
-            for( Int j=0; j<nX; ++j )
-                cublas::Axpy( mX, alpha, &XBuf[j*ldX], 1, &YBuf[j], ldY );
-        }
-        else
-        {
-            for( Int i=0; i<mX; ++i )
-                cublas::Axpy( nX, alpha, &XBuf[i], ldX, &YBuf[i*ldY], 1 );
-        }
+        CublasGeam( nX, mX, conjugate ? 'C' : 'T', 'N',
+                    alpha, XBuf, ldX,
+                    T(1), YBuf, ldY, YBuf, ldY );
     }
 }
 

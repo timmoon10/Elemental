@@ -46,6 +46,18 @@ namespace cublas
         ScalarType const& beta,                                         \
         ScalarType* C, BlasInt CLDim);
 
+//
+// BLAS-like Extension Routines
+//
+#define ADD_GEAM_DECL(ScalarType)                 \
+    void Geam(char transA, char transB,           \
+              BlasInt m, BlasInt n,               \
+              ScalarType const& alpha,            \
+              ScalarType const* A, BlasInt ALDim, \
+              ScalarType const& beta,             \
+              ScalarType const* B, BlasInt BLDim, \
+              ScalarType* C, BlasInt CLDim);
+
 // BLAS 1
 ADD_AXPY_DECL(float)
 ADD_AXPY_DECL(double)
@@ -59,6 +71,10 @@ ADD_GEMV_DECL(double)
 // BLAS 3
 ADD_GEMM_DECL(float)
 ADD_GEMM_DECL(double)
+
+// BLAS-like Extension
+ADD_GEAM_DECL(float)
+ADD_GEAM_DECL(double)
 
 }// namespace cublas
 }// namespace El
