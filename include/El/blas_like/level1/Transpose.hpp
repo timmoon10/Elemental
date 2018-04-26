@@ -9,10 +9,6 @@
 #ifndef EL_BLAS_TRANSPOSE_HPP
 #define EL_BLAS_TRANSPOSE_HPP
 
-#ifdef HYDROGEN_HAVE_CUDA
-#include "GPU/Geam.hpp"
-#endif // HYDROGEN_HAVE_CUDA
-
 namespace El {
 
 namespace transpose {
@@ -168,10 +164,10 @@ void Transpose(Matrix<T,Device::GPU> const& A,
 {
     const Int m = A.Height(), n = A.Width();
     B.Resize(n,m);
-    CublasGeam(conjugate ? 'C' : 'T', 'N', n, m,
-               T(1), A.LockedBuffer(), A.LDim(),
-               T(0), B.LockedBuffer(), B.LDim(),
-               B.Buffer(), B.LDim());
+    cublas::Geam(conjugate ? 'C' : 'T', 'N', n, m,
+                 T(1), A.LockedBuffer(), A.LDim(),
+                 T(0), B.LockedBuffer(), B.LDim(),
+                 B.Buffer(), B.LDim());
 }
 
 template <typename T, typename, typename>

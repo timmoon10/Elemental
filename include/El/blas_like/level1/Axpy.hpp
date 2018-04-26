@@ -11,10 +11,6 @@
 
 #include <El/blas_like/level1/Axpy/util.hpp>
 
-#ifdef HYDROGEN_HAVE_CUDA
-#include "GPU/Geam.hpp"
-#endif // HYDROGEN_HAVE_CUDA
-
 namespace El {
 
 template <typename T, typename S>
@@ -140,9 +136,9 @@ void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
     }
     else
     {
-        CublasGeam('N', 'N', mX, nX,
-                   alpha, XBuf, ldX,
-                   T(1), YBuf, ldY, YBuf, ldY);
+        cublas::Geam('N', 'N', mX, nX,
+                     alpha, XBuf, ldX,
+                     T(1), YBuf, ldY, YBuf, ldY);
     }
 }
 #endif // HYDROGEN_HAVE_CUDA

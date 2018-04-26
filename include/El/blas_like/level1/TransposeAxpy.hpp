@@ -9,10 +9,6 @@
 #ifndef EL_BLAS_TRANSPOSEAXPY_HPP
 #define EL_BLAS_TRANSPOSEAXPY_HPP
 
-#ifdef HYDROGEN_HAVE_CUDA
-#include "GPU/Geam.hpp"
-#endif // HYDROGEN_HAVE_CUDA
-
 namespace El {
 
 template <typename T, typename S>

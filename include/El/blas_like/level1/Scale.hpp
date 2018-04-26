@@ -9,12 +9,33 @@
 #ifndef EL_BLAS_SCALE_HPP
 #define EL_BLAS_SCALE_HPP
 
-#ifdef HYDROGEN_HAVE_CUDA
-#include "GPU/Geam.hpp"
-#endif // HYDROGEN_HAVE_CUDA
 
 namespace El
 {
+
+#ifdef HYDROGEN_HAVE_CUDA
+namespace gpu_details
+{
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void Scale(T const& alpha, T* ABuf,
+           Int const& height, Int const& width, Int const& ALDim)
+{
+    cublas::Geam( 'N', 'N', height, width,
+                  alpha, ABuf, ALDim,
+                  T(0), ABuf, ALDim, ABuf, ALDim );
+}
+
+template <typename T,
+          typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
+          typename=void>
+void Scale(T const&, T*, Int const&, Int const&, Int const&)
+{
+    LogicError("Scale: Bad device/type combo!");
+}
+
+}// namespace gpu_details
+#endif // HYDROGEN_HAVE_CUDA
+
 
 template<typename T,typename S>
 void Scale( S alphaS, AbstractMatrix<T>& A )
@@ -58,9 +79,7 @@ void Scale( S alphaS, AbstractMatrix<T>& A )
             break;
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
-            CublasGeam( 'N', 'N', height, width,
-                        alpha, ABuf, ALDim,
-                        T(0), ABuf, ALDim, ABuf, ALDim );
+            gpu_details::Scale(alpha, ABuf, height, width, ALDim);
             break;
 #endif // HYDROGEN_HAVE_CUDA
         default:
