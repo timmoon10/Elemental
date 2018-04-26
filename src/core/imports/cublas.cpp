@@ -137,7 +137,7 @@ cuBLAS_Manager manager_;
         ScalarType const* B, int BLDim,                                 \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-      EL_CHECK_CUDA(cublas ## TypeChar ## geam(                         \
+      EL_CHECK_CUBLAS(cublas ## TypeChar ## geam(                         \
             manager_,                                                   \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
             m, n, &alpha, A, ALDim, &beta, B, BLDim, C, CLDim));        \
