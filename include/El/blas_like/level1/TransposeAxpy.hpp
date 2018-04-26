@@ -157,9 +157,9 @@ void TransposeAxpy(S alphaS,
           if( mX != nY || nX != mY )
               LogicError("Nonconformal TransposeAxpy");
         )
-        CublasGeam( nX, mX, conjugate ? 'C' : 'T', 'N',
-                    alpha, XBuf, ldX,
-                    T(1), YBuf, ldY, YBuf, ldY );
+        cublas::Geam(conjugate ? 'C' : 'T', 'N', nX, mX,
+                     alpha, XBuf, ldX,
+                     T(1), YBuf, ldY, YBuf, ldY);
     }
 }
 
