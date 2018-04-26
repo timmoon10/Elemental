@@ -6,13 +6,19 @@ namespace El
 
 template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
 void Hadamard_GPU_impl(
-    T const* Input0, T const* Input1, T* Output, size_t size);
+    size_t, size_t,
+    T const*, size_t, size_t,
+    T const*, size_t, size_t,
+    T*, size_t, size_t);
 
 template <typename T,
           typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
           typename=void>
 void Hadamard_GPU_impl(
-    T const* Input0, T const* Input1, T* Output, size_t size)
+    size_t, size_t,
+    T const*, size_t, size_t,
+    T const*, size_t, size_t,
+    T*, size_t, size_t)
 {
     LogicError("Hadamard: Type not valid on GPU.");
 }
