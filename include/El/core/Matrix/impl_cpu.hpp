@@ -311,6 +311,17 @@ Matrix<Ring, Device::CPU>::LockedBuffer(Int i, Int j) const EL_NO_EXCEPT
     return &data_[i+j*this->LDim()];
 }
 
+// Advanced functions
+// ==================
+
+template<typename Ring>
+void Matrix<Ring, Device::CPU>::SetMemoryMode(unsigned int mode)
+{ memory_.SetMode(mode); }
+
+template<typename Ring>
+unsigned int Matrix<Ring, Device::CPU>::MemoryMode() const EL_NO_EXCEPT
+{ return memory_.Mode(); }
+
 // Single-entry manipulation
 // =========================
 

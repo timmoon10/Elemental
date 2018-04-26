@@ -17,7 +17,7 @@ class Memory
 {
 public:
     Memory();
-    Memory(size_t size);
+    Memory(size_t size, unsigned int mode = 0);
     ~Memory();
 
     Memory(Memory<G,D>&& mem);
@@ -32,10 +32,14 @@ public:
     G* Require(size_t size);
     void Release();
     void Empty();
+
+    void SetMode(unsigned int mode);
+    unsigned int Mode() const;
 private:
     size_t size_;
     G* rawBuffer_;
     G* buffer_;
+    unsigned int mode_;
 };// class Memory
 
 } // namespace El

@@ -117,6 +117,11 @@ public:
     const Ring* LockedBuffer() const EL_NO_EXCEPT override;
     const Ring* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT override;
 
+    //
+    // Advanced functions
+    //
+    void SetMemoryMode(unsigned int mode) override;
+    unsigned int MemoryMode() const EL_NO_EXCEPT override;
 
     // Single-entry manipulation
     // =========================
@@ -285,6 +290,10 @@ public:
     // Return a locked view
     const Matrix<Ring, Device::GPU>
     operator()(Range<Int> I, Range<Int> J) const;
+
+    // Advanced functions
+    void SetMemoryMode(unsigned int mode) override;
+    unsigned int MemoryMode() const EL_NO_EXCEPT override;
 
     // Single-entry manipulation
     // =========================
