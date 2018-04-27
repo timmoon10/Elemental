@@ -32,7 +32,6 @@ namespace
 template <typename G, Device D>
 struct MemHelper;
 
-// CPU impls are very simple
 template <typename G>
 struct MemHelper<G,Device::CPU>
 {
@@ -92,52 +91,61 @@ struct MemHelper<G,Device::CPU>
 cub::CachingDeviceAllocator cubMemPool(2);
 #endif // HYDROGEN_HAVE_CUB
 
-// GPU impls are just a smidge longer
 template <typename G>
 struct MemHelper<G,Device::GPU>
 {
     static G* New( size_t size, unsigned int mode )
     {
-        G* dptr = nullptr;
+
+        // Allocate memory
+        G* ptr = nullptr;
+        cudaError_t status = cudaSuccess;
+        switch (mode) {
+        case 0: status = cudaMalloc(&ptr, size * sizeof(G)); break;
 #ifdef HYDROGEN_HAVE_CUB
-        cudaStream_t stream = 0; // TODO: non-default stream
-        auto error = cubMemPool.DeviceAllocate(&dptr,
-                                               size * sizeof(G),
-                                               stream);
-        if (error != cudaSuccess)
-        {
-            RuntimeError("CUB memory pool failed to allocate GPU memory ",
-                         "with message: \"", cudaGetErrorString(error), "\"");
+        case 1: 
+            {
+                cudaStream_t stream = 0; // TODO: non-default stream
+                status = cubMemPool.DeviceAllocate(&ptr,
+                                                   size * sizeof(G),
+                                                   stream);
+            }
+            break;
+#endif // HYDROGEN_HAVE_CUB            
+        default: RuntimeError("Invalid GPU memory allocation mode");
         }
-#else
-        auto error = cudaMalloc(&dptr, size * sizeof(G));
-        if (error != cudaSuccess)
+
+        // Check for errors
+        if (status != cudaSuccess)
         {
-            RuntimeError("cudaMalloc failed with message: \"",
-                         cudaGetErrorString(error), "\"");
+            RuntimeError("Failed to allocate GPU memory with message: ",
+                         "\"", cudaGetErrorString(status), "\"");
         }
-#endif // HYDROGEN_HAVE_CUB
-        return dptr;
+
+        return ptr;
     }
 
     static void Delete( G*& ptr, unsigned int mode )
     { 
+
+        // Deallocate memory
+        cudaError_t status = cudaSuccess;
+        switch (mode) {
+        case 0: status = cudaFree(ptr); break;
 #ifdef HYDROGEN_HAVE_CUB
-        auto error = cubMemPool.DeviceFree(dptr);
-        if (error != cudaSuccess)
-        {
-            RuntimeError("CUB memory pool failed to deallocate GPU memory ",
-                         "with message: \"", cudaGetErrorString(error), "\"");
+        case 1: status = cubMemPool.DeviceFree(ptr); break;
+#endif // HYDROGEN_HAVE_CUB            
+        default: RuntimeError("Invalid GPU memory deallocation mode");
         }
-#else
-        auto error = cudaFree(ptr);
-        if (error != cudaSuccess)
-        {
-            RuntimeError("cudaFree failed with message: \"",
-                         cudaGetErrorString(error), "\"");
-        }
-#endif // HYDROGEN_HAVE_CUB
         ptr = nullptr;
+
+        // Check for errors
+        if (status != cudaSuccess)
+        {
+            RuntimeError("Failed to deallocate GPU memory with message: ",
+                         "\"", cudaGetErrorString(status), "\"");
+        }
+
     }
 
     static void MemZero( G* buffer, size_t numEntries, unsigned int mode )
