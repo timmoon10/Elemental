@@ -13,43 +13,50 @@ namespace El
 struct CudaError : std::runtime_error
 {
     std::string build_error_string_(
-        cudaError_t cuda_error, char const* file, int line)
+        cudaError_t cuda_error, char const* file, int line, bool async = false)
     {
         std::ostringstream oss;
-        oss << "CUDA error at " << file << ":" << line << "\n\n"
-                  << "Error: " << cudaGetErrorString(cuda_error) << '\n';
+        oss << ( async ? "Asynchronous CUDA error" : "CUDA error" )
+            << " (" << file << ":" << line << "): "
+            << cudaGetErrorString(cuda_error);
         return oss.str();
     }
-    CudaError(cudaError_t cuda_error, char const* file, int line)
-        : std::runtime_error{build_error_string_(cuda_error,file,line)}
+  CudaError(cudaError_t cuda_error, char const* file, int line, bool async = false)
+      : std::runtime_error{build_error_string_(cuda_error,file,line,async)}
     {}
 };// struct CudaError
 
 #define EL_FORCE_CHECK_CUDA(cuda_call)                                  \
     do                                                                  \
     {                                                                   \
-        const cudaError_t cuda_status = cuda_call;                      \
-        if (cuda_status != cudaSuccess)                                 \
         {                                                               \
-            cudaDeviceReset();                                          \
-            throw CudaError(cuda_status,__FILE__,__LINE__);             \
+            /* Check for earlier asynchronous errors. */                \
+            cudaError_t status_CHECK_CUDA = cudaDeviceSynchronize();    \
+            if (status_CHECK_CUDA == cudaSuccess)                       \
+                status_CHECK_CUDA = cudaGetLastError();                 \
+            if (status_CHECK_CUDA != cudaSuccess) {                     \
+                cudaDeviceReset();                                      \
+                throw CudaError(status_CHECK_CUDA,__FILE__,__LINE__,true); \
+            }                                                           \
+        }                                                               \
+        {                                                               \
+            /* Make CUDA call and check for errors. */                  \
+            cudaError_t status_CHECK_CUDA = (cuda_call);                \
+            if (status_CHECK_CUDA == cudaSuccess)                       \
+                status_CHECK_CUDA = cudaDeviceSynchronize();            \
+            if (status_CHECK_CUDA == cudaSuccess)                       \
+                status_CHECK_CUDA = cudaGetLastError();                 \
+            if (status_CHECK_CUDA != cudaSuccess) {                     \
+                cudaDeviceReset();                                      \
+                throw CudaError(status_CHECK_CUDA,__FILE__,__LINE__,false); \
+            }                                                           \
         }                                                               \
     } while (0)
 
 #ifdef EL_RELEASE
-#define EL_CHECK_CUDA(cuda_call) cuda_call
-#define EL_CHECK_CUDNN(cudnn_call) cudnn_call
+#define EL_CHECK_CUDA(cuda_call) (cuda_call)
 #else
-#define EL_CHECK_CUDA(cuda_call)                   \
-  do {                                             \
-    EL_FORCE_CHECK_CUDA(cuda_call);                \
-    EL_FORCE_CHECK_CUDA(cudaDeviceSynchronize());  \
-  } while (0)
-#define EL_CHECK_CUDNN(cudnn_call)                \
-  do {                                            \
-    EL_FORCE_CHECK_CUDNN(cudnn_call);             \
-    EL_FORCE_CHECK_CUDA(cudaDeviceSynchronize()); \
-  } while (0)
+#define EL_CHECK_CUDA(cuda_call) EL_FORCE_CHECK_CUDA(cuda_call)
 #endif // #ifdef EL_RELEASE
 
 

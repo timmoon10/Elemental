@@ -1,47 +1,79 @@
 #ifndef HYDROGEN_IMPORTS_CUBLAS_HPP_
 #define HYDROGEN_IMPORTS_CUBLAS_HPP_
 
+#include "cuda.hpp"
+#include <cublas_v2.h>
+
 namespace El
 {
 
-/** \class CudaError
- *  \brief Exception class for CUDA errors.
+/** \class CublasError
+ *  \brief Exception class for cuBLAS errors.
  */
-struct cublasError : std::runtime_error
+struct CublasError : std::runtime_error
 {
+  
+    static std::string get_error_string_(cublasStatus_t status)
+    {
+        switch (status) {
+        case CUBLAS_STATUS_SUCCESS:          return "CUBLAS_STATUS_SUCCESS";
+        case CUBLAS_STATUS_NOT_INITIALIZED:  return "CUBLAS_STATUS_NOT_INITIALIZED";
+        case CUBLAS_STATUS_ALLOC_FAILED:     return "CUBLAS_STATUS_ALLOC_FAILED";
+        case CUBLAS_STATUS_INVALID_VALUE:    return "CUBLAS_STATUS_INVALID_VALUE";
+        case CUBLAS_STATUS_ARCH_MISMATCH:    return "CUBLAS_STATUS_ARCH_MISMATCH";
+        case CUBLAS_STATUS_MAPPING_ERROR:    return "CUBLAS_STATUS_MAPPING_ERROR";
+        case CUBLAS_STATUS_EXECUTION_FAILED: return "CUBLAS_STATUS_EXECUTION_FAILED";
+        case CUBLAS_STATUS_INTERNAL_ERROR:   return "CUBLAS_STATUS_INTERNAL_ERROR";
+        case CUBLAS_STATUS_NOT_SUPPORTED:    return "CUBLAS_STATUS_NOT_SUPPORTED";
+        case CUBLAS_STATUS_LICENSE_ERROR:    return "CUBLAS_STATUS_LICENSE_ERROR";
+        default:                             return "unknown cuBLAS error";
+        }
+    }
+
     std::string build_error_string_(
-        char const* file, int line)
+        cublasStatus_t status, char const* file, int line)
     {
         std::ostringstream oss;
-        oss << "cuBLAS error at " << file << ":" << line << "\n\n";
+        oss << "cuBLAS error (" << file << ":" << line << "): "
+            << get_error_string_(status);
         return oss.str();
     }
-    cublasError(char const* file, int line)
-        : std::runtime_error{build_error_string_(file,line)}
+
+    CublasError(cublasStatus_t status, char const* file, int line)
+        : std::runtime_error{build_error_string_(status,file,line)}
     {}
+
 };// struct cublasError
 
 #define EL_FORCE_CHECK_CUBLAS(cublas_call)                              \
     do                                                                  \
     {                                                                   \
-        const cublasStatus_t cublas_status = cublas_call;               \
-        if (cublas_status != CUBLAS_STATUS_SUCCESS)                     \
+        /* Check for earlier asynchronous errors. */                    \
+        EL_FORCE_CHECK_CUDA(cudaSuccess);                               \
         {                                                               \
-            cudaDeviceReset();                                          \
-            throw cublasError(__FILE__,__LINE__);                       \
+            /* Make cuBLAS call and check for errors. */                \
+            const cublasStatus_t status_CHECK_CUBLAS = (cublas_call);   \
+            if (status_CHECK_CUBLAS != CUBLAS_STATUS_SUCCESS) {         \
+              cudaDeviceReset();                                        \
+              throw CublasError(status_CHECK_CUBLAS,__FILE__,__LINE__); \
+            }                                                           \
+        }                                                               \
+        {                                                               \
+            /* Check for CUDA errors. */                                \
+            cudaError_t status_CHECK_CUBLAS = cudaDeviceSynchronize();  \
+            if (status_CHECK_CUBLAS == cudaSuccess)                     \
+                status_CHECK_CUBLAS = cudaGetLastError();               \
+            if (status_CHECK_CUBLAS != cudaSuccess) {                   \
+                cudaDeviceReset();                                      \
+                throw CudaError(status_CHECK_CUBLAS,__FILE__,__LINE__,false); \
+            }                                                           \
         }                                                               \
     } while (0)
 
-
 #ifdef EL_RELEASE
-#define EL_CHECK_CUBLAS(cublas_call) cublas_call
+#define EL_CHECK_CUBLAS(cublas_call) (cublas_call)
 #else
-#define EL_CHECK_CUBLAS(cublas_call)                   \
-    do                                                 \
-    {                                                  \
-        EL_FORCE_CHECK_CUBLAS(cublas_call);            \
-        EL_FORCE_CHECK_CUDA(cudaDeviceSynchronize());  \
-    } while (0)
+#define EL_CHECK_CUBLAS(cublas_call) EL_FORCE_CHECK_CUBLAS(cublas_call)
 #endif // #ifdef EL_RELEASE
 
 
