@@ -39,6 +39,8 @@ public:
     // Advanced functions
     void SetViewType(El::ViewType viewType) EL_NO_EXCEPT;
     El::ViewType ViewType() const EL_NO_EXCEPT;
+    virtual void SetMemoryMode(unsigned int mode) = 0;
+    virtual unsigned int MemoryMode() const EL_NO_EXCEPT = 0;
 
     virtual T* Buffer() EL_NO_EXCEPT = 0;
     virtual T* Buffer(Int i, Int j) EL_NO_EXCEPT = 0;
