@@ -62,6 +62,29 @@ struct CudaError : std::runtime_error
 
 void InitializeCUDA(int,char*[],int requested_device_id = -1);
 
+
+class GPUManager {
+private:
+  static GPUManager* m_instance;
+  int m_device_id;
+  GPUManager() {
+    m_device_id = -1;
+  }
+
+public:
+  static GPUManager* getInstance() {
+    if(m_instance == nullptr) {
+      m_instance = new GPUManager();
+    }
+    return m_instance;
+  }
+  GPUManager(const GPUManager&) = delete;
+  GPUManager& operator=(const GPUManager&) = delete;
+
+  void set_device_id(int gpu_id) { m_device_id = gpu_id; }
+  int get_device_id() { return m_device_id; }
+};
+
 }// namespace El
 
 #endif // HYDROGEN_IMPORTS_CUDA_HPP_
