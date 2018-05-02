@@ -271,6 +271,7 @@ Matrix<Ring, Device::GPU>::operator-=(Matrix<Ring, Device::GPU> const& A)
 #endif // 0
 
 // Basic queries
+// -------------
 
 template<typename Ring>
 Int Matrix<Ring, Device::GPU>::do_get_memory_size_() const EL_NO_EXCEPT
@@ -338,6 +339,16 @@ Matrix<Ring, Device::GPU>::LockedBuffer(Int i, Int j) const EL_NO_EXCEPT
     return &data_[i+j*this->LDim()];
 }
 
+// Advanced functions
+// ------------------
+
+template<typename Ring>
+void Matrix<Ring, Device::GPU>::SetMemoryMode(unsigned int mode)
+{ memory_.SetMode(mode); }
+
+template<typename Ring>
+unsigned int Matrix<Ring, Device::GPU>::MemoryMode() const EL_NO_EXCEPT
+{ return memory_.Mode(); }
 
 // Single-entry manipulation
 // =========================
