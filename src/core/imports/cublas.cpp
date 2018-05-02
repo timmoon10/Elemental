@@ -15,36 +15,6 @@ namespace cublas
 namespace
 {
 
-class cuBLAS_Manager
-{
-    cublasHandle_t cublas_handle_;
-public:
-    operator cublasHandle_t()
-    {
-        if (!initialized_)
-            initialize();
-        return cublas_handle_;
-    }
-
-    cuBLAS_Manager() = default;
-
-    void initialize()
-    {
-        if (cublasCreate(&cublas_handle_) != CUBLAS_STATUS_SUCCESS)
-            RuntimeError("cublasCreate() Error!");
-        initialized_ = true;
-    }
-
-    ~cuBLAS_Manager()
-    {
-        if (initialized_)
-            if (cublasDestroy(cublas_handle_) != CUBLAS_STATUS_SUCCESS)
-                std::terminate();
-    }
-
-    bool initialized_ = false;
-};// class cuBLAS_Manager
-
 inline cublasOperation_t CharTocuBLASOp(char c)
 {
     switch (c)
@@ -66,26 +36,26 @@ inline cublasOperation_t CharTocuBLASOp(char c)
 
 }// namespace <anon>
 
-cuBLAS_Manager manager_;
-
 //
 // BLAS 1
 //
-#define ADD_AXPY_IMPL(ScalarType, TypeChar)             \
-    void Axpy(int n, ScalarType const& alpha,           \
-              ScalarType const* X, int incx,            \
-              ScalarType* Y, int incy)                  \
-    {                                                   \
-        EL_CHECK_CUBLAS(cublas ## TypeChar ## axpy(     \
-            manager_, n, &alpha, X, incx, Y, incy));    \
+#define ADD_AXPY_IMPL(ScalarType, TypeChar)                  \
+    void Axpy(int n, ScalarType const& alpha,                \
+              ScalarType const* X, int incx,                 \
+              ScalarType* Y, int incy)                       \
+    {                                                        \
+        GPUManager* gpu_manager = GPUManager::getInstance(); \
+        EL_CHECK_CUBLAS(cublas ## TypeChar ## axpy(          \
+            *gpu_manager, n, &alpha, X, incx, Y, incy));     \
     }
 
-#define ADD_COPY_IMPL(ScalarType, TypeChar)             \
-    void Copy(int n, ScalarType const* X, int incx,     \
-              ScalarType* Y, int incy)                  \
-    {                                                   \
-      EL_CHECK_CUBLAS(cublas ## TypeChar ## copy(       \
-            manager_, n, X, incx, Y, incy));            \
+#define ADD_COPY_IMPL(ScalarType, TypeChar)                 \
+    void Copy(int n, ScalarType const* X, int incx,         \
+              ScalarType* Y, int incy)                      \
+    {                                                       \
+       GPUManager* gpu_manager = GPUManager::getInstance(); \
+       EL_CHECK_CUBLAS(cublas ## TypeChar ## copy(          \
+            *gpu_manager, n, X, incx, Y, incy));            \
     }
 
 //
@@ -100,8 +70,9 @@ cuBLAS_Manager manager_;
         ScalarType const& beta,                                         \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
+      GPUManager* gpu_manager = GPUManager::getInstance();              \
       EL_CHECK_CUBLAS(cublas ## TypeChar ## gemv(                       \
-            manager_,                                                   \
+            gpu_manager,                                                \
             CharTocuBLASOp(transA),                                     \
             m, n, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));        \
     }
@@ -118,8 +89,9 @@ cuBLAS_Manager manager_;
         ScalarType const& beta,                                         \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-        EL_CHECK_CUBLAS(cublas ## TypeChar ## gemm(                     \
-            manager_,                                                   \
+         GPUManager* gpu_manager = GPUManager::getInstance();           \
+         EL_CHECK_CUBLAS(cublas ## TypeChar ## gemm(                    \
+            *gpu_manager,                                               \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
             m, n, k, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));     \
     }
@@ -137,8 +109,9 @@ cuBLAS_Manager manager_;
         ScalarType const* B, int BLDim,                                 \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-      EL_CHECK_CUBLAS(cublas ## TypeChar ## geam(                         \
-            manager_,                                                   \
+       GPUManager* gpu_manager = GPUManager::getInstance();             \
+       EL_CHECK_CUBLAS(cublas ## TypeChar ## geam(                      \
+            *gpu_manager,                                               \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
             m, n, &alpha, A, ALDim, &beta, B, BLDim, C, CLDim));        \
     }
@@ -232,6 +205,10 @@ void InitializeCUDA(int argc, char*argv[])
     EL_FORCE_CHECK_CUDA(cudaSetDevice(device_id));
 
     gpu_manager->set_local_device_id(device_id);
+
+    // Use the default stream for now
+    gpu_manager->create_local_stream();
+    gpu_manager->create_local_cublas_handle();
 }
 
 }// namespace El
