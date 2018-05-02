@@ -1,6 +1,7 @@
 # Add the headers for this directory
 set_full_path(THIS_DIR_HEADERS
   blas.hpp
+  cuda.hpp
   cublas.hpp
   choice.hpp
   flame.hpp
