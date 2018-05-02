@@ -60,8 +60,7 @@ struct CudaError : std::runtime_error
 #endif // #ifdef EL_RELEASE
 
 
-void InitializeCUDA(int,char*[],int requested_device_id = -1);
-
+void InitializeCUDA(int,char*[]);
 
 class GPUManager
 {
@@ -78,15 +77,18 @@ public:
     GPUManager(const GPUManager&) = delete;
     GPUManager& operator=(const GPUManager&) = delete;
 
-    void set_device_id(int gpu_id) noexcept { device_id_ = gpu_id; }
-    int get_device_id() const noexcept { return device_id_; }
+    void set_local_device_id(int gpu_id) noexcept { device_id_ = gpu_id; }
+    int get_local_device_id() const noexcept { return device_id_; }
+    void set_local_device_count(int num_devices) noexcept { device_count_ = num_devices; }
+    int get_local_device_count() const noexcept { return device_count_; }
 
 private:
     static std::unique_ptr<GPUManager> instance_;
     int device_id_;
+    int device_count_;
 
     GPUManager()
-        : device_id_{-1}
+      : device_id_{-1}, device_count_{0}
     {}
 
 };// class GPUManager

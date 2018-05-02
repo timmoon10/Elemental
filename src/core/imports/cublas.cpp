@@ -164,7 +164,10 @@ ADD_GEAM_IMPL(double, D)
 
 }// namespace cublas
 
-void InitializeCUDA(int,char*[], int requested_device_id)
+// Global static pointer used to ensure a single instance of the GPUManager class.
+std::unique_ptr<GPUManager> GPUManager::instance_ = nullptr;
+
+void InitializeCUDA(int argc, char*argv[])
 {
     int device_count;
     auto error = cudaGetDeviceCount(&device_count);
@@ -175,10 +178,46 @@ void InitializeCUDA(int,char*[], int requested_device_id)
     if (device_count < 1)
         RuntimeError("No CUDA devices found!");
 
-    int device_id = requested_device_id;
-    if(requested_device_id < 0) {
-      device_id = 0;
+    // If the device ID is properly set, store it in the GPUManager
+    GPUManager* gpu_manager = GPUManager::getInstance();
+    gpu_manager->set_local_device_count(device_count);
+
+    int requested_device_id = -1;
+    // if (argc != 0) {
+    //   requested_device_id = atoi(argv[0]);
+    //   if(requested_device_id >= device_count) {
+    //     RuntimeError("Requested device id is out of range, device count = ", device_count);
+    //   }
+    // }
+
+    char *env = nullptr;
+    int local_rank = 0;
+    if(env == nullptr) {
+      env = getenv("SLURM_LOCALID");
     }
+    if(env == nullptr) {
+      env = getenv("MV2_COMM_WORLD_LOCAL_RANK");
+    }
+    if(env == nullptr) {
+      env = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
+    }
+    if(env != nullptr) {
+      local_rank = atoi(env);
+    }
+
+    int device_id = local_rank;
+    if(requested_device_id >= 0) {
+      device_id = requested_device_id;
+    }
+
+    if(device_id >= device_count) {
+        RuntimeError("Selected local rank is out of range, device count = ", device_count);
+    }
+
+    // const char* visible_devices = getenv("CUDA_VISIBLE_DEVICES");
+    // if(visible_devices != nullptr && strlen(visible_devices) > 0) {
+    //   std::cout << "visible gpus " << visible_devices << std::endl;
+    // }
 
     cudaDeviceProp deviceProp;
     error = cudaGetDeviceProperties(&deviceProp, device_id);
@@ -190,7 +229,9 @@ void InitializeCUDA(int,char*[], int requested_device_id)
         RuntimeError(std::string {} + "Device " + std::to_string(device_id)
                      + " is in ComputeModeProhibited mode. Can't use.");
 
-    cudaSetDevice(device_id);
+    EL_FORCE_CHECK_CUDA(cudaSetDevice(device_id));
+
+    gpu_manager->set_local_device_id(device_id);
 }
 
 }// namespace El
