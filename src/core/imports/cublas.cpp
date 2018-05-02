@@ -72,7 +72,7 @@ inline cublasOperation_t CharTocuBLASOp(char c)
     {                                                                   \
       GPUManager* gpu_manager = GPUManager::getInstance();              \
       EL_CHECK_CUBLAS(cublas ## TypeChar ## gemv(                       \
-            gpu_manager,                                                \
+            *gpu_manager,                                               \
             CharTocuBLASOp(transA),                                     \
             m, n, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));        \
     }
