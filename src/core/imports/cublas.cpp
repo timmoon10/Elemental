@@ -205,8 +205,6 @@ void InitializeCUDA(int argc, char*argv[])
     EL_FORCE_CHECK_CUDA(cudaSetDevice(device_id));
 
     gpu_manager->set_local_device_id(device_id);
-
-    // Use the default stream for now
     gpu_manager->create_local_stream();
     gpu_manager->create_local_cublas_handle();
 }

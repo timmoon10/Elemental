@@ -100,7 +100,7 @@ public:
     void set_local_device_count(int num_devices) noexcept { device_count_ = num_devices; }
     int get_local_device_count() const noexcept { return device_count_; }
 
-    /** Use explicit type conversion to return the cuBLAS handle */
+    /** Use implicit type conversion to return the cuBLAS handle */
     operator cublasHandle_t()
     {
         return cublas_handle_;
