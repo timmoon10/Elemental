@@ -83,8 +83,8 @@ public:
     int get_local_device_id() const noexcept { return device_id_; }
 
     void create_local_stream() {
-      cuda_stream_ = 0;
-      /*EL_FORCE_CHECK_CUDA(cudaStreamCreate(&cuda_stream_));*/ }
+      EL_FORCE_CHECK_CUDA(cudaStreamCreate(&cuda_stream_));
+    }
     cudaStream_t get_local_stream() const noexcept { return cuda_stream_; }
 
     void create_local_cublas_handle() {
@@ -108,16 +108,16 @@ public:
 
     ~GPUManager()
     {
-      if (cuda_stream_) {
-        if (cudaStreamDestroy(cuda_stream_) != cudaSuccess) {
-          std::terminate();
-        }
-      }
       if (cublas_handle_) {
         if (cublasDestroy(cublas_handle_) != CUBLAS_STATUS_SUCCESS) {
           std::terminate();
         }
       }
+      // if (cuda_stream_) {
+      //   if (cudaStreamDestroy(cuda_stream_) != cudaSuccess) {
+      //     std::terminate();
+      //   }
+      // }
     }
 
 private:
