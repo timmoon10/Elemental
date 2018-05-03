@@ -103,15 +103,15 @@ struct MemHelper<G,Device::GPU>
         switch (mode) {
         case 0: status = cudaMalloc(&ptr, size * sizeof(G)); break;
 #ifdef HYDROGEN_HAVE_CUB
-        case 1: 
+        case 1:
             {
-                cudaStream_t stream = 0; // TODO: non-default stream
+                GPUManager* gpu_manager = GPUManager::getInstance();
                 status = cubMemPool.DeviceAllocate(&ptr,
                                                    size * sizeof(G),
-                                                   stream);
+                                                   gpu_manager->get_local_stream());
             }
             break;
-#endif // HYDROGEN_HAVE_CUB            
+#endif // HYDROGEN_HAVE_CUB
         default: RuntimeError("Invalid GPU memory allocation mode");
         }
 
@@ -126,7 +126,7 @@ struct MemHelper<G,Device::GPU>
     }
 
     static void Delete( G*& ptr, unsigned int mode )
-    { 
+    {
 
         // Deallocate memory
         cudaError_t status = cudaSuccess;
@@ -134,7 +134,7 @@ struct MemHelper<G,Device::GPU>
         case 0: status = cudaFree(ptr); break;
 #ifdef HYDROGEN_HAVE_CUB
         case 1: status = cubMemPool.DeviceFree(ptr); break;
-#endif // HYDROGEN_HAVE_CUB            
+#endif // HYDROGEN_HAVE_CUB
         default: RuntimeError("Invalid GPU memory deallocation mode");
         }
         ptr = nullptr;
@@ -150,14 +150,14 @@ struct MemHelper<G,Device::GPU>
 
     static void MemZero( G* buffer, size_t numEntries, unsigned int mode )
     {
-        cudaStream_t stream = 0; // TODO: non-default stream
+        GPUManager* gpu_manager = GPUManager::getInstance();
         auto error = cudaMemsetAsync(buffer,
                                      0,
                                      numEntries * sizeof(G),
-                                     stream);
+                                     gpu_manager->get_local_stream());
         if (error != cudaSuccess)
         {
-            RuntimeError("cudaMemset failed with message: \"",
+            RuntimeError("cudaMemsetAsync failed with message: \"",
                          cudaGetErrorString(error), "\"");
         }
     }

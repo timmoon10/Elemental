@@ -133,13 +133,15 @@ void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
     if (error != cudaSuccess)
         RuntimeError("Previously existing error!");
 
-    error = cudaMemcpy2D(BBuf, ldB*sizeof(T),
+    GPUManager* gpu_manager = GPUManager::getInstance();
+    error = cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
                          ABuf, ldA*sizeof(T),
                          height*sizeof(T), width,
-                         cudaMemcpyDeviceToDevice);
+                         cudaMemcpyDeviceToDevice,
+                         gpu_manager->get_local_stream());
 
     if (error != cudaSuccess)
-        RuntimeError("cudaMemcpy error in Copy():\n\n",
+        RuntimeError("cudaMemcpy2DAsync error in Copy():\n\n",
                      cudaGetErrorString(error));
 }
 #endif // HYDROGEN_HAVE_CUDA

@@ -21,6 +21,9 @@ void Zero( AbstractMatrix<T>& A )
     const Int ALDim = A.LDim();
     T* ABuf = A.Buffer();
 
+#ifdef HYDROGEN_HAVE_CUDA
+    GPUManager* gpu_manager = GPUManager::getInstance();
+#endif // HYDROGEN_HAVE_CUDA
     if( ALDim == height )
     {
         switch (A.GetDevice())
@@ -42,7 +45,8 @@ void Zero( AbstractMatrix<T>& A )
             break;
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
-            EL_CHECK_CUDA(cudaMemset(ABuf,0x0,height*width*sizeof(T)));
+            EL_CHECK_CUDA(cudaMemsetAsync(ABuf,0x0,height*width*sizeof(T),
+                                          gpu_manager->get_local_stream()));
             break;
 #endif // HYDROGEN_HAVE_CUDA
         default:
@@ -62,8 +66,9 @@ void Zero( AbstractMatrix<T>& A )
             break;
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
-            EL_CHECK_CUDA(cudaMemset2D( ABuf, ALDim*sizeof(T), 0x0,
-                                        height*sizeof(T), width ));
+            EL_CHECK_CUDA(cudaMemset2DAsync( ABuf, ALDim*sizeof(T), 0x0,
+                                             height*sizeof(T), width,
+                                             gpu_manager->get_local_stream() ));
 
             break;
 #endif // HYDROGEN_HAVE_CUDA

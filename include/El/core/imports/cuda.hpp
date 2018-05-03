@@ -108,9 +108,16 @@ public:
 
     ~GPUManager()
     {
-      if (cublas_handle_)
-        if (cublasDestroy(cublas_handle_) != CUBLAS_STATUS_SUCCESS)
+      if (cuda_stream_) {
+        if (cudaStreamDestroy(cuda_stream_) != cudaSuccess) {
           std::terminate();
+        }
+      }
+      if (cublas_handle_) {
+        if (cublasDestroy(cublas_handle_) != CUBLAS_STATUS_SUCCESS) {
+          std::terminate();
+        }
+      }
     }
 
 private:
