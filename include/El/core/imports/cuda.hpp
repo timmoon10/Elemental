@@ -3,6 +3,8 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cublas_v2.h>
+
 
 namespace El
 {
@@ -60,8 +62,7 @@ struct CudaError : std::runtime_error
 #endif // #ifdef EL_RELEASE
 
 
-void InitializeCUDA(int,char*[],int requested_device_id = -1);
-
+void InitializeCUDA(int,char*[]);
 
 class GPUManager
 {
@@ -78,15 +79,53 @@ public:
     GPUManager(const GPUManager&) = delete;
     GPUManager& operator=(const GPUManager&) = delete;
 
-    void set_device_id(int gpu_id) noexcept { device_id_ = gpu_id; }
-    int get_device_id() const noexcept { return device_id_; }
+    void set_local_device_id(int gpu_id) noexcept { device_id_ = gpu_id; }
+    int get_local_device_id() const noexcept { return device_id_; }
+
+    void create_local_stream() {
+      cuda_stream_ = 0;
+      /*EL_FORCE_CHECK_CUDA(cudaStreamCreate(&cuda_stream_));*/ }
+    cudaStream_t get_local_stream() const noexcept { return cuda_stream_; }
+
+    void create_local_cublas_handle() {
+      cublasCreate(&cublas_handle_);
+      cublasSetStream(cublas_handle_, cuda_stream_);
+      cublasSetPointerMode(cublas_handle_, CUBLAS_POINTER_MODE_HOST);
+      // EL_FORCE_CHECK_CUBLAS(cublasCreate(&cublas_handle_));
+      // EL_FORCE_CHECK_CUBLAS(cublasSetStream(cublas_handle_, cuda_stream_));
+      // EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cublas_handle_, CUBLAS_POINTER_MODE_DEVICE));
+    }
+    cublasHandle_t get_local_cublas_handle() const noexcept { return cublas_handle_; }
+
+    void set_local_device_count(int num_devices) noexcept { device_count_ = num_devices; }
+    int get_local_device_count() const noexcept { return device_count_; }
+
+    /** Use implicit type conversion to return the cuBLAS handle */
+    operator cublasHandle_t()
+    {
+        return cublas_handle_;
+    }
+
+    ~GPUManager()
+    {
+      if (cublas_handle_)
+        if (cublasDestroy(cublas_handle_) != CUBLAS_STATUS_SUCCESS)
+          std::terminate();
+    }
 
 private:
     static std::unique_ptr<GPUManager> instance_;
+    /** GPU device ID */
     int device_id_;
+    /** CUDA stream. */
+    cudaStream_t cuda_stream_;
+    /** cuBLAS handle */
+    cublasHandle_t cublas_handle_;
+    int device_count_;
 
     GPUManager()
-        : device_id_{-1}
+      : device_id_{-1}, cuda_stream_{nullptr}, cublas_handle_{nullptr},
+        device_count_{0}
     {}
 
 };// class GPUManager

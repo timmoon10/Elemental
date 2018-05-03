@@ -140,7 +140,7 @@ void Initialize( int& argc, char**& argv )
     ::args = new Args( argc, argv );
 
 #ifdef HYDROGEN_HAVE_CUDA
-    InitializeCUDA(argc,argv,0);
+    InitializeCUDA(argc,argv);
 #endif
 
     ::numElemInits = 1;
