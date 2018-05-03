@@ -3,7 +3,7 @@ set_full_path(THIS_DIR_SOURCES
   BasicBlockDistMatrix.cpp
   Constants.cpp
   DifferentGrids.cpp
-  DistMatrix.cpp
+  #DistMatrix.cpp
   Matrix.cpp
   Pow.cpp
   QDToInt.cpp

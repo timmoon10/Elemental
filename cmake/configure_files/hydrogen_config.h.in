@@ -24,5 +24,6 @@
 #cmakedefine HYDROGEN_HAVE_CUDA
 #cmakedefine HYDROGEN_HAVE_CUDA_AWARE_MPI
 #cmakedefine HYDROGEN_HAVE_NCCL2
+#cmakedefine HYDROGEN_HAVE_CUB
 
 #endif /* HYDROGEN_CONFIG_H */
