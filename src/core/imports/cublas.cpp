@@ -155,7 +155,7 @@ void InitializeCUDA(int argc, char*argv[])
     GPUManager* gpu_manager = GPUManager::getInstance();
     gpu_manager->set_local_device_count(device_count);
 
-    int requested_device_id = -1;
+    // int requested_device_id = -1;
     // if (argc != 0) {
     //   requested_device_id = atoi(argv[0]);
     //   if(requested_device_id >= device_count) {
@@ -178,14 +178,10 @@ void InitializeCUDA(int argc, char*argv[])
       local_rank = atoi(env);
     }
 
-    int device_id = local_rank;
-    if(requested_device_id >= 0) {
-      device_id = requested_device_id;
-    }
-
-    if(device_id >= device_count) {
-        RuntimeError("Selected local rank is out of range, device count = ", device_count);
-    }
+    int device_id = local_rank % device_count;
+    // if(requested_device_id >= 0) {
+    //   device_id = requested_device_id;
+    // }
 
     // const char* visible_devices = getenv("CUDA_VISIBLE_DEVICES");
     // if(visible_devices != nullptr && strlen(visible_devices) > 0) {
@@ -195,12 +191,28 @@ void InitializeCUDA(int argc, char*argv[])
     cudaDeviceProp deviceProp;
     error = cudaGetDeviceProperties(&deviceProp, device_id);
 
-    if (error != cudaSuccess)
+    if (error != cudaSuccess) {
+        cudaDeviceReset();
         RuntimeError("CUDA initialize error: ", cudaGetErrorString(error));
+    }
 
-    if (deviceProp.computeMode == cudaComputeModeProhibited)
+    /// Check to make sure that the device is available for computing
+    if (deviceProp.computeMode == cudaComputeModeProhibited) {
+        cudaDeviceReset();
         RuntimeError(std::string {} + "Device " + std::to_string(device_id)
                      + " is in ComputeModeProhibited mode. Can't use.");
+    }
+
+    /// If there are multiple ranks that want to share the GPU, make
+    /// sure the GPU is not in exclusive use mode
+    if (local_rank >= device_count &&
+        (deviceProp.computeMode == cudaComputeModeExclusive ||
+         deviceProp.computeMode == cudaComputeModeExclusiveProcess)) {
+      cudaDeviceReset();
+      RuntimeError("Selected local rank ", local_rank,
+                   " is out of range, device count = ", device_count,
+                   " and the devices are in exclusive or exclusive process mode");
+    }
 
     EL_FORCE_CHECK_CUDA(cudaSetDevice(device_id));
 
