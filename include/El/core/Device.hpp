@@ -88,12 +88,16 @@ public:
         // Shallow copy not possible
 
         this->allocate(A.size());
-        auto error = cudaMemcpy(data_, A.data(), size_*sizeof(T),
-                                cudaMemcpyDeviceToHost);
+        GPUManager* gpu_manager = GPUManager::getInstance();
+        auto error = cudaMemcpyAsync(data_, A.data(), size_*sizeof(T),
+                                     cudaMemcpyDeviceToHost,
+                                     gpu_manager->get_local_stream());
+        cudaStreamSynchronize(gpu_manager->get_local_stream());
+
         if (error != cudaSuccess)
         {
             RuntimeError(
-                "Error in cudaMemcpy.\n\ncudaError = ",
+                "Error in cudaMemcpyAsync.\n\ncudaError = ",
                 cudaGetErrorString(error));
         }
     }
@@ -130,9 +134,11 @@ public:
         if (value != T(0))
             LogicError("Cannot value-initialize to nonzero value on GPU.");
 
-        auto error = cudaMemset(data_, value, size*sizeof(T));
+        GPUManager* gpu_manager = GPUManager::getInstance();
+        auto error = cudaMemsetAsync(data_, value, size*sizeof(T),
+                                     gpu_manager->get_local_stream());
         if (error != cudaSuccess)
-            RuntimeError("simple_buffer: cudaMemset failed with message: \"",
+            RuntimeError("simple_buffer: cudaMemsetAsync failed with message: \"",
                          cudaGetErrorString(error), "\"");
     }
 
@@ -195,8 +201,10 @@ public:
         // Shallow copy not possible
 
         this->allocate(A.size());
-        auto error = cudaMemcpy(data_, A.data(), size_*sizeof(T),
-                                cudaMemcpyHostToDevice);
+        GPUManager* gpu_manager = GPUManager::getInstance();
+        auto error = cudaMemcpyAsync(data_, A.data(), size_*sizeof(T),
+                                     cudaMemcpyHostToDevice,
+                                     gpu_manager->get_local_stream());
         if (error != cudaSuccess)
         {
             RuntimeError(

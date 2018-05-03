@@ -71,11 +71,14 @@ Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::GPU> const& A)
     : Matrix{A.Height(), A.Width(), A.LDim()}
 {
     EL_DEBUG_CSE;
-    auto error = cudaMemcpy2D(data_, A.Width()*sizeof(Ring),
-                              A.LockedBuffer(), A.Width()*sizeof(Ring),
-                              A.Width()*sizeof(Ring), A.LDim(),
-                              //height_*sizeof(Ring),
-                              cudaMemcpyDeviceToHost);
+    GPUManager* gpu_manager = GPUManager::getInstance();
+    auto error = cudaMemcpy2DAsync(data_, A.Width()*sizeof(Ring),
+                                   A.LockedBuffer(), A.Width()*sizeof(Ring),
+                                   A.Width()*sizeof(Ring), A.LDim(),
+                                   //height_*sizeof(Ring),
+                                   cudaMemcpyDeviceToHost,
+                                   gpu_manager->get_local_stream());
+    cudaStreamSynchronize(gpu_manager->get_local_stream());
     if (error != cudaSuccess)
     {
         std::ostringstream oss;
