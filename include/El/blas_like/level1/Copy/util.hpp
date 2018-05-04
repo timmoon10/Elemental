@@ -195,20 +195,19 @@ struct Impl<T, Device::GPU, true>
                      T const* A, Int colStrideA, Int rowStrideA,
                      T* B, Int colStrideB, Int rowStrideB)
     {
-        GPUManager* gpu_manager = GPUManager::getInstance();
         if (colStrideA == 1 && colStrideB == 1)
         {
-            cudaMemcpy2DAsync(B, rowStrideB*sizeof(T),
-                              A, rowStrideA*sizeof(T), height*sizeof(T), width,
-                              cudaMemcpyDeviceToDevice,
-                              gpu_manager->get_local_stream());
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(B, rowStrideB*sizeof(T),
+                                            A, rowStrideA*sizeof(T),
+                                            height*sizeof(T), width,
+                                            cudaMemcpyDeviceToDevice,
+                                            GPUManager::Stream()));
         }
         else
         {
             Copy_GPU_impl(height, width,
                           A, colStrideA, rowStrideA,
                           B, colStrideB, rowStrideB);
-            cudaDeviceSynchronize();
         }
     }
 
@@ -217,25 +216,16 @@ struct Impl<T, Device::GPU, true>
                                T const* A,Int ALDim,
                                T* BPortions, Int portionSize)
     {
-        {
-            cudaError_t error = cudaGetLastError();
-            if (error != cudaSuccess)
-                RuntimeError("Previously existing error: ",
-                             cudaGetErrorString(error));
-        }
-        GPUManager* gpu_manager = GPUManager::getInstance();
         for (Int k=0; k<rowStride; ++k)
         {
             const Int rowShift = Shift_(k, rowAlign, rowStride);
             const Int localWidth = Length_(width, rowShift, rowStride);
-
             EL_CHECK_CUDA(cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
                                             A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
                                             height*sizeof(T), localWidth,
                                             cudaMemcpyDeviceToDevice,
-                                            gpu_manager->get_local_stream()));
+                                            GPUManager::Stream()));
         }
-        cudaDeviceSynchronize();
     }
 
     static void RowStridedUnpack(Int height, Int width,
@@ -243,25 +233,16 @@ struct Impl<T, Device::GPU, true>
                                  T const* APortions, Int portionSize,
                                  T* B, Int BLDim)
     {
-        {
-            cudaError_t error = cudaGetLastError();
-            if (error != cudaSuccess)
-                RuntimeError("Previously existing error: ",
-                             cudaGetErrorString(error));
-        }
-        GPUManager* gpu_manager = GPUManager::getInstance();
         for (Int k=0; k<rowStride; ++k)
         {
             const Int rowShift = Shift_(k, rowAlign, rowStride);
             const Int localWidth = Length_(width, rowShift, rowStride);
-
             EL_CHECK_CUDA(cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
                                             APortions+k*portionSize, height*sizeof(T),
                                             height*sizeof(T), localWidth,
                                             cudaMemcpyDeviceToDevice,
-                                            gpu_manager->get_local_stream()));
+                                            GPUManager::Stream()));
         }
-        cudaDeviceSynchronize();
     }
 
     static void PartialRowStridedPack
@@ -272,22 +253,19 @@ struct Impl<T, Device::GPU, true>
      const T* A,         Int ALDim,
      T* BPortions, Int portionSize)
     {
-        GPUManager* gpu_manager = GPUManager::getInstance();
         for (Int k=0; k<rowStrideUnion; ++k)
         {
-            const Int rowShift =
-                Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
+            const Int rowShift = Shift_(rowRankPart+k*rowStridePart,
+                                        rowAlign, rowStride);
             const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
             const Int localWidth = Length_(width, rowShift, rowStride);
-
             EL_CHECK_CUDA(cudaMemcpy2DAsync(
                 BPortions + k*portionSize, height*sizeof(T),
                 A + rowOffset*ALDim, rowStrideUnion*ALDim*sizeof(T),
                 height*sizeof(T), localWidth,
                 cudaMemcpyDeviceToDevice,
-                gpu_manager->get_local_stream()));
+                GPUManager::Stream()));
         }
-        cudaDeviceSynchronize();
     }
 
     static void PartialRowStridedUnpack
@@ -298,11 +276,10 @@ struct Impl<T, Device::GPU, true>
      const T* APortions, Int portionSize,
      T* B, Int BLDim)
     {
-        GPUManager* gpu_manager = GPUManager::getInstance();
         for (Int k=0; k<rowStrideUnion; ++k)
         {
-            const Int rowShift =
-                Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
+            const Int rowShift = Shift_(rowRankPart+k*rowStridePart,
+                                        rowAlign, rowStride);
             const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
             const Int localWidth = Length_(width, rowShift, rowStride);
             EL_CHECK_CUDA(cudaMemcpy2DAsync(
@@ -310,9 +287,8 @@ struct Impl<T, Device::GPU, true>
                 APortions + k*portionSize, height*sizeof(T),
                 height*sizeof(T), localWidth,
                 cudaMemcpyDeviceToDevice,
-                gpu_manager->get_local_stream()));
+                GPUManager::Stream()));
         }
-        cudaDeviceSynchronize();
     }
 
     static void PartialColStridedColumnPack
@@ -355,13 +331,14 @@ struct InterDevice<Device::CPU,Device::GPU>
                    T const* EL_RESTRICT const src, Int const src_ldim,
                    Int const height, Int const width)
     {
-      GPUManager* gpu_manager = GPUManager::getInstance();
-      EL_CHECK_CUDA(cudaMemcpy2DAsync(
+        auto stream = GPUManager::Stream();
+        EL_CHECK_CUDA(cudaMemcpy2DAsync(
             dest, dest_ldim*sizeof(T),
             src, src_ldim*sizeof(T),
             height*sizeof(T), width,
             cudaMemcpyHostToDevice,
-            gpu_manager->get_local_stream()));
+            stream));
+        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 };// InterDevice<CPU,GPU>
 
@@ -373,14 +350,14 @@ struct InterDevice<Device::GPU,Device::CPU>
                    T const* EL_RESTRICT const src, Int const src_ldim,
                    Int const height, Int const width)
     {
-      GPUManager* gpu_manager = GPUManager::getInstance();
-      EL_CHECK_CUDA(cudaMemcpy2DAsync(
+        auto stream = GPUManager::Stream();
+        EL_CHECK_CUDA(cudaMemcpy2DAsync(
             dest, dest_ldim*sizeof(T),
             src, src_ldim*sizeof(T),
             height*sizeof(T), width,
             cudaMemcpyDeviceToHost,
-            gpu_manager->get_local_stream()));
-      cudaStreamSynchronize(gpu_manager->get_local_stream());
+            stream));
+        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 };// InterDevice<CPU,GPU>
 #endif // HYDROGEN_HAVE_CUDA

@@ -105,10 +105,9 @@ struct MemHelper<G,Device::GPU>
 #ifdef HYDROGEN_HAVE_CUB
         case 1:
             {
-                GPUManager* gpu_manager = GPUManager::getInstance();
                 status = cubMemPool.DeviceAllocate(&ptr,
                                                    size * sizeof(G),
-                                                   gpu_manager->get_local_stream());
+                                                   GPUManager::Stream());
             }
             break;
 #endif // HYDROGEN_HAVE_CUB
@@ -150,16 +149,9 @@ struct MemHelper<G,Device::GPU>
 
     static void MemZero( G* buffer, size_t numEntries, unsigned int mode )
     {
-        GPUManager* gpu_manager = GPUManager::getInstance();
-        auto error = cudaMemsetAsync(buffer,
-                                     0,
-                                     numEntries * sizeof(G),
-                                     gpu_manager->get_local_stream());
-        if (error != cudaSuccess)
-        {
-            RuntimeError("cudaMemsetAsync failed with message: \"",
-                         cudaGetErrorString(error), "\"");
-        }
+        EL_CHECK_CUDA(cudaMemsetAsync(buffer, 0x0,
+                                      numEntries * sizeof(G),
+                                      GPUManager::Stream()));
     }
 
 };

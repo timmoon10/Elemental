@@ -34,47 +34,46 @@ inline cublasOperation_t CharTocuBLASOp(char c)
     }
 }
 
-}// namespace <anon>
+} // namespace <anon>
 
 //
 // BLAS 1
 //
-#define ADD_AXPY_IMPL(ScalarType, TypeChar)                  \
-    void Axpy(int n, ScalarType const& alpha,                \
-              ScalarType const* X, int incx,                 \
-              ScalarType* Y, int incy)                       \
-    {                                                        \
-        GPUManager* gpu_manager = GPUManager::getInstance(); \
-        EL_CHECK_CUBLAS(cublas ## TypeChar ## axpy(          \
-            *gpu_manager, n, &alpha, X, incx, Y, incy));     \
+#define ADD_AXPY_IMPL(ScalarType, TypeChar)           \
+    void Axpy(int n, ScalarType const& alpha,         \
+              ScalarType const* X, int incx,          \
+              ScalarType* Y, int incy)                \
+    {                                                 \
+        EL_CHECK_CUBLAS(cublas ## TypeChar ## axpy(   \
+            GPUManager::cuBLASHandle(),               \
+            n, &alpha, X, incx, Y, incy));            \
     }
 
-#define ADD_COPY_IMPL(ScalarType, TypeChar)                 \
-    void Copy(int n, ScalarType const* X, int incx,         \
-              ScalarType* Y, int incy)                      \
-    {                                                       \
-       GPUManager* gpu_manager = GPUManager::getInstance(); \
-       EL_CHECK_CUBLAS(cublas ## TypeChar ## copy(          \
-            *gpu_manager, n, X, incx, Y, incy));            \
+#define ADD_COPY_IMPL(ScalarType, TypeChar)           \
+    void Copy(int n, ScalarType const* X, int incx,   \
+              ScalarType* Y, int incy)                \
+    {                                                 \
+        EL_CHECK_CUBLAS(cublas ## TypeChar ## copy(   \
+            GPUManager::cuBLASHandle(),               \
+            n, X, incx, Y, incy));                    \
     }
 
 //
 // BLAS 2
 //
-#define ADD_GEMV_IMPL(ScalarType, TypeChar)                             \
-    void Gemv(                                                          \
-        char transA, int m, int n,                                      \
-        ScalarType const& alpha,                                        \
-        ScalarType const* A, int ALDim,                                 \
-        ScalarType const* B, int BLDim,                                 \
-        ScalarType const& beta,                                         \
-        ScalarType* C, int CLDim )                                      \
-    {                                                                   \
-      GPUManager* gpu_manager = GPUManager::getInstance();              \
-      EL_CHECK_CUBLAS(cublas ## TypeChar ## gemv(                       \
-            *gpu_manager,                                               \
-            CharTocuBLASOp(transA),                                     \
-            m, n, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));        \
+#define ADD_GEMV_IMPL(ScalarType, TypeChar)                     \
+    void Gemv(                                                  \
+        char transA, int m, int n,                              \
+        ScalarType const& alpha,                                \
+        ScalarType const* A, int ALDim,                         \
+        ScalarType const* B, int BLDim,                         \
+        ScalarType const& beta,                                 \
+        ScalarType* C, int CLDim )                              \
+    {                                                           \
+        EL_CHECK_CUBLAS(cublas ## TypeChar ## gemv(             \
+            GPUManager::cuBLASHandle(),                         \
+            CharTocuBLASOp(transA),                             \
+            m, n, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));\
     }
 
 //
@@ -89,9 +88,8 @@ inline cublasOperation_t CharTocuBLASOp(char c)
         ScalarType const& beta,                                         \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-         GPUManager* gpu_manager = GPUManager::getInstance();           \
          EL_CHECK_CUBLAS(cublas ## TypeChar ## gemm(                    \
-            *gpu_manager,                                               \
+            GPUManager::cuBLASHandle(),                                 \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
             m, n, k, &alpha, A, ALDim, B, BLDim, &beta, C, CLDim));     \
     }
@@ -109,9 +107,8 @@ inline cublasOperation_t CharTocuBLASOp(char c)
         ScalarType const* B, int BLDim,                                 \
         ScalarType* C, int CLDim )                                      \
     {                                                                   \
-       GPUManager* gpu_manager = GPUManager::getInstance();             \
        EL_CHECK_CUBLAS(cublas ## TypeChar ## geam(                      \
-            *gpu_manager,                                               \
+            GPUManager::cuBLASHandle(),                                 \
             CharTocuBLASOp(transA), CharTocuBLASOp(transB),             \
             m, n, &alpha, A, ALDim, &beta, B, BLDim, C, CLDim));        \
     }
@@ -135,90 +132,6 @@ ADD_GEMM_IMPL(double, D)
 ADD_GEAM_IMPL(float, S)
 ADD_GEAM_IMPL(double, D)
 
-}// namespace cublas
+} // namespace cublas
 
-// Global static pointer used to ensure a single instance of the GPUManager class.
-std::unique_ptr<GPUManager> GPUManager::instance_ = nullptr;
-
-void InitializeCUDA(int argc, char*argv[])
-{
-    int device_count;
-    auto error = cudaGetDeviceCount(&device_count);
-
-    if (error != cudaSuccess)
-        RuntimeError("CUDA initialize error: ", cudaGetErrorString(error));
-
-    if (device_count < 1)
-        RuntimeError("No CUDA devices found!");
-
-    // If the device ID is properly set, store it in the GPUManager
-    GPUManager* gpu_manager = GPUManager::getInstance();
-    gpu_manager->set_local_device_count(device_count);
-
-    // int requested_device_id = -1;
-    // if (argc != 0) {
-    //   requested_device_id = atoi(argv[0]);
-    //   if(requested_device_id >= device_count) {
-    //     RuntimeError("Requested device id is out of range, device count = ", device_count);
-    //   }
-    // }
-
-    char *env = nullptr;
-    int local_rank = 0;
-    if(env == nullptr) {
-      env = getenv("SLURM_LOCALID");
-    }
-    if(env == nullptr) {
-      env = getenv("MV2_COMM_WORLD_LOCAL_RANK");
-    }
-    if(env == nullptr) {
-      env = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
-    }
-    if(env != nullptr) {
-      local_rank = atoi(env);
-    }
-
-    int device_id = local_rank % device_count;
-    // if(requested_device_id >= 0) {
-    //   device_id = requested_device_id;
-    // }
-
-    // const char* visible_devices = getenv("CUDA_VISIBLE_DEVICES");
-    // if(visible_devices != nullptr && strlen(visible_devices) > 0) {
-    //   std::cout << "visible gpus " << visible_devices << std::endl;
-    // }
-
-    cudaDeviceProp deviceProp;
-    error = cudaGetDeviceProperties(&deviceProp, device_id);
-
-    if (error != cudaSuccess) {
-        cudaDeviceReset();
-        RuntimeError("CUDA initialize error: ", cudaGetErrorString(error));
-    }
-
-    /// Check to make sure that the device is available for computing
-    if (deviceProp.computeMode == cudaComputeModeProhibited) {
-        cudaDeviceReset();
-        RuntimeError(std::string {} + "Device " + std::to_string(device_id)
-                     + " is in ComputeModeProhibited mode. Can't use.");
-    }
-
-    /// If there are multiple ranks that want to share the GPU, make
-    /// sure the GPU is not in exclusive use mode
-    if (local_rank >= device_count &&
-        (deviceProp.computeMode == cudaComputeModeExclusive ||
-         deviceProp.computeMode == cudaComputeModeExclusiveProcess)) {
-      cudaDeviceReset();
-      RuntimeError("Selected local rank ", local_rank,
-                   " is out of range, device count = ", device_count,
-                   " and the devices are in exclusive or exclusive process mode");
-    }
-
-    EL_FORCE_CHECK_CUDA(cudaSetDevice(device_id));
-
-    gpu_manager->set_local_device_id(device_id);
-    gpu_manager->create_local_stream();
-    gpu_manager->create_local_cublas_handle();
-}
-
-}// namespace El
+} // namespace El

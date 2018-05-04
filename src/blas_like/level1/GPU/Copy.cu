@@ -1,6 +1,7 @@
 #include <El-lite.hpp>
 #include <El/blas_like/level1.hpp>
 #include <El/blas_like/level1/GPU/Copy.hpp>
+#include <El/core/imports/cuda.hpp>
 
 namespace
 {
@@ -34,10 +35,12 @@ void Copy_GPU_impl(
     const size_t size = height * width;
     const size_t blockDim = 256;
     const size_t gridDim = (size + blockDim - 1) / blockDim;
-    cudaStream_t stream = 0; // TODO: non-default stream
-    Copy_kernel<T><<<gridDim, blockDim, 0, stream>>>(
-        height, width,
-        X, colStrideX, rowStrideX, Y, colStrideY, rowStrideY );
+    cudaStream_t stream = GPUManager::Stream();
+    EL_CHECK_CUDA_KERNEL( Copy_kernel<T>,
+                          gridDim, blockDim, 0, stream,
+                          ( height, width,
+                            X, colStrideX, rowStrideX,
+                            Y, colStrideY, rowStrideY ) );
 }
 
 template void Copy_GPU_impl(

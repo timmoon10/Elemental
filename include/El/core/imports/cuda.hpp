@@ -9,8 +9,8 @@
 namespace El
 {
 
-/** \class CudaError
- *  \brief Exception class for CUDA errors.
+/** CudaError
+ *  Exception class for CUDA errors.
  */
 struct CudaError : std::runtime_error
 {
@@ -26,117 +26,110 @@ struct CudaError : std::runtime_error
   CudaError(cudaError_t cuda_error, char const* file, int line, bool async = false)
       : std::runtime_error{build_error_string_(cuda_error,file,line,async)}
     {}
-};// struct CudaError
+}; // struct CudaError
 
+#define EL_CUDA_SYNC(async)                                             \
+    do                                                                  \
+    {                                                                   \
+        /* Synchronize GPU and check for errors. */                     \
+        cudaError_t status_CUDA_SYNC = cudaDeviceSynchronize();         \
+        if (status_CUDA_SYNC == cudaSuccess)                            \
+            status_CUDA_SYNC = cudaGetLastError();                      \
+        if (status_CUDA_SYNC != cudaSuccess) {                          \
+            cudaDeviceReset();                                          \
+            throw CudaError(status_CUDA_SYNC,__FILE__,__LINE__,async);  \
+        }                                                               \
+    }                                                                   \
+    while( 0 )
 #define EL_FORCE_CHECK_CUDA(cuda_call)                                  \
     do                                                                  \
     {                                                                   \
-        {                                                               \
-            /* Check for earlier asynchronous errors. */                \
-            cudaError_t status_CHECK_CUDA = cudaDeviceSynchronize();    \
-            if (status_CHECK_CUDA == cudaSuccess)                       \
-                status_CHECK_CUDA = cudaGetLastError();                 \
-            if (status_CHECK_CUDA != cudaSuccess) {                     \
-                cudaDeviceReset();                                      \
-                throw CudaError(status_CHECK_CUDA,__FILE__,__LINE__,true); \
-            }                                                           \
+        /* Call CUDA API routine, synchronizing before and after to */  \
+        /* check for errors. */                                         \
+        EL_CUDA_SYNC(true);                                             \
+        cudaError_t status_CHECK_CUDA = ( cuda_call );                  \
+        if( status_CHECK_CUDA != cudaSuccess ) {                        \
+            cudaDeviceReset();                                          \
+            throw CudaError(status_CHECK_CUDA,__FILE__,__LINE__,false); \
         }                                                               \
-        {                                                               \
-            /* Make CUDA call and check for errors. */                  \
-            cudaError_t status_CHECK_CUDA = (cuda_call);                \
-            if (status_CHECK_CUDA == cudaSuccess)                       \
-                status_CHECK_CUDA = cudaDeviceSynchronize();            \
-            if (status_CHECK_CUDA == cudaSuccess)                       \
-                status_CHECK_CUDA = cudaGetLastError();                 \
-            if (status_CHECK_CUDA != cudaSuccess) {                     \
-                cudaDeviceReset();                                      \
-                throw CudaError(status_CHECK_CUDA,__FILE__,__LINE__,false); \
-            }                                                           \
-        }                                                               \
+        EL_CUDA_SYNC(false);                                            \
     } while (0)
+#define EL_LAUNCH_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)      \
+    do                                                          \
+    {                                                           \
+        /* Dg is a dim3 specifying grid dimensions. */          \
+        /* Db is a dim3 specifying block dimensions. */         \
+        /* Ns is a size_t specifying dynamic memory. */         \
+        /* S is a cudaStream_t specifying stream. */            \
+        kernel <<< Dg, Db, Ns, S >>> args ;                     \
+    }                                                           \
+    while (0)
+#define EL_FORCE_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args) \
+    do                                                          \
+    {                                                           \
+        /* Launch CUDA kernel, synchronizing before */          \
+        /* and after to check for errors. */                    \
+        EL_CUDA_SYNC(true);                                     \
+        EL_LAUNCH_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args);     \
+        EL_CUDA_SYNC(false);                                    \
+    }                                                           \
+    while (0)
 
 #ifdef EL_RELEASE
-#define EL_CHECK_CUDA(cuda_call) (cuda_call)
+#define EL_CHECK_CUDA( cuda_call ) ( cuda_call )
+#define EL_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args) \
+  EL_LAUNCH_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)
 #else
-#define EL_CHECK_CUDA(cuda_call) EL_FORCE_CHECK_CUDA(cuda_call)
+#define EL_CHECK_CUDA( cuda_call ) EL_FORCE_CHECK_CUDA( cuda_call )
+#define EL_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args) \
+  EL_FORCE_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)
 #endif // #ifdef EL_RELEASE
 
-
+/** Initialize CUDA environment. */
 void InitializeCUDA(int,char*[]);
 
+/** Singleton class to manage CUDA objects.
+ *  This class also manages cuBLAS objects.
+ */
 class GPUManager
 {
 public:
-    static GPUManager* getInstance()
-    {
-        if (!instance_)
-        {
-            instance_.reset(new GPUManager());;
-        }
-        return instance_.get();
-    }
 
     GPUManager(const GPUManager&) = delete;
     GPUManager& operator=(const GPUManager&) = delete;
+    ~GPUManager();
 
-    void set_local_device_id(int gpu_id) noexcept { device_id_ = gpu_id; }
-    int get_local_device_id() const noexcept { return device_id_; }
+    /** Get singleton instance of CUDA manager. */
+    static GPUManager* Instance();
+    /** Get number of visible CUDA devices. */
+    static int NumDevices();
+    /** Get currently active CUDA device. */
+    static int Device();
+    /** Set active CUDA device. */
+    static void SetDevice(int device);
+    /** Get CUDA stream. */
+    static cudaStream_t Stream();
+    /** Get cuBLAS handle. */
+    static cublasHandle_t cuBLASHandle();
 
-    void create_local_stream() {
-      EL_FORCE_CHECK_CUDA(cudaStreamCreate(&cuda_stream_));
-    }
-    cudaStream_t get_local_stream() const noexcept { return cuda_stream_; }
+private:  
 
-    void create_local_cublas_handle() {
-      cublasCreate(&cublas_handle_);
-      cublasSetStream(cublas_handle_, cuda_stream_);
-      cublasSetPointerMode(cublas_handle_, CUBLAS_POINTER_MODE_HOST);
-      // EL_FORCE_CHECK_CUBLAS(cublasCreate(&cublas_handle_));
-      // EL_FORCE_CHECK_CUBLAS(cublasSetStream(cublas_handle_, cuda_stream_));
-      // EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cublas_handle_, CUBLAS_POINTER_MODE_DEVICE));
-    }
-    cublasHandle_t get_local_cublas_handle() const noexcept { return cublas_handle_; }
-
-    void set_local_device_count(int num_devices) noexcept { device_count_ = num_devices; }
-    int get_local_device_count() const noexcept { return device_count_; }
-
-    /** Use implicit type conversion to return the cuBLAS handle */
-    operator cublasHandle_t()
-    {
-        return cublas_handle_;
-    }
-
-    ~GPUManager()
-    {
-      if (cublas_handle_) {
-        if (cublasDestroy(cublas_handle_) != CUBLAS_STATUS_SUCCESS) {
-          std::terminate();
-        }
-      }
-      // if (cuda_stream_) {
-      //   if (cudaStreamDestroy(cuda_stream_) != cudaSuccess) {
-      //     std::terminate();
-      //   }
-      // }
-    }
-
-private:
+    /** Singleton instance. */
     static std::unique_ptr<GPUManager> instance_;
-    /** GPU device ID */
-    int device_id_;
+
+    /** Number of visible CUDA devices. */
+    int numDevices_;
+    /** Currently active CUDA device. */
+    int device_;
     /** CUDA stream. */
-    cudaStream_t cuda_stream_;
+    cudaStream_t stream_;
     /** cuBLAS handle */
-    cublasHandle_t cublas_handle_;
-    int device_count_;
+    cublasHandle_t cublasHandle_;
 
-    GPUManager()
-      : device_id_{-1}, cuda_stream_{nullptr}, cublas_handle_{nullptr},
-        device_count_{0}
-    {}
+    GPUManager();
 
-};// class GPUManager
+}; // class GPUManager
 
-}// namespace El
+} // namespace El
 
 #endif // HYDROGEN_IMPORTS_CUDA_HPP_

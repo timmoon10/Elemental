@@ -9,6 +9,10 @@
 #ifndef EL_BLAS_ZERO_HPP
 #define EL_BLAS_ZERO_HPP
 
+#ifdef HYDROGEN_HAVE_CUDA
+#include "GPU/Fill.hpp"
+#endif
+
 namespace El {
 
 template<typename T>
@@ -21,60 +25,41 @@ void Zero( AbstractMatrix<T>& A )
     const Int ALDim = A.LDim();
     T* ABuf = A.Buffer();
 
-#ifdef HYDROGEN_HAVE_CUDA
-    GPUManager* gpu_manager = GPUManager::getInstance();
-#endif // HYDROGEN_HAVE_CUDA
-    if( ALDim == height )
+    switch (A.GetDevice())
     {
-        switch (A.GetDevice())
+    case Device::CPU:
+        if( width == 1 || ALDim == height )
         {
-        case Device::CPU:
 #ifdef _OPENMP
-        #pragma omp parallel
-        {
-            const Int numThreads = omp_get_num_threads();
-            const Int thread = omp_get_thread_num();
-            const Int chunk = (size + numThreads - 1) / numThreads;
-            const Int start = Min(chunk * thread, size);
-            const Int end = Min(chunk * (thread + 1), size);
-            MemZero( &ABuf[start], end - start );
-        }
+            #pragma omp parallel
+            {
+                const Int numThreads = omp_get_num_threads();
+                const Int thread = omp_get_thread_num();
+                const Int chunk = (size + numThreads - 1) / numThreads;
+                const Int start = Min(chunk * thread, size);
+                const Int end = Min(chunk * (thread + 1), size);
+                MemZero( &ABuf[start], end - start );
+            }
 #else
-        MemZero( ABuf, size );
+            MemZero( ABuf, size );
 #endif
-            break;
-#ifdef HYDROGEN_HAVE_CUDA
-        case Device::GPU:
-            EL_CHECK_CUDA(cudaMemsetAsync(ABuf,0x0,height*width*sizeof(T),
-                                          gpu_manager->get_local_stream()));
-            break;
-#endif // HYDROGEN_HAVE_CUDA
-        default:
-            LogicError("Bad device type for Zero");
         }
-    }
-    else
-    {
-        switch (A.GetDevice())
+        else
         {
-        case Device::CPU:
             EL_PARALLEL_FOR
             for( Int j=0; j<width; ++j )
             {
                 MemZero( &ABuf[j*ALDim], height );
             }
-            break;
-#ifdef HYDROGEN_HAVE_CUDA
-        case Device::GPU:
-            EL_CHECK_CUDA(cudaMemset2DAsync( ABuf, ALDim*sizeof(T), 0x0,
-                                             height*sizeof(T), width,
-                                             gpu_manager->get_local_stream() ));
-
-            break;
-#endif // HYDROGEN_HAVE_CUDA
-        default:
-            LogicError("Bad device type for Zero");
         }
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Fill_GPU_impl(height, width, T(0), ABuf, ALDim);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Bad device type in Zero");
     }
 
 }

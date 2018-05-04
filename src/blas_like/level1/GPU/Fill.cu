@@ -1,6 +1,7 @@
 #include <El-lite.hpp>
 #include <El/blas_like/level1.hpp>
 #include <El/blas_like/level1/GPU/Fill.hpp>
+#include <El/core/imports/cuda.hpp>
 
 namespace
 {
@@ -43,14 +44,37 @@ void Fill_GPU_impl(
     const size_t size = height * width;
     const size_t blockDim = 256;
     const size_t gridDim = (size + blockDim - 1) / blockDim;
-    cudaStream_t stream = 0; // TODO: non-default stream
-    if( width == 1 || ldim == height ) {
-        Fill1D_kernel<T><<<gridDim, blockDim, 0, stream>>>(
-            size, value, buffer );
-    } else {
-        Fill2D_kernel<T><<<gridDim, blockDim, 0, stream>>>(
-            height, width, value, buffer, ldim );
+    cudaStream_t stream = GPUManager::Stream();
+    if( value == T(0) )
+    {
+        if( width == 1 || ldim == height )
+        {
+            EL_CHECK_CUDA(cudaMemsetAsync( buffer, 0x0, size*sizeof(T),
+                                           stream ));
+        }
+        else
+        {
+            EL_CHECK_CUDA(cudaMemset2DAsync( buffer, ldim*sizeof(T), 0x0,
+                                             height*sizeof(T), width,
+                                             stream ));
+        }
     }
+    else
+    {
+        if( width == 1 || ldim == height )
+        {
+            EL_CHECK_CUDA_KERNEL( Fill1D_kernel<T>,
+                                  gridDim, blockDim, 0, stream,
+                                  ( size, value, buffer ) );
+        }
+        else
+        {
+            EL_CHECK_CUDA_KERNEL( Fill2D_kernel<T>,
+                                  gridDim, blockDim, 0, stream,
+                                  ( height, width, value, buffer, ldim ) );
+        }
+    }
+
 }
 
 template void Fill_GPU_impl(

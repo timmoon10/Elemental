@@ -1,6 +1,7 @@
 #include <El-lite.hpp>
 #include <El/blas_like/level1.hpp>
 #include <El/blas_like/level1/GPU/Hadamard.hpp>
+#include <El/core/imports/cuda.hpp>
 
 namespace
 {
@@ -61,33 +62,40 @@ void Hadamard_GPU_impl(
     const size_t size = height * width;
     const size_t blockDim = 256;
     const size_t gridDim = (size + blockDim - 1) / blockDim;
-    cudaStream_t stream = 0; // TODO: non-default stream
+    auto stream = GPUManager::Stream();
     if( colStrideX == 1 && rowStrideX == height
         && colStrideY == 1 && rowStrideY == height
         && colStrideZ == 1 && rowStrideZ == height )
     {
         if( X == Z )
         {
-            MultAssign_kernel<T><<<gridDim, blockDim, 0, stream>>>( size, Y, Z );
+            EL_CHECK_CUDA_KERNEL( MultAssign_kernel<T>,
+                                  gridDim, blockDim, 0, stream,
+                                  ( size, Y, Z ) );
         }
         else if( Y == Z )
         {
-            MultAssign_kernel<T><<<gridDim, blockDim, 0, stream>>>( size, X, Z );
+            EL_CHECK_CUDA_KERNEL( MultAssign_kernel<T>,
+                                  gridDim, blockDim, 0, stream,
+                                  ( size, X, Z ) );
         }
         else
         {
-            Hadamard1D_kernel<T><<<gridDim, blockDim, 0, stream>>>( size, X, Y, Z );
+            EL_CHECK_CUDA_KERNEL( Hadamard1D_kernel<T>,
+                                  gridDim, blockDim, 0, stream,
+                                  ( size, X, Y, Z ) );
         }
-
     }
     else
     {
-        Hadamard2D_kernel<T><<<gridDim, blockDim, 0, stream>>>(
-            height, width,
-            X, colStrideX, rowStrideX,
-            Y, colStrideY, rowStrideY,
-            Z, colStrideZ, rowStrideZ );
+        EL_CHECK_CUDA_KERNEL( Hadamard2D_kernel<T>,
+                              gridDim, blockDim, 0, stream,
+                              ( height, width,
+                                X, colStrideX, rowStrideX,
+                                Y, colStrideY, rowStrideY,
+                                Z, colStrideZ, rowStrideZ ) );
     }
+
 }
 
 template void Hadamard_GPU_impl(

@@ -128,21 +128,11 @@ void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
     const Int ldB = B.LDim();
     const T* ABuf = A.LockedBuffer();
     T* BBuf = B.Buffer();
-
-    cudaError_t error = cudaGetLastError();
-    if (error != cudaSuccess)
-        RuntimeError("Previously existing error!");
-
-    GPUManager* gpu_manager = GPUManager::getInstance();
-    error = cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
-                         ABuf, ldA*sizeof(T),
-                         height*sizeof(T), width,
-                         cudaMemcpyDeviceToDevice,
-                         gpu_manager->get_local_stream());
-
-    if (error != cudaSuccess)
-        RuntimeError("cudaMemcpy2DAsync error in Copy():\n\n",
-                     cudaGetErrorString(error));
+    EL_CHECK_CUDA(cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
+                                    ABuf, ldA*sizeof(T),
+                                    height*sizeof(T), width,
+                                    cudaMemcpyDeviceToDevice,
+                                    GPUManager::Stream()));
 }
 #endif // HYDROGEN_HAVE_CUDA
 

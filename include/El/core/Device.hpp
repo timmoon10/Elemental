@@ -86,20 +86,12 @@ public:
     void shallowCopyIfPossible(simple_buffer<T,Device::GPU>& A)
     {
         // Shallow copy not possible
-
         this->allocate(A.size());
-        GPUManager* gpu_manager = GPUManager::getInstance();
-        auto error = cudaMemcpyAsync(data_, A.data(), size_*sizeof(T),
-                                     cudaMemcpyDeviceToHost,
-                                     gpu_manager->get_local_stream());
-        cudaStreamSynchronize(gpu_manager->get_local_stream());
-
-        if (error != cudaSuccess)
-        {
-            RuntimeError(
-                "Error in cudaMemcpyAsync.\n\ncudaError = ",
-                cudaGetErrorString(error));
-        }
+        auto stream = GPUManager::Stream();
+        EL_CHECK_CUDA(cudaMemcpyAsync(data_, A.data(), size_*sizeof(T),
+                                      cudaMemcpyDeviceToHost,
+                                      stream));
+        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 #endif // HYDROGEN_HAVE_CUDA
 
@@ -130,30 +122,23 @@ public:
     simple_buffer(size_t size, T const& value)
         : simple_buffer(size)
     {
-        // FIXME
-        if (value != T(0))
-            LogicError("Cannot value-initialize to nonzero value on GPU.");
-
-        GPUManager* gpu_manager = GPUManager::getInstance();
-        auto error = cudaMemsetAsync(data_, value, size*sizeof(T),
-                                     gpu_manager->get_local_stream());
-        if (error != cudaSuccess)
-            RuntimeError("simple_buffer: cudaMemsetAsync failed with message: \"",
-                         cudaGetErrorString(error), "\"");
+        if( value == T(0) )
+        {
+            EL_CHECK_CUDA(cudaMemsetAsync(data_, 0x0, size*sizeof(T),
+                                          GPUManager::Stream()));
+        }
+        else
+        {
+            simple_buffer<T,Device::CPU> cpuBuffer(size, value);
+            shallowCopyIfPossible(cpuBuffer);
+        }
     }
 
     ~simple_buffer()
     {
         if (data_ && own_data_)
         {
-            auto error = cudaFree(data_);
-            if (error != cudaSuccess)
-            {
-                std::cerr << "Error in destructor. About to terminate.\n\n"
-                          << "cudaError = " << cudaGetErrorString(error)
-                          << std::endl;
-                std::terminate();
-            }
+            EL_CHECK_CUDA(cudaFree(data_));
             data_ = nullptr;
         }
     }
@@ -167,27 +152,15 @@ public:
         }
 
         T* ptr;
-        auto error = cudaMalloc(&ptr, size*sizeof(T));
-        if (error != cudaSuccess)
-            RuntimeError("simple_buffer: cudaMalloc failed with message: \"",
-                         cudaGetErrorString(error), "\"");
-        else
+        EL_CHECK_CUDA(cudaMalloc(&ptr, size*sizeof(T)));
+        std::swap(data_,ptr);
+        const bool own_ptr = own_data_;
+        own_data_ = true;
+        size_ = size;
+        if (ptr && own_ptr)
         {
-            std::swap(data_,ptr);
-            const bool own_ptr = own_data_;
-            own_data_ = true;
-            size_ = size;
-            if (ptr && own_ptr)
-            {
-                auto error = cudaFree(ptr);
-                if (error != cudaSuccess)
-                {
-                    RuntimeError(
-                        "Error in with cudaMemcpy.\n\n"
-                        "cudaError = ", cudaGetErrorString(error));
-                }
-                ptr = nullptr;
-            }
+            EL_CHECK_CUDA(cudaFree(ptr));
+            ptr = nullptr;
         }
     }
 
@@ -199,18 +172,12 @@ public:
     void shallowCopyIfPossible(simple_buffer<T,Device::CPU>& A)
     {
         // Shallow copy not possible
-
         this->allocate(A.size());
-        GPUManager* gpu_manager = GPUManager::getInstance();
-        auto error = cudaMemcpyAsync(data_, A.data(), size_*sizeof(T),
-                                     cudaMemcpyHostToDevice,
-                                     gpu_manager->get_local_stream());
-        if (error != cudaSuccess)
-        {
-            RuntimeError(
-                "Error in cudaMemcpy.\n\ncudaError = ",
-                cudaGetErrorString(error));
-        }
+        auto stream = GPUManager::Stream();
+        EL_CHECK_CUDA(cudaMemcpyAsync(data_, A.data(), size_*sizeof(T),
+                                      cudaMemcpyHostToDevice,
+                                      stream));
+        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 
     void shallowCopyIfPossible(simple_buffer<T,Device::GPU>& A)
