@@ -47,7 +47,7 @@ struct CudaError : std::runtime_error
         /* Call CUDA API routine, synchronizing before and after to */  \
         /* check for errors. */                                         \
         EL_CUDA_SYNC(true);                                             \
-        cudaError_t status_CHECK_CUDA = ( cuda_call );                  \
+        cudaError_t status_CHECK_CUDA = cuda_call ;                     \
         if( status_CHECK_CUDA != cudaSuccess ) {                        \
             cudaDeviceReset();                                          \
             throw CudaError(status_CHECK_CUDA,__FILE__,__LINE__,false); \
@@ -76,7 +76,7 @@ struct CudaError : std::runtime_error
     while (0)
 
 #ifdef EL_RELEASE
-#define EL_CHECK_CUDA( cuda_call ) ( cuda_call )
+#define EL_CHECK_CUDA( cuda_call ) cuda_call
 #define EL_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args) \
   EL_LAUNCH_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)
 #else
@@ -87,6 +87,8 @@ struct CudaError : std::runtime_error
 
 /** Initialize CUDA environment. */
 void InitializeCUDA(int,char*[]);
+/** Finalize CUDA environment. */
+void FinalizeCUDA();
 
 /** Singleton class to manage CUDA objects.
  *  This class also manages cuBLAS objects. Note that the CUDA device
@@ -101,8 +103,10 @@ public:
     GPUManager& operator=( const GPUManager& ) = delete;
     ~GPUManager();
 
-    /** Instantiate singleton instance of CUDA manager. */
-    static void Instantiate( int device = 0 );
+    /** Create new singleton instance of CUDA manager. */
+    static void Create( int device = 0 );
+    /** Destroy singleton instance of CUDA manager. */
+    static void Destroy();
     /** Get singleton instance of CUDA manager. */
     static GPUManager* Instance();
     /** Get number of visible CUDA devices. */

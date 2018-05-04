@@ -240,6 +240,10 @@ void Finalize()
         FinalizeRandom();
     }
 
+#ifdef HYDROGEN_HAVE_CUDA
+    FinalizeCUDA();
+#endif
+
     EL_DEBUG_ONLY( CloseLog() )
 #ifdef HYDROGEN_HAVE_MPC
     if( EL_RUNNING_ON_VALGRIND )
