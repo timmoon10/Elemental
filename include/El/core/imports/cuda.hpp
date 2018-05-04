@@ -89,16 +89,20 @@ struct CudaError : std::runtime_error
 void InitializeCUDA(int,char*[]);
 
 /** Singleton class to manage CUDA objects.
- *  This class also manages cuBLAS objects.
+ *  This class also manages cuBLAS objects. Note that the CUDA device
+ *  is set whenever the singleton instance is requested, i.e. in most
+ *  of the static functions.
  */
 class GPUManager
 {
 public:
 
-    GPUManager(const GPUManager&) = delete;
-    GPUManager& operator=(const GPUManager&) = delete;
+    GPUManager( const GPUManager& ) = delete;
+    GPUManager& operator=( const GPUManager& ) = delete;
     ~GPUManager();
 
+    /** Instantiate singleton instance of CUDA manager. */
+    static void Instantiate( int device = 0 );
     /** Get singleton instance of CUDA manager. */
     static GPUManager* Instance();
     /** Get number of visible CUDA devices. */
@@ -106,7 +110,7 @@ public:
     /** Get currently active CUDA device. */
     static int Device();
     /** Set active CUDA device. */
-    static void SetDevice(int device);
+    static void SetDevice( int device );
     /** Get CUDA stream. */
     static cudaStream_t Stream();
     /** Get cuBLAS handle. */
@@ -126,7 +130,7 @@ private:
     /** cuBLAS handle */
     cublasHandle_t cublasHandle_;
 
-    GPUManager();
+    GPUManager( int device = 0 );
 
 }; // class GPUManager
 

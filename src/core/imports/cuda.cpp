@@ -14,13 +14,12 @@ std::unique_ptr<GPUManager> GPUManager::instance_ = nullptr;
 void InitializeCUDA( int argc, char* argv[] )
 {
 
-    // Instantiate CUDA manager
-    GPUManager::Instance();
-
-    // Choose device by parsing command-line arguments
-    const int numDevices = GPUManager::NumDevices();
+    int numDevices = 0;
+    EL_FORCE_CHECK_CUDA( cudaGetDeviceCount( &numDevices ) );
     int device = -1;
     cudaDeviceProp deviceProp;
+
+    // Choose device by parsing command-line arguments
     // if( argc > 0 ) { device = atoi(argv[0]); }
 
     // Choose device by parsing environment variables
@@ -63,9 +62,9 @@ void InitializeCUDA( int argc, char* argv[] )
         }
     }
 
-    // Set CUDA device
+    // Instantiate CUDA manager
     if( device < 0 ) { device = 0; }
-    GPUManager::SetDevice(device);
+    GPUManager::Instantiate( device );
 
     // Check device compute mode
     EL_FORCE_CHECK_CUDA(cudaGetDeviceProperties(&deviceProp, device));
@@ -77,47 +76,38 @@ void InitializeCUDA( int argc, char* argv[] )
 
 }
 
-GPUManager::GPUManager()
-    : numDevices_{0}, device_{0}, stream_{0}, cublasHandle_{nullptr}
+GPUManager::GPUManager(int device)
+    : numDevices_{0}, device_{0}, stream_{nullptr}, cublasHandle_{nullptr}
 {
-
-    // Make sure there are CUDA devices available
-    EL_FORCE_CHECK_CUDA( cudaGetDeviceCount( &numDevices_ ) );
+    EL_CHECK_CUDA( cudaGetDeviceCount( &numDevices_ ) );
     if( numDevices_ < 1 )
     {
         RuntimeError("No CUDA devices found!");
     }
-
-    // Initialize CUDA objects
-    EL_CHECK_CUDA( cudaSetDevice( device_ ) );
-    EL_CHECK_CUDA( cudaStreamCreate( &stream_ ) );
-    
-    // Initialize cuBLAS
-    EL_FORCE_CHECK_CUBLAS( cublasCreate( &cublasHandle_ ) );
-    EL_CHECK_CUBLAS( cublasSetStream( cublasHandle_, stream_ ) );
-    EL_CHECK_CUBLAS( cublasSetPointerMode( cublasHandle_,
-                                           CUBLAS_POINTER_MODE_HOST ) );
-
+    SetDevice( device );
 }
 
 GPUManager::~GPUManager()
 {
+    EL_CHECK_CUDA( cudaSetDevice( device_ ) );
     if( cublasHandle_ != nullptr )
     {
         EL_CHECK_CUBLAS( cublasDestroy( cublasHandle_ ) );
     }
-    if( stream_ != 0 )
+    if( stream_ != nullptr )
     {
         EL_CHECK_CUDA( cudaStreamDestroy( stream_ ) );
     }
 }
 
+void GPUManager::Instantiate( int device )
+{
+    instance_.reset( new GPUManager( device ) );
+}
+
 GPUManager* GPUManager::Instance()
 {
-    if( !instance_ )
-    {
-        instance_.reset( new GPUManager() );
-    }
+    if( !instance_ ) { Instantiate(); }
     EL_CHECK_CUDA( cudaSetDevice( instance_->device_ ) );
     return instance_.get();
 }
@@ -130,15 +120,49 @@ int GPUManager::Device()
 
 void GPUManager::SetDevice( int device )
 {
+
+    // Make sure device is valid
     auto* instance = Instance();
     if( device < 0 || device >= instance->numDevices_ )
     {
-      RuntimeError("Attempted to set invalid CUDA device ",
-                   "(requested device ",device,", ",
-                   "but there are ",instance->numDevices_," devices)");
+        RuntimeError("Attempted to set invalid CUDA device ",
+                     "(requested device ",device,", ",
+                     "but there are ",
+                     instance->numDevices_," available devices)");
     }
+
+    // Deallocate objects if needed
+    if( instance->device_ != device )
+    {
+        EL_CHECK_CUDA( cudaSetDevice( instance->device_ ) );
+        if( instance->cublasHandle_ != nullptr )
+        {
+            EL_CHECK_CUBLAS( cublasDestroy( instance->cublasHandle_ ) );
+            instance->cublasHandle_ = nullptr;
+        }
+        if( instance->stream_ != nullptr )
+        {
+            EL_CHECK_CUDA( cudaStreamDestroy( instance->stream_ ) );
+            instance->stream_ = nullptr;
+        }
+    }
+
+    // Change device and allocate objects if needed
     instance->device_ = device;
     EL_CHECK_CUDA( cudaSetDevice( instance->device_ ) );
+    if( instance->stream_ == nullptr )
+    {
+        EL_CHECK_CUDA( cudaStreamCreate( &instance->stream_ ) );
+    }
+    if( instance->cublasHandle_ == nullptr )
+    {
+        EL_CHECK_CUBLAS( cublasCreate( &instance->cublasHandle_ ) );
+        EL_CHECK_CUBLAS( cublasSetStream( instance->cublasHandle_,
+                                          instance->stream_ ) );
+        EL_CHECK_CUBLAS( cublasSetPointerMode( instance->cublasHandle_,
+                                               CUBLAS_POINTER_MODE_HOST ) );
+    }
+
 }
 
 cudaStream_t GPUManager::Stream()
