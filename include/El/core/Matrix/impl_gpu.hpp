@@ -351,56 +351,44 @@ template<typename Ring>
 Ring Matrix<Ring, Device::GPU>::Get(Int i, Int j) const
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
-        if (i == END) i = this->Height() - 1;
+    if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    return CRef(i, j);
+    Ring val = Ring(0);
+    EL_CHECK_CUDA(cudaMemcpy( &val, &data_[i+j*this->LDim()],
+                              sizeof(Ring), cudaMemcpyDeviceToHost ));
+    return val;
 }
 
 template<typename Ring>
 Base<Ring> Matrix<Ring, Device::GPU>::GetRealPart(Int i, Int j) const
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
-        if (i == END) i = this->Height() - 1;
-    if (j == END) j = this->Width() - 1;
-    return El::RealPart(CRef(i, j));
+    return El::RealPart(Get(i, j));
 }
 
 template<typename Ring>
 Base<Ring> Matrix<Ring, Device::GPU>::GetImagPart(Int i, Int j) const
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
-        if (i == END) i = this->Height() - 1;
-    if (j == END) j = this->Width() - 1;
-    return El::ImagPart(CRef(i, j));
+    return El::ImagPart(Get(i, j));
 }
 
 template<typename Ring>
 void Matrix<Ring, Device::GPU>::Set(Int i, Int j, Ring const& alpha)
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(
         this->AssertValidEntry(i, j);
         if (this->Locked())
             LogicError("Cannot modify data of locked matrices");
         )
-        if (i == END) i = this->Height() - 1;
+    if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    Ref(i, j) = alpha;
+    EL_CHECK_CUDA(cudaMemcpy( &data_[i+j*this->LDim()], &alpha,
+                              sizeof(Ring), cudaMemcpyHostToDevice ));
 }
 
 template<typename Ring>
@@ -414,17 +402,14 @@ Matrix<Ring, Device::GPU>::SetRealPart(
     Int i, Int j, Base<Ring> const& alpha)
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(
         this->AssertValidEntry(i, j);
         if (this->Locked())
             LogicError("Cannot modify data of locked matrices");
         )
-        if (i == END) i = this->Height() - 1;
-    if (j == END) j = this->Width() - 1;
-    El::SetRealPart(Ref(i, j), alpha);
+    Ring val = Get(i, j);
+    El::SetRealPart(val, alpha);
+    Set(i, j, val);
 }
 
 template<typename Ring>
@@ -437,17 +422,14 @@ void
 Matrix<Ring, Device::GPU>::SetImagPart(Int i, Int j, Base<Ring> const& alpha)
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(
         this->AssertValidEntry(i, j);
         if (this->Locked())
             LogicError("Cannot modify data of locked matrices");
         )
-        if (i == END) i = this->Height() - 1;
-    if (j == END) j = this->Width() - 1;
-    El::SetImagPart(Ref(i, j), alpha);
+    Ring val = Get(i, j);
+    El::SetImagPart(val, alpha);
+    Set(i, j, val);
 }
 
 template<typename Ring>
@@ -459,17 +441,14 @@ template<typename Ring>
 void Matrix<Ring, Device::GPU>::Update(Int i, Int j, Ring const& alpha)
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(
         this->AssertValidEntry(i, j);
         if (this->Locked())
             LogicError("Cannot modify data of locked matrices");
         )
-        if (i == END) i = this->Height() - 1;
-    if (j == END) j = this->Width() - 1;
-    Ref(i, j) += alpha;
+    Ring val = Get(i, j);
+    val += alpha;
+    Set(i, j, val);
 }
 
 template<typename Ring>
@@ -482,17 +461,14 @@ void
 Matrix<Ring, Device::GPU>::UpdateRealPart(Int i, Int j, Base<Ring> const& alpha)
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(
         this->AssertValidEntry(i, j);
         if (this->Locked())
             LogicError("Cannot modify data of locked matrices");
         )
-        if (i == END) i = this->Height() - 1;
-    if (j == END) j = this->Width() - 1;
-    El::UpdateRealPart(Ref(i, j), alpha);
+    Ring val = Get(i, j);
+    El::UpdateRealPart(val, alpha);
+    Set(i, j, val);
 }
 
 template<typename Ring>
@@ -505,17 +481,14 @@ void
 Matrix<Ring, Device::GPU>::UpdateImagPart(Int i, Int j, Base<Ring> const& alpha)
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(
         this->AssertValidEntry(i, j);
         if (this->Locked())
             LogicError("Cannot modify data of locked matrices");
         )
-        if (i == END) i = this->Height() - 1;
-    if (j == END) j = this->Width() - 1;
-    El::UpdateImagPart(Ref(i, j), alpha);
+    Ring val = Get(i, j);
+    El::UpdateImagPart(val, alpha);
+    Set(i, j, val);
 }
 
 template<typename Ring>
@@ -527,9 +500,6 @@ template<typename Ring>
 void Matrix<Ring, Device::GPU>::MakeReal(Int i, Int j)
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(
         this->AssertValidEntry(i, j);
         if (this->Locked())
@@ -542,9 +512,6 @@ template<typename Ring>
 void Matrix<Ring, Device::GPU>::Conjugate(Int i, Int j)
 {
     EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
     EL_DEBUG_ONLY(
         this->AssertValidEntry(i, j);
         if (this->Locked())
@@ -625,41 +592,32 @@ void Matrix<Ring, Device::GPU>::Control_
 // ===========================================================
 template<typename Ring>
 Ring const& Matrix<Ring, Device::GPU>::CRef(Int i, Int j) const
-    EL_NO_RELEASE_EXCEPT
 {
-    return data_[i+j*this->LDim()];
+    LogicError("Attempted to get reference to entry of a GPU matrix");
+    return data_[0];
 }
 
 template<typename Ring>
 Ring const& Matrix<Ring, Device::GPU>::operator()(Int i, Int j) const
 {
-    EL_DEBUG_CSE;
-
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-
-    EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
-        return data_[i+j*this->LDim()];
+    LogicError("Attempted to get reference to entry of a GPU matrix");
+    return data_[0];
 }
 
 template<typename Ring>
 Ring& Matrix<Ring, Device::GPU>::Ref(Int i, Int j)
-    EL_NO_RELEASE_EXCEPT
 {
-    return data_[i+j*this->LDim()];
+    LogicError("Attempted to get reference to entry of a GPU matrix");
+    return data_[0];
 }
 
 template<typename Ring>
 Ring& Matrix<Ring, Device::GPU>::operator()(Int i, Int j)
 {
-    EL_DEBUG_CSE;
-    LogicError("DON'T DO SINGLE-ENTRY MANIPULATION ON WITH GPU MATRICES!");
-#ifndef EL_RELEASE
-    this->AssertValidEntry(i, j);
-    if (this->Locked())
-        LogicError("Cannot modify data of locked matrices");
-#endif // !EL_RELEASE
-    return data_[i+j*this->LDim()];
+    LogicError("Attempted to get reference to entry of a GPU matrix");
+    return data_[0];
 }
+
 #if 0
 // Assertions
 // ==========
