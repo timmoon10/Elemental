@@ -20,20 +20,20 @@ void InitializeCUDA( int argc, char* argv[] )
     cudaDeviceProp deviceProp;
 
     // Choose device by parsing command-line arguments
-    // if( argc > 0 ) { device = atoi(argv[0]); }
+    // if( argc > 0 ) { device = std::atoi(argv[0]); }
 
     // Choose device by parsing environment variables
     if( device < 0 )
     {
-        char *env = nullptr;
-        if( env == nullptr ) { env = getenv("SLURM_LOCALID"); }
-        if( env == nullptr ) { env = getenv("MV2_COMM_WORLD_LOCAL_RANK"); }
-        if( env == nullptr ) { env = getenv("OMPI_COMM_WORLD_LOCAL_RANK"); }
-        if( env != nullptr )
+        std::string env;
+        if( env.empty() ) { env = std::getenv("SLURM_LOCALID"); }
+        if( env.empty() ) { env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK"); }
+        if( env.empty() ) { env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK"); }
+        if( env.empty() )
         {
 
             // Allocate devices amongst ranks in round-robin fashion
-            const int localRank = atoi(env);
+            const int localRank = std::atoi(env.c_str());
             device = localRank % numDevices;
 
             // If device is shared amongst MPI ranks, check its
