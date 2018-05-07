@@ -29,7 +29,7 @@ void InitializeCUDA( int argc, char* argv[] )
         if( env.empty() ) { env = std::getenv("SLURM_LOCALID"); }
         if( env.empty() ) { env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK"); }
         if( env.empty() ) { env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK"); }
-        if( env.empty() )
+        if( !env.empty() )
         {
 
             // Allocate devices amongst ranks in round-robin fashion
@@ -62,17 +62,29 @@ void InitializeCUDA( int argc, char* argv[] )
         }
     }
 
-    // Instantiate CUDA manager
-    if( device < 0 ) { device = 0; }
-    GPUManager::Create( device );
-
     // Check device compute mode
-    EL_FORCE_CHECK_CUDA(cudaGetDeviceProperties(&deviceProp, device));
-    if( deviceProp.computeMode == cudaComputeModeProhibited )
+    if( device >= 0 )
     {
+        EL_FORCE_CHECK_CUDA(cudaGetDeviceProperties(&deviceProp, device));
+    }
+    else
+    {
+        EL_FORCE_CHECK_CUDA(cudaGetDeviceProperties(&deviceProp, 0));
+    }
+    switch( deviceProp.computeMode )
+    {
+    case cudaComputeModeExclusive:
+    case cudaComputeModeExclusiveProcess:
+        device = -1; // Let CUDA handle GPU assignments
+        break;
+    case cudaComputeModeProhibited:
         cudaDeviceReset();
         RuntimeError("CUDA Device ",device," is set with ComputeModeProhibited");
+        break;
     }
+
+    // Instantiate CUDA manager
+    GPUManager::Create( device );
 
 }
 
@@ -84,8 +96,8 @@ GPUManager::GPUManager(int device)
 {
 
     // Check if device is valid
-    EL_CHECK_CUDA( cudaGetDeviceCount( &numDevices_ ) );
-    if( device_ < 0 || device_ >= numDevices_ )
+    EL_FORCE_CHECK_CUDA( cudaGetDeviceCount( &numDevices_ ) );
+    if( device_ >= numDevices_ )
     {
         RuntimeError("Attempted to set invalid CUDA device ",
                      "(requested device ",device_,", ",
@@ -93,25 +105,31 @@ GPUManager::GPUManager(int device)
     }
 
     // Initialize CUDA and cuBLAS objects
-    EL_CHECK_CUDA( cudaSetDevice( device_ ) );
-    EL_CHECK_CUDA( cudaStreamCreate( &stream_ ) );
-    EL_CHECK_CUBLAS( cublasCreate( &cublasHandle_ ) );
-    EL_CHECK_CUBLAS( cublasSetStream( cublasHandle_, stream_ ) );
-    EL_CHECK_CUBLAS( cublasSetPointerMode( cublasHandle_,
-                                           CUBLAS_POINTER_MODE_HOST ) );
+    if( device_ >= 0 )
+    {
+        EL_FORCE_CHECK_CUDA( cudaSetDevice( device_ ) );
+    }
+    EL_FORCE_CHECK_CUDA( cudaStreamCreate( &stream_ ) );
+    EL_FORCE_CHECK_CUBLAS( cublasCreate( &cublasHandle_ ) );
+    EL_FORCE_CHECK_CUBLAS( cublasSetStream( cublasHandle_, stream_ ) );
+    EL_FORCE_CHECK_CUBLAS( cublasSetPointerMode( cublasHandle_,
+                                                 CUBLAS_POINTER_MODE_HOST ) );
 
 }
 
 GPUManager::~GPUManager()
 {
-    EL_CHECK_CUDA( cudaSetDevice( device_ ) );
+    if( device_ >= 0 )
+    {
+        EL_FORCE_CHECK_CUDA( cudaSetDevice( device_ ) );
+    }
     if( cublasHandle_ != nullptr )
     {
-        EL_CHECK_CUBLAS( cublasDestroy( cublasHandle_ ) );
+        EL_FORCE_CHECK_CUBLAS( cublasDestroy( cublasHandle_ ) );
     }
     if( stream_ != nullptr )
     {
-        EL_CHECK_CUDA( cudaStreamDestroy( stream_ ) );
+        EL_FORCE_CHECK_CUDA( cudaStreamDestroy( stream_ ) );
     }
 }
 
@@ -124,7 +142,10 @@ void GPUManager::Destroy()
 GPUManager* GPUManager::Instance()
 {
     if( !instance_ ) { Create(); }
-    EL_CHECK_CUDA( cudaSetDevice( instance_->device_ ) );
+    if( instance_->device_ >= 0 )
+    {
+        EL_CHECK_CUDA( cudaSetDevice( instance_->device_ ) );
+    }
     return instance_.get();
 }
 
