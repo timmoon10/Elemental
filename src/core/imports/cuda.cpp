@@ -63,19 +63,14 @@ void InitializeCUDA( int argc, char* argv[] )
     }
 
     // Check device compute mode
-    if( device >= 0 )
-    {
-        EL_FORCE_CHECK_CUDA(cudaGetDeviceProperties(&deviceProp, device));
-    }
-    else
-    {
-        EL_FORCE_CHECK_CUDA(cudaGetDeviceProperties(&deviceProp, 0));
-    }
+    if( device < 0 ) { device = 0; }
+    EL_FORCE_CHECK_CUDA(cudaGetDeviceProperties(&deviceProp, device));
     switch( deviceProp.computeMode )
     {
     case cudaComputeModeExclusive:
     case cudaComputeModeExclusiveProcess:
-        device = -1; // Let CUDA handle GPU assignments
+        // Let CUDA handle GPU assignments
+        EL_FORCE_CHECK_CUDA(cudaGetDevice( &device ));
         break;
     case cudaComputeModeProhibited:
         cudaDeviceReset();
@@ -97,7 +92,7 @@ GPUManager::GPUManager(int device)
 
     // Check if device is valid
     EL_FORCE_CHECK_CUDA( cudaGetDeviceCount( &numDevices_ ) );
-    if( device_ >= numDevices_ )
+    if( device_ < 0 || device_ >= numDevices_ )
     {
         RuntimeError("Attempted to set invalid CUDA device ",
                      "(requested device ",device_,", ",
@@ -105,10 +100,7 @@ GPUManager::GPUManager(int device)
     }
 
     // Initialize CUDA and cuBLAS objects
-    if( device_ >= 0 )
-    {
-        EL_FORCE_CHECK_CUDA( cudaSetDevice( device_ ) );
-    }
+    EL_FORCE_CHECK_CUDA( cudaSetDevice( device_ ) );
     EL_FORCE_CHECK_CUDA( cudaStreamCreate( &stream_ ) );
     EL_FORCE_CHECK_CUBLAS( cublasCreate( &cublasHandle_ ) );
     EL_FORCE_CHECK_CUBLAS( cublasSetStream( cublasHandle_, stream_ ) );
@@ -119,10 +111,7 @@ GPUManager::GPUManager(int device)
 
 GPUManager::~GPUManager()
 {
-    if( device_ >= 0 )
-    {
-        EL_FORCE_CHECK_CUDA( cudaSetDevice( device_ ) );
-    }
+    EL_FORCE_CHECK_CUDA( cudaSetDevice( device_ ) );
     if( cublasHandle_ != nullptr )
     {
         EL_FORCE_CHECK_CUBLAS( cublasDestroy( cublasHandle_ ) );
@@ -142,10 +131,7 @@ void GPUManager::Destroy()
 GPUManager* GPUManager::Instance()
 {
     if( !instance_ ) { Create(); }
-    if( instance_->device_ >= 0 )
-    {
-        EL_CHECK_CUDA( cudaSetDevice( instance_->device_ ) );
-    }
+    EL_CHECK_CUDA( cudaSetDevice( instance_->device_ ) );
     return instance_.get();
 }
 
