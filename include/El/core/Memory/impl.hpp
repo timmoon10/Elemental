@@ -117,8 +117,14 @@ struct MemHelper<G,Device::GPU>
         // Check for errors
         if (status != cudaSuccess)
         {
+            size_t freeMemory = 0;
+            size_t totalMemory = 0;
+            cudaMemGetInfo(&freeMemory, &totalMemory);
             RuntimeError("Failed to allocate GPU memory with message: ",
-                         "\"", cudaGetErrorString(status), "\"");
+                         "\"", cudaGetErrorString(status), "\" ",
+                         "(",size*sizeof(G)," bytes requested, ",
+                         freeMemory," bytes available, ",
+                         totalMemory," bytes total)");
         }
 
         return ptr;
