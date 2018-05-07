@@ -354,9 +354,12 @@ Ring Matrix<Ring, Device::GPU>::Get(Int i, Int j) const
     EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
+    auto stream = GPUManager::Stream();
     Ring val = Ring(0);
-    EL_CHECK_CUDA(cudaMemcpy( &val, &data_[i+j*this->LDim()],
-                              sizeof(Ring), cudaMemcpyDeviceToHost ));
+    EL_CHECK_CUDA(cudaMemcpyAsync( &val, &data_[i+j*this->LDim()],
+                                   sizeof(Ring), cudaMemcpyDeviceToHost,
+                                   stream ));
+    EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     return val;
 }
 
@@ -387,8 +390,11 @@ void Matrix<Ring, Device::GPU>::Set(Int i, Int j, Ring const& alpha)
         )
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    EL_CHECK_CUDA(cudaMemcpy( &data_[i+j*this->LDim()], &alpha,
-                              sizeof(Ring), cudaMemcpyHostToDevice ));
+    auto stream = GPUManager::Stream();
+    EL_CHECK_CUDA(cudaMemcpyAsync( &data_[i+j*this->LDim()], &alpha,
+                                   sizeof(Ring), cudaMemcpyHostToDevice,
+                                   stream ));
+    EL_CHECK_CUDA(cudaStreamSynchronize(stream));
 }
 
 template<typename Ring>
