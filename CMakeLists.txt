@@ -184,7 +184,9 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
 
     if (${PROJECT_NAME}_ENABLE_CUB)
       find_package(CUB REQUIRED)
-      set(${PROJECT_NAME}_HAVE_CUB TRUE)
+      set(HYDROGEN_HAVE_CUB TRUE)
+    else ()
+      set(HYDROGEN_HAVE_CUB FALSE)
     endif ()
 
     if (NOT TARGET cuda::toolkit)

@@ -22,8 +22,11 @@
 
 // CUDA stuff
 #cmakedefine HYDROGEN_HAVE_CUDA
-#cmakedefine HYDROGEN_HAVE_CUDA_AWARE_MPI
 #cmakedefine HYDROGEN_HAVE_NCCL2
 #cmakedefine HYDROGEN_HAVE_CUB
+
+#cmakedefine HYDROGEN_HAVE_CUDA_AWARE_MPI
+#cmakedefine HYDROGEN_MPI_IS_OPENMPI
+#cmakedefine HYDROGEN_MPI_IS_MVAPICH2
 
 #endif /* HYDROGEN_CONFIG_H */
