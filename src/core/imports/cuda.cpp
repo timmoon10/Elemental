@@ -40,7 +40,6 @@ void InitializeCUDA(int argc, char* argv[])
 
         if (env)
         {
-
             // Allocate devices amongst ranks in round-robin fashion
             int const localRank = std::atoi(env);
             device = localRank % numDevices;
@@ -68,7 +67,6 @@ void InitializeCUDA(int argc, char* argv[])
                     break;
                 }
             }
-
         }
     }
 
@@ -95,11 +93,12 @@ void InitializeCUDA(int argc, char* argv[])
 
     // Instantiate CUDA manager
     GPUManager::Create(device);
-
 }
 
 void FinalizeCUDA()
-{ GPUManager::Destroy(); }
+{
+    GPUManager::Destroy();
+}
 
 GPUManager::GPUManager(int device)
     : numDevices_{0}, device_{device}, stream_{nullptr}, cublasHandle_{nullptr}
@@ -122,17 +121,28 @@ GPUManager::GPUManager(int device)
     EL_FORCE_CHECK_CUBLAS(cublasSetStream(cublasHandle_, stream_));
     EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cublasHandle_,
                                                CUBLAS_POINTER_MODE_HOST));
-
 }
+
 
 GPUManager::~GPUManager()
 {
-    cudaSetDevice(device_);
-    if (cublasHandle_ != nullptr)
-        cublasDestroy(cublasHandle_);
+    try
+    {
+        EL_FORCE_CHECK_CUDA(cudaSetDevice(device_));
+        if (cublasHandle_ != nullptr)
+            EL_FORCE_CHECK_CUBLAS(cublasDestroy(cublasHandle_));
 
-    if (stream_ != nullptr)
-        cudaStreamDestroy(stream_);
+        if (stream_ != nullptr)
+            EL_FORCE_CHECK_CUDA(cudaStreamDestroy(stream_));
+    }
+    catch (std::exception const& e)
+    {
+        std::cerr << "cudaFree error detected:\n\n"
+                  << e.what() << std::endl
+                  << "std::terminate() will be called."
+                  << std::endl;
+        std::terminate();
+    }
 }
 
 void GPUManager::Create(int device)

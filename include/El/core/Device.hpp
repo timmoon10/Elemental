@@ -138,7 +138,18 @@ public:
     {
         if (data_ && own_data_)
         {
-            EL_CHECK_CUDA(cudaFree(data_));
+            try
+            {
+                EL_CHECK_CUDA(cudaFree(data_));
+            }
+            catch (std::exception const& e)
+            {
+                std::cerr << "cudaFree error detected:\n\n"
+                          << e.what() << std::endl
+                          << "std::terminate() will be called."
+                          << std::endl;
+                std::terminate();
+            }
             data_ = nullptr;
         }
     }
