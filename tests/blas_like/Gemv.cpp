@@ -79,10 +79,16 @@ main(int argc, char* argv[])
         ComplainIfDebug();
         OutputFromRoot(comm,"Will test Gemv ",transA);
 
+#ifdef HYDROGEN_HAVE_CUDA
         TestGemv<float,Device::GPU>
-        (orientA, m,
-          float(3), float(4),
-          print, g);
+            (orientA, m,
+             float(3), float(4),
+             print, g);
+        TestGemv<double,Device::GPU>
+            (orientA, m,
+             double(3), double(4),
+             print, g);
+#endif // HYDROGEN_HAVE_CUDA
 
         TestGemv<float>
         (orientA, m,
