@@ -88,7 +88,7 @@ struct MemHelper<G,Device::CPU>
 
 #ifdef HYDROGEN_HAVE_CUB
 // GPU memory pool
-cub::CachingDeviceAllocator cubMemPool(2);
+cub::CachingDeviceAllocator cubMemPool(2u);
 #endif // HYDROGEN_HAVE_CUB
 
 template <typename G>
@@ -105,7 +105,7 @@ struct MemHelper<G,Device::GPU>
 #ifdef HYDROGEN_HAVE_CUB
         case 1:
             {
-                status = cubMemPool.DeviceAllocate(&ptr,
+                status = cubMemPool.DeviceAllocate(reinterpret_cast<void**>(&ptr),
                                                    size * sizeof(G),
                                                    GPUManager::Stream());
             }
@@ -138,7 +138,7 @@ struct MemHelper<G,Device::GPU>
         switch (mode) {
         case 0: status = cudaFree(ptr); break;
 #ifdef HYDROGEN_HAVE_CUB
-        case 1: status = cubMemPool.DeviceFree(ptr); break;
+        case 1: status = cubMemPool.DeviceFree(reinterpret_cast<void*>(ptr)); break;
 #endif // HYDROGEN_HAVE_CUB
         default: RuntimeError("Invalid GPU memory deallocation mode");
         }
