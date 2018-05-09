@@ -21,13 +21,10 @@ inline cublasOperation_t CharTocuBLASOp(char c)
     {
     case 'N':
         return CUBLAS_OP_N;
-        break;
     case 'T':
         return CUBLAS_OP_T;
-        break;
     case 'C':
         return CUBLAS_OP_C;
-        break;
     default:
         RuntimeError("cuBLAS: Unknown operation type.");
         return CUBLAS_OP_N; // Compiler yells about not returning anything...

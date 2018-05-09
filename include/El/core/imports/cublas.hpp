@@ -12,21 +12,33 @@ namespace El
  */
 struct CublasError : std::runtime_error
 {
-  
+
     static std::string get_error_string_(cublasStatus_t status)
     {
-        switch (status) {
-        case CUBLAS_STATUS_SUCCESS:          return "CUBLAS_STATUS_SUCCESS";
-        case CUBLAS_STATUS_NOT_INITIALIZED:  return "CUBLAS_STATUS_NOT_INITIALIZED";
-        case CUBLAS_STATUS_ALLOC_FAILED:     return "CUBLAS_STATUS_ALLOC_FAILED";
-        case CUBLAS_STATUS_INVALID_VALUE:    return "CUBLAS_STATUS_INVALID_VALUE";
-        case CUBLAS_STATUS_ARCH_MISMATCH:    return "CUBLAS_STATUS_ARCH_MISMATCH";
-        case CUBLAS_STATUS_MAPPING_ERROR:    return "CUBLAS_STATUS_MAPPING_ERROR";
-        case CUBLAS_STATUS_EXECUTION_FAILED: return "CUBLAS_STATUS_EXECUTION_FAILED";
-        case CUBLAS_STATUS_INTERNAL_ERROR:   return "CUBLAS_STATUS_INTERNAL_ERROR";
-        case CUBLAS_STATUS_NOT_SUPPORTED:    return "CUBLAS_STATUS_NOT_SUPPORTED";
-        case CUBLAS_STATUS_LICENSE_ERROR:    return "CUBLAS_STATUS_LICENSE_ERROR";
-        default:                             return "unknown cuBLAS error";
+        switch (status)
+        {
+        case CUBLAS_STATUS_SUCCESS:
+            return "CUBLAS_STATUS_SUCCESS";
+        case CUBLAS_STATUS_NOT_INITIALIZED:
+            return "CUBLAS_STATUS_NOT_INITIALIZED";
+        case CUBLAS_STATUS_ALLOC_FAILED:
+            return "CUBLAS_STATUS_ALLOC_FAILED";
+        case CUBLAS_STATUS_INVALID_VALUE:
+            return "CUBLAS_STATUS_INVALID_VALUE";
+        case CUBLAS_STATUS_ARCH_MISMATCH:
+            return "CUBLAS_STATUS_ARCH_MISMATCH";
+        case CUBLAS_STATUS_MAPPING_ERROR:
+            return "CUBLAS_STATUS_MAPPING_ERROR";
+        case CUBLAS_STATUS_EXECUTION_FAILED:
+            return "CUBLAS_STATUS_EXECUTION_FAILED";
+        case CUBLAS_STATUS_INTERNAL_ERROR:
+            return "CUBLAS_STATUS_INTERNAL_ERROR";
+        case CUBLAS_STATUS_NOT_SUPPORTED:
+            return "CUBLAS_STATUS_NOT_SUPPORTED";
+        case CUBLAS_STATUS_LICENSE_ERROR:
+            return "CUBLAS_STATUS_LICENSE_ERROR";
+        default:
+            return "unknown cuBLAS error";
         }
     }
 
@@ -53,7 +65,8 @@ struct CublasError : std::runtime_error
         {                                                               \
             /* Make cuBLAS call and check for errors. */                \
             const cublasStatus_t status_CHECK_CUBLAS = (cublas_call);   \
-            if (status_CHECK_CUBLAS != CUBLAS_STATUS_SUCCESS) {         \
+            if (status_CHECK_CUBLAS != CUBLAS_STATUS_SUCCESS)           \
+            {                                                           \
               cudaDeviceReset();                                        \
               throw CublasError(status_CHECK_CUBLAS,__FILE__,__LINE__); \
             }                                                           \
@@ -63,7 +76,8 @@ struct CublasError : std::runtime_error
             cudaError_t status_CHECK_CUBLAS = cudaDeviceSynchronize();  \
             if (status_CHECK_CUBLAS == cudaSuccess)                     \
                 status_CHECK_CUBLAS = cudaGetLastError();               \
-            if (status_CHECK_CUBLAS != cudaSuccess) {                   \
+            if (status_CHECK_CUBLAS != cudaSuccess)                     \
+            {                                                           \
                 cudaDeviceReset();                                      \
                 throw CudaError(status_CHECK_CUBLAS,__FILE__,__LINE__,false); \
             }                                                           \
