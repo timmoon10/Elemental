@@ -152,7 +152,7 @@ void GPUManager::Create(int device)
 
 void GPUManager::Destroy()
 {
-    instance_.release();
+    instance_.reset();
 }
 
 GPUManager* GPUManager::Instance()
