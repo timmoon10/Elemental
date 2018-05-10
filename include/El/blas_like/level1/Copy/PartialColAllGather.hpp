@@ -12,10 +12,10 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V,Device D>
 void PartialColAllGather
-( const DistMatrix<T,        U,   V>& A,
-        DistMatrix<T,Partial<U>(),V>& B )
+( DistMatrix<T,U,V,ELEMENT,D> const& A,
+  DistMatrix<T,Partial<U>(),V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
@@ -65,13 +65,12 @@ void PartialColAllGather
         }
         else
         {
-            vector<T> buffer;
-            FastResize( buffer, (colStrideUnion+1)*portionSize );
-            T* firstBuf = &buffer[0];
-            T* secondBuf = &buffer[portionSize];
+            simple_buffer<T,D> buffer((colStrideUnion+1)*portionSize);
+            T* firstBuf = buffer.data();
+            T* secondBuf = buffer.data() + portionSize;
 
             // Pack
-            util::InterleaveMatrix
+            util::InterleaveMatrix<T,D>
             ( A.LocalHeight(), width,
               A.LockedBuffer(), 1, A.LDim(),
               firstBuf,         1, A.LocalHeight() );
@@ -82,7 +81,7 @@ void PartialColAllGather
               A.PartialUnionColComm() );
 
             // Unpack
-            util::PartialColStridedUnpack
+            util::PartialColStridedUnpack<T,D>
             ( height, width,
               A.ColAlign(), A.ColStride(),
               colStrideUnion, colStridePart, A.PartialColRank(),
@@ -97,13 +96,12 @@ void PartialColAllGather
         if( A.Grid().Rank() == 0 )
             cerr << "Unaligned PartialColAllGather" << endl;
 #endif
-        vector<T> buffer;
-        FastResize( buffer, (colStrideUnion+1)*portionSize );
-        T* firstBuf = &buffer[0];
-        T* secondBuf = &buffer[portionSize];
+        simple_buffer<T,D> buffer((colStrideUnion+1)*portionSize);
+        T* firstBuf = buffer.data();
+        T* secondBuf = buffer.data() + portionSize;
 
         // Perform a SendRecv to match the row alignments
-        util::InterleaveMatrix
+        util::InterleaveMatrix<T,D>
         ( A.LocalHeight(), width,
           A.LockedBuffer(), 1, A.LDim(),
           secondBuf,        1, A.LocalHeight() );
@@ -119,7 +117,7 @@ void PartialColAllGather
           secondBuf, portionSize, A.PartialUnionColComm() );
 
         // Unpack
-        util::PartialColStridedUnpack
+        util::PartialColStridedUnpack<T,D>
         ( height, width,
           A.ColAlign()+colDiff, A.ColStride(),
           colStrideUnion, colStridePart, A.PartialColRank(),

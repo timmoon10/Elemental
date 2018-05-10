@@ -21,6 +21,14 @@ void Ones( Matrix<T>& A, Int m, Int n )
 }
 
 template<typename T>
+void Ones( AbstractMatrix<T>& A, Int m, Int n )
+{
+    EL_DEBUG_CSE
+    A.Resize( m, n );
+    Fill( A, T(1) );
+}
+
+template<typename T>
 void Ones( AbstractDistMatrix<T>& A, Int m, Int n )
 {
     EL_DEBUG_CSE
@@ -31,6 +39,7 @@ void Ones( AbstractDistMatrix<T>& A, Int m, Int n )
 
 #define PROTO(T) \
   template void Ones( Matrix<T>& A, Int m, Int n ); \
+  template void Ones( AbstractMatrix<T>& A, Int m, Int n ); \
   template void Ones( AbstractDistMatrix<T>& A, Int m, Int n );
 
 #define EL_ENABLE_DOUBLEDOUBLE

@@ -18,27 +18,27 @@ if (MPI_CXX_FOUND)
       set_property(TARGET MPI::MPI_CXX PROPERTY
         INTERFACE_COMPILE_OPTIONS "${_MPI_CXX_COMPILE_OPTIONS}")
     endif()
-    
+
     if(MPI_CXX_LINK_FLAGS)
       separate_arguments(_MPI_CXX_LINK_LINE UNIX_COMMAND
         "${MPI_CXX_LINK_FLAGS}")
     endif()
     list(APPEND _MPI_CXX_LINK_LINE "${MPI_CXX_LIBRARIES}")
-    
+
     set_property(TARGET MPI::MPI_CXX PROPERTY
       INTERFACE_LINK_LIBRARIES "${_MPI_CXX_LINK_LINE}")
-    
+
     set_property(TARGET MPI::MPI_CXX PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
-    
+
   endif (NOT TARGET MPI::MPI_CXX)
 else()
   message(FATAL_ERROR "MPI CXX compiler was not found and is required")
 endif()
 
-# NOTE: 
+# NOTE:
 # check_function_exists only supports cdecl calling conventions, despite the
-# fact that MS-MPI uses __stdcall. Thus, it is best to avoid using 
+# fact that MS-MPI uses __stdcall. Thus, it is best to avoid using
 # check_function_exists in favor of check_c_source_compiles.
 # Thanks to Ahn Vo for discovering this issue!
 
@@ -54,13 +54,13 @@ set(MPI_REDUCE_SCATTER_CODE
    {
      MPI_Init( &argc, &argv );
      int *recvCounts;
-     double *a, *b;  
+     double *a, *b;
      MPI_Reduce_scatter
      ( a, b, recvCounts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
      MPI_Finalize();
      return 0;
    }")
-check_cxx_source_compiles("${MPI_REDUCE_SCATTER_CODE}" 
+check_cxx_source_compiles("${MPI_REDUCE_SCATTER_CODE}"
   EL_HAVE_MPI_REDUCE_SCATTER)
 if(NOT EL_HAVE_MPI_REDUCE_SCATTER)
   message(FATAL_ERROR "Could not find MPI_Reduce_scatter")
@@ -126,7 +126,7 @@ if(MPI_Fortran_FOUND)
   if(MPIF_EXISTS)
     set(EL_HAVE_MPI_FORTRAN TRUE)
   else()
-    message(WARNING 
+    message(WARNING
       "Fortran MPI support detected, but mpif.h was not found in ${MPI_Fortran_INCLUDE_PATH}")
   endif()
 endif()
@@ -147,7 +147,7 @@ set(MPI_TYPE_CREATE_STRUCT_CODE
          MPI_Finalize();
          return 0;
      }")
-check_cxx_source_compiles("${MPI_TYPE_CREATE_STRUCT_CODE}" 
+check_cxx_source_compiles("${MPI_TYPE_CREATE_STRUCT_CODE}"
   EL_HAVE_MPI_TYPE_CREATE_STRUCT)
 if(NOT EL_HAVE_MPI_TYPE_CREATE_STRUCT)
   message(FATAL_ERROR "Could not find MPI_Type_create_struct")
@@ -167,7 +167,7 @@ set(MPI_LONG_LONG_CODE
      }")
 check_cxx_source_compiles("${MPI_LONG_LONG_CODE}" EL_HAVE_MPI_LONG_LONG)
 if(EL_USE_64BIT_INTS AND NOT EL_HAVE_MPI_LONG_LONG)
-  message(FATAL_ERROR 
+  message(FATAL_ERROR
     "Did not detect MPI_LONG_LONG_INT and MPI_UNSIGNED_LONG_LONG")
 endif()
 
@@ -192,7 +192,7 @@ set(MPI_LONG_DOUBLE_COMPLEX_CODE
          return 0;
      }")
 check_cxx_source_compiles("${MPI_LONG_DOUBLE_CODE}" EL_HAVE_MPI_LONG_DOUBLE)
-check_cxx_source_compiles("${MPI_LONG_DOUBLE_COMPLEX_CODE}" 
+check_cxx_source_compiles("${MPI_LONG_DOUBLE_COMPLEX_CODE}"
   EL_HAVE_MPI_LONG_DOUBLE_COMPLEX)
 
 # Check if MPI_C_FLOAT_COMPLEX and MPI_C_DOUBLE_COMPLEX exist
@@ -216,12 +216,12 @@ set(MPI_REDUCE_SCATTER_BLOCK_CODE
      int main( int argc, char* argv[] )
      {
        MPI_Init( &argc, &argv );
-       double *a, *b; 
+       double *a, *b;
        MPI_Reduce_scatter_block( a, b, 5, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
        MPI_Finalize();
        return 0;
      }")
-check_cxx_source_compiles("${MPI_REDUCE_SCATTER_BLOCK_CODE}" 
+check_cxx_source_compiles("${MPI_REDUCE_SCATTER_BLOCK_CODE}"
   EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
 set(MPI_IALLGATHER_CODE
     "#include \"mpi.h\"
@@ -231,12 +231,12 @@ set(MPI_IALLGATHER_CODE
        double *a, *b;
        MPI_Request request;
        MPI_Iallgather
-       ( a, 5, MPI_DOUBLE, 
+       ( a, 5, MPI_DOUBLE,
          b, 5, MPI_DOUBLE, MPI_COMM_WORLD, &request );
        MPI_Finalize();
        return 0;
      }")
-check_cxx_source_compiles("${MPI_IALLGATHER_CODE}" 
+check_cxx_source_compiles("${MPI_IALLGATHER_CODE}"
   EL_HAVE_MPI3_NONBLOCKING_COLLECTIVES)
 set(MPIX_IALLGATHER_CODE
     "#include \"mpi.h\"
@@ -246,12 +246,12 @@ set(MPIX_IALLGATHER_CODE
        double *a, *b;
        MPI_Request request;
        MPIX_Iallgather
-       ( a, 5, MPI_DOUBLE, 
+       ( a, 5, MPI_DOUBLE,
          b, 5, MPI_DOUBLE, MPI_COMM_WORLD, &request );
        MPI_Finalize();
        return 0;
      }")
-check_cxx_source_compiles("${MPIX_IALLGATHER_CODE}" 
+check_cxx_source_compiles("${MPIX_IALLGATHER_CODE}"
   EL_HAVE_MPIX_NONBLOCKING_COLLECTIVES)
 set(MPI_INIT_THREAD_CODE
     "#include \"mpi.h\"
@@ -284,7 +284,7 @@ set(MPI_COMM_SET_ERRHANDLER_CODE
        MPI_Finalize();
        return 0;
      }")
-check_cxx_source_compiles("${MPI_COMM_SET_ERRHANDLER_CODE}" 
+check_cxx_source_compiles("${MPI_COMM_SET_ERRHANDLER_CODE}"
   EL_HAVE_MPI_COMM_SET_ERRHANDLER)
 # Detecting MPI_IN_PLACE and MPI_Comm_f2c requires test compilation
 # -----------------------------------------------------------------
@@ -317,7 +317,7 @@ check_cxx_source_compiles("${MPI_COMM_F2C_CODE}" EL_HAVE_MPI_COMM_F2C)
 
 # Detect whether or not MPI_Comm and MPI_Group are implemented as an int
 # ======================================================================
-# NOTE: These are no longer used internally by Elemental 
+# NOTE: These are no longer used internally by Elemental
 set(MPI_COMM_NOT_INT_CODE
     "#include \"mpi.h\"
      void Foo( MPI_Comm comm ) { }
@@ -340,6 +340,71 @@ set(MPI_GROUP_NOT_INT_CODE
      }")
 check_cxx_source_compiles("${MPI_COMM_NOT_INT_CODE}" EL_MPI_COMM_NOT_INT)
 check_cxx_source_compiles("${MPI_GROUP_NOT_INT_CODE}" EL_MPI_GROUP_NOT_INT)
+
+
+# These are a few checks to determine if we're using one of the common
+# MPI libraries. This might matter for some atrocities we might commit
+# with respect to synchronizing CUDA streams with the MPI library.
+set(MPI_IS_OPEN_MPI_VARIANT_CODE
+  "#include <mpi.h>
+   int main(int argc, char** argv)
+   {
+     int is_open_mpi = OPEN_MPI;
+     return !is_open_mpi;
+   }")
+check_cxx_source_compiles("${MPI_IS_OPENMPI_VARIANT_CODE}"
+  HYDROGEN_MPI_IS_OPENMPI)
+
+set(MPI_IS_MVAPICH2_VARIANT_CODE
+  "#include <mpi.h>
+   #include <iostream>
+   int main(int argc, char** argv)
+   {
+     std::cout << MVAPICH2_VERSION << std::endl;
+     return 0;
+   }")
+check_cxx_source_compiles("${MPI_IS_MVAPICH2_VARIANT_CODE}"
+  HYDROGEN_MPI_IS_MVAPICH2)
+
+# Check for CUDA-aware MPI
+if (HYDROGEN_HAVE_CUDA
+    AND (HYDROGEN_MPI_IS_OPENMPI OR HYDROGEN_MPI_IS_MVAPICH2))
+
+  if (HYDROGEN_MPI_IS_OPENMPI)
+    set(MPI_IS_CUDA_AWARE_CODE
+      "#include <mpi.h>
+       #include <mpi-ext.h>
+       int main(int argc, char** argv)
+       {
+         int has_mpi_support = MPIX_CUDA_AWARE_SUPPORT;
+         return !has_mpi_support;
+       }")
+    check_cxx_source_compiles("${MPI_IS_CUDA_AWARE_CODE}"
+      HYDROGEN_HAVE_CUDA_AWARE_MPI)
+
+  elseif (HYDROGEN_MPI_IS_MVAPICH2)
+    set(MPI_IS_CUDA_AWARE_CODE
+      "#include <mpi.h>
+       #include <cuda_runtime.h>
+       extern cudaStream_t stream_d2h;
+       int main(int argc, char** argv)
+       {
+         if (stream_d2h)
+           return 0;
+         else
+           return 0;
+       }")
+    set(CMAKE_REQUIRED_INCLUDES ${MPI_CXX_INCLUDE_PATH} ${CUDA_INCLUDE_DIRS})
+    check_cxx_source_compiles("${MPI_IS_CUDA_AWARE_CODE}"
+      HYDROGEN_HAVE_CUDA_AWARE_MPI)
+
+  endif ()
+
+  if (NOT HYDROGEN_HAVE_CUDA_AWARE_MPI)
+    message(FATAL_ERROR
+      "Cannot detect CUDA-aware MPI.")
+  endif ()
+endif ()
 
 set(CMAKE_REQUIRED_FLAGS)
 set(CMAKE_REQUIRED_LINKER_FLAGS)

@@ -17,7 +17,7 @@ set_full_path(THIS_DIR_SOURCES
 
 # Add the subdirectories
 add_subdirectory(DistMatrix)
-add_subdirectory(FlamePart)
+#add_subdirectory(FlamePart)
 add_subdirectory(imports)
 
 # Propagate the files up the tree

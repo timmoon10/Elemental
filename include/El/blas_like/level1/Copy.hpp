@@ -15,6 +15,68 @@
 
 namespace El {
 
+template <typename T>
+void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
+{
+    if (A.GetDevice() != B.GetDevice())
+        LogicError("Copy: A and B must be on same device for now.");
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        switch (B.GetDevice())
+        {
+        case Device::CPU:
+            Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
+                 static_cast<Matrix<T,Device::CPU>&>(B));
+            break;
+#ifdef HYDROGEN_HAVE_CUDA
+        case Device::GPU:
+            Copy(static_cast<Matrix<T,Device::CPU> const&>(A),
+                 static_cast<Matrix<T,Device::GPU>&>(B));
+            break;
+#endif // HYDROGEN_HAVE_CUDA
+        default:
+            LogicError("Copy: Bad device.");
+        }
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        switch (B.GetDevice())
+        {
+        case Device::CPU:
+            Copy(static_cast<Matrix<T,Device::GPU> const&>(A),
+                 static_cast<Matrix<T,Device::CPU>&>(B));
+            break;
+        case Device::GPU:
+            Copy(static_cast<Matrix<T,Device::GPU> const&>(A),
+                 static_cast<Matrix<T,Device::GPU>&>(B));
+            break;
+        default:
+            LogicError("Copy: Bad device.");
+        }
+        break;
+#endif //  HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Copy: Bad device.");
+    }
+}
+
+template<typename T, Device SrcD, Device DestD>
+void Copy(const Matrix<T,SrcD>& A, Matrix<T,DestD>& B)
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize(height, width);
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* EL_RESTRICT ABuf = A.LockedBuffer();
+    T* EL_RESTRICT BBuf = B.Buffer();
+
+    copy::util::InterDeviceMemCopy2D<SrcD,DestD>(
+        BBuf, ldB, ABuf, ldA, height, width);
+}
+
 template<typename T>
 void Copy( const Matrix<T>& A, Matrix<T>& B )
 {
@@ -52,8 +114,27 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
             MemCopy(&BBuf[j*ldB], &ABuf[j*ldA], height);
         }
     }
-
 }
+
+#ifdef HYDROGEN_HAVE_CUDA
+template<typename T>
+void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize( height, width );
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* ABuf = A.LockedBuffer();
+    T* BBuf = B.Buffer();
+    EL_CHECK_CUDA(cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
+                                    ABuf, ldA*sizeof(T),
+                                    height*sizeof(T), width,
+                                    cudaMemcpyDeviceToDevice,
+                                    GPUManager::Stream()));
+}
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename S,typename T,
          typename/*=EnableIf<CanCast<S,T>>*/>
@@ -63,20 +144,34 @@ void Copy( const Matrix<S>& A, Matrix<T>& B )
     EntrywiseMap( A, B, MakeFunction(Caster<S,T>::Cast) );
 }
 
-template<typename T,Dist U,Dist V>
-void Copy( const ElementalMatrix<T>& A, DistMatrix<T,U,V>& B )
+template<typename T,Dist U,Dist V,Device D,
+         typename = EnableIf<IsDeviceValidType<T,D>>>
+void Copy(const ElementalMatrix<T>& A,
+          DistMatrix<T,U,V,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
     B = A;
 }
 
-// Datatype conversions should not be very common, and so it is likely best to
-// avoid explicitly instantiating every combination
-template<typename S,typename T,Dist U,Dist V>
-void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V>& B )
+template<typename T,Dist U,Dist V,Device D,
+         typename = DisableIf<IsDeviceValidType<T,D>>,
+         typename = void>
+void Copy(const ElementalMatrix<T>& A,
+          DistMatrix<T,U,V,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
-    if( A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V )
+    LogicError("Copy: bad data/device combination.");
+}
+
+// Datatype conversions should not be very common, and so it is likely best to
+// avoid explicitly instantiating every combination
+template<typename S,typename T,Dist U,Dist V,Device D,
+         typename = EnableIf<IsDeviceValidType<T,D>>>
+void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
+{
+    EL_DEBUG_CSE
+    if (A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V
+        && A.GetLocalDevice() == D)
     {
         if( !B.RootConstrained() )
             B.SetRoot( A.Root() );
@@ -92,11 +187,20 @@ void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V>& B )
             return;
         }
     }
-    DistMatrix<S,U,V> BOrig(A.Grid());
+    DistMatrix<S,U,V,ELEMENT,D> BOrig(A.Grid());
     BOrig.AlignWith( B );
     BOrig = A;
     B.Resize( A.Height(), A.Width() );
     Copy( BOrig.LockedMatrix(), B.Matrix() );
+}
+
+template<typename S,typename T,Dist U,Dist V,Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>,
+         typename=void>
+void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
+{
+    EL_DEBUG_CSE
+    LogicError("Copy: bad data/device combination.");
 }
 
 template<typename T,Dist U,Dist V>
@@ -143,12 +247,14 @@ template<typename S,typename T,
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
-    #define GUARD(CDIST,RDIST,WRAP) \
-      B.ColDist() == CDIST && B.RowDist() == RDIST && ELEMENT == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-        auto& BCast = static_cast<DistMatrix<T,CDIST,RDIST,ELEMENT>&>(B); \
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                                        \
+        (B.ColDist() == CDIST) && (B.RowDist() == RDIST)                \
+            && (B.Wrap() == WRAP) && (B.GetLocalDevice() == DEVICE)
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                                \
+        auto& BCast =                                                   \
+            static_cast<DistMatrix<T,CDIST,RDIST,ELEMENT,DEVICE>&>(B);  \
         Copy( A, BCast );
-    #include <El/macros/GuardAndPayload.h>
+    #include <El/macros/DeviceGuardAndPayload.h>
 }
 
 template<typename T>
@@ -204,7 +310,7 @@ void Copy( const BlockMatrix<S>& A, BlockMatrix<T>& B )
 {
     EL_DEBUG_CSE
     #define GUARD(CDIST,RDIST,WRAP) \
-      B.ColDist() == CDIST && B.RowDist() == RDIST && BLOCK == WRAP
+        B.ColDist() == CDIST && B.RowDist() == RDIST && B.Wrap() == WRAP && B.GetLocalDevice() == Device::CPU
     #define PAYLOAD(CDIST,RDIST,WRAP) \
       auto& BCast = static_cast<DistMatrix<T,CDIST,RDIST,BLOCK>&>(B); \
       Copy( A, BCast );
@@ -263,6 +369,8 @@ void CopyFromNonRoot
 
 #define PROTO(T) \
   EL_EXTERN template void Copy \
+  ( const AbstractMatrix<T>& A, AbstractMatrix<T>& B ); \
+  EL_EXTERN template void Copy \
   ( const Matrix<T>& A, Matrix<T>& B ); \
   EL_EXTERN template void Copy \
   ( const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B ); \
@@ -275,6 +383,13 @@ void CopyFromNonRoot
     bool includingViewers ); \
   EL_EXTERN template void CopyFromNonRoot \
   ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers );
+
+#ifdef HYDROGEN_HAVE_CUDA
+EL_EXTERN template void Copy
+( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<double,Device::GPU>& A, Matrix<double,Device::GPU>& B );
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

@@ -1,5 +1,6 @@
 # Add the headers for this directory
 set_full_path(THIS_DIR_HEADERS
+  AbstractMatrix.hpp
   CReflect.hpp
   DistMap.hpp
   DistMatrix.hpp

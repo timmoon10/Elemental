@@ -9,10 +9,36 @@
 #ifndef EL_BLAS_SCALE_HPP
 #define EL_BLAS_SCALE_HPP
 
-namespace El {
+
+namespace El
+{
+
+#ifdef HYDROGEN_HAVE_CUDA
+namespace gpu_details
+{
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void Scale(T const& alpha, T* ABuf,
+           Int const& height, Int const& width, Int const& ALDim)
+{
+    cublas::Geam( 'N', 'N', height, width,
+                  alpha, ABuf, ALDim,
+                  T(0), ABuf, ALDim, ABuf, ALDim );
+}
+
+template <typename T,
+          typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
+          typename=void>
+void Scale(T const&, T*, Int const&, Int const&, Int const&)
+{
+    LogicError("Scale: Bad device/type combo!");
+}
+
+}// namespace gpu_details
+#endif // HYDROGEN_HAVE_CUDA
+
 
 template<typename T,typename S>
-void Scale( S alphaS, Matrix<T>& A )
+void Scale( S alphaS, AbstractMatrix<T>& A )
 {
     EL_DEBUG_CSE
     const T alpha = T(alphaS);
@@ -22,40 +48,52 @@ void Scale( S alphaS, Matrix<T>& A )
     const Int width = A.Width();
     T* ABuf = A.Buffer();
 
-    // TODO(poulson): Use imatcopy if MKL or OpenBLAS is detected
-
     if( alpha == T(0) )
     {
         Zero( A );
     }
-    else if( alpha != T(1) )
+    else
     {
-        if( ALDim == height )
+        switch (A.GetDevice())
         {
-            EL_PARALLEL_FOR
-            for( Int i=0; i<height*width; ++i )
-                ABuf[i] *= alpha;
-        }
-        else
-        {
-            EL_PARALLEL_FOR
-            for( Int j=0; j<width; ++j )
+        case Device::CPU:
+            if( width == 1 || ALDim == height )
             {
-                EL_SIMD
-                for( Int i=0; i<height; ++i )
+                EL_PARALLEL_FOR
+                for( Int i=0; i<height*width; ++i )
                 {
-                    ABuf[i+j*ALDim] *= alpha;
+                    ABuf[i] *= alpha;
                 }
             }
+            else
+            {
+                EL_PARALLEL_FOR_COLLAPSE2
+                for( Int j=0; j<width; ++j )
+                {
+                    for( Int i=0; i<height; ++i )
+                    {
+                        ABuf[i+j*ALDim] *= alpha;
+                    }
+                }
+            }
+            break;
+#ifdef HYDROGEN_HAVE_CUDA
+        case Device::GPU:
+            gpu_details::Scale(alpha, ABuf, height, width, ALDim);
+            break;
+#endif // HYDROGEN_HAVE_CUDA
+        default:
+            LogicError("Bad device type in Scale");
         }
     }
+
 }
 
 template<typename Real,typename S,typename>
-void Scale( S alphaS, Matrix<Real>& AReal, Matrix<Real>& AImag )
+void Scale( S alphaS, AbstractMatrix<Real>& AReal, AbstractMatrix<Real>& AImag )
 {
     EL_DEBUG_CSE
-    typedef Complex<Real> C;
+     typedef Complex<Real> C;
     const C alpha = C(alphaS);
     if( alpha != C(1) )
     {
@@ -101,7 +139,7 @@ void Scale( S alpha, AbstractDistMatrix<Real>& AReal,
 
 #define PROTO(T) \
   EL_EXTERN template void Scale \
-  ( T alpha, Matrix<T>& A ); \
+  ( T alpha, AbstractMatrix<T>& A ); \
   EL_EXTERN template void Scale \
   ( T alpha, AbstractDistMatrix<T>& A );
 

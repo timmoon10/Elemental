@@ -12,25 +12,26 @@
 namespace El {
 namespace copy {
 
-template<typename T>
+// FIXME (trb 03/06/18) -- Need to do the GPU impl
+template<typename T, Device D>
 void Scatter
-( const DistMatrix<T,CIRC,CIRC>& A,
-        ElementalMatrix<T>& B )
+(const DistMatrix<T,CIRC,CIRC,ELEMENT,D>& A,
+        ElementalMatrix<T>& B)
 {
     EL_DEBUG_CSE
-    AssertSameGrids( A, B );
+    AssertSameGrids(A, B);
 
     const Int m = A.Height();
     const Int n = A.Width();
     const Int colStride = B.ColStride();
     const Int rowStride = B.RowStride();
-    B.Resize( m, n );
-    if( B.CrossSize() != 1 || B.RedundantSize() != 1 )
+    B.Resize(m, n);
+    if (B.CrossSize() != 1 || B.RedundantSize() != 1)
     {
         // TODO(poulson):
         // Broadcast over the redundant communicator and use mpi::Translate
         // rank to determine whether a process is the root of the broadcast.
-        GeneralPurpose( A, B );
+        GeneralPurpose(A, B);
         return;
     }
 
@@ -40,94 +41,94 @@ void Scatter
 
     // Translate the root of A into the DistComm of B (if possible)
     const Int root = A.Root();
-    const Int target = mpi::Translate( A.CrossComm(), root, B.DistComm() );
-    if( target == mpi::UNDEFINED )
+    const Int target = mpi::Translate(A.CrossComm(), root, B.DistComm());
+    if (target == mpi::UNDEFINED)
         return;
 
-    if( B.DistSize() == 1 )
+    if (B.DistSize() == 1)
     {
-        Copy( A.LockedMatrix(), B.Matrix() );
+        Copy(A.LockedMatrix(), B.Matrix());
         return;
     }
 
-    vector<T> buffer;
+    simple_buffer<T,D> buffer;
     T* recvBuf=0; // some compilers (falsely) warn otherwise
-    if( A.CrossRank() == root )
+    if (A.CrossRank() == root)
     {
-        FastResize( buffer, sendSize+recvSize );
-        T* sendBuf = &buffer[0];
-        recvBuf    = &buffer[sendSize];
+        buffer.allocate(sendSize+recvSize);
+        T* sendBuf = buffer.data();
+        recvBuf = buffer.data() + sendSize;
 
         // Pack the send buffer
-        copy::util::StridedPack
-        ( m, n,
+        copy::util::StridedPack<T,D>
+        (m, n,
           B.ColAlign(), colStride,
           B.RowAlign(), rowStride,
           A.LockedBuffer(), A.LDim(),
-          sendBuf,          pkgSize );
+          sendBuf,          pkgSize);
 
         // Scatter from the root
         mpi::Scatter
-        ( sendBuf, pkgSize, recvBuf, pkgSize, target, B.DistComm() );
+        (sendBuf, pkgSize, recvBuf, pkgSize, target, B.DistComm());
     }
     else
     {
-        FastResize( buffer, recvSize );
-        recvBuf = &buffer[0];
+        buffer.allocate(recvSize);
+        recvBuf = buffer.data();
 
         // Perform the receiving portion of the scatter from the non-root
         mpi::Scatter
-        ( static_cast<T*>(0), pkgSize,
-          recvBuf,            pkgSize, target, B.DistComm() );
+        (static_cast<T*>(0), pkgSize,
+          recvBuf,            pkgSize, target, B.DistComm());
     }
 
     // Unpack
-    copy::util::InterleaveMatrix
-    ( B.LocalHeight(), B.LocalWidth(),
+    copy::util::InterleaveMatrix<T,D>
+    (B.LocalHeight(), B.LocalWidth(),
       recvBuf,    1, B.LocalHeight(),
-      B.Buffer(), 1, B.LDim() );
+      B.Buffer(), 1, B.LDim());
 }
 
 template<typename T>
 void Scatter
-( const DistMatrix<T,CIRC,CIRC,BLOCK>& A,
-        BlockMatrix<T>& B )
+(const DistMatrix<T,CIRC,CIRC,BLOCK>& A,
+        BlockMatrix<T>& B)
 {
     EL_DEBUG_CSE
-    AssertSameGrids( A, B );
+    AssertSameGrids(A, B);
     // TODO(poulson): More efficient implementation
-    GeneralPurpose( A, B );
+    GeneralPurpose(A, B);
 }
 
-template<typename T>
+template<typename T,Device D>
 void Scatter
-( const DistMatrix<T,CIRC,CIRC>& A,
-        DistMatrix<T,STAR,STAR>& B )
+(DistMatrix<T,CIRC,CIRC,ELEMENT,D> const& A,
+  DistMatrix<T,STAR,STAR,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
-    AssertSameGrids( A, B );
-    B.Resize( A.Height(), A.Width() );
-    if( B.Participating() )
+    AssertSameGrids(A, B);
+    B.Resize(A.Height(), A.Width());
+    if (B.Participating())
     {
-        if( A.Participating() )
+        if (A.Participating())
             B.Matrix() = A.LockedMatrix();
-        El::Broadcast( B, A.CrossComm(), A.Root() );
+        El::Broadcast(B, A.CrossComm(), A.Root());
     }
 }
 
 template<typename T>
 void Scatter
-( const DistMatrix<T,CIRC,CIRC,BLOCK>& A,
-        DistMatrix<T,STAR,STAR,BLOCK>& B )
+(const DistMatrix<T,CIRC,CIRC,BLOCK>& A,
+        DistMatrix<T,STAR,STAR,BLOCK>& B)
 {
     EL_DEBUG_CSE
-    AssertSameGrids( A, B );
-    B.Resize( A.Height(), A.Width() );
-    if( B.Participating() )
+    AssertSameGrids(A, B);
+    B.Resize(A.Height(), A.Width());
+    if (B.Participating())
     {
-        if( A.Participating() )
+        if (A.Participating())
             B.Matrix() = A.LockedMatrix();
-        El::Broadcast( B, A.CrossComm(), A.Root() );
+        El::Broadcast(B, A.CrossComm(), A.Root());
     }
 }
 

@@ -11,6 +11,36 @@
 
 namespace El {
 
+template <typename T, typename S>
+void TransposeAxpy(
+    S alphaS, AbstractMatrix<T> const& X, AbstractMatrix<T>& Y, bool conjugate)
+{
+    EL_DEBUG_CSE
+    if (X.GetDevice() != Y.GetDevice())
+        LogicError("X and Y must have same device for TransposeAxpy.");
+
+    switch (X.GetDevice())
+    {
+    case Device::CPU:
+        TransposeAxpy(alphaS,
+                      static_cast<Matrix<T,Device::CPU> const&>(X),
+                      static_cast<Matrix<T,Device::CPU>&>(Y),
+                      conjugate);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        TransposeAxpy(alphaS,
+                      static_cast<Matrix<T,Device::GPU> const&>(X),
+                      static_cast<Matrix<T,Device::GPU>&>(Y),
+                      conjugate);
+
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Bad device for TransposeAxpy");
+    }
+}
+
 template<typename T,typename S>
 void TransposeAxpy
 (       S alphaS,
@@ -76,6 +106,70 @@ void TransposeAxpy
     }
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T, typename S,
+          typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void TransposeAxpy(S alphaS,
+                   Matrix<T,Device::GPU> const& X,
+                   Matrix<T,Device::GPU>& Y,
+                   bool conjugate)
+{
+    EL_DEBUG_CSE
+    const T alpha = T(alphaS);
+    const Int mX = X.Height();
+    const Int nX = X.Width();
+    const Int nY = Y.Width();
+    const Int ldX = X.LDim();
+    const Int ldY = Y.LDim();
+    const T* XBuf = X.LockedBuffer();
+    T* YBuf = Y.Buffer();
+
+#ifndef EL_RELEASE
+    if (conjugate)
+        std::cerr << "TransposeAxpy: Conjugate not supported on GPU.\n"
+                  << "  However, the type should be real anyway." << std::endl;
+#endif // !EL_RELEASE
+
+    // If X and Y are vectors, we can allow one to be a column and the other
+    // to be a row. Otherwise we force X and Y to be the same dimension.
+    if( mX == 1 || nX == 1 )
+    {
+        const Int lengthX = ( nX==1 ? mX : nX );
+        const Int incX = ( nX==1 ? 1  : ldX );
+        const Int incY = ( nY==1 ? 1  : ldY );
+#ifndef EL_RELEASE
+        const Int mY = Y.Height();
+        const Int lengthY = ( nY==1 ? mY : nY );
+        if( lengthX != lengthY )
+            LogicError("Nonconformal TransposeAxpy");
+#endif // !EL_RELEASE
+
+        cublas::Axpy( lengthX, alpha, XBuf, incX, YBuf, incY );
+    }
+    else
+    {
+        EL_DEBUG_ONLY(
+          const Int mY = Y.Height();
+          if( mX != nY || nX != mY )
+              LogicError("Nonconformal TransposeAxpy");
+        )
+        cublas::Geam(conjugate ? 'C' : 'T', 'N', nX, mX,
+                     alpha, XBuf, ldX,
+                     T(1), YBuf, ldY, YBuf, ldY);
+    }
+}
+
+template <typename T, typename S,
+          typename=DisableIf<IsDeviceValidType<T,Device::GPU>>, typename=void>
+void TransposeAxpy (S alphaS,
+                    Matrix<T,Device::GPU> const& X,
+                    Matrix<T,Device::GPU>& Y,
+                    bool conjugate )
+{
+    LogicError("TransposeAxpy: Bad type/device combo.");
+}
+#endif // HYDROGEN_HAVE_CUDA
+
 template<typename T,typename S>
 void TransposeAxpy
 (       S alphaS,
@@ -133,6 +227,11 @@ void AdjointAxpy
 #endif
 
 #define PROTO_TYPES(T,S) \
+  EL_EXTERN template void TransposeAxpy \
+  (       S alpha, \
+    const AbstractMatrix<T>& A, \
+          AbstractMatrix<T>& B, \
+          bool conjugate ); \
   EL_EXTERN template void TransposeAxpy \
   (       S alpha, \
     const Matrix<T>& A, \

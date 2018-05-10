@@ -169,12 +169,12 @@ void DiagonalSolve
   bool checkIfSingular )
 {
     EL_DEBUG_CSE
-    #define GUARD(CDIST,RDIST,WRAP) \
-      A.ColDist() == CDIST && A.RowDist() == RDIST && A.Wrap() == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-        auto& ACast = static_cast<DistMatrix<F,CDIST,RDIST,WRAP>&>(A); \
+    #define GUARD(CDIST,RDIST,WRAP,DEVICE) \
+      A.ColDist() == CDIST && A.RowDist() == RDIST && A.Wrap() == WRAP && A.GetLocalDevice() == DEVICE
+    #define PAYLOAD(CDIST,RDIST,WRAP,DEVICE) \
+        auto& ACast = static_cast<DistMatrix<F,CDIST,RDIST,WRAP,DEVICE>&>(A); \
         DiagonalSolve( side, orientation, d, ACast, checkIfSingular );
-    #include <El/macros/GuardAndPayload.h>
+    #include <El/macros/DeviceGuardAndPayload.h>
 }
 
 

@@ -2,6 +2,8 @@
 set_full_path(THIS_DIR_HEADERS
   decl.hpp
   impl.hpp
+  impl_cpu.hpp
+  impl_gpu.hpp
   )
 
 # Propagate the files up the tree

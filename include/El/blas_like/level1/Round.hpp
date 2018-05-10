@@ -12,6 +12,23 @@
 namespace El {
 
 // TODO(poulson): Sparse matrix versions
+template <typename T>
+void Round(AbstractMatrix<T>& A)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Round(static_cast<Matrix<T,Device::CPU>&>(A));
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Round(static_cast<Matrix<T,Device::GPU>&>(A));
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Invalid device type.");
+    }
+}
 
 template<typename T>
 void Round( Matrix<T>& A )
@@ -45,9 +62,10 @@ template<typename T>
 void Round( AbstractDistMatrix<T>& A )
 { Round( A.Matrix() ); }
 
+// FIXME
 template<>
-inline void Round( AbstractDistMatrix<Int>& )
-{ }
+inline void Round( AbstractDistMatrix<Int>& A )
+{ Round( A.Matrix() ); }
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN

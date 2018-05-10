@@ -2,12 +2,13 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
 #include <El/lapack_like.hpp>
+#include <El/blas_like/level1/Givens.hpp>
 
 using El::FortranLogical;
 using El::BlasInt;
@@ -18,68 +19,68 @@ extern "C" {
 
 // Copy matrices
 void EL_LAPACK(slacpy)
-( const char* uplo, const BlasInt* m, const BlasInt* n, 
+( const char* uplo, const BlasInt* m, const BlasInt* n,
   const float* A, const BlasInt* lda, float* B, const BlasInt* ldb );
 void EL_LAPACK(dlacpy)
-( const char* uplo, const BlasInt* m, const BlasInt* n, 
+( const char* uplo, const BlasInt* m, const BlasInt* n,
   const double* A, const BlasInt* lda, double* B, const BlasInt* ldb );
 void EL_LAPACK(clacpy)
-( const char* uplo, const BlasInt* m, const BlasInt* n, 
+( const char* uplo, const BlasInt* m, const BlasInt* n,
   const scomplex* A, const BlasInt* lda, scomplex* B, const BlasInt* ldb );
 void EL_LAPACK(zlacpy)
-( const char* uplo, const BlasInt* m, const BlasInt* n, 
+( const char* uplo, const BlasInt* m, const BlasInt* n,
   const dcomplex* A, const BlasInt* lda, dcomplex* B, const BlasInt* ldb );
 
 // Symmetric tridiagonal eigensolvers (via MRRR)
 void EL_LAPACK(sstevr)
 ( const char* job, const char* range, const BlasInt* n,
-  float* d, float* e, const float* vl, const float* vu, 
-  const BlasInt* il, const BlasInt* iu, const float* absTol, BlasInt * m, 
-  float* w, float* Z, const BlasInt* ldZ, BlasInt* isuppZ, 
-  float* work, const BlasInt* workSize, 
-  BlasInt* iWork, const BlasInt* iWorkSize, 
+  float* d, float* e, const float* vl, const float* vu,
+  const BlasInt* il, const BlasInt* iu, const float* absTol, BlasInt * m,
+  float* w, float* Z, const BlasInt* ldZ, BlasInt* isuppZ,
+  float* work, const BlasInt* workSize,
+  BlasInt* iWork, const BlasInt* iWorkSize,
   BlasInt* info );
 void EL_LAPACK(dstevr)
 ( const char* job, const char* range, const BlasInt* n,
-  double* d, double* e, const double* vl, const double* vu, 
-  const BlasInt* il, const BlasInt* iu, const double* absTol, BlasInt * m, 
-  double* w, double* Z, const BlasInt* ldZ, BlasInt* isuppZ, 
-  double* work, const BlasInt* workSize, 
-  BlasInt* iWork, const BlasInt* iWorkSize, 
+  double* d, double* e, const double* vl, const double* vu,
+  const BlasInt* il, const BlasInt* iu, const double* absTol, BlasInt * m,
+  double* w, double* Z, const BlasInt* ldZ, BlasInt* isuppZ,
+  double* work, const BlasInt* workSize,
+  BlasInt* iWork, const BlasInt* iWorkSize,
   BlasInt* info );
 
 // Hermitian eigensolvers (via MRRR)
 void EL_LAPACK(ssyevr)
 ( const char* job, const char* range, const char* uplo, const BlasInt* n,
-  float* A, const BlasInt* ldA, const float* vl, const float* vu, 
-  const BlasInt* il, const BlasInt* iu, const float* absTol, BlasInt * m, 
-  float* w, float* Z, const BlasInt* ldZ, BlasInt* isuppZ, 
-  float* work, const BlasInt* workSize, 
-  BlasInt* iWork, const BlasInt* iWorkSize, 
+  float* A, const BlasInt* ldA, const float* vl, const float* vu,
+  const BlasInt* il, const BlasInt* iu, const float* absTol, BlasInt * m,
+  float* w, float* Z, const BlasInt* ldZ, BlasInt* isuppZ,
+  float* work, const BlasInt* workSize,
+  BlasInt* iWork, const BlasInt* iWorkSize,
   BlasInt* info );
 void EL_LAPACK(dsyevr)
 ( const char* job, const char* range, const char* uplo, const BlasInt* n,
-  double* A, const BlasInt* ldA, const double* vl, const double* vu, 
-  const BlasInt* il, const BlasInt* iu, const double* absTol, BlasInt * m, 
-  double* w, double* Z, const BlasInt* ldZ, BlasInt* isuppZ, 
-  double* work, const BlasInt* workSize, 
-  BlasInt* iWork, const BlasInt* iWorkSize, 
+  double* A, const BlasInt* ldA, const double* vl, const double* vu,
+  const BlasInt* il, const BlasInt* iu, const double* absTol, BlasInt * m,
+  double* w, double* Z, const BlasInt* ldZ, BlasInt* isuppZ,
+  double* work, const BlasInt* workSize,
+  BlasInt* iWork, const BlasInt* iWorkSize,
   BlasInt* info );
 void EL_LAPACK(cheevr)
 ( const char* job, const char* range, const char* uplo, const BlasInt* n,
-  scomplex* A, const BlasInt* ldA, const float* vl, const float* vu, 
+  scomplex* A, const BlasInt* ldA, const float* vl, const float* vu,
   const BlasInt* il, const BlasInt* iu, const float* absTol, BlasInt* m,
-  float* w, scomplex* Z, const BlasInt* ldZ, BlasInt* isuppZ, 
-  scomplex* work, const BlasInt* workSize, 
-  float* rWork, const BlasInt* rWorkSize, 
+  float* w, scomplex* Z, const BlasInt* ldZ, BlasInt* isuppZ,
+  scomplex* work, const BlasInt* workSize,
+  float* rWork, const BlasInt* rWorkSize,
   BlasInt* iWork, const BlasInt* iWorkSize, BlasInt* info );
 void EL_LAPACK(zheevr)
 ( const char* job, const char* range, const char* uplo, const BlasInt* n,
-  dcomplex* A, const BlasInt* ldA, const double* vl, const double* vu, 
+  dcomplex* A, const BlasInt* ldA, const double* vl, const double* vu,
   const BlasInt* il, const BlasInt* iu, const double* absTol, BlasInt* m,
-  double* w, dcomplex* Z, const BlasInt* ldZ, BlasInt* isuppZ, 
-  dcomplex* work, const BlasInt* workSize, 
-  double* rWork, const BlasInt* rWorkSize, 
+  double* w, dcomplex* Z, const BlasInt* ldZ, BlasInt* isuppZ,
+  dcomplex* work, const BlasInt* workSize,
+  double* rWork, const BlasInt* rWorkSize,
   BlasInt* iWork, const BlasInt* iWorkSize, BlasInt* info );
 
 // Bidiagonal DQDS
@@ -90,26 +91,26 @@ void EL_LAPACK(dlasq1)
 
 // Bidiagonal QR
 void EL_LAPACK(sbdsqr)
-( const char* uplo, const BlasInt* n, 
+( const char* uplo, const BlasInt* n,
   const BlasInt* numColsVT, const BlasInt* numRowsU,
-  const BlasInt* numColsC, float* d, float* e, 
+  const BlasInt* numColsC, float* d, float* e,
   float* VTrans, const BlasInt* ldVT,
-  float* U, const BlasInt* ldU, float* C, const BlasInt* ldC, 
+  float* U, const BlasInt* ldU, float* C, const BlasInt* ldC,
   float* work, BlasInt* info );
 void EL_LAPACK(dbdsqr)
-( const char* uplo, const BlasInt* n, 
+( const char* uplo, const BlasInt* n,
   const BlasInt* numColsVT, const BlasInt* numRowsU,
   const BlasInt* numColsC, double* d, double* e,
   double* VTrans, const BlasInt* ldVT, double* U, const BlasInt* ldU,
   double* C, const BlasInt* ldC, double* work, BlasInt* info );
 void EL_LAPACK(cbdsqr)
-( const char* uplo, const BlasInt* n, 
+( const char* uplo, const BlasInt* n,
   const BlasInt* numColsVH, const BlasInt* numRowsU,
   const BlasInt* numColsC, float* d, float* e,
   scomplex* VH, const BlasInt* ldVH, scomplex* U, const BlasInt* ldU,
   scomplex* C, const BlasInt* ldC, float* work, BlasInt* info );
 void EL_LAPACK(zbdsqr)
-( const char* uplo, const BlasInt* n, 
+( const char* uplo, const BlasInt* n,
   const BlasInt* numColsVH, const BlasInt* numRowsU,
   const BlasInt* numColsC, double* d, double* e,
   dcomplex* VH, const BlasInt* ldVH, dcomplex* U, const BlasInt* ldU,
@@ -117,15 +118,15 @@ void EL_LAPACK(zbdsqr)
 
 // Divide and Conquer SVD
 void EL_LAPACK(sgesdd)
-( const char* jobz, const BlasInt* m, const BlasInt* n, 
+( const char* jobz, const BlasInt* m, const BlasInt* n,
   float* A, const BlasInt* ldA,
-  float* s, float* U, const BlasInt* ldu, 
+  float* s, float* U, const BlasInt* ldu,
   float* VTrans, const BlasInt* ldvt,
   float* work, const BlasInt* workSize, BlasInt* iWork, BlasInt* info );
 void EL_LAPACK(dgesdd)
-( const char* jobz, const BlasInt* m, const BlasInt* n, 
+( const char* jobz, const BlasInt* m, const BlasInt* n,
   double* A, const BlasInt* ldA,
-  double* s, double* U, const BlasInt* ldu, 
+  double* s, double* U, const BlasInt* ldu,
   double* VTrans, const BlasInt* ldvt,
   double* work, const BlasInt* workSize, BlasInt* iWork, BlasInt* info );
 void EL_LAPACK(cgesdd)
@@ -166,28 +167,28 @@ void EL_LAPACK(zgesvd)
 // Reduction to Hessenberg form
 void EL_LAPACK(sgehrd)
 ( const BlasInt* n,
-  const BlasInt* ilo, const BlasInt* ihi, 
+  const BlasInt* ilo, const BlasInt* ihi,
   float* A, const BlasInt* ldA,
   float* tau,
   float* work, const BlasInt* workSize,
   BlasInt* info );
 void EL_LAPACK(dgehrd)
 ( const BlasInt* n,
-  const BlasInt* ilo, const BlasInt* ihi, 
+  const BlasInt* ilo, const BlasInt* ihi,
   double* A, const BlasInt* ldA,
   double* tau,
   double* work, const BlasInt* workSize,
   BlasInt* info );
 void EL_LAPACK(cgehrd)
 ( const BlasInt* n,
-  const BlasInt* ilo, const BlasInt* ihi, 
+  const BlasInt* ilo, const BlasInt* ihi,
   scomplex* A, const BlasInt* ldA,
   scomplex* tau,
   scomplex* work, const BlasInt* workSize,
   BlasInt* info );
 void EL_LAPACK(zgehrd)
 ( const BlasInt* n,
-  const BlasInt* ilo, const BlasInt* ihi, 
+  const BlasInt* ilo, const BlasInt* ihi,
   dcomplex* A, const BlasInt* ldA,
   dcomplex* tau,
   dcomplex* work, const BlasInt* workSize,
@@ -196,28 +197,28 @@ void EL_LAPACK(zgehrd)
 // Generates a unitary matrix defined as the product of Householder reflectors
 void EL_LAPACK(sorghr)
 ( const BlasInt* n,
-  const BlasInt* ilo, const BlasInt* ihi, 
+  const BlasInt* ilo, const BlasInt* ihi,
   float* A, const BlasInt* ldA,
   const float* tau,
   float* work, const BlasInt* workSize,
   BlasInt* info );
 void EL_LAPACK(dorghr)
 ( const BlasInt* n,
-  const BlasInt* ilo, const BlasInt* ihi, 
+  const BlasInt* ilo, const BlasInt* ihi,
   double* A, const BlasInt* ldA,
   const double* tau,
   double* work, const BlasInt* workSize,
   BlasInt* info );
 void EL_LAPACK(cunghr)
 ( const BlasInt* n,
-  const BlasInt* ilo, const BlasInt* ihi, 
+  const BlasInt* ilo, const BlasInt* ihi,
   scomplex* A, const BlasInt* ldA,
   const scomplex* tau,
   scomplex* work, const BlasInt* workSize,
   BlasInt* info );
 void EL_LAPACK(zunghr)
 ( const BlasInt* n,
-  const BlasInt* ilo, const BlasInt* ihi, 
+  const BlasInt* ilo, const BlasInt* ihi,
   dcomplex* A, const BlasInt* ldA,
   const dcomplex* tau,
   dcomplex* work, const BlasInt* workSize,
@@ -225,19 +226,19 @@ void EL_LAPACK(zunghr)
 
 // Hessenberg QR algorithm (with AED)
 void EL_LAPACK(shseqr)
-( const char* job, const char* compZ, const BlasInt* n, 
+( const char* job, const char* compZ, const BlasInt* n,
   const BlasInt* ilo, const BlasInt* ihi,
-  float* H, const BlasInt* ldH, 
+  float* H, const BlasInt* ldH,
   float* wr, float* wi,
-  float* Z, const BlasInt* ldZ, 
+  float* Z, const BlasInt* ldZ,
   float* work, const BlasInt* workSize,
   BlasInt* info );
 void EL_LAPACK(dhseqr)
-( const char* job, const char* compZ, const BlasInt* n, 
+( const char* job, const char* compZ, const BlasInt* n,
   const BlasInt* ilo, const BlasInt* ihi,
-  double* H, const BlasInt* ldH, 
+  double* H, const BlasInt* ldH,
   double* wr, double* wi,
-  double* Z, const BlasInt* ldZ, 
+  double* Z, const BlasInt* ldZ,
   double* work, const BlasInt* workSize,
   BlasInt* info );
 void EL_LAPACK(chseqr)
@@ -261,22 +262,22 @@ void EL_LAPACK(zhseqr)
 void EL_LAPACK(slahqr)
 ( const FortranLogical* wantT,
   const FortranLogical* wantZ,
-  const BlasInt* n, 
+  const BlasInt* n,
   const BlasInt* ilo, const BlasInt* ihi,
-  float* H, const BlasInt* ldH, 
+  float* H, const BlasInt* ldH,
   float* wr, float* wi,
   const BlasInt* iloZ, const BlasInt* ihiZ,
-  float* Z, const BlasInt* ldZ, 
+  float* Z, const BlasInt* ldZ,
   BlasInt* info );
 void EL_LAPACK(dlahqr)
 ( const FortranLogical* wantT,
   const FortranLogical* wantZ,
-  const BlasInt* n, 
+  const BlasInt* n,
   const BlasInt* ilo, const BlasInt* ihi,
-  double* H, const BlasInt* ldH, 
+  double* H, const BlasInt* ldH,
   double* wr, double* wi,
   const BlasInt* iloZ, const BlasInt* ihiZ,
-  double* Z, const BlasInt* ldZ, 
+  double* Z, const BlasInt* ldZ,
   BlasInt* info );
 void EL_LAPACK(clahqr)
 ( const FortranLogical* wantT,
@@ -318,7 +319,7 @@ void Copy
             for( Int i=j; i<m; ++i )
                 B[i+j*ldb] = A[i+j*lda];
     }
-    else if( std::toupper(uplo) == 'U' ) 
+    else if( std::toupper(uplo) == 'U' )
     {
         for( Int j=0; j<n; ++j )
             for( Int i=0; i<=j; ++i )
@@ -332,72 +333,72 @@ void Copy
     }
 }
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const Int* A, BlasInt lda,
         Int* B, BlasInt ldb );
 #ifdef HYDROGEN_HAVE_QD
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const DoubleDouble* A, BlasInt lda,
         DoubleDouble* B, BlasInt ldb );
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const QuadDouble* A, BlasInt lda,
         QuadDouble* B, BlasInt ldb );
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const Complex<DoubleDouble>* A, BlasInt lda,
         Complex<DoubleDouble>* B, BlasInt ldb );
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const Complex<QuadDouble>* A, BlasInt lda,
         Complex<QuadDouble>* B, BlasInt ldb );
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const Quad* A, BlasInt lda,
         Quad* B, BlasInt ldb );
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const Complex<Quad>* A, BlasInt lda,
         Complex<Quad>* B, BlasInt ldb );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const BigInt* A, BlasInt lda,
         BigInt* B, BlasInt ldb );
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const BigFloat* A, BlasInt lda,
         BigFloat* B, BlasInt ldb );
 template void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const Complex<BigFloat>* A, BlasInt lda,
         Complex<BigFloat>* B, BlasInt ldb );
 #endif
 
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const float* A, BlasInt lda, float* B, BlasInt ldb )
 { EL_LAPACK(slacpy)( &uplo, &m, &n, A, &lda, B, &ldb ); }
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const double* A, BlasInt lda, double* B, BlasInt ldb )
 { EL_LAPACK(dlacpy)( &uplo, &m, &n, A, &lda, B, &ldb ); }
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const scomplex* A, BlasInt lda, scomplex* B, BlasInt ldb )
 { EL_LAPACK(clacpy)( &uplo, &m, &n, A, &lda, B, &ldb ); }
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const dcomplex* A, BlasInt lda, dcomplex* B, BlasInt ldb )
 { EL_LAPACK(zlacpy)( &uplo, &m, &n, A, &lda, B, &ldb ); }
 
 // Generate a Householder reflector
 // ================================
-// NOTE: 
+// NOTE:
 // Since LAPACK chooses to use the identity matrix, rather than a single
 // coordinate negation, in cases where the mass is already entirely in the
 // first entry, and the identity matrix cannot be represented as a Householder
@@ -413,7 +414,7 @@ template<typename F>
 F Reflector( BlasInt n, F& chi, F* x, BlasInt incx )
 {
     EL_DEBUG_CSE
-    typedef Base<F> Real; 
+    typedef Base<F> Real;
     const Real zero(0);
 
     Real norm = blas::Nrm2( n-1, x, incx );
@@ -421,7 +422,7 @@ F Reflector( BlasInt n, F& chi, F* x, BlasInt incx )
     if( norm == zero && ImagPart(alpha) == zero )
     {
         chi *= -1;
-        return F(2); 
+        return F(2);
     }
 
     Real beta;
@@ -731,7 +732,7 @@ BlasInt SymmetricTridiagEigWrapper
     vector<BlasInt> iWork(iWorkSize);
     EL_LAPACK(sstevr)
     ( &job, &range, &n, d, e, &vl, &vu, &il, &iu, &absTol, &m,
-      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize, 
+      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize,
       iWork.data(), &iWorkSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -764,7 +765,7 @@ BlasInt SymmetricTridiagEigWrapper
     vector<BlasInt> iWork(iWorkSize);
     EL_LAPACK(dstevr)
     ( &job, &range, &n, d, e, &vl, &vu, &il, &iu, &absTol, &m,
-      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize, 
+      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize,
       iWork.data(), &iWorkSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -796,7 +797,7 @@ void SymmetricTridiagEig
 // Floating-point range
 // ^^^^^^^^^^^^^^^^^^^^
 BlasInt SymmetricTridiagEig
-( BlasInt n, float* d, float* e, float* w, float vl, float vu, 
+( BlasInt n, float* d, float* e, float* w, float vl, float vu,
   float absTol )
 {
     EL_DEBUG_CSE
@@ -804,7 +805,7 @@ BlasInt SymmetricTridiagEig
     ( 'N', 'V', n, d, e, vl, vu, 0, 0, absTol, w, 0, 1 );
 }
 BlasInt SymmetricTridiagEig
-( BlasInt n, double* d, double* e, double* w, double vl, double vu, 
+( BlasInt n, double* d, double* e, double* w, double vl, double vu,
   double absTol )
 {
     EL_DEBUG_CSE
@@ -815,7 +816,7 @@ BlasInt SymmetricTridiagEig
 // Index range
 // ^^^^^^^^^^^^^
 void SymmetricTridiagEig
-( BlasInt n, float* d, float* e, float* w, BlasInt il, BlasInt iu, 
+( BlasInt n, float* d, float* e, float* w, BlasInt il, BlasInt iu,
   float absTol )
 {
     EL_DEBUG_CSE
@@ -823,7 +824,7 @@ void SymmetricTridiagEig
     ( 'N', 'I', n, d, e, 0, 0, il+1, iu+1, absTol, w, 0, 1 );
 }
 void SymmetricTridiagEig
-( BlasInt n, double* d, double* e, double* w, BlasInt il, BlasInt iu, 
+( BlasInt n, double* d, double* e, double* w, BlasInt il, BlasInt iu,
   double absTol )
 {
     EL_DEBUG_CSE
@@ -837,7 +838,7 @@ void SymmetricTridiagEig
 // All eigenpairs
 // ^^^^^^^^^^^^^^
 void SymmetricTridiagEig
-( BlasInt n, float* d, float* e, float* w, float* Z, BlasInt ldZ, 
+( BlasInt n, float* d, float* e, float* w, float* Z, BlasInt ldZ,
   float absTol )
 {
     EL_DEBUG_CSE
@@ -845,7 +846,7 @@ void SymmetricTridiagEig
     ( 'V', 'A', n, d, e, 0, 0, 0, 0, absTol, w, Z, ldZ );
 }
 void SymmetricTridiagEig
-( BlasInt n, double* d, double* e, double* w, double* Z, BlasInt ldZ, 
+( BlasInt n, double* d, double* e, double* w, double* Z, BlasInt ldZ,
   double absTol )
 {
     EL_DEBUG_CSE
@@ -875,7 +876,7 @@ BlasInt SymmetricTridiagEig
 // Index range
 // ^^^^^^^^^^^^^
 void SymmetricTridiagEig
-( BlasInt n, float* d, float* e, float* w, float* Z, BlasInt ldZ, 
+( BlasInt n, float* d, float* e, float* w, float* Z, BlasInt ldZ,
   BlasInt il, BlasInt iu, float absTol )
 {
     EL_DEBUG_CSE
@@ -895,8 +896,8 @@ void SymmetricTridiagEig
 // =====================================
 
 BlasInt HermitianEigWrapper
-( char job, char range, char uplo, BlasInt n, float* A, BlasInt ldA, 
-  float vl, float vu, BlasInt il, BlasInt iu, float absTol, 
+( char job, char range, char uplo, BlasInt n, float* A, BlasInt ldA,
+  float vl, float vu, BlasInt il, BlasInt iu, float absTol,
   float* w, float* Z, BlasInt ldZ )
 {
     EL_DEBUG_CSE
@@ -919,7 +920,7 @@ BlasInt HermitianEigWrapper
     vector<BlasInt> iWork(iWorkSize);
     EL_LAPACK(ssyevr)
     ( &job, &range, &uplo, &n, A, &ldA, &vl, &vu, &il, &iu, &absTol, &m,
-      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize, 
+      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize,
       iWork.data(), &iWorkSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -929,8 +930,8 @@ BlasInt HermitianEigWrapper
 }
 
 BlasInt HermitianEigWrapper
-( char job, char range, char uplo, BlasInt n, double* A, BlasInt ldA, 
-  double vl, double vu, BlasInt il, BlasInt iu, double absTol, 
+( char job, char range, char uplo, BlasInt n, double* A, BlasInt ldA,
+  double vl, double vu, BlasInt il, BlasInt iu, double absTol,
   double* w, double* Z, BlasInt ldZ )
 {
     EL_DEBUG_CSE
@@ -944,7 +945,7 @@ BlasInt HermitianEigWrapper
     double workDummy;
     EL_LAPACK(dsyevr)
     ( &job, &range, &uplo, &n, A, &ldA, &vl, &vu, &il, &iu, &absTol, &m,
-      w, Z, &ldZ, isuppZ.data(), &workDummy, &workSize, 
+      w, Z, &ldZ, isuppZ.data(), &workDummy, &workSize,
       &iWorkDummy, &iWorkSize, &info );
 
     workSize = workDummy;
@@ -953,7 +954,7 @@ BlasInt HermitianEigWrapper
     vector<BlasInt> iWork(iWorkSize);
     EL_LAPACK(dsyevr)
     ( &job, &range, &uplo, &n, A, &ldA, &vl, &vu, &il, &iu, &absTol, &m,
-      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize, 
+      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize,
       iWork.data(), &iWorkSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -963,8 +964,8 @@ BlasInt HermitianEigWrapper
 }
 
 BlasInt HermitianEigWrapper
-( char job, char range, char uplo, BlasInt n, scomplex* A, BlasInt ldA, 
-  float vl, float vu, BlasInt il, BlasInt iu, float absTol, 
+( char job, char range, char uplo, BlasInt n, scomplex* A, BlasInt ldA,
+  float vl, float vu, BlasInt il, BlasInt iu, float absTol,
   float* w, scomplex* Z, BlasInt ldZ )
 {
     EL_DEBUG_CSE
@@ -990,7 +991,7 @@ BlasInt HermitianEigWrapper
     vector<BlasInt> iWork(iWorkSize);
     EL_LAPACK(cheevr)
     ( &job, &range, &uplo, &n, A, &ldA, &vl, &vu, &il, &iu, &absTol, &m,
-      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize, 
+      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize,
       rWork.data(), &rWorkSize, iWork.data(), &iWorkSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -1000,8 +1001,8 @@ BlasInt HermitianEigWrapper
 }
 
 BlasInt HermitianEigWrapper
-( char job, char range, char uplo, BlasInt n, dcomplex* A, BlasInt ldA, 
-  double vl, double vu, BlasInt il, BlasInt iu, double absTol, 
+( char job, char range, char uplo, BlasInt n, dcomplex* A, BlasInt ldA,
+  double vl, double vu, BlasInt il, BlasInt iu, double absTol,
   double* w, dcomplex* Z, BlasInt ldZ )
 {
     EL_DEBUG_CSE
@@ -1027,7 +1028,7 @@ BlasInt HermitianEigWrapper
     vector<BlasInt> iWork(iWorkSize);
     EL_LAPACK(zheevr)
     ( &job, &range, &uplo, &n, A, &ldA, &vl, &vu, &il, &iu, &absTol, &m,
-      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize, 
+      w, Z, &ldZ, isuppZ.data(), work.data(), &workSize,
       rWork.data(), &rWorkSize, iWork.data(), &iWorkSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -1073,7 +1074,7 @@ void HermitianEig
 // Floating-point range
 // ^^^^^^^^^^^^^^^^^^^^
 BlasInt HermitianEig
-( char uplo, BlasInt n, float* A, BlasInt ldA, float* w, 
+( char uplo, BlasInt n, float* A, BlasInt ldA, float* w,
   float vl, float vu, float absTol )
 {
     EL_DEBUG_CSE
@@ -1081,7 +1082,7 @@ BlasInt HermitianEig
     ( 'N', 'V', uplo, n, A, ldA, vl, vu, 0, 0, absTol, w, 0, 1 );
 }
 BlasInt HermitianEig
-( char uplo, BlasInt n, double* A, BlasInt ldA, double* w, 
+( char uplo, BlasInt n, double* A, BlasInt ldA, double* w,
   double vl, double vu, double absTol )
 {
     EL_DEBUG_CSE
@@ -1089,7 +1090,7 @@ BlasInt HermitianEig
     ( 'N', 'V', uplo, n, A, ldA, vl, vu, 0, 0, absTol, w, 0, 1 );
 }
 BlasInt HermitianEig
-( char uplo, BlasInt n, scomplex* A, BlasInt ldA, float* w, 
+( char uplo, BlasInt n, scomplex* A, BlasInt ldA, float* w,
   float vl, float vu, float absTol )
 {
     EL_DEBUG_CSE
@@ -1097,7 +1098,7 @@ BlasInt HermitianEig
     ( 'N', 'V', uplo, n, A, ldA, vl, vu, 0, 0, absTol, w, 0, 1 );
 }
 BlasInt HermitianEig
-( char uplo, BlasInt n, dcomplex* A, BlasInt ldA, double* w, 
+( char uplo, BlasInt n, dcomplex* A, BlasInt ldA, double* w,
   double vl, double vu, double absTol )
 {
     EL_DEBUG_CSE
@@ -1108,7 +1109,7 @@ BlasInt HermitianEig
 // Index range
 // ^^^^^^^^^^^
 void HermitianEig
-( char uplo, BlasInt n, float* A, BlasInt ldA, float* w, 
+( char uplo, BlasInt n, float* A, BlasInt ldA, float* w,
   BlasInt il, BlasInt iu, float absTol )
 {
     EL_DEBUG_CSE
@@ -1116,7 +1117,7 @@ void HermitianEig
     ( 'N', 'I', uplo, n, A, ldA, 0, 0, il+1, iu+1, absTol, w, 0, 1 );
 }
 void HermitianEig
-( char uplo, BlasInt n, double* A, BlasInt ldA, double* w, 
+( char uplo, BlasInt n, double* A, BlasInt ldA, double* w,
   BlasInt il, BlasInt iu, double absTol )
 {
     EL_DEBUG_CSE
@@ -1124,7 +1125,7 @@ void HermitianEig
     ( 'N', 'I', uplo, n, A, ldA, 0, 0, il+1, iu+1, absTol, w, 0, 1 );
 }
 void HermitianEig
-( char uplo, BlasInt n, scomplex* A, BlasInt ldA, float* w, 
+( char uplo, BlasInt n, scomplex* A, BlasInt ldA, float* w,
   BlasInt il, BlasInt iu, float absTol )
 {
     EL_DEBUG_CSE
@@ -1132,7 +1133,7 @@ void HermitianEig
     ( 'N', 'I', uplo, n, A, ldA, 0, 0, il+1, iu+1, absTol, w, 0, 1 );
 }
 void HermitianEig
-( char uplo, BlasInt n, dcomplex* A, BlasInt ldA, double* w, 
+( char uplo, BlasInt n, dcomplex* A, BlasInt ldA, double* w,
   BlasInt il, BlasInt iu, double absTol )
 {
     EL_DEBUG_CSE
@@ -1146,7 +1147,7 @@ void HermitianEig
 // All eigenpairs
 // ^^^^^^^^^^^^^^
 void HermitianEig
-( char uplo, BlasInt n, float* A, BlasInt ldA, float* w, float* Z, BlasInt ldZ, 
+( char uplo, BlasInt n, float* A, BlasInt ldA, float* w, float* Z, BlasInt ldZ,
   float absTol )
 {
     EL_DEBUG_CSE
@@ -1154,7 +1155,7 @@ void HermitianEig
     ( 'V', 'A', uplo, n, A, ldA, 0, 0, 0, 0, absTol, w, Z, ldZ );
 }
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   double* A, BlasInt ldA, double* w, double* Z, BlasInt ldZ,
   double absTol )
 {
@@ -1163,7 +1164,7 @@ void HermitianEig
     ( 'V', 'A', uplo, n, A, ldA, 0, 0, 0, 0, absTol, w, Z, ldZ );
 }
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   scomplex* A, BlasInt ldA, float* w, scomplex* Z, BlasInt ldZ,
   float absTol )
 {
@@ -1172,7 +1173,7 @@ void HermitianEig
     ( 'V', 'A', uplo, n, A, ldA, 0, 0, 0, 0, absTol, w, Z, ldZ );
 }
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   dcomplex* A, BlasInt ldA, double* w, dcomplex* Z, BlasInt ldZ,
   double absTol )
 {
@@ -1184,7 +1185,7 @@ void HermitianEig
 // Floating-point range
 // ^^^^^^^^^^^^^^^^^^^^
 BlasInt HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   float* A, BlasInt ldA, float* w, float* Z, BlasInt ldZ,
   float vl, float vu, float absTol )
 {
@@ -1193,7 +1194,7 @@ BlasInt HermitianEig
     ( 'V', 'V', uplo, n, A, ldA, vl, vu, 0, 0, absTol, w, Z, ldZ );
 }
 BlasInt HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   double* A, BlasInt ldA, double* w, double* Z, BlasInt ldZ,
   double vl, double vu, double absTol )
 {
@@ -1202,7 +1203,7 @@ BlasInt HermitianEig
     ( 'V', 'V', uplo, n, A, ldA, vl, vu, 0, 0, absTol, w, Z, ldZ );
 }
 BlasInt HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   scomplex* A, BlasInt ldA, float* w, scomplex* Z, BlasInt ldZ,
   float vl, float vu, float absTol )
 {
@@ -1211,7 +1212,7 @@ BlasInt HermitianEig
     ( 'V', 'V', uplo, n, A, ldA, vl, vu, 0, 0, absTol, w, Z, ldZ );
 }
 BlasInt HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   dcomplex* A, BlasInt ldA, double* w, dcomplex* Z, BlasInt ldZ,
   double vl, double vu, double absTol )
 {
@@ -1223,7 +1224,7 @@ BlasInt HermitianEig
 // Index range
 // ^^^^^^^^^^^
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   float* A, BlasInt ldA, float* w, float* Z, BlasInt ldZ,
   BlasInt il, BlasInt iu, float absTol )
 {
@@ -1232,8 +1233,8 @@ void HermitianEig
     ( 'V', 'I', uplo, n, A, ldA, 0, 0, il+1, iu+1, absTol, w, Z, ldZ );
 }
 void HermitianEig
-( char uplo, BlasInt n, 
-  double* A, BlasInt ldA, double* w, double* Z, BlasInt ldZ, 
+( char uplo, BlasInt n,
+  double* A, BlasInt ldA, double* w, double* Z, BlasInt ldZ,
   BlasInt il, BlasInt iu, double absTol )
 {
     EL_DEBUG_CSE
@@ -1241,7 +1242,7 @@ void HermitianEig
     ( 'V', 'I', uplo, n, A, ldA, 0, 0, il+1, iu+1, absTol, w, Z, ldZ );
 }
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   scomplex* A, BlasInt ldA, float* w, scomplex* Z, BlasInt ldZ,
   BlasInt il, BlasInt iu, float absTol )
 {
@@ -1250,7 +1251,7 @@ void HermitianEig
     ( 'V', 'I', uplo, n, A, ldA, 0, 0, il+1, iu+1, absTol, w, Z, ldZ );
 }
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   dcomplex* A, BlasInt ldA, double* w, dcomplex* Z, BlasInt ldZ,
   BlasInt il, BlasInt iu, double absTol )
 {
@@ -1280,7 +1281,7 @@ void BidiagDQDS( BlasInt n, float* d, float* e )
         else if( info == 3 )
             msg << "Termination criterion of outer while loop not met";
         RuntimeError( msg.str() );
-    } 
+    }
 }
 
 void BidiagDQDS( BlasInt n, double* d, double* e )
@@ -1301,7 +1302,7 @@ void BidiagDQDS( BlasInt n, double* d, double* e )
         else if( info == 3 )
             msg << "Termination criterion of outer while loop not met";
         RuntimeError( msg.str() );
-    } 
+    }
 }
 
 // Bidiagonal QR algorithm for SVD
@@ -1333,7 +1334,7 @@ void BidiagSVDQRAlg
 }
 
 void BidiagSVDQRAlg
-( char uplo, BlasInt n, BlasInt numColsVT, BlasInt numRowsU, 
+( char uplo, BlasInt n, BlasInt numColsVT, BlasInt numRowsU,
   double* d, double* e, double* VTrans, BlasInt ldVT, double* U, BlasInt ldU )
 {
     EL_DEBUG_CSE
@@ -1346,7 +1347,7 @@ void BidiagSVDQRAlg
     vector<double> work( 4*n );
     EL_LAPACK(dbdsqr)
     ( &uplo, &n, &numColsVT, &numRowsU, &numColsC,
-      d, e, 
+      d, e,
       VTrans, &ldVT,
       U, &ldU,
       C, &ldC,
@@ -1358,7 +1359,7 @@ void BidiagSVDQRAlg
 }
 
 void BidiagSVDQRAlg
-( char uplo, BlasInt n, BlasInt numColsVH, BlasInt numRowsU, 
+( char uplo, BlasInt n, BlasInt numColsVH, BlasInt numRowsU,
   float* d, float* e,
   scomplex* VH, BlasInt ldVH,
   scomplex* U,  BlasInt ldU )
@@ -1389,7 +1390,7 @@ void BidiagSVDQRAlg
 }
 
 void BidiagSVDQRAlg
-( char uplo, BlasInt n, BlasInt numColsVH, BlasInt numRowsU, 
+( char uplo, BlasInt n, BlasInt numColsVH, BlasInt numRowsU,
   double* d, double* e,
   dcomplex* VH, BlasInt ldVH,
   dcomplex* U,  BlasInt ldU )
@@ -1424,7 +1425,7 @@ void BidiagSVDQRAlg
 
 void DivideAndConquerSVD
 ( BlasInt m, BlasInt n,
-  float* A, BlasInt ldA, 
+  float* A, BlasInt ldA,
   float* s,
   float* U, BlasInt ldu,
   float* VTrans, BlasInt ldvt,
@@ -1469,7 +1470,7 @@ void DivideAndConquerSVD
 
 void DivideAndConquerSVD
 ( BlasInt m, BlasInt n,
-  double* A, BlasInt ldA, 
+  double* A, BlasInt ldA,
   double* s,
   double* U, BlasInt ldu,
   double* VTrans, BlasInt ldvt,
@@ -1514,7 +1515,7 @@ void DivideAndConquerSVD
 
 void DivideAndConquerSVD
 ( BlasInt m, BlasInt n,
-  scomplex* A, BlasInt ldA, 
+  scomplex* A, BlasInt ldA,
   float* s,
   scomplex* U, BlasInt ldu,
   scomplex* VH, BlasInt ldva,
@@ -1564,7 +1565,7 @@ void DivideAndConquerSVD
 
 void DivideAndConquerSVD
 ( BlasInt m, BlasInt n,
-  dcomplex* A, BlasInt ldA, 
+  dcomplex* A, BlasInt ldA,
   double* s,
   dcomplex* U, BlasInt ldu,
   dcomplex* VH, BlasInt ldva,
@@ -1617,7 +1618,7 @@ void DivideAndConquerSVD
 
 void QRSVD
 ( BlasInt m, BlasInt n,
-  float* A, BlasInt ldA, 
+  float* A, BlasInt ldA,
   float* s,
   float* U, BlasInt ldu,
   float* VTrans, BlasInt ldvt,
@@ -1637,7 +1638,7 @@ void QRSVD
       A, &ldA,
       s,
       U, &ldu,
-      VTrans, &ldvt, 
+      VTrans, &ldvt,
       &workDummy, &workSize,
       &info );
 
@@ -1648,7 +1649,7 @@ void QRSVD
       A, &ldA,
       s,
       U, &ldu,
-      VTrans, &ldvt, 
+      VTrans, &ldvt,
       work.data(), &workSize,
       &info );
     if( info < 0 )
@@ -1659,7 +1660,7 @@ void QRSVD
 
 void QRSVD
 ( BlasInt m, BlasInt n,
-  double* A, BlasInt ldA, 
+  double* A, BlasInt ldA,
   double* s,
   double* U, BlasInt ldu,
   double* VTrans, BlasInt ldvt,
@@ -1679,7 +1680,7 @@ void QRSVD
       A, &ldA,
       s,
       U, &ldu,
-      VTrans, &ldvt, 
+      VTrans, &ldvt,
       &workDummy, &workSize,
       &info );
 
@@ -1690,7 +1691,7 @@ void QRSVD
       A, &ldA,
       s,
       U, &ldu,
-      VTrans, &ldvt, 
+      VTrans, &ldvt,
       work.data(), &workSize,
       &info );
     if( info < 0 )
@@ -1701,7 +1702,7 @@ void QRSVD
 
 void QRSVD
 ( BlasInt m, BlasInt n,
-  scomplex* A, BlasInt ldA, 
+  scomplex* A, BlasInt ldA,
   float* s,
   scomplex* U, BlasInt ldu,
   scomplex* VH, BlasInt ldva,
@@ -1723,7 +1724,7 @@ void QRSVD
       A, &ldA,
       s,
       U, &ldu,
-      VH, &ldva, 
+      VH, &ldva,
       &workDummy, &workSize,
       rWork.data(),
       &info );
@@ -1735,7 +1736,7 @@ void QRSVD
       A, &ldA,
       s,
       U, &ldu,
-      VH, &ldva, 
+      VH, &ldva,
       work.data(), &workSize,
       rWork.data(),
       &info );
@@ -1747,7 +1748,7 @@ void QRSVD
 
 void QRSVD
 ( BlasInt m, BlasInt n,
-  dcomplex* A, BlasInt ldA, 
+  dcomplex* A, BlasInt ldA,
   double* s,
   dcomplex* U, BlasInt ldu,
   dcomplex* VH, BlasInt ldva,
@@ -1769,7 +1770,7 @@ void QRSVD
       A, &ldA,
       s,
       U, &ldu,
-      VH, &ldva, 
+      VH, &ldva,
       &workDummy, &workSize,
       rWork.data(),
       &info );
@@ -1781,7 +1782,7 @@ void QRSVD
       A, &ldA,
       s,
       U, &ldu,
-      VH, &ldva, 
+      VH, &ldva,
       work.data(), &workSize,
       rWork.data(),
       &info );
@@ -1805,13 +1806,13 @@ void SVD( BlasInt m, BlasInt n, float* A, BlasInt ldA, float* s )
     float workDummy;
 
     EL_LAPACK(sgesvd)
-    ( &jobU, &jobVT, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim, 
+    ( &jobU, &jobVT, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim,
       &workDummy, &workSize, &info );
 
     workSize = workDummy;
     vector<float> work(workSize);
     EL_LAPACK(sgesvd)
-    ( &jobU, &jobVT, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim, 
+    ( &jobU, &jobVT, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim,
       work.data(), &workSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -1830,13 +1831,13 @@ void SVD( BlasInt m, BlasInt n, double* A, BlasInt ldA, double* s )
     double workDummy;
 
     EL_LAPACK(dgesvd)
-    ( &jobU, &jobVT, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim, 
+    ( &jobU, &jobVT, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim,
       &workDummy, &workSize, &info );
 
     workSize = workDummy;
     vector<double> work(workSize);
     EL_LAPACK(dgesvd)
-    ( &jobU, &jobVT, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim, 
+    ( &jobU, &jobVT, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim,
       work.data(), &workSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -1857,13 +1858,13 @@ void SVD( BlasInt m, BlasInt n, scomplex* A, BlasInt ldA, float* s )
     vector<float> rWork(5*k);
 
     EL_LAPACK(cgesvd)
-    ( &jobU, &jobVH, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim, 
+    ( &jobU, &jobVH, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim,
       &workDummy, &workSize, rWork.data(), &info );
 
     workSize = workDummy.real();
     vector<scomplex> work(workSize);
     EL_LAPACK(cgesvd)
-    ( &jobU, &jobVH, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim, 
+    ( &jobU, &jobVH, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim,
       work.data(), &workSize, rWork.data(), &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -1884,13 +1885,13 @@ void SVD( BlasInt m, BlasInt n, dcomplex* A, BlasInt ldA, double* s )
     vector<double> rWork(5*k);
 
     EL_LAPACK(zgesvd)
-    ( &jobU, &jobVH, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim, 
+    ( &jobU, &jobVH, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim,
       &workDummy, &workSize, rWork.data(), &info );
 
     workSize = workDummy.real();
     vector<dcomplex> work(workSize);
     EL_LAPACK(zgesvd)
-    ( &jobU, &jobVH, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim, 
+    ( &jobU, &jobVH, &m, &n, A, &ldA, s, 0, &fakeLDim, 0, &fakeLDim,
       work.data(), &workSize, rWork.data(), &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," had an illegal value");
@@ -2377,7 +2378,7 @@ template bool Solve4x4FullPiv
   const BigFloat& minPiv );
 #endif
 
-// Solve a 1x1, 1x2, 2x1, or 2x2 Sylvester equation, 
+// Solve a 1x1, 1x2, 2x1, or 2x2 Sylvester equation,
 //
 //   op_C(C) X +- X op_D(D) = scale*B,
 //
@@ -2455,7 +2456,7 @@ bool SmallSylvester
         maxCD = Max( maxCD, Abs(psi) );
         const Real minPiv = Max( epsilon*maxCD, smallNum );
 
-        // 
+        //
         // In the case of no transpositions, solve
         //
         // | psi +- delta00,   +-delta01    | | chi0 | = | beta0 |
@@ -2504,7 +2505,7 @@ bool SmallSylvester
         maxCD = Max( maxCD, Abs(delta) );
         const Real minPiv = Max( epsilon*maxCD, smallNum );
 
-        // 
+        //
         // In the case of no transpositions, solve
         //
         // | psi00 +- delta,      psi01      | | chi0 | = | beta0 |
@@ -2697,7 +2698,7 @@ template<typename Real>
 void Helper
 ( bool wantSchurVecs,
   BlasInt n,
-  Real* T, BlasInt TLDim, 
+  Real* T, BlasInt TLDim,
   Real* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt n1,
@@ -2732,8 +2733,8 @@ void Helper
     //
     // For example,
     //
-    //   Q' | -X | = | R | 
-    //      |  I |   | 0 |    
+    //   Q' | -X | = | R |
+    //      |  I |   | 0 |
     //
     // implies
     //
@@ -2761,14 +2762,14 @@ void Helper
     //
     // and therefore
     //
-    //   Q' A Q 
+    //   Q' A Q
     //
     //    = | 0,   R   |^{-1} | A11, 0   | | 0,   R   |
     //      | Q21, Q22 |      | 0,   A22 | | Q21, Q22 |
     //
     //    = | -inv(Q21)' Q22 inv(R), inv(Q21) | | A11,  0  | | 0,    R  |
     //      | inv(R),                    0    | |  0,  A22 | | Q21, Q22 |
-    // 
+    //
     //    = | -inv(Q21)' Q22 inv(R) A11, inv(Q21) A22 | | 0,    R  |
     //      |         inv(R) A11,               0     | | Q21, Q22 |
     //
@@ -2819,7 +2820,7 @@ void Helper
     {
         Real D[16], X[4];
         const BlasInt XLDim = 2;
-        const BlasInt nSum = n1 + n2; 
+        const BlasInt nSum = n1 + n2;
         for( BlasInt j=0; j<nSum; ++j )
             for( BlasInt i=0; i<nSum; ++i )
                 D[i+j*nSum] = T[(j1+i)+(j1+j)*TLDim];
@@ -2867,12 +2868,12 @@ void Helper
             v[1] = X[0*XLDim];
             v[2] = X[1*XLDim];
             Real phi = Reflector( 3, v[2], v, 1 );
-            v[2] = 1; 
+            v[2] = 1;
 
             if( testAccuracy )
             {
                 // Perform the candidate rotation out-of-place on D
-                // ------------------------------------------------ 
+                // ------------------------------------------------
                 // Apply the rotation from the left,
                 //   D := (I - phi v v') D = D - v (phi v' D)
                 ApplyReflector( true, 3, 3, v, 1, phi, D, nSum, work );
@@ -2881,7 +2882,7 @@ void Helper
                 ApplyReflector( false, 3, 3, v, 1, phi, D, nSum, work );
 
                 // Throw an exception if the rotation would be too inaccurate.
-                // As in LAPACK, rather than simply measuring the size of the 
+                // As in LAPACK, rather than simply measuring the size of the
                 // bottom-left block of the rotation of D (which should ideally
                 // be zero), we also take into account our knowledge that the
                 // bottom-right entry of D should by T(j1,j1)
@@ -2894,7 +2895,7 @@ void Helper
             }
 
             // Perform the rotation on T
-            // ------------------------- 
+            // -------------------------
             // Apply the rotation from the left,
             //   T := (I - phi v v') T = T - v (phi v' T)
             ApplyReflector
@@ -2905,7 +2906,7 @@ void Helper
             ( false, j1+2, 3, v, 1, phi, &T[j1*TLDim], TLDim, work );
             // Force our a priori knowledge that T is block upper-triangular
             T[(j1+2)+ j1   *TLDim] = zero;
-            T[(j1+2)+(j1+1)*TLDim] = zero; 
+            T[(j1+2)+(j1+1)*TLDim] = zero;
             T[(j1+2)+(j1+2)*TLDim] = tau11;
 
             if( wantSchurVecs )
@@ -2934,12 +2935,12 @@ void Helper
             v[1] = -X[1];
             v[2] = scale;
             Real phi = Reflector( 3, v[0], &v[1], 1 );
-            v[0] = 1; 
+            v[0] = 1;
 
             if( testAccuracy )
             {
                 // Perform the candidate rotation out-of-place on D
-                // ------------------------------------------------ 
+                // ------------------------------------------------
                 // Apply the rotation from the left,
                 //   D := (I - phi v v') D = D - v (phi v' D)
                 ApplyReflector( true, 3, 3, v, 1, phi, D, nSum, work );
@@ -2948,7 +2949,7 @@ void Helper
                 ApplyReflector( false, 3, 3, v, 1, phi, D, nSum, work );
 
                 // Throw an exception if the rotation would be too inaccurate.
-                // As in LAPACK, rather than simply measuring the size of the 
+                // As in LAPACK, rather than simply measuring the size of the
                 // bottom-left block of the rotation of D (which should ideally
                 // be zero), we also take into account our knowledge that the
                 // top-left entry of D should by tau22
@@ -2961,7 +2962,7 @@ void Helper
             }
 
             // Perform the rotation on T
-            // ------------------------- 
+            // -------------------------
             // Apply the rotation from the right,
             //   T := T (I - phi v v') = T - (phi T v) v'
             ApplyReflector
@@ -3002,20 +3003,20 @@ void Helper
             v0[1] = -chi10;
             v0[2] = scale;
             Real phi0 = Reflector( 3, v0[0], &v0[1], 1 );
-            v0[0] = 1; 
+            v0[0] = 1;
 
             innerProd = -phi0*(chi01+v0[1]*chi11);
             Real v1[3];
             v1[0] = -innerProd*v0[1] - chi11;
             v1[1] = -innerProd*v0[2];
             v1[2] = scale;
-            Real phi1 = Reflector( 3, v1[0], &v1[1], 1 ); 
+            Real phi1 = Reflector( 3, v1[0], &v1[1], 1 );
             v1[0] = 1;
 
             if( testAccuracy )
             {
                 // Perform the candidate rotation out-of-place on D
-                // ------------------------------------------------ 
+                // ------------------------------------------------
                 // Apply the first rotation from the left,
                 //   D := (I - phi0 v0 v0') D = D - v0 (phi0 v0' D)
                 ApplyReflector( true, 3, 4, v0, 1, phi0, D, nSum, work );
@@ -3042,7 +3043,7 @@ void Helper
             }
 
             // Perform the rotation on T
-            // ------------------------- 
+            // -------------------------
             // Apply the first rotation from the left,
             //   T := (I - phi0 v0 v0') T = T - v0 (phi0 v0' T)
             ApplyReflector
@@ -3091,7 +3092,7 @@ void Helper
             if( j3+2 < n )
             {
                 blas::Rot
-                ( n-(j3+2), 
+                ( n-(j3+2),
                   &T[j3+(j3+2)*TLDim], TLDim,
                   &T[j4+(j3+2)*TLDim], TLDim, c, s );
             }
@@ -3102,7 +3103,7 @@ void Helper
             if( wantSchurVecs )
             {
                 blas::Rot
-                ( n, 
+                ( n,
                   &Q[j3*QLDim], 1,
                   &Q[j4*QLDim], 1, c, s );
             }
@@ -3117,7 +3118,7 @@ void Helper
             ( T[j1+j1*TLDim], T[j1+j2*TLDim],
               T[j2+j1*TLDim], T[j2+j2*TLDim], lambda0, lambda1, c, s );
             blas::Rot
-            ( n-(j1+2), 
+            ( n-(j1+2),
               &T[j1+(j1+2)*TLDim], TLDim,
               &T[j2+(j1+2)*TLDim], TLDim, c, s );
             blas::Rot
@@ -3127,7 +3128,7 @@ void Helper
             if( wantSchurVecs )
             {
                 blas::Rot
-                ( n, 
+                ( n,
                   &Q[j1*QLDim], 1,
                   &Q[j2*QLDim], 1, c, s );
             }
@@ -3158,7 +3159,7 @@ void AdjacentSchurExchange
 template<typename Real>
 void AdjacentSchurExchange
 ( BlasInt n,
-  Real* T, BlasInt TLDim, 
+  Real* T, BlasInt TLDim,
   Real* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt n1,
@@ -3290,7 +3291,7 @@ template<typename Real,typename=EnableIf<IsReal<Real>>>
 void Helper
 ( bool wantSchurVecs,
   BlasInt n,
-  Real* T, BlasInt TLDim, 
+  Real* T, BlasInt TLDim,
   Real* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt j2,
@@ -3312,13 +3313,13 @@ void Helper
     const bool doubleSecond = ( j1 < n-1 && T[(j1+1)+j1*TLDim] != zero );
 
     if( j1 == j2 )
-        return; 
+        return;
 
     bool splitDouble = false;
     if( j1 < j2 )
     {
         // We will translate down the j1 block, one swap at a time
-        if( doubleFirst && !doubleSecond ) 
+        if( doubleFirst && !doubleSecond )
             --j2;
         if( !doubleFirst && doubleSecond )
             ++j2;
@@ -3329,7 +3330,7 @@ void Helper
             {
                 bool doubleNext =
                   ( j+nb+1 < n && T[(j+nb+1)+(j+nb)*TLDim] != zero );
-                Int nbNext = ( doubleNext ? 2 : 1 ); 
+                Int nbNext = ( doubleNext ? 2 : 1 );
                 adjacent_schur::Helper
                 ( wantSchurVecs, n,
                   T, TLDim,
@@ -3473,7 +3474,7 @@ template<typename Real>
 void Helper
 ( bool wantSchurVecs,
   BlasInt n,
-  Complex<Real>* T, BlasInt TLDim, 
+  Complex<Real>* T, BlasInt TLDim,
   Complex<Real>* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt j2 )
@@ -3549,7 +3550,7 @@ void SchurExchange
 template<typename Real>
 void SchurExchange
 ( BlasInt n,
-  Real* T, BlasInt TLDim, 
+  Real* T, BlasInt TLDim,
   Real* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt j2,
@@ -3565,7 +3566,7 @@ void SchurExchange
 template<typename Real>
 void SchurExchange
 ( BlasInt n,
-  Complex<Real>* T, BlasInt TLDim, 
+  Complex<Real>* T, BlasInt TLDim,
   Complex<Real>* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt j2 )
@@ -3831,7 +3832,7 @@ void HessenbergSchur
     {
         FortranLogical wantT=(fullTriangle ? FORTRAN_TRUE : FORTRAN_FALSE),
                        wantZ=FORTRAN_FALSE;
-        EL_LAPACK(dlahqr) 
+        EL_LAPACK(dlahqr)
         ( &wantT, &wantZ, &n, &ilo, &ihi, H, &ldH, wr.data(), wi.data(),
           &ilo, &ihi, 0, &fakeLDim, &info );
         if( info < 0 )
@@ -3839,7 +3840,7 @@ void HessenbergSchur
         else if( info > 0 )
             RuntimeError("dlahqr failed to compute all eigenvalues");
     }
-    
+
     for( BlasInt i=0; i<n; ++i )
         w[i] = Complex<double>(wr[i],wi[i]);
 }
@@ -3864,13 +3865,13 @@ void HessenbergSchur
         BlasInt workSize=-1;
         scomplex workDummy;
         EL_LAPACK(chseqr)
-        ( &job, &compZ, &n, &ilo, &ihi, H, &ldH, w, 0, &fakeLDim, 
+        ( &job, &compZ, &n, &ilo, &ihi, H, &ldH, w, 0, &fakeLDim,
           &workDummy, &workSize, &info );
 
         workSize = workDummy.real();
         vector<scomplex> work(workSize);
         EL_LAPACK(chseqr)
-        ( &job, &compZ, &n, &ilo, &ihi, H, &ldH, w, 0, &fakeLDim, 
+        ( &job, &compZ, &n, &ilo, &ihi, H, &ldH, w, 0, &fakeLDim,
           work.data(), &workSize, &info );
         if( info < 0 )
             RuntimeError("Argument ",-info," had an illegal value");
@@ -3881,7 +3882,7 @@ void HessenbergSchur
     {
         FortranLogical wantT=(fullTriangle ? FORTRAN_TRUE : FORTRAN_FALSE),
                        wantZ=FORTRAN_FALSE;
-        EL_LAPACK(clahqr) 
+        EL_LAPACK(clahqr)
         ( &wantT, &wantZ, &n, &ilo, &ihi, H, &ldH, w,
           &ilo, &ihi, 0, &fakeLDim, &info );
         if( info < 0 )
@@ -3911,13 +3912,13 @@ void HessenbergSchur
         BlasInt workSize=-1;
         dcomplex workDummy;
         EL_LAPACK(zhseqr)
-        ( &job, &compZ, &n, &ilo, &ihi, H, &ldH, w, 0, &fakeLDim, 
+        ( &job, &compZ, &n, &ilo, &ihi, H, &ldH, w, 0, &fakeLDim,
           &workDummy, &workSize, &info );
 
         workSize = workDummy.real();
         vector<dcomplex> work(workSize);
         EL_LAPACK(zhseqr)
-        ( &job, &compZ, &n, &ilo, &ihi, H, &ldH, w, 0, &fakeLDim, 
+        ( &job, &compZ, &n, &ilo, &ihi, H, &ldH, w, 0, &fakeLDim,
           work.data(), &workSize, &info );
         if( info < 0 )
             RuntimeError("Argument ",-info," had an illegal value");
@@ -3928,7 +3929,7 @@ void HessenbergSchur
     {
         FortranLogical wantT=(fullTriangle ? FORTRAN_TRUE : FORTRAN_FALSE),
                        wantZ=FORTRAN_FALSE;
-        EL_LAPACK(zlahqr) 
+        EL_LAPACK(zlahqr)
         ( &wantT, &wantZ, &n, &ilo, &ihi, H, &ldH, w,
           &ilo, &ihi, 0, &fakeLDim, &info );
         if( info < 0 )
@@ -3942,7 +3943,7 @@ void HessenbergSchur
 ( BlasInt n,
   float* H, BlasInt ldH,
   scomplex* w,
-  float* Q, BlasInt ldQ, 
+  float* Q, BlasInt ldQ,
   bool fullTriangle,
   bool multiplyQ,
   bool useAED )
@@ -3995,7 +3996,7 @@ void HessenbergSchur
 ( BlasInt n,
   double* H, BlasInt ldH,
   dcomplex* w,
-  double* Q, BlasInt ldQ, 
+  double* Q, BlasInt ldQ,
   bool fullTriangle,
   bool multiplyQ,
   bool useAED )
@@ -4039,7 +4040,7 @@ void HessenbergSchur
         else if( info > 0 )
             RuntimeError("dlahqr failed to compute all eigenvalues");
     }
-    
+
     for( BlasInt i=0; i<n; ++i )
         w[i] = Complex<double>(wr[i],wi[i]);
 }
@@ -4297,7 +4298,7 @@ void Schur
     const char job = ( fullTriangle ? 'S' : 'E' ), compZ='N';
     BlasInt fakeLDim=1, negOne=-1;
     EL_LAPACK(chseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, 0, &fakeLDim, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, 0, &fakeLDim,
       &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy.real()), workSize );
 
@@ -4310,7 +4311,7 @@ void Schur
 
     // Compute the eigenvalues
     EL_LAPACK(chseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, 0, &fakeLDim, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, 0, &fakeLDim,
       work.data(), &workSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," of QR alg had an illegal value");
@@ -4341,7 +4342,7 @@ void Schur
     const char job = ( fullTriangle ? 'S' : 'E' ), compZ='N';
     BlasInt fakeLDim=1, negOne=-1;
     EL_LAPACK(zhseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, 0, &fakeLDim, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, 0, &fakeLDim,
       &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy.real()), workSize );
 
@@ -4354,7 +4355,7 @@ void Schur
 
     // Compute the eigenvalues
     EL_LAPACK(zhseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, 0, &fakeLDim, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, 0, &fakeLDim,
       work.data(), &workSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," of QR alg had an illegal value");
@@ -4366,7 +4367,7 @@ void Schur
 ( BlasInt n,
   float* A, BlasInt ldA,
   scomplex* w,
-  float* Q, BlasInt ldQ, 
+  float* Q, BlasInt ldQ,
   bool fullTriangle,
   bool time )
 {
@@ -4383,7 +4384,7 @@ void Schur
     workSize = workDummy;
 
     // Query the explicit Q formation workspace
-    BlasInt negOne=-1; 
+    BlasInt negOne=-1;
     EL_LAPACK(sorghr)
     ( &n, &ilo, &ihi, Q, &ldQ, tau.data(), &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy), workSize );
@@ -4392,7 +4393,7 @@ void Schur
     const char job = ( fullTriangle ? 'S' : 'E' ), compZ='V';
     vector<float> wr( n ), wi( n );
     EL_LAPACK(shseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, wr.data(), wi.data(), Q, &ldQ, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, wr.data(), wi.data(), Q, &ldQ,
       &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy), workSize );
 
@@ -4415,7 +4416,7 @@ void Schur
 
     // Compute the Schur decomposition
     EL_LAPACK(shseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, wr.data(), wi.data(), Q, &ldQ, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, wr.data(), wi.data(), Q, &ldQ,
       work.data(), &workSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," of QR alg had an illegal value");
@@ -4431,7 +4432,7 @@ void Schur
 ( BlasInt n,
   double* A, BlasInt ldA,
   dcomplex* w,
-  double* Q, BlasInt ldQ, 
+  double* Q, BlasInt ldQ,
   bool fullTriangle,
   bool time )
 {
@@ -4448,7 +4449,7 @@ void Schur
     workSize = workDummy;
 
     // Query the explicit Q formation workspace
-    BlasInt negOne=-1; 
+    BlasInt negOne=-1;
     EL_LAPACK(dorghr)
     ( &n, &ilo, &ihi, Q, &ldQ, tau.data(), &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy), workSize );
@@ -4457,7 +4458,7 @@ void Schur
     const char job = ( fullTriangle ? 'S' : 'E' ), compZ='V';
     vector<double> wr( n ), wi( n );
     EL_LAPACK(dhseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, wr.data(), wi.data(), Q, &ldQ, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, wr.data(), wi.data(), Q, &ldQ,
       &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy), workSize );
 
@@ -4480,7 +4481,7 @@ void Schur
 
     // Compute the Schur decomposition
     EL_LAPACK(dhseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, wr.data(), wi.data(), Q, &ldQ, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, wr.data(), wi.data(), Q, &ldQ,
       work.data(), &workSize, &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," of QR alg had an illegal value");
@@ -4496,7 +4497,7 @@ void Schur
 ( BlasInt n,
   scomplex* A, BlasInt ldA,
   scomplex* w,
-  scomplex* Q, BlasInt ldQ, 
+  scomplex* Q, BlasInt ldQ,
   bool fullTriangle,
   bool time )
 {
@@ -4513,7 +4514,7 @@ void Schur
     workSize = workDummy.real();
 
     // Query the explicit Q formation workspace
-    BlasInt negOne=-1; 
+    BlasInt negOne=-1;
     EL_LAPACK(cunghr)
     ( &n, &ilo, &ihi, Q, &ldQ, tau.data(), &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy.real()), workSize );
@@ -4521,7 +4522,7 @@ void Schur
     // Query the QR algorithm workspace size
     const char job = ( fullTriangle ? 'S' : 'E' ), compZ='V';
     EL_LAPACK(chseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, Q, &ldQ, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, Q, &ldQ,
       &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy.real()), workSize );
 
@@ -4544,7 +4545,7 @@ void Schur
 
     // Compute the Schur decomposition
     EL_LAPACK(chseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, Q, &ldQ, work.data(), &workSize, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, Q, &ldQ, work.data(), &workSize,
       &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," of QR alg had an illegal value");
@@ -4556,7 +4557,7 @@ void Schur
 ( BlasInt n,
   dcomplex* A, BlasInt ldA,
   dcomplex* w,
-  dcomplex* Q, BlasInt ldQ, 
+  dcomplex* Q, BlasInt ldQ,
   bool fullTriangle,
   bool time )
 {
@@ -4573,7 +4574,7 @@ void Schur
     workSize = workDummy.real();
 
     // Query the explicit Q formation workspace
-    BlasInt negOne=-1; 
+    BlasInt negOne=-1;
     EL_LAPACK(zunghr)
     ( &n, &ilo, &ihi, Q, &ldQ, tau.data(), &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy.real()), workSize );
@@ -4581,7 +4582,7 @@ void Schur
     // Query the QR algorithm workspace size
     const char job = ( fullTriangle ? 'S' : 'E' ), compZ='V';
     EL_LAPACK(zhseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, Q, &ldQ, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, Q, &ldQ,
       &workDummy, &negOne, &info );
     workSize = Max( BlasInt(workDummy.real()), workSize );
 
@@ -4604,7 +4605,7 @@ void Schur
 
     // Compute the Schur decomposition
     EL_LAPACK(zhseqr)
-    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, Q, &ldQ, work.data(), &workSize, 
+    ( &job, &compZ, &n, &ilo, &ihi, A, &ldA, w, Q, &ldQ, work.data(), &workSize,
       &info );
     if( info < 0 )
         RuntimeError("Argument ",-info," of QR alg had an illegal value");

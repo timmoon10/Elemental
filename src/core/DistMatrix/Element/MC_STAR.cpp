@@ -24,49 +24,49 @@ namespace El {
 
 // Make a copy
 // -----------
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,MC,MR>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,MC,MR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    copy::RowAllGather( A, *this );
+    copy::RowAllGather(A, *this);
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,STAR,MR>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,STAR,MR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T,MC,MR> A_MC_MR(this->Grid());
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignColsWith(*this);
     A_MC_MR = A;
     *this = A_MC_MR;
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,MD,STAR>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,MD,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
     // TODO: More efficient implementation
-    copy::GeneralPurpose( A, *this );
+    copy::GeneralPurpose(A, *this);
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,STAR,MD>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,STAR,MD,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
     // TODO: More efficient implementation
-    copy::GeneralPurpose( A, *this );
+    copy::GeneralPurpose(A, *this);
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,MR,MC>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,MR,MC,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T,VR,STAR> A_VR_STAR( A );
-    DistMatrix<T,VC,STAR> A_VC_STAR( this->Grid() );
+    DistMatrix<T,VR,STAR,ELEMENT,D> A_VR_STAR(A);
+    DistMatrix<T,VC,STAR,ELEMENT,D> A_VC_STAR(this->Grid());
     A_VC_STAR.AlignColsWith(*this);
     A_VC_STAR = A_VR_STAR;
     A_VR_STAR.Empty();
@@ -74,23 +74,23 @@ DM& DM::operator=( const DistMatrix<T,MR,MC>& A )
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,MR,STAR>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,MR,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(AssertSameGrids( *this, A ))
+    EL_DEBUG_ONLY(AssertSameGrids(*this, A))
     const Grid& grid = A.Grid();
-    if( grid.Height() == grid.Width() )
+    if (grid.Height() == grid.Width())
     {
         const int gridDim = grid.Height();
         const int transposeRank =
             this->RowOwner(A.ColShift()) + gridDim*A.RowOwner(this->ColShift());
-        copy::Exchange( A, *this, transposeRank, transposeRank, grid.VCComm() );
+        copy::Exchange(A, *this, transposeRank, transposeRank, grid.VCComm());
     }
     else
     {
-        DistMatrix<T,VR,STAR> A_VR_STAR( A );
-        DistMatrix<T,VC,STAR> A_VC_STAR( grid );
+        DistMatrix<T,VR,STAR,ELEMENT,D> A_VR_STAR(A);
+        DistMatrix<T,VC,STAR,ELEMENT,D> A_VC_STAR(grid);
         A_VC_STAR.AlignColsWith(*this);
         A_VC_STAR = A_VR_STAR;
         A_VR_STAR.Empty();
@@ -99,15 +99,15 @@ DM& DM::operator=( const DistMatrix<T,MR,STAR>& A )
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,STAR,MC>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,STAR,MC,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T,MR,MC> A_MR_MC( A );
-    DistMatrix<T,VR,STAR> A_VR_STAR( A_MR_MC );
+    DistMatrix<T,MR,MC,ELEMENT,D> A_MR_MC(A);
+    DistMatrix<T,VR,STAR,ELEMENT,D> A_VR_STAR(A_MR_MC);
     A_MR_MC.Empty();
 
-    DistMatrix<T,VC,STAR> A_VC_STAR( this->Grid() );
+    DistMatrix<T,VC,STAR,ELEMENT,D> A_VC_STAR(this->Grid());
     A_VC_STAR.AlignColsWith(*this);
     A_VC_STAR = A_VR_STAR;
     A_VR_STAR.Empty();
@@ -116,20 +116,20 @@ DM& DM::operator=( const DistMatrix<T,STAR,MC>& A )
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,VC,STAR>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,VC,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    copy::PartialColAllGather( A, *this );
+    copy::PartialColAllGather(A, *this);
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,STAR,VC>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,STAR,VC,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T,STAR,VR> A_STAR_VR( A );
-    DistMatrix<T> A_MC_MR( this->Grid() );
+    DistMatrix<T,STAR,VR,ELEMENT,D> A_STAR_VR(A);
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignColsWith(*this);
     A_MC_MR = A_STAR_VR;
     A_STAR_VR.Empty();
@@ -137,169 +137,227 @@ DM& DM::operator=( const DistMatrix<T,STAR,VC>& A )
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,VR,STAR>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,VR,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T,VC,STAR> A_VC_STAR(this->Grid());
+    DistMatrix<T,VC,STAR,ELEMENT,D> A_VC_STAR(this->Grid());
     A_VC_STAR.AlignColsWith(*this);
     A_VC_STAR = A;
     *this = A_VC_STAR;
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,STAR,VR>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,STAR,VR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T,MC,MR> A_MC_MR(this->Grid());
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignColsWith(*this);
     A_MC_MR = A;
     *this = A_MC_MR;
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,STAR,STAR>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,STAR,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    copy::ColFilter( A, *this );
+    copy::ColFilter(A, *this);
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const DistMatrix<T,CIRC,CIRC>& A )
+template <typename T, Device D>
+DM& DM::operator=(const DistMatrix<T,CIRC,CIRC,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T,MC,MR> A_MC_MR( this->Grid() );
-    A_MC_MR.AlignWith( *this );
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(this->Grid());
+    A_MC_MR.AlignWith(*this);
     A_MC_MR = A;
     *this = A_MC_MR;
     return *this;
 }
 
-template<typename T>
-DM& DM::operator=( const ElementalMatrix<T>& A )
+template <typename T, Device D>
+DM& DM::operator=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE
-    #define GUARD(CDIST,RDIST,WRAP) \
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                                        \
       A.DistData().colDist == CDIST && A.DistData().rowDist == RDIST && \
-      ELEMENT == WRAP
-    #define PAYLOAD(CDIST,RDIST,WRAP) \
-      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST>&>(A); \
+          ELEMENT == WRAP && A.GetLocalDevice() == DEVICE
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                                      \
+      auto& ACast = static_cast<const DistMatrix<T,CDIST,RDIST,ELEMENT,DEVICE>&>(A); \
       *this = ACast;
-    #include "El/macros/GuardAndPayload.h"
+    #include "El/macros/DeviceGuardAndPayload.h"
     return *this;
 }
 
 // Basic queries
 // =============
-template<typename T>
+template <typename T, Device D>
 mpi::Comm DM::DistComm() const EL_NO_EXCEPT
-{ return this->grid_->MCComm(); }
+{ return this->Grid().MCComm(); }
 
-template<typename T>
+template <typename T, Device D>
 mpi::Comm DM::RedundantComm() const EL_NO_EXCEPT
-{ return this->grid_->MRComm(); }
+{ return this->Grid().MRComm(); }
 
-template<typename T>
+template <typename T, Device D>
 mpi::Comm DM::CrossComm() const EL_NO_EXCEPT
-{ return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
+{ return (this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL); }
 
-template<typename T>
+template <typename T, Device D>
 mpi::Comm DM::ColComm() const EL_NO_EXCEPT
-{ return this->grid_->MCComm(); }
+{ return this->Grid().MCComm(); }
 
-template<typename T>
+template <typename T, Device D>
 mpi::Comm DM::RowComm() const EL_NO_EXCEPT
-{ return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
+{ return (this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL); }
 
-template<typename T>
+template <typename T, Device D>
 mpi::Comm DM::PartialColComm() const EL_NO_EXCEPT
 { return this->ColComm(); }
-template<typename T>
+template <typename T, Device D>
 mpi::Comm DM::PartialRowComm() const EL_NO_EXCEPT
 { return this->RowComm(); }
-template<typename T>
+template <typename T, Device D>
 mpi::Comm DM::PartialUnionColComm() const EL_NO_EXCEPT
-{ return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
-template<typename T>
+{ return (this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL); }
+template <typename T, Device D>
 mpi::Comm DM::PartialUnionRowComm() const EL_NO_EXCEPT
-{ return ( this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL ); }
+{ return (this->Grid().InGrid() ? mpi::COMM_SELF : mpi::COMM_NULL); }
 
-template<typename T>
-int DM::ColStride() const EL_NO_EXCEPT { return this->grid_->MCSize(); }
-template<typename T>
+template <typename T, Device D>
+int DM::ColStride() const EL_NO_EXCEPT { return this->Grid().MCSize(); }
+template <typename T, Device D>
 int DM::RowStride() const EL_NO_EXCEPT { return 1; }
-template<typename T>
-int DM::DistSize() const EL_NO_EXCEPT { return this->grid_->MCSize(); }
-template<typename T>
+template <typename T, Device D>
+int DM::DistSize() const EL_NO_EXCEPT { return this->Grid().MCSize(); }
+template <typename T, Device D>
 int DM::CrossSize() const EL_NO_EXCEPT { return 1; }
-template<typename T>
-int DM::RedundantSize() const EL_NO_EXCEPT { return this->grid_->MRSize(); }
-template<typename T>
+template <typename T, Device D>
+int DM::RedundantSize() const EL_NO_EXCEPT { return this->Grid().MRSize(); }
+template <typename T, Device D>
 int DM::PartialColStride() const EL_NO_EXCEPT { return this->ColStride(); }
-template<typename T>
+template <typename T, Device D>
 int DM::PartialRowStride() const EL_NO_EXCEPT { return this->RowStride(); }
-template<typename T>
+template <typename T, Device D>
 int DM::PartialUnionColStride() const EL_NO_EXCEPT { return 1; }
-template<typename T>
+template <typename T, Device D>
 int DM::PartialUnionRowStride() const EL_NO_EXCEPT { return 1; }
 
-template<typename T>
-int DM::ColRank() const EL_NO_EXCEPT { return this->grid_->MCRank(); }
-template<typename T>
+template <typename T, Device D>
+int DM::ColRank() const EL_NO_EXCEPT { return this->Grid().MCRank(); }
+template <typename T, Device D>
 int DM::RowRank() const EL_NO_EXCEPT
-{ return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
-template<typename T>
-int DM::DistRank() const EL_NO_EXCEPT { return this->grid_->MCRank(); }
-template<typename T>
+{ return (this->Grid().InGrid() ? 0 : mpi::UNDEFINED); }
+template <typename T, Device D>
+int DM::DistRank() const EL_NO_EXCEPT { return this->Grid().MCRank(); }
+template <typename T, Device D>
 int DM::CrossRank() const EL_NO_EXCEPT
-{ return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
-template<typename T>
-int DM::RedundantRank() const EL_NO_EXCEPT { return this->grid_->MRRank(); }
-template<typename T>
+{ return (this->Grid().InGrid() ? 0 : mpi::UNDEFINED); }
+template <typename T, Device D>
+int DM::RedundantRank() const EL_NO_EXCEPT { return this->Grid().MRRank(); }
+template <typename T, Device D>
 int DM::PartialColRank() const EL_NO_EXCEPT { return this->ColRank(); }
-template<typename T>
+template <typename T, Device D>
 int DM::PartialRowRank() const EL_NO_EXCEPT { return this->RowRank(); }
-template<typename T>
+template <typename T, Device D>
 int DM::PartialUnionColRank() const EL_NO_EXCEPT
-{ return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
-template<typename T>
+{ return (this->Grid().InGrid() ? 0 : mpi::UNDEFINED); }
+template <typename T, Device D>
 int DM::PartialUnionRowRank() const EL_NO_EXCEPT
-{ return ( this->Grid().InGrid() ? 0 : mpi::UNDEFINED ); }
+{ return (this->Grid().InGrid() ? 0 : mpi::UNDEFINED); }
 
 // Instantiate {Int,Real,Complex<Real>} for each Real in {float,double}
 // ####################################################################
 
-#define SELF(T,U,V) \
-  template DistMatrix<T,COLDIST,ROWDIST>::DistMatrix \
-  ( const DistMatrix<T,U,V>& A );
-#define OTHER(T,U,V) \
-  template DistMatrix<T,COLDIST,ROWDIST>::DistMatrix \
-  ( const DistMatrix<T,U,V,BLOCK>& A ); \
-  template DistMatrix<T,COLDIST,ROWDIST>& \
-           DistMatrix<T,COLDIST,ROWDIST>::operator= \
-           ( const DistMatrix<T,U,V,BLOCK>& A )
-#define BOTH(T,U,V) \
-  SELF(T,U,V) \
-  OTHER(T,U,V)
+#define SELF(T,U,V,D)                                 \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>::DistMatrix \
+    (const DistMatrix<T,U,V,ELEMENT,D>& A)
+#define OTHER(T,U,V,D) \
+  template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>::DistMatrix \
+  (const DistMatrix<T,U,V,BLOCK,D>& A); \
+  template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>& \
+           DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>::operator= \
+           (const DistMatrix<T,U,V,BLOCK,D>& A)
+#define BOTH(T,U,V,D) \
+    SELF(T,U,V,D);    \
+    OTHER(T,U,V,D)
 #define PROTO(T) \
   template class DistMatrix<T,COLDIST,ROWDIST>; \
-  BOTH( T,CIRC,CIRC); \
-  BOTH( T,MC,  MR  ); \
-  OTHER(T,MC,  STAR); \
-  BOTH( T,MD,  STAR); \
-  BOTH( T,MR,  MC  ); \
-  BOTH( T,MR,  STAR); \
-  BOTH( T,STAR,MC  ); \
-  BOTH( T,STAR,MD  ); \
-  BOTH( T,STAR,MR  ); \
-  BOTH( T,STAR,STAR); \
-  BOTH( T,STAR,VC  ); \
-  BOTH( T,STAR,VR  ); \
-  BOTH( T,VC,  STAR); \
-  BOTH( T,VR,  STAR);
+  BOTH(T,CIRC,CIRC,Device::CPU); \
+  BOTH(T,MC,  MR ,Device::CPU); \
+  OTHER(T,MC,  STAR,Device::CPU); \
+  BOTH(T,MD,  STAR,Device::CPU); \
+  BOTH(T,MR,  MC ,Device::CPU); \
+  BOTH(T,MR,  STAR,Device::CPU); \
+  BOTH(T,STAR,MC ,Device::CPU); \
+  BOTH(T,STAR,MD ,Device::CPU); \
+  BOTH(T,STAR,MR ,Device::CPU); \
+  BOTH(T,STAR,STAR,Device::CPU); \
+  BOTH(T,STAR,VC ,Device::CPU); \
+  BOTH(T,STAR,VR ,Device::CPU); \
+  BOTH(T,VC,  STAR,Device::CPU); \
+  BOTH(T,VR,  STAR,Device::CPU);
+
+#ifdef HYDROGEN_HAVE_CUDA
+#define INSTGPU(T,U,V)                                                  \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>&         \
+    DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=        \
+    (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&)
+
+template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+INSTGPU(float,CIRC,CIRC);
+INSTGPU(float,MC,  MR  );
+INSTGPU(float,MD,  STAR);
+INSTGPU(float,MR,  MC  );
+INSTGPU(float,MR,  STAR);
+INSTGPU(float,STAR,MC  );
+INSTGPU(float,STAR,MD  );
+INSTGPU(float,STAR,MR  );
+INSTGPU(float,STAR,STAR);
+INSTGPU(float,STAR,VC  );
+INSTGPU(float,STAR,VR  );
+INSTGPU(float,VC,  STAR);
+INSTGPU(float,VR,  STAR);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix
+   (const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>& A);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
+
+template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+INSTGPU(double,CIRC,CIRC);
+INSTGPU(double,MC,  MR  );
+INSTGPU(double,MD,  STAR);
+INSTGPU(double,MR,  MC  );
+INSTGPU(double,MR,  STAR);
+INSTGPU(double,STAR,MC  );
+INSTGPU(double,STAR,MD  );
+INSTGPU(double,STAR,MR  );
+INSTGPU(double,STAR,STAR);
+INSTGPU(double,STAR,VC  );
+INSTGPU(double,STAR,VR  );
+INSTGPU(double,VC,  STAR);
+INSTGPU(double,VR,  STAR);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix
+   (const DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>& A);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
+
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

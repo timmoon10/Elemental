@@ -24,6 +24,29 @@ void ProcessEvents( int numMsecs )
 #endif
 }
 
+template <typename Real>
+void Display(AbstractMatrix<Real> const& A, std::string title)
+{
+        switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Display(static_cast<Matrix<Real,Device::CPU> const&>(A), title);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+    {
+        // Copy to the CPU
+        Matrix<Real,Device::CPU> A_CPU{
+            static_cast<Matrix<Real,Device::GPU> const&>(A)};
+        Display(A_CPU, title);
+    }
+    break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Display: Bad Device type.");
+    }
+}
+
 template<typename Real>
 void Display( const Matrix<Real>& A, string title )
 {

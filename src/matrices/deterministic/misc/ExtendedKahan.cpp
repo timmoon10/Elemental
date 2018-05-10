@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
@@ -11,19 +11,19 @@
 #include <El/matrices.hpp>
 
 // Generate a 3(2^k) x 3(2^k) Extended Kahan matrix, which has the form
-// A = S R, where S = diag(1,zeta,...,zeta^(3 2^k - 1)), 
-// 
+// A = S R, where S = diag(1,zeta,...,zeta^(3 2^k - 1)),
+//
 //         | I -phi H_k    0     |
 //     R = | 0    I      phi H_k |,
 //         | 0    0        I     |
 //
-// where H_k is the 2^k x 2^k Hadamard matrix, 0 < mu << 1, and 
+// where H_k is the 2^k x 2^k Hadamard matrix, 0 < mu << 1, and
 // phi^2 + zeta^2 = 1.
 //
 
 namespace El {
 
-template<typename F> 
+template<typename F>
 void MakeExtendedKahan
 ( Matrix<F>& A, Base<F> phi, Base<F> mu )
 {
@@ -47,7 +47,7 @@ void MakeExtendedKahan
     if( mu <= Real(0) || mu >= Real(1) )
         LogicError("mu must be in (0,1)");
 
-    // Start by setting A to the identity, and then modify the necessary 
+    // Start by setting A to the identity, and then modify the necessary
     // l x l blocks of its 3 x 3 partitioning.
     MakeIdentity( A );
     auto ABlock = A( IR(2*l,3*l), IR(2*l,3*l) );
@@ -93,7 +93,7 @@ void MakeExtendedKahan
     if( mu <= Real(0) || mu >= Real(1) )
         LogicError("mu must be in (0,1)");
 
-    // Start by setting A to the identity, and then modify the necessary 
+    // Start by setting A to the identity, and then modify the necessary
     // l x l blocks of its 3 x 3 partitioning.
     MakeIdentity( A );
     unique_ptr<ElementalMatrix<F>> ABlock( A.Construct(A.Grid(),A.Root()) );
@@ -108,7 +108,7 @@ void MakeExtendedKahan
 
     // Now scale A by S
     const Real zeta = Sqrt(Real(1)-phi*phi);
-    auto& ALoc = A.Matrix();
+    auto& ALoc = dynamic_cast<Matrix<F,Device::CPU>&>(A.Matrix());
     for( Int iLoc=0; iLoc<A.LocalHeight(); ++iLoc )
     {
         const Int i = A.GlobalRow(iLoc);

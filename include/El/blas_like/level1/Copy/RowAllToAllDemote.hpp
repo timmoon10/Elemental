@@ -12,18 +12,18 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+template<typename T,Dist U,Dist V, Device D>
 void RowAllToAllDemote
-  ( const DistMatrix<T,PartialUnionCol<U,V>(),Partial<V>()>& A,
-          DistMatrix<T,                U,             V   >& B )
+(DistMatrix<T,PartialUnionCol<U,V>(),Partial<V>(),ELEMENT,D> const& A,
+  DistMatrix<T,U,V,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
-    AssertSameGrids( A, B );
+    AssertSameGrids(A, B);
 
     const Int height = A.Height();
     const Int width = A.Width();
-    B.AlignRowsAndResize( A.RowAlign(), height, width, false, false );
-    if( !B.Participating() )
+    B.AlignRowsAndResize(A.RowAlign(), height, width, false, false);
+    if(!B.Participating())
         return;
 
     const Int rowAlign = B.RowAlign();
@@ -36,95 +36,93 @@ void RowAllToAllDemote
 
     const Int maxLocalHeight = MaxLength(height,rowStrideUnion);
     const Int maxLocalWidth = MaxLength(width,rowStride);
-    const Int portionSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
+    const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
 
-    if( rowDiff == 0 )
+    if(rowDiff == 0)
     {
-        if( B.PartialUnionRowStride() == 1 )
+        if(B.PartialUnionRowStride() == 1)
         {
-            Copy( A.LockedMatrix(), B.Matrix() );
+            Copy(A.LockedMatrix(), B.Matrix());
         }
         else
         {
-            vector<T> buffer;
-            FastResize( buffer, 2*rowStrideUnion*portionSize );
-            T* firstBuf  = &buffer[0];
-            T* secondBuf = &buffer[rowStrideUnion*portionSize];
+            simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize);
+            T* firstBuf  = buffer.data();
+            T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
             // Pack
-            util::PartialRowStridedPack
-            ( A.LocalHeight(), width,
+            util::PartialRowStridedPack<T,D>
+            (A.LocalHeight(), width,
               rowAlign, rowStride,
               rowStrideUnion, rowStridePart, rowRankPart,
               A.RowShift(),
               A.LockedBuffer(), A.LDim(),
-              firstBuf,         portionSize );
+              firstBuf,         portionSize);
 
             // Simultaneously Scatter in rows and Gather in columns
             mpi::AllToAll
-            ( firstBuf,  portionSize,
-              secondBuf, portionSize, B.PartialUnionRowComm() );
+            (firstBuf,  portionSize,
+              secondBuf, portionSize, B.PartialUnionRowComm());
 
             // Unpack
-            util::ColStridedUnpack
-            ( height, B.LocalWidth(),
+            util::ColStridedUnpack<T,D>
+            (height, B.LocalWidth(),
               A.ColAlign(), rowStrideUnion,
               secondBuf, portionSize,
-              B.Buffer(), B.LDim() );
+              B.Buffer(), B.LDim());
         }
     }
     else
     {
 #ifdef EL_UNALIGNED_WARNINGS
-        if( B.Grid().Rank() == 0 )
+        if(B.Grid().Rank() == 0)
             cerr << "Unaligned RowAllToAllDemote" << endl;
 #endif
-        const Int sendRowRankPart = Mod( rowRankPart+rowDiff, rowStridePart );
-        const Int recvRowRankPart = Mod( rowRankPart-rowDiff, rowStridePart );
+        const Int sendRowRankPart = Mod(rowRankPart+rowDiff, rowStridePart);
+        const Int recvRowRankPart = Mod(rowRankPart-rowDiff, rowStridePart);
 
-        vector<T> buffer;
-        FastResize( buffer, 2*rowStrideUnion*portionSize );
-        T* firstBuf  = &buffer[0];
-        T* secondBuf = &buffer[rowStrideUnion*portionSize];
+        simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize);
+        T* firstBuf  = buffer.data();
+        T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
         // Pack
-        util::PartialRowStridedPack
-        ( A.LocalHeight(), width,
+        util::PartialRowStridedPack<T,D>
+        (A.LocalHeight(), width,
           rowAlign, rowStride,
           rowStrideUnion, rowStridePart, sendRowRankPart,
           A.RowShift(),
           A.LockedBuffer(), A.LDim(),
-          secondBuf,        portionSize );
+          secondBuf,        portionSize);
 
         // Simultaneously Scatter in rows and Gather in columns
         mpi::AllToAll
-        ( secondBuf, portionSize,
-          firstBuf,  portionSize, B.PartialUnionRowComm() );
+        (secondBuf, portionSize,
+          firstBuf,  portionSize, B.PartialUnionRowComm());
 
         // Realign the result
         mpi::SendRecv
-        ( firstBuf,  rowStrideUnion*portionSize, sendRowRankPart,
+        (firstBuf,  rowStrideUnion*portionSize, sendRowRankPart,
           secondBuf, rowStrideUnion*portionSize, recvRowRankPart,
-          B.PartialRowComm() );
+          B.PartialRowComm());
 
         // Unpack
-        util::ColStridedUnpack
-        ( height, B.LocalWidth(),
+        util::ColStridedUnpack<T,D>
+        (height, B.LocalWidth(),
           A.ColAlign(), rowStrideUnion,
           secondBuf,  portionSize,
-          B.Buffer(), B.LDim() );
+          B.Buffer(), B.LDim());
     }
 }
 
 template<typename T,Dist U,Dist V>
 void RowAllToAllDemote
-  ( const DistMatrix<T,PartialUnionCol<U,V>(),Partial<V>(),BLOCK>& A,
-          DistMatrix<T,                U,             V   ,BLOCK>& B )
+  (const DistMatrix<T,PartialUnionCol<U,V>(),Partial<V>(),BLOCK>& A,
+          DistMatrix<T,                U,             V   ,BLOCK>& B)
 {
     EL_DEBUG_CSE
-    AssertSameGrids( A, B );
+    AssertSameGrids(A, B);
     // TODO(poulson): More efficient implementation
-    GeneralPurpose( A, B );
+    GeneralPurpose(A, B);
 }
 
 } // namespace copy

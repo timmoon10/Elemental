@@ -9,35 +9,53 @@
 #ifndef EL_BLAS_FILL_HPP
 #define EL_BLAS_FILL_HPP
 
-namespace El {
+#ifdef HYDROGEN_HAVE_CUDA
+#include "GPU/Fill.hpp"
+#endif
+
+namespace El
+{
 
 template<typename T>
-void Fill( Matrix<T>& A, T alpha )
+void Fill( AbstractMatrix<T>& A, T alpha )
 {
     EL_DEBUG_CSE
     const Int m = A.Height();
     const Int n = A.Width();
     T* ABuf = A.Buffer();
     const Int ALDim = A.LDim();
-
-    // Iterate over single loop if memory is contiguous. Otherwise
-    // iterate over double loop.
-    if( ALDim == m )
+    switch (A.GetDevice())
     {
-        for( Int i=0; i<m*n; ++i )
+    case Device::CPU:
+        // Iterate over single loop if memory is contiguous. Otherwise
+        // iterate over double loop.
+        if( n == 1 || ALDim == m )
         {
-            ABuf[i] = alpha;
-        }
-    }
-    else
-    {
-        for( Int j=0; j<n; ++j )
-        {
-            for( Int i=0; i<m; ++i )
+            EL_PARALLEL_FOR
+            for( Int i=0; i<m*n; ++i )
             {
-                ABuf[i+j*ALDim] = alpha;
+                ABuf[i] = alpha;
             }
         }
+        else
+        {
+            EL_PARALLEL_FOR_COLLAPSE2
+            for( Int j=0; j<n; ++j )
+            {
+                for( Int i=0; i<m; ++i )
+                {
+                    ABuf[i+j*ALDim] = alpha;
+                }
+            }
+        }
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Fill_GPU_impl(m, n, alpha, ABuf, ALDim);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Bad device type in Fill");
     }
 }
 
@@ -55,7 +73,7 @@ void Fill( AbstractDistMatrix<T>& A, T alpha )
 #endif
 
 #define PROTO(T) \
-  EL_EXTERN template void Fill( Matrix<T>& A, T alpha ); \
+  EL_EXTERN template void Fill( AbstractMatrix<T>& A, T alpha ); \
   EL_EXTERN template void Fill( AbstractDistMatrix<T>& A, T alpha );
 
 #define EL_ENABLE_DOUBLEDOUBLE

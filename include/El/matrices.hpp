@@ -134,6 +134,8 @@ void Jordan( AbstractDistMatrix<T>& J, Int n, T lambda );
 template<typename T>
 void Ones( Matrix<T>& A, Int m, Int n );
 template<typename T>
+void Ones( AbstractMatrix<T>& A, Int m, Int n );
+template<typename T>
 void Ones( AbstractDistMatrix<T>& A, Int m, Int n );
 
 // Toeplitz
@@ -156,6 +158,8 @@ void Walsh( AbstractDistMatrix<T>& A, Int k, bool binary=false );
 // -----
 template<typename T>
 void Zeros( Matrix<T>& A, Int m, Int n );
+template<typename T>
+void Zeros( AbstractMatrix<T>& A, Int m, Int n );
 template<typename T>
 void Zeros( AbstractDistMatrix<T>& A, Int m, Int n );
 
@@ -547,14 +551,23 @@ void Bernoulli( AbstractDistMatrix<T>& A, Int m, Int n, double p=0.5 );
 // --------
 template<typename Field>
 void MakeGaussian
-( Matrix<Field>& A, Field mean=0, Base<Field> stddev=1 );
+( AbstractMatrix<Field>& A, Field mean=0, Base<Field> stddev=1 );
+template<typename Field,Device Dev,
+         typename=EnableIf<IsDeviceValidType<Field,Dev>>>
+void MakeGaussian
+( Matrix<Field,Dev>& A, Field mean=0, Base<Field> stddev=1 );
+template<typename Field,Device Dev,
+         typename=DisableIf<IsDeviceValidType<Field,Dev>>,
+         typename=void>
+void MakeGaussian
+( Matrix<Field,Dev>& A, Field mean=0, Base<Field> stddev=1 );
 template<typename Field>
 void MakeGaussian
 ( AbstractDistMatrix<Field>& A, Field mean=0, Base<Field> stddev=1 );
 
 template<typename Field>
 void Gaussian
-( Matrix<Field>& A, Int m, Int n,
+( AbstractMatrix<Field>& A, Int m, Int n,
   Field mean=0, Base<Field> stddev=1 );
 template<typename Field>
 void Gaussian
@@ -579,12 +592,12 @@ void ThreeValued( AbstractDistMatrix<T>& A, Int m, Int n, double p=2./3. );
 // -------
 // Draw each entry from a uniform PDF over a closed ball.
 template<typename T>
-void MakeUniform( Matrix<T>& A, T center=0, Base<T> radius=1 );
+void MakeUniform( AbstractMatrix<T>& A, T center=0, Base<T> radius=1 );
 template<typename T>
 void MakeUniform( AbstractDistMatrix<T>& A, T center=0, Base<T> radius=1 );
 
 template<typename T>
-void Uniform( Matrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
+void Uniform( AbstractMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
 template<typename T>
 void Uniform
 ( AbstractDistMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );

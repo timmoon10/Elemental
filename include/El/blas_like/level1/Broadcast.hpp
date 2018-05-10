@@ -11,8 +11,8 @@
 
 namespace El {
 
-template<typename T>
-void Broadcast( Matrix<T>& A, mpi::Comm comm, int rank )
+template <Device D, typename T>
+void Broadcast_impl( AbstractMatrix<T>& A, mpi::Comm comm, int rank )
 {
     EL_DEBUG_CSE
     const int commSize = mpi::Size( comm );
@@ -29,12 +29,11 @@ void Broadcast( Matrix<T>& A, mpi::Comm comm, int rank )
     }
     else
     {
-        vector<T> buf;
-        FastResize( buf, size );
+        simple_buffer<T,D> buf(size);
 
         // Pack
         if( commRank == rank )
-            copy::util::InterleaveMatrix
+            copy::util::InterleaveMatrix<T,D>
             ( height, width,
               A.LockedBuffer(), 1, A.LDim(),
               buf.data(),       1, height );
@@ -43,10 +42,28 @@ void Broadcast( Matrix<T>& A, mpi::Comm comm, int rank )
 
         // Unpack
         if( commRank != rank )
-            copy::util::InterleaveMatrix
+            copy::util::InterleaveMatrix<T,D>
             ( height,        width,
               buf.data(), 1, height,
               A.Buffer(), 1, A.LDim() );
+    }
+}
+
+template<typename T>
+void Broadcast( AbstractMatrix<T>& A, mpi::Comm comm, int rank )
+{
+    switch(A.GetDevice())
+    {
+    case Device::CPU:
+        Broadcast_impl<Device::CPU>(A, comm, rank);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Broadcast_impl<Device::GPU>(A, comm, rank);
+        break;
+#endif // HYROGEN_HAVE_CUDA
+    default:
+        LogicError("Unsupported device type.");
     }
 }
 
@@ -99,7 +116,7 @@ void Broadcast( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank )
 
 #define PROTO(T) \
   EL_EXTERN template void Broadcast \
-  ( Matrix<T>& A, mpi::Comm comm, int rank ); \
+  ( AbstractMatrix<T>& A, mpi::Comm comm, int rank ); \
   EL_EXTERN template void Broadcast \
   ( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank );
 

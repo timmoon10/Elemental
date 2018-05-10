@@ -12,10 +12,10 @@
 namespace {
 
 // Debugging
-EL_DEBUG_ONLY(
+#ifndef EL_RELEASE
   std::stack<std::string> callStack;
   bool tracingEnabled = false;
-)
+#endif // !EL_RELEASE
 
 }
 

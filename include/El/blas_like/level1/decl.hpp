@@ -67,12 +67,20 @@ void AdjointAxpyContract
 // AllReduce
 // =========
 template<typename T>
-void AllReduce( Matrix<T>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
+void AllReduce( AbstractMatrix<T>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
+template<typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
+void AllReduce( Matrix<T,D>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
+template<typename T, Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>,typename=void>
+void AllReduce( Matrix<T,D>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
 template<typename T>
 void AllReduce( AbstractDistMatrix<T>& A, mpi::Comm comm, mpi::Op op=mpi::SUM );
 
 // Axpy
 // ====
+template<typename Ring1,typename Ring2>
+void Axpy(
+    Ring2 alpha, const AbstractMatrix<Ring1>& X, AbstractMatrix<Ring1>& Y );
 template<typename Ring1,typename Ring2>
 void Axpy( Ring2 alpha, const Matrix<Ring1>& X, Matrix<Ring1>& Y );
 template<typename Ring1,typename Ring2>
@@ -88,12 +96,12 @@ void Axpy
 namespace axpy {
 namespace util {
 
-template<typename Ring>
+template<typename Ring,Device=Device::CPU>
 void InterleaveMatrixUpdate
 ( Ring alpha, Int localHeight, Int localWidth,
   const Ring* A, Int colStrideA, Int rowStrideA,
         Ring* B, Int colStrideB, Int rowStrideB );
-template<typename Ring>
+template<typename Ring,Device=Device::CPU>
 void UpdateWithLocalData
 ( Ring alpha, const ElementalMatrix<Ring>& A, DistMatrix<Ring,STAR,STAR>& B );
 
@@ -133,8 +141,10 @@ void LocalAxpyTrapezoid
 
 // Broadcast
 // =========
+template<typename T, Device D>
+void Broadcast( Matrix<T, D>& A, mpi::Comm comm, int rank=0 );
 template<typename T>
-void Broadcast( Matrix<T>& A, mpi::Comm comm, int rank=0 );
+void Broadcast( AbstractMatrix<T>& A, mpi::Comm comm, int rank=0 );
 template<typename T>
 void Broadcast( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank=0 );
 
@@ -147,7 +157,11 @@ void Send( const Matrix<T>& A, mpi::Comm comm, int destination );
 // ========
 template<typename T>
 void SendRecv
-( const Matrix<T>& A, Matrix<T>& B, mpi::Comm comm,
+( const AbstractMatrix<T>& A, AbstractMatrix<T>& B, mpi::Comm comm,
+  int sendRank, int recvRank );
+template<typename T, Device D>
+void SendRecv
+( const Matrix<T,D>& A, Matrix<T,D>& B, mpi::Comm comm,
   int sendRank, int recvRank );
 
 // Recv
@@ -338,6 +352,8 @@ void Contract( const BlockMatrix<T>& A, BlockMatrix<T>& B );
 // ====
 
 template<typename T>
+void Copy( const AbstractMatrix<T>& A, AbstractMatrix<T>& B );
+template<typename T>
 void Copy( const Matrix<T>& A, Matrix<T>& B );
 template<typename S,typename T,
          typename=EnableIf<CanCast<S,T>>>
@@ -377,31 +393,31 @@ void CopyFromNonRoot( DistMatrix<T,CIRC,CIRC,BLOCK>& B,
 namespace copy {
 namespace util {
 
-template<typename T>
+template<typename T, Device D=Device::CPU>
 void InterleaveMatrix
 ( Int height, Int width,
   const T* A, Int colStrideA, Int rowStrideA,
         T* B, Int colStrideB, Int rowStrideB );
 
-template<typename T>
+template<typename T,Device=Device::CPU>
 void ColStridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
 template<typename T>
-void ColStridedColumPack
+void ColStridedColumnPack
 ( Int height,
   Int colAlign, Int colStride,
   const T* A,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void ColStridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
-template<typename T>
+template<typename T, Device = Device::CPU>
 void PartialColStridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
@@ -417,7 +433,7 @@ void PartialColStridedColumnPack
   Int colShiftA,
   const T* A,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void PartialColStridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,
@@ -434,19 +450,19 @@ void PartialColStridedColumnUnpack
   const T* APortions, Int portionSize,
         T* B );
 
-template<typename T>
+template<typename T,Device = Device::CPU>
 void RowStridedPack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void RowStridedUnpack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void PartialRowStridedPack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -454,7 +470,7 @@ void PartialRowStridedPack
   Int rowShiftA,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device = Device::CPU>
 void PartialRowStridedUnpack
 ( Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -463,14 +479,14 @@ void PartialRowStridedUnpack
   const T* APortions, Int portionSize,
         T* B,         Int BLDim );
 
-template<typename T>
+template<typename T,Device=Device::CPU>
 void StridedPack
 ( Int height, Int width,
   Int colAlign, Int colStride,
   Int rowAlign, Int rowStride,
   const T* A,         Int ALDim,
         T* BPortions, Int portionSize );
-template<typename T>
+template<typename T,Device=Device::CPU>
 void StridedUnpack
 ( Int height, Int width,
   Int colAlign, Int colStride,
@@ -553,8 +569,10 @@ void DiagonalSolve
 
 // Dot
 // ===
+template<typename T, Device D>
+T Dot( const Matrix<T, D>& A, const Matrix<T, D>& B );
 template<typename T>
-T Dot( const Matrix<T>& A, const Matrix<T>& B );
+T Dot( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B );
 template<typename T>
 T Dot( const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B );
 
@@ -571,17 +589,21 @@ template<typename T>
 void EntrywiseFill( Matrix<T>& A, function<T(void)> func );
 template<typename T>
 void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func );
+#ifdef HYDROGEN_HAVE_CUDA
+template<typename T>
+void EntrywiseFill( Matrix<T,Device::GPU>& A, function<T(void)> func );
+#endif // HYDROGEN_HAVE_CUDA
 
 // EntrywiseMap
 // ============
 template<typename T>
-void EntrywiseMap( Matrix<T>& A, function<T(const T&)> func );
+void EntrywiseMap( AbstractMatrix<T>& A, function<T(const T&)> func );
 template<typename T>
 void EntrywiseMap( AbstractDistMatrix<T>& A, function<T(const T&)> func );
 
 template<typename S,typename T>
 void EntrywiseMap
-( const Matrix<S>& A, Matrix<T>& B, function<T(const S&)> func );
+( const AbstractMatrix<S>& A, AbstractMatrix<T>& B, function<T(const S&)> func );
 template<typename S,typename T>
 void EntrywiseMap
 ( const AbstractDistMatrix<S>& A, AbstractDistMatrix<T>& B,
@@ -590,7 +612,7 @@ void EntrywiseMap
 // Fill
 // ====
 template<typename T>
-void Fill( Matrix<T>& A, T alpha );
+void Fill( AbstractMatrix<T>& A, T alpha );
 template<typename T>
 void Fill( AbstractDistMatrix<T>& A, T alpha );
 
@@ -742,7 +764,8 @@ void GetSubmatrix
 // Hadamard
 // ========
 template<typename T>
-void Hadamard( const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C );
+void Hadamard( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B,
+               AbstractMatrix<T>& C );
 template<typename T>
 void Hadamard
 ( const AbstractDistMatrix<T>& A,
@@ -752,7 +775,7 @@ void Hadamard
 // HilbertSchmidt
 // ==============
 template<typename T>
-T HilbertSchmidt( const Matrix<T>& A, const Matrix<T>& B );
+T HilbertSchmidt( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B );
 template<typename T>
 T HilbertSchmidt
 ( const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& C );
@@ -1248,6 +1271,9 @@ void RotateCols
 // Round
 // =====
 // Round each entry to the nearest integer
+template <typename T>
+void Round(AbstractMatrix<T>& A);
+
 template<typename T>
 void Round( Matrix<T>& A );
 template<>
@@ -1263,13 +1289,13 @@ void Round( AbstractDistMatrix<T>& A );
 // =====
 // TODO(poulson): Force S=T?
 template<typename T,typename S>
-void Scale( S alpha, Matrix<T>& A );
+void Scale( S alpha, AbstractMatrix<T>& A );
 template<typename T,typename S>
 void Scale( S alpha, AbstractDistMatrix<T>& A );
 
 template<typename Real,typename S,
          typename=EnableIf<IsReal<Real>>>
-void Scale( S alpha, Matrix<Real>& AReal, Matrix<Real>& AImag );
+void Scale( S alpha, AbstractMatrix<Real>& AReal, AbstractMatrix<Real>& AImag );
 template<typename Real,typename S,
          typename=EnableIf<IsReal<Real>>>
 void Scale
@@ -1419,6 +1445,21 @@ void Transpose
 ( const Matrix<T>& A,
         Matrix<T>& B,
   bool conjugate=false );
+#ifdef HYDROGEN_HAVE_CUDA
+template<typename T,typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void Transpose
+( Matrix<T,Device::GPU> const& A,
+  Matrix<T,Device::GPU>& B,
+  bool conjugate=false );
+template<typename T,
+         typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
+         typename=void>
+void Transpose
+( Matrix<T,Device::GPU> const& A,
+  Matrix<T,Device::GPU>& B,
+  bool conjugate=false );
+#endif // HYDROGEN_HAVE_CUDA
+
 template<typename T>
 void Transpose
 ( const ElementalMatrix<T>& A,
@@ -1523,7 +1564,7 @@ void UpdateSubmatrix
 // Zero
 // ====
 template<typename T>
-void Zero( Matrix<T>& A );
+void Zero( AbstractMatrix<T>& A );
 template<typename T>
 void Zero( AbstractDistMatrix<T>& A );
 
@@ -1538,7 +1579,6 @@ void Zero( AbstractDistMatrix<T>& A );
 // This routine uses the stable approach suggested by Kahan and Demmel and
 // returns the value rho.
 //
-
 template<typename Real>
 Real Givens
 ( const Real& phi,
