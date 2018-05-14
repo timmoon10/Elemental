@@ -9,6 +9,10 @@
 #ifndef EL_BLAS_ZERO_HPP
 #define EL_BLAS_ZERO_HPP
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #ifdef HYDROGEN_HAVE_CUDA
 #include "GPU/Fill.hpp"
 #endif

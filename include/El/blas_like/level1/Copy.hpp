@@ -9,6 +9,10 @@
 #ifndef EL_BLAS_COPY_HPP
 #define EL_BLAS_COPY_HPP
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include <El/blas_like/level1/Copy/internal_decl.hpp>
 #include <El/blas_like/level1/Copy/GeneralPurpose.hpp>
 #include <El/blas_like/level1/Copy/util.hpp>
