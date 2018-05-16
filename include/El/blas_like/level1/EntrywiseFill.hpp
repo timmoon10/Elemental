@@ -12,7 +12,7 @@
 namespace El {
 
 template<typename T>
-void EntrywiseFill( Matrix<T>& A, function<T(void)> func )
+void EntrywiseFill( Matrix<T, Device::CPU>& A, function<T(void)> func )
 {
     EL_DEBUG_CSE
     const Int m = A.Height();
@@ -22,9 +22,21 @@ void EntrywiseFill( Matrix<T>& A, function<T(void)> func )
             A(i,j) = func();
 }
 
+// FIXME: Make proper kernel
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T>
+void EntrywiseFill(Matrix<T,Device::GPU> &A, function<T(void)> func)
+{
+    EL_DEBUG_CSE
+    Matrix<T,Device::CPU> CPU_Mat(A.Height(),A.Width(),A.LDim());
+    EntrywiseFill(CPU_Mat, std::move(func));
+    A = CPU_Mat;
+}
+#endif // HYDROGEN_HAVE_CUDA
+
 template<typename T>
 void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func )
-{ EntrywiseFill( A.Matrix(), func ); }
+{ EntrywiseFill( dynamic_cast<Matrix<T,Device::CPU>&>(A.Matrix()), func ); }
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
@@ -34,9 +46,16 @@ void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func )
 
 #define PROTO(T) \
   EL_EXTERN template void EntrywiseFill \
-  ( Matrix<T>& A, function<T(void)> func ); \
+  ( Matrix<T,Device::CPU>& A, function<T(void)> func );  \
   EL_EXTERN template void EntrywiseFill \
   ( AbstractDistMatrix<T>& A, function<T(void)> func );
+
+#ifdef HYDROGEN_HAVE_CUDA
+EL_EXTERN template void EntrywiseFill(
+    Matrix<float,Device::GPU>&, function<float(void)>);
+EL_EXTERN template void EntrywiseFill(
+    Matrix<double,Device::GPU>&, function<double(void)>);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

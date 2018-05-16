@@ -9,30 +9,61 @@
 #ifndef EL_BLAS_ZERO_HPP
 #define EL_BLAS_ZERO_HPP
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+#ifdef HYDROGEN_HAVE_CUDA
+#include "GPU/Fill.hpp"
+#endif
+
 namespace El {
 
 template<typename T>
-void Zero( Matrix<T>& A )
+void Zero( AbstractMatrix<T>& A )
 {
     EL_DEBUG_CSE
     const Int height = A.Height();
     const Int width = A.Width();
+    const Int size = height * width;
     const Int ALDim = A.LDim();
     T* ABuf = A.Buffer();
 
-    // Zero out all entries if memory is contiguous. Otherwise zero
-    // out each column.
-    if( ALDim == height )
+    switch (A.GetDevice())
     {
-        MemZero( ABuf, height*width );
-    }
-    else
-    {
-        EL_PARALLEL_FOR
-        for( Int j=0; j<width; ++j )
+    case Device::CPU:
+        if( width == 1 || ALDim == height )
         {
-            MemZero( &ABuf[j*ALDim], height );
+#ifdef _OPENMP
+            #pragma omp parallel
+            {
+                const Int numThreads = omp_get_num_threads();
+                const Int thread = omp_get_thread_num();
+                const Int chunk = (size + numThreads - 1) / numThreads;
+                const Int start = Min(chunk * thread, size);
+                const Int end = Min(chunk * (thread + 1), size);
+                MemZero( &ABuf[start], end - start );
+            }
+#else
+            MemZero( ABuf, size );
+#endif
         }
+        else
+        {
+            EL_PARALLEL_FOR
+            for( Int j=0; j<width; ++j )
+            {
+                MemZero( &ABuf[j*ALDim], height );
+            }
+        }
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Fill_GPU_impl(height, width, T(0), ABuf, ALDim);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Bad device type in Zero");
     }
 
 }
@@ -52,7 +83,7 @@ void Zero( AbstractDistMatrix<T>& A )
 #endif
 
 #define PROTO(T) \
-  EL_EXTERN template void Zero( Matrix<T>& A ); \
+  EL_EXTERN template void Zero( AbstractMatrix<T>& A ); \
   EL_EXTERN template void Zero( AbstractDistMatrix<T>& A );
 
 #define EL_ENABLE_DOUBLEDOUBLE

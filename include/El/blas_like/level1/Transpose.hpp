@@ -69,6 +69,33 @@ void PartialColAllGather
 
 } // namespace transpose
 
+template <typename T>
+void Transpose(AbstractMatrix<T> const& A, AbstractMatrix<T>& B,
+               bool conjugate)
+{
+    EL_DEBUG_CSE
+    if (A.GetDevice() != B.GetDevice())
+        LogicError("Matrices must be on same device for Transpose.");
+
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Transpose(
+            static_cast<Matrix<T,Device::CPU> const&>(A),
+            static_cast<Matrix<T,Device::CPU>&>(B), conjugate);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Transpose(
+            static_cast<Matrix<T,Device::GPU> const&>(A),
+            static_cast<Matrix<T,Device::GPU>&>(B), conjugate);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Bad device for transform.");
+    }
+}
+
 template<typename T>
 void Transpose( const Matrix<T>& A, Matrix<T>& B, bool conjugate )
 {
@@ -130,6 +157,27 @@ void Transpose( const Matrix<T>& A, Matrix<T>& B, bool conjugate )
 #endif
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T, typename>
+void Transpose(Matrix<T,Device::GPU> const& A,
+               Matrix<T,Device::GPU>& B, bool conjugate )
+{
+    const Int m = A.Height(), n = A.Width();
+    B.Resize(n,m);
+    cublas::Geam(conjugate ? 'C' : 'T', 'N', n, m,
+                 T(1), A.LockedBuffer(), A.LDim(),
+                 T(0), B.LockedBuffer(), B.LDim(),
+                 B.Buffer(), B.LDim());
+}
+
+template <typename T, typename, typename>
+void Transpose(Matrix<T,Device::GPU> const& A,
+               Matrix<T,Device::GPU>& B, bool /* conjugate */)
+{
+    LogicError("Bad device type!");
+}
+#endif // HYDROGEN_HAVE_CUDA
+
 template<typename T>
 void Transpose
 ( const ElementalMatrix<T>& A,
@@ -148,7 +196,7 @@ void Transpose
     {
         B.Align( A.RowAlign(), A.ColAlign() );
         B.Resize( A.Width(), A.Height() );
-        Transpose( A.LockedMatrix(), B.Matrix(), conjugate );
+        Transpose(A.LockedMatrix(), B.Matrix(), conjugate);
     }
     else if( AData.colDist == BData.rowDist &&
              AData.rowDist == Collect(BData.colDist) )
@@ -187,7 +235,7 @@ void Transpose
         C->AlignWith( BData );
         Copy( A, *C );
         B.Resize( A.Width(), A.Height() );
-        Transpose( C->LockedMatrix(), B.Matrix(), conjugate );
+        Transpose(C->LockedMatrix(), B.Matrix(), conjugate);
     }
 }
 
@@ -213,7 +261,7 @@ void Transpose
         ( A.BlockWidth(), A.BlockHeight(),
           A.RowAlign(), A.ColAlign(), A.RowCut(), A.ColCut() );
         B.Resize( A.Width(), A.Height() );
-        Transpose( A.LockedMatrix(), B.Matrix(), conjugate );
+        Transpose(A.LockedMatrix(), B.Matrix(), conjugate);
     }
     else if( AData.colDist == BData.rowDist &&
              AData.rowDist == Collect(BData.colDist) )
@@ -252,7 +300,7 @@ void Transpose
         C->AlignWith( BData );
         Copy( A, *C );
         B.Resize( A.Width(), A.Height() );
-        Transpose( C->LockedMatrix(), B.Matrix(), conjugate );
+        Transpose(C->LockedMatrix(), B.Matrix(), conjugate );
     }
 }
 
@@ -283,7 +331,7 @@ void Transpose
         C->AlignWith( BCast );
         Copy( A, *C );
         BCast.Resize( A.Width(), A.Height() );
-        Transpose( C->LockedMatrix(), BCast.Matrix(), conjugate );
+        Transpose(C->LockedMatrix(), BCast.Matrix(), conjugate);
     }
     else  // A.Wrap() == BLOCK && B.Wrap() == ELEMENT
     {
@@ -293,7 +341,7 @@ void Transpose
         C->AlignWith( BCast );
         Copy( A, *C );
         BCast.Resize( A.Width(), A.Height() );
-        Transpose( C->LockedMatrix(), BCast.Matrix(), conjugate );
+        Transpose(C->LockedMatrix(), BCast.Matrix(), conjugate);
     }
 }
 
@@ -335,6 +383,8 @@ void Adjoint
 
 #define PROTO(T) \
   EL_EXTERN template void Transpose \
+  ( const AbstractMatrix<T>& A, AbstractMatrix<T>& B, bool conjugate ); \
+  EL_EXTERN template void Transpose \
   ( const Matrix<T>& A, Matrix<T>& B, bool conjugate ); \
   EL_EXTERN template void Transpose \
   ( const ElementalMatrix<T>& A, ElementalMatrix<T>& B, bool conjugate ); \
@@ -352,6 +402,15 @@ void Adjoint
   EL_EXTERN template void Adjoint \
   ( const AbstractDistMatrix<T>& A, \
           AbstractDistMatrix<T>& B );
+
+#ifdef HYDROGEN_HAVE_CUDA
+template void Transpose(
+    Matrix<float,Device::GPU> const& A, Matrix<float,Device::GPU>& B,
+    bool conjugate);
+template void Transpose(
+    Matrix<double,Device::GPU> const& A, Matrix<double,Device::GPU>& B,
+    bool conjugate);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

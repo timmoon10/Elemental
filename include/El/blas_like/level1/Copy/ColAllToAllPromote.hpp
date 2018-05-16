@@ -12,10 +12,11 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+// FIXME (trb 03/06/18) -- Need to do the GPU impl
+template<typename T,Dist U,Dist V,Device D>
 void ColAllToAllPromote
-( const DistMatrix<T,        U,                     V   >& A,
-        DistMatrix<T,Partial<U>(),PartialUnionRow<U,V>()>& B )
+( const DistMatrix<T,U,V,ELEMENT,D>& A,
+  DistMatrix<T,Partial<U>(),PartialUnionRow<U,V>(),ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
@@ -45,13 +46,12 @@ void ColAllToAllPromote
         }
         else
         {
-            vector<T> buffer;
-            FastResize( buffer, 2*colStrideUnion*portionSize );
-            T* firstBuf  = &buffer[0];
-            T* secondBuf = &buffer[colStrideUnion*portionSize];
+            simple_buffer<T,D> buffer(2*colStrideUnion*portionSize);
+            T* firstBuf  = buffer.data();
+            T* secondBuf = buffer.data() + colStrideUnion*portionSize;
 
             // Pack
-            util::RowStridedPack
+            util::RowStridedPack<T,D>
             ( A.LocalHeight(), width,
               B.RowAlign(), colStrideUnion,
               A.LockedBuffer(), A.LDim(),
@@ -63,7 +63,7 @@ void ColAllToAllPromote
               secondBuf, portionSize, A.PartialUnionColComm() );
 
             // Unpack
-            util::PartialColStridedUnpack
+            util::PartialColStridedUnpack<T,D>
             ( height, B.LocalWidth(),
               A.ColAlign(), colStride,
               colStrideUnion, colStridePart, colRankPart,
@@ -81,13 +81,12 @@ void ColAllToAllPromote
         const Int sendColRankPart = Mod( colRankPart+colDiff, colStridePart );
         const Int recvColRankPart = Mod( colRankPart-colDiff, colStridePart );
 
-        vector<T> buffer;
-        FastResize( buffer, 2*colStrideUnion*portionSize );
-        T* firstBuf  = &buffer[0];
-        T* secondBuf = &buffer[colStrideUnion*portionSize];
+        simple_buffer<T,D> buffer(2*colStrideUnion*portionSize);
+        T* firstBuf  = buffer.data();
+        T* secondBuf = buffer.data() + colStrideUnion*portionSize;
 
         // Pack
-        util::RowStridedPack
+        util::RowStridedPack<T,D>
         ( A.LocalHeight(), width,
           B.RowAlign(), colStrideUnion,
           A.LockedBuffer(), A.LDim(),
@@ -105,7 +104,7 @@ void ColAllToAllPromote
           secondBuf, portionSize, A.PartialUnionColComm() );
 
         // Unpack
-        util::PartialColStridedUnpack
+        util::PartialColStridedUnpack<T,D>
         ( height, B.LocalWidth(),
           A.ColAlign(), colStride,
           colStrideUnion, colStridePart, recvColRankPart,

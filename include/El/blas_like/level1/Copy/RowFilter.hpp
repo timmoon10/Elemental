@@ -13,8 +13,8 @@ namespace El {
 namespace copy {
 
 // (U,Collect(V)) |-> (U,V)
-template<typename T>
-void RowFilter
+template <Device D, typename T>
+void RowFilter_impl
 ( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
@@ -39,7 +39,7 @@ void RowFilter
     const Int colDiff = B.ColAlign() - A.ColAlign();
     if( colDiff == 0 )
     {
-        util::InterleaveMatrix
+        util::InterleaveMatrix<T,D>
         ( localHeight, localWidth,
           A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
           B.Buffer(),                 1, B.LDim() );
@@ -57,13 +57,12 @@ void RowFilter
         const Int sendSize = localHeightA*localWidth;
         const Int recvSize = localHeight *localWidth;
 
-        vector<T> buffer;
-        FastResize( buffer, sendSize+recvSize );
-        T* sendBuf = &buffer[0];
-        T* recvBuf = &buffer[sendSize];
+        simple_buffer<T,D> buffer(sendSize+recvSize);
+        T* sendBuf = buffer.data();
+        T* recvBuf = buffer.data() + sendSize;
 
         // Pack
-        util::InterleaveMatrix
+        util::InterleaveMatrix<T,D>
         ( localHeightA, localWidth,
           A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
           sendBuf,                    1, localHeightA );
@@ -74,10 +73,33 @@ void RowFilter
           recvBuf, recvSize, recvColRank, B.ColComm() );
 
         // Unpack
-        util::InterleaveMatrix
+        util::InterleaveMatrix<T,D>
         ( localHeight, localWidth,
           recvBuf,    1, localHeight,
           B.Buffer(), 1, B.LDim() );
+    }
+}
+
+template <typename T>
+void RowFilter
+( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
+{
+    EL_DEBUG_CSE
+    if (A.GetLocalDevice() != B.GetLocalDevice())
+        LogicError("Interdevice row filter not supported yet.");
+
+    switch (A.GetLocalDevice())
+    {
+    case Device::CPU:
+        RowFilter_impl<Device::CPU>(A,B);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        RowFilter_impl<Device::GPU>(A,B);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("RowFilter: Bad device.");
     }
 }
 

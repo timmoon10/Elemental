@@ -176,9 +176,13 @@ string BuildString( const ArgPack& ... args )
     return os.str();
 }
 
+inline void break_on_me() noexcept {}
+
 template<typename... ArgPack>
 void UnrecoverableError( const ArgPack& ... args )
 {
+    break_on_me();
+
     ostringstream os;
     BuildStream( os, args... );
     os << endl;
@@ -188,6 +192,8 @@ void UnrecoverableError( const ArgPack& ... args )
 template<typename... ArgPack>
 void LogicError( const ArgPack& ... args )
 {
+    break_on_me();
+
     ostringstream os;
     BuildStream( os, args... );
     os << endl;
@@ -197,6 +203,8 @@ void LogicError( const ArgPack& ... args )
 template<typename... ArgPack>
 void RuntimeError( const ArgPack& ... args )
 {
+    break_on_me();
+
     ostringstream os;
     BuildStream( os, args... );
     os << endl;

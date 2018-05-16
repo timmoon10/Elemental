@@ -12,10 +12,12 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V>
+// FIXME (trb 04/03/2018): This would not be hard to extend to
+// inter-device AllGather
+template<typename T,Dist U,Dist V,Device D>
 void AllGather
-( const DistMatrix<T,        U,           V   >& A,
-        DistMatrix<T,Collect<U>(),Collect<V>()>& B )
+( DistMatrix<T,        U,           V   ,ELEMENT,D> const& A,
+  DistMatrix<T,Collect<U>(),Collect<V>(),ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
@@ -39,13 +41,18 @@ void AllGather
             const Int maxLocalHeight = MaxLength(height,colStride);
             const Int maxLocalWidth = MaxLength(width,rowStride);
             const Int portionSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
-            vector<T> buf;
-            FastResize( buf, (distStride+1)*portionSize );
-            T* sendBuf = &buf[0];
-            T* recvBuf = &buf[portionSize];
+            simple_buffer<T,D> buf((distStride+1)*portionSize);
+            T* sendBuf = buf.data();
+            T* recvBuf = buf.data() + portionSize;
 
+#if 0
+            simple_buffer<T,D1> send_buffer(portionSize);
+            simple_buffer<T,D2> recv_buffer(distStride*portionSize);
+            T* sendBuf = send_buffer.data();
+            T* recvBuf = recv_buffer.data();
+#endif
             // Pack
-            util::InterleaveMatrix
+            util::InterleaveMatrix<T,D>// D1
             ( A.LocalHeight(), A.LocalWidth(),
               A.LockedBuffer(), 1, A.LDim(),
               sendBuf,          1, A.LocalHeight() );
@@ -55,7 +62,7 @@ void AllGather
             ( sendBuf, portionSize, recvBuf, portionSize, A.DistComm() );
 
             // Unpack
-            util::StridedUnpack
+            util::StridedUnpack<T,D>// D2
             ( height, width,
               A.ColAlign(), colStride,
               A.RowAlign(), rowStride,

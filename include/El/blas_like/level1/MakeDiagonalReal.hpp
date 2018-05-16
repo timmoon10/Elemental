@@ -32,7 +32,7 @@ void MakeDiagonalReal( AbstractDistMatrix<T>& A, Int offset )
     EL_DEBUG_CSE
     const Int height = A.Height();
     const Int localWidth = A.LocalWidth();
-    Matrix<T>& ALoc = A.Matrix();
+    Matrix<T>& ALoc = dynamic_cast<Matrix<T>&>(A.Matrix());
     for( Int jLoc=0; jLoc<localWidth; ++jLoc )
     {
         const Int j = A.GlobalCol(jLoc);

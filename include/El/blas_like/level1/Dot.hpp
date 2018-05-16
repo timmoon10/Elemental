@@ -11,11 +11,35 @@
 
 namespace El {
 
-template<typename T>
-T Dot( const Matrix<T>& A, const Matrix<T>& B )
+template<typename T, Device D>
+T Dot( const Matrix<T, D>& A, const Matrix<T, D>& B )
 {
     EL_DEBUG_CSE
     return HilbertSchmidt( A, B );
+}
+
+template<typename T>
+T Dot( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B )
+{
+    if (A.GetDevice() != B.GetDevice())
+        LogicError("Dot requires matching device types.");
+
+    T sum(0);
+    switch(A.GetDevice()) {
+    case Device::CPU:
+      sum = Dot(static_cast<const Matrix<T,Device::CPU>&>(A),
+                static_cast<const Matrix<T,Device::CPU>&>(B));
+      break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+      sum = Dot(static_cast<const Matrix<T,Device::GPU>&>(A),
+                static_cast<const Matrix<T,Device::GPU>&>(B));
+      break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+      LogicError("Unsupported device type.");
+    }
+    return sum;
 }
 
 template<typename T>
@@ -60,8 +84,8 @@ T Dotu( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B )
     if( A.Participating() )
     {
         T localInnerProd(0);
-        auto& ALoc = A.LockedMatrix();
-        auto& BLoc = B.LockedMatrix();
+        auto& ALoc = dynamic_cast<Matrix<T,Device::CPU> const&>(A.LockedMatrix());
+        auto& BLoc = dynamic_cast<Matrix<T,Device::CPU> const&>(B.LockedMatrix());
         const Int localHeight = A.LocalHeight();
         const Int localWidth = A.LocalWidth();
         for( Int jLoc=0; jLoc<localWidth; ++jLoc )
@@ -83,6 +107,8 @@ T Dotu( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B )
 #define PROTO(T) \
   EL_EXTERN template T Dot \
   ( const Matrix<T>& A, const Matrix<T>& B ); \
+  EL_EXTERN template T Dot \
+  ( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B ); \
   EL_EXTERN template T Dot \
   ( const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& B ); \
   EL_EXTERN template T Dotu \

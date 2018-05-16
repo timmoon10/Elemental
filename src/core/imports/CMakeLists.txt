@@ -13,6 +13,11 @@ set_full_path(THIS_DIR_SOURCES
   scalapack.cpp
   )
 
+if (HYDROGEN_HAVE_CUDA)
+  set_full_path(CUDA_SOURCES cuda.cpp cublas.cpp)
+  list(APPEND THIS_DIR_SOURCES ${CUDA_SOURCES})
+endif()
+
 # Add the subdirectories
 add_subdirectory(blas)
 add_subdirectory(lapack)

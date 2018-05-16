@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El.hpp>
@@ -17,9 +17,33 @@
 
 namespace El {
 
+template <typename T>
+void Write(AbstractMatrix<T> const& A, string basename,
+           FileFormat format, string title)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Write(static_cast<Matrix<T,Device::CPU> const&>(A),
+              basename, format, title);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+    {
+        // Copy to the CPU
+        Matrix<T,Device::CPU> A_CPU{static_cast<Matrix<T,Device::GPU> const&>(A)};
+        Write(A_CPU, basename, format, title);
+    }
+    break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Write: Bad Device type.");
+    }
+}
+
 template<typename T>
 void Write
-( const Matrix<T>& A, 
+( const Matrix<T>& A,
   string basename, FileFormat format, string title )
 {
     EL_DEBUG_CSE
@@ -45,7 +69,7 @@ void Write
 
 template<typename T>
 void Write
-( const AbstractDistMatrix<T>& A, 
+( const AbstractDistMatrix<T>& A,
   string basename, FileFormat format, string title )
 {
     EL_DEBUG_CSE
@@ -63,12 +87,14 @@ void Write
 }
 
 #define PROTO(T) \
-  template void Write \
-  ( const Matrix<T>& A, \
-    string basename, FileFormat format, string title ); \
-  template void Write \
-  ( const AbstractDistMatrix<T>& A, \
-    string basename, FileFormat format, string title );
+    template void Write                         \
+    ( const AbstractMatrix<T>&, string, FileFormat, string );   \
+    template void Write                                 \
+    ( const Matrix<T>& A,                               \
+      string basename, FileFormat format, string title );       \
+    template void Write                                         \
+    ( const AbstractDistMatrix<T>& A,                           \
+      string basename, FileFormat format, string title );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

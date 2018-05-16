@@ -11,9 +11,12 @@
 namespace El {
 
 template<typename Field>
-Base<Field> EntrywiseNorm( const Matrix<Field>& A, Base<Field> p )
+Base<Field> EntrywiseNorm( const AbstractMatrix<Field>& A, Base<Field> p )
 {
     EL_DEBUG_CSE
+    if(A.GetDevice() != Device::CPU)
+      LogicError("EntrywiseNorm: Unsupported function for non-CPU Matrix");
+
     // TODO(poulson): Make this more numerically stable
     typedef Base<Field> Real;
     Real sum = 0;
@@ -164,7 +167,7 @@ Base<Field> SymmetricEntrywiseNorm
 }
 
 #define PROTO(Field) \
-  template Base<Field> EntrywiseNorm( const Matrix<Field>& A, Base<Field> p ); \
+  template Base<Field> EntrywiseNorm( const AbstractMatrix<Field>& A, Base<Field> p ); \
   template Base<Field> \
   EntrywiseNorm( const AbstractDistMatrix<Field>& A, Base<Field> p ); \
   template Base<Field> HermitianEntrywiseNorm \

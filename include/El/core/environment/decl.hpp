@@ -238,30 +238,30 @@ public:
     : std::runtime_error( msg ) { }
 };
 
-EL_DEBUG_ONLY(
-    void EnableTracing();
-    void DisableTracing();
+#ifndef EL_RELEASE
+void EnableTracing();
+void DisableTracing();
 
-    void PushCallStack( string s );
-    void PopCallStack();
-    void DumpCallStack( ostream& os=cerr );
+void PushCallStack( string s );
+void PopCallStack();
+void DumpCallStack( ostream& os=cerr );
 
-    class CallStackEntry
+class CallStackEntry
+{
+public:
+    CallStackEntry( string s )
     {
-    public:
-        CallStackEntry( string s )
-        {
-            if( !uncaught_exception() )
-                PushCallStack(s);
-        }
-        ~CallStackEntry()
-        {
-            if( !uncaught_exception() )
-                PopCallStack();
-        }
-    };
-    typedef CallStackEntry CSE;
-)
+        if( !uncaught_exception() )
+            PushCallStack(s);
+    }
+    ~CallStackEntry()
+    {
+        if( !uncaught_exception() )
+            PopCallStack();
+    }
+};
+typedef CallStackEntry CSE;
+#endif // !EL_RELEASE
 
 void OpenLog( const char* filename );
 

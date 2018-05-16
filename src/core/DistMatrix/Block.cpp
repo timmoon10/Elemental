@@ -153,7 +153,7 @@ BlockMatrix<T>::operator=( BlockMatrix<T>&& A )
     }
     else
     {
-        this->matrix_.ShallowSwap( A.matrix_ );
+        this->Matrix().ShallowSwap( A.Matrix() );
         this->viewType_ = A.viewType_;
         this->height_ = A.height_;
         this->width_ = A.width_;
@@ -180,10 +180,11 @@ BlockMatrix<T>::operator=( BlockMatrix<T>&& A )
 template<typename T>
 void BlockMatrix<T>::Empty( bool freeMemory )
 {
+
     if( freeMemory )
-        this->matrix_.Empty_();
+        this->Matrix().Empty_();
     else
-        this->matrix_.Resize( 0, 0 );
+        this->Matrix().Resize( 0, 0 );
 
     this->viewType_ = OWNER;
     this->height_ = 0;
@@ -198,7 +199,7 @@ void BlockMatrix<T>::Empty( bool freeMemory )
     this->rowConstrained_ = false;
     this->rootConstrained_ = false;
 
-    SwapClear( this->remoteUpdates );
+    //SwapClear( this->remoteUpdates_ );
 }
 
 template<typename T>
@@ -209,7 +210,7 @@ void BlockMatrix<T>::Resize( Int height, Int width )
     this->height_ = height;
     this->width_ = width;
     if( this->Participating() )
-        this->matrix_.Resize_
+        this->Matrix().Resize_
         ( this->NewLocalHeight(height), this->NewLocalWidth(width) );
 }
 
@@ -221,7 +222,7 @@ void BlockMatrix<T>::Resize( Int height, Int width, Int ldim )
     this->height_ = height;
     this->width_ = width;
     if( this->Participating() )
-        this->matrix_.Resize_
+        this->Matrix().Resize_
         ( this->NewLocalHeight(height), this->NewLocalWidth(width), ldim );
 }
 
@@ -496,7 +497,7 @@ void BlockMatrix<T>::Attach
     {
         Int localHeight = this->NewLocalHeight(height);
         Int localWidth  = this->NewLocalWidth(width);
-        this->matrix_.Attach_( localHeight, localWidth, buffer, ldim );
+        this->Matrix().Attach_( localHeight, localWidth, buffer, ldim );
     }
 }
 
@@ -541,7 +542,7 @@ void BlockMatrix<T>::LockedAttach
     {
         Int localHeight = this->NewLocalHeight(height);
         Int localWidth  = this->NewLocalWidth(width);
-        this->matrix_.LockedAttach_( localHeight, localWidth, buffer, ldim );
+        this->Matrix().LockedAttach_( localHeight, localWidth, buffer, ldim );
     }
 }
 
@@ -770,7 +771,7 @@ Int BlockMatrix<T>::NewLocalWidth( Int width ) const
 template<typename T>
 void BlockMatrix<T>::ShallowSwap( BlockMatrix<T>& A )
 {
-    this->matrix_.ShallowSwap( A.matrix_ );
+    this->Matrix().ShallowSwap( A.Matrix() );
     std::swap( this->viewType_, A.viewType_ );
     std::swap( this->height_ , A.height_ );
     std::swap( this->width_, A.width_ );

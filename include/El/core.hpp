@@ -247,6 +247,10 @@ template<typename T> struct IsStdField<Complex<T>>
 #include <El/core/Timer.hpp>
 #include <El/core/indexing/decl.hpp>
 #include <El/core/imports/blas.hpp>
+#ifdef HYDROGEN_HAVE_CUDA
+#include <El/core/imports/cuda.hpp>
+#include <El/core/imports/cublas.hpp>
+#endif // HYDROGEN_HAVE_CUDA
 #include <El/core/imports/lapack.hpp>
 #include <El/core/imports/flame.hpp>
 #include <El/core/imports/mkl.hpp>
@@ -256,22 +260,27 @@ template<typename T> struct IsStdField<Complex<T>>
 
 #include <El/core/limits.hpp>
 
+#include <El/core/Device.hpp>
+
 #include <El/core/Memory.hpp>
 
 namespace El {
 
-template<typename T=double> class Matrix;
+template <typename T=double> class AbstractMatrix;
+template<typename T=double, Device D=Device::CPU> class Matrix;
 
 template<typename T=double> class AbstractDistMatrix;
 
 template<typename T=double> class ElementalMatrix;
 template<typename T=double> class BlockMatrix;
 
-template<typename T=double,Dist U=MC,Dist V=MR,DistWrap wrap=ELEMENT>
+template<typename T=double, Dist U=MC, Dist V=MR,
+         DistWrap wrap=ELEMENT, Device=Device::CPU>
 class DistMatrix;
 
 } // namespace El
 
+#include <El/core/AbstractMatrix.hpp>
 #include <El/core/Matrix/decl.hpp>
 #include <El/core/DistMap/decl.hpp>
 #include <El/core/View/decl.hpp>
@@ -281,6 +290,7 @@ class DistMatrix;
 #include <El/core/Grid.hpp>
 #include <El/core/DistMatrix.hpp>
 #include <El/core/Proxy.hpp>
+#include <El/core/ProxyDevice.hpp>
 
 // Implement the intertwined parts of the library
 #include <El/core/Element/impl.hpp>

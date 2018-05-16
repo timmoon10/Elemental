@@ -5,7 +5,7 @@ set_full_path(THIS_DIR_SOURCES
 
 # Add the subdirectories
 add_subdirectory(blas_like)
-add_subdirectory(control)
+#add_subdirectory(control)
 add_subdirectory(core)
 add_subdirectory(io)
 add_subdirectory(lapack_like)

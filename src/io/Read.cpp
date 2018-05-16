@@ -16,6 +16,29 @@
 
 namespace El {
 
+template <typename T>
+void Read(AbstractMatrix<T>& A,
+          std::string const& filename, FileFormat format)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Read(static_cast<Matrix<T,Device::CPU>&>(A), filename, format);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+    {
+        Matrix<T,Device::CPU> A_CPU;
+        Read(A_CPU, filename, format);
+        static_cast<Matrix<T,Device::GPU>&>(A) = A_CPU;
+    }
+    break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Read: Bad device type.");
+    }
+}
+
 template<typename T>
 void Read( Matrix<T>& A, const string filename, FileFormat format )
 {
@@ -54,7 +77,7 @@ void Read
     if( format == AUTO )
         format = DetectFormat( filename );
 
-    if( A.ColStride() == 1 && A.RowStride() == 1 )
+    if(( A.ColStride() == 1 && A.RowStride() == 1 ) && !(A.ColDist() == STAR || A.RowDist() == STAR))
     {
         if( A.CrossRank() == A.Root() && A.RedundantRank() == 0 )
         {

@@ -9,6 +9,7 @@
 #ifndef EL_BLAS_CONJUGATE_HPP
 #define EL_BLAS_CONJUGATE_HPP
 
+// FIXME GPUs
 namespace El {
 
 template<typename Real>
@@ -35,7 +36,7 @@ template<typename T>
 void Conjugate( AbstractDistMatrix<T>& A )
 {
     EL_DEBUG_CSE
-    Conjugate( A.Matrix() );
+    Conjugate( dynamic_cast<Matrix<T,Device::CPU>&>(A.Matrix()) );
 }
 
 template<typename T>

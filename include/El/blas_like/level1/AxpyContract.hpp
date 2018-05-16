@@ -14,7 +14,7 @@ namespace El {
 namespace axpy_contract {
 
 // (Partial(U),V) -> (U,V)
-template<typename T>
+template<typename T, Device D>
 void PartialColScatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -53,10 +53,10 @@ void PartialColScatter
         // We explicitly zero-initialize rather than calling FastResize to avoid
         // inadvertently causing a floating-point exception in the reduction of
         // the padding entries.
-        vector<T> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0));
 
         // Pack
-        copy::util::PartialColStridedPack
+        copy::util::PartialColStridedPack<T,D>
         ( height, width,
           colAlign, colStride,
           colStrideUnion, colStridePart, colRankPart,
@@ -67,8 +67,9 @@ void PartialColScatter
         // Communicate
         mpi::ReduceScatter( buffer.data(), recvSize, B.PartialUnionColComm() );
 
+        // FIXME
         // Unpack our received data
-        axpy::util::InterleaveMatrixUpdate
+        axpy::util::InterleaveMatrixUpdate<T,D>
         ( alpha, localHeight, width,
           buffer.data(), 1, localHeight,
           B.Buffer(),    1, B.LDim() );
@@ -78,7 +79,7 @@ void PartialColScatter
 }
 
 // (U,Partial(V)) -> (U,V)
-template<typename T>
+template<typename T, Device D>
 void PartialRowScatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -104,10 +105,10 @@ void PartialRowScatter
         const Int recvSize = mpi::Pad( height*maxLocalWidth );
         const Int sendSize = rowStrideUnion*recvSize;
 
-        vector<T> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0));
 
         // Pack
-        copy::util::PartialRowStridedPack
+        copy::util::PartialRowStridedPack<T,D>
         ( height, width,
           B.RowAlign(), rowStride,
           rowStrideUnion, rowStridePart, rowRankPart,
@@ -119,7 +120,7 @@ void PartialRowScatter
         mpi::ReduceScatter( buffer.data(), recvSize, B.PartialUnionRowComm() );
 
         // Unpack our received data
-        axpy::util::InterleaveMatrixUpdate
+        axpy::util::InterleaveMatrixUpdate<T,D>
         ( alpha, height, B.LocalWidth(),
           buffer.data(), 1, height,
           B.Buffer(),    1, B.LDim() );
@@ -129,7 +130,7 @@ void PartialRowScatter
 }
 
 // (Collect(U),V) -> (U,V)
-template<typename T>
+template <typename T, Device D>
 void ColScatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -175,10 +176,10 @@ void ColScatter
 
         const Int recvSize = mpi::Pad( maxLocalHeight*localWidth );
         const Int sendSize = colStride*recvSize;
-        vector<T> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0));
 
         // Pack
-        copy::util::ColStridedPack
+        copy::util::ColStridedPack<T,D>
         ( height, localWidth,
           colAlign, colStride,
           A.LockedBuffer(), A.LDim(),
@@ -188,7 +189,7 @@ void ColScatter
         mpi::ReduceScatter( buffer.data(), recvSize, B.ColComm() );
 
         // Update with our received data
-        axpy::util::InterleaveMatrixUpdate
+        axpy::util::InterleaveMatrixUpdate<T,D>
         ( alpha, localHeight, localWidth,
           buffer.data(), 1, localHeight,
           B.Buffer(),    1, B.LDim() );
@@ -206,12 +207,13 @@ void ColScatter
         const Int sendSize_RS = colStride*recvSize_RS;
         const Int recvSize_SR = localHeight*localWidth;
 
-        vector<T> buffer(recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0));
-        T* firstBuf = &buffer[0];
-        T* secondBuf = &buffer[recvSize_RS];
+        simple_buffer<T,D> buffer(
+            recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0));
+        T* firstBuf = buffer.data();
+        T* secondBuf = buffer.data() + recvSize_RS;
 
         // Pack
-        copy::util::ColStridedPack
+        copy::util::ColStridedPack<T,D>
         ( height, localWidth,
           colAlign, colStride,
           A.LockedBuffer(), A.LDim(),
@@ -228,7 +230,7 @@ void ColScatter
           secondBuf, localHeight*localWidth,  recvCol, B.RowComm() );
 
         // Update with our received data
-        axpy::util::InterleaveMatrixUpdate
+        axpy::util::InterleaveMatrixUpdate<T,D>
         ( alpha, localHeight, localWidth,
           secondBuf,  1, localHeight,
           B.Buffer(), 1, B.LDim() );
@@ -236,7 +238,7 @@ void ColScatter
 }
 
 // (U,Collect(V)) -> (U,V)
-template<typename T>
+template <typename T, Device D>
 void RowScatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -257,7 +259,7 @@ void RowScatter
         {
             const Int localHeight = B.LocalHeight();
             const Int portionSize = mpi::Pad( localHeight );
-            vector<T> buffer(portionSize, T(0));
+            simple_buffer<T,D> buffer(portionSize, T(0));
 
             // Reduce to rowAlign
             const Int rowAlign = B.RowAlign();
@@ -267,7 +269,7 @@ void RowScatter
 
             if( B.RowRank() == rowAlign )
             {
-                axpy::util::InterleaveMatrixUpdate
+                axpy::util::InterleaveMatrixUpdate<T,D>
                 ( alpha, localHeight, 1,
                   buffer.data(), 1, localHeight,
                   B.Buffer(),    1, B.LDim() );
@@ -286,8 +288,8 @@ void RowScatter
             const Int sendSize = rowStride*portionSize;
 
             // Pack
-            vector<T> buffer(sendSize, T(0));
-            copy::util::RowStridedPack
+            simple_buffer<T,D> buffer(sendSize, T(0));
+            copy::util::RowStridedPack<T,D>
             ( localHeight, width,
               rowAlign, rowStride,
               A.LockedBuffer(), A.LDim(),
@@ -297,7 +299,7 @@ void RowScatter
             mpi::ReduceScatter( buffer.data(), portionSize, B.RowComm() );
 
             // Update with our received data
-            axpy::util::InterleaveMatrixUpdate
+            axpy::util::InterleaveMatrixUpdate<T,D>
             ( alpha, localHeight, localWidth,
               buffer.data(), 1, localHeight,
               B.Buffer(),    1, B.LDim() );
@@ -320,9 +322,10 @@ void RowScatter
 
         if( width == 1 )
         {
-            vector<T> buffer(localHeight + localHeightA, T(0));
-            T* sendBuf = &buffer[0];
-            T* recvBuf = &buffer[localHeightA];
+            simple_buffer<T,D> buffer(
+                localHeight + localHeightA, T(0));
+            T* sendBuf = buffer.data();
+            T* recvBuf = buffer.data() + localHeightA;
 
             // Reduce to rowAlign
             const Int rowAlign = B.RowAlign();
@@ -336,7 +339,7 @@ void RowScatter
                 ( sendBuf, localHeightA, sendRow,
                   recvBuf, localHeight,  recvRow, B.ColComm() );
 
-                axpy::util::InterleaveMatrixUpdate
+                axpy::util::InterleaveMatrixUpdate<T,D>
                 ( alpha, localHeight, 1,
                   recvBuf,    1, localHeight,
                   B.Buffer(), 1, B.LDim() );
@@ -354,12 +357,13 @@ void RowScatter
             const Int sendSize_RS = rowStride * recvSize_RS;
             const Int recvSize_SR = localHeight * localWidth;
 
-            vector<T> buffer(recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0));
-            T* firstBuf = &buffer[0];
-            T* secondBuf = &buffer[recvSize_RS];
+            simple_buffer<T,D> buffer(
+                recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0));
+            T* firstBuf = buffer.data();
+            T* secondBuf = buffer.data() + recvSize_RS;
 
             // Pack
-            copy::util::RowStridedPack
+            copy::util::RowStridedPack<T,D>
             ( localHeightA, width,
               rowAlign, rowStride,
               A.LockedBuffer(), A.LDim(),
@@ -374,7 +378,7 @@ void RowScatter
               secondBuf, localHeight*localWidth,  recvRow, B.ColComm() );
 
             // Update with our received data
-            axpy::util::InterleaveMatrixUpdate
+            axpy::util::InterleaveMatrixUpdate<T,D>
             ( alpha, localHeight, localWidth,
               secondBuf,  1, localHeight,
               B.Buffer(), 1, B.LDim() );
@@ -383,7 +387,7 @@ void RowScatter
 }
 
 // (Collect(U),Collect(V)) -> (U,V)
-template<typename T>
+template <typename T, Device D>
 void Scatter
 ( T alpha,
   const ElementalMatrix<T>& A,
@@ -411,10 +415,10 @@ void Scatter
     const Int recvSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
     const Int sendSize = colStride*rowStride*recvSize;
 
-    vector<T> buffer(sendSize, T(0));
+    simple_buffer<T,D> buffer(sendSize, T(0));
 
     // Pack
-    copy::util::StridedPack
+    copy::util::StridedPack<T,D>
     ( height, width,
       colAlign, colStride,
       rowAlign, rowStride,
@@ -425,7 +429,7 @@ void Scatter
     mpi::ReduceScatter( buffer.data(), recvSize, B.DistComm() );
 
     // Unpack our received data
-    axpy::util::InterleaveMatrixUpdate
+    axpy::util::InterleaveMatrixUpdate<T,D>
     ( alpha, localHeight, localWidth,
       buffer.data(), 1, localHeight,
       B.Buffer(),    1, B.LDim() );
@@ -433,31 +437,68 @@ void Scatter
 
 } // namespace axpy_contract
 
-template<typename T>
+template <Device D, typename T, typename=EnableIf<IsDeviceValidType<T,D>>>
+void AxpyContract_impl
+( T alpha,
+  const ElementalMatrix<T>& A,
+        ElementalMatrix<T>& B )
+{
+    EL_DEBUG_CSE
+    if ((A.GetLocalDevice() != D) || (B.GetLocalDevice() != D))
+        LogicError("AxpyContract: Bad device.");
+
+    const Dist U = B.ColDist();
+    const Dist V = B.RowDist();
+    if( A.ColDist() == U && A.RowDist() == V )
+        Axpy( alpha, A, B );// FIXME
+    else if( A.ColDist() == Partial(U) && A.RowDist() == V )
+        axpy_contract::PartialColScatter<T,D>( alpha, A, B );
+    else if( A.ColDist() == U && A.RowDist() == Partial(V) )
+        axpy_contract::PartialRowScatter<T,D>( alpha, A, B );
+    else if( A.ColDist() == Collect(U) && A.RowDist() == V )
+        axpy_contract::ColScatter<T,D>( alpha, A, B );
+    else if( A.ColDist() == U && A.RowDist() == Collect(V) )
+        axpy_contract::RowScatter<T,D>( alpha, A, B );
+    else if( A.ColDist() == Collect(U) && A.RowDist() == Collect(V) )
+        axpy_contract::Scatter<T,D>( alpha, A, B );
+    else
+        LogicError("Incompatible distributions");
+}
+
+template <Device D, typename T,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void AxpyContract_impl
+( T alpha,
+  const ElementalMatrix<T>& A,
+        ElementalMatrix<T>& B )
+{
+    LogicError("AxpyContract: Bad device/type combination.");
+}
+
+template <typename T>
 void AxpyContract
 ( T alpha,
   const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
-    const Dist U = B.ColDist();
-    const Dist V = B.RowDist();
-    if( A.ColDist() == U && A.RowDist() == V )
-        Axpy( alpha, A, B );
-    else if( A.ColDist() == Partial(U) && A.RowDist() == V )
-        axpy_contract::PartialColScatter( alpha, A, B );
-    else if( A.ColDist() == U && A.RowDist() == Partial(V) )
-        axpy_contract::PartialRowScatter( alpha, A, B );
-    else if( A.ColDist() == Collect(U) && A.RowDist() == V )
-        axpy_contract::ColScatter( alpha, A, B );
-    else if( A.ColDist() == U && A.RowDist() == Collect(V) )
-        axpy_contract::RowScatter( alpha, A, B );
-    else if( A.ColDist() == Collect(U) && A.RowDist() == Collect(V) )
-        axpy_contract::Scatter( alpha, A, B );
-    else
-        LogicError("Incompatible distributions");
-}
+    if (A.GetLocalDevice() != B.GetLocalDevice())
+        LogicError("AxpyContract: Bad device.");
 
+    switch (A.GetLocalDevice())
+    {
+    case Device::CPU:
+        AxpyContract_impl<Device::CPU>(alpha,A,B);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        AxpyContract_impl<Device::GPU>(alpha,A,B);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("AxpyContract: Bad device type.");
+    }
+}
 template<typename T>
 void AxpyContract
 ( T alpha,

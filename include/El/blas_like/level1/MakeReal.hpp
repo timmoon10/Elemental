@@ -32,7 +32,7 @@ template<typename T>
 void MakeReal( AbstractDistMatrix<T>& A )
 {
     EL_DEBUG_CSE
-    MakeReal( A.Matrix() );
+    MakeReal(dynamic_cast<Matrix<T,Device::CPU>&>(A.Matrix()));
 }
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1

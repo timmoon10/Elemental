@@ -21,25 +21,51 @@ void ConfigurePrecision( ostream& os )
 
 // Dense
 // =====
+template <typename T>
+void Print(AbstractMatrix<T> const& A, string title, ostream& os)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Print(static_cast<Matrix<T,Device::CPU> const&>(A), title, os);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+    {
+        // Copy to host
+        Matrix<T,Device::CPU> A_CPU{
+            static_cast<Matrix<T,Device::GPU> const&>(A)};
+        Print(A_CPU, title, os);
+    }
+    break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Print: Bad device.");
+    }
+}
 
 template<typename T>
 void Print( const Matrix<T>& A, string title, ostream& os )
 {
     EL_DEBUG_CSE
-    if( title != "" )
-        os << title << endl;
 
-    ConfigurePrecision<T>( os );
+    ostringstream msg;
+
+    if( title != "" )
+        msg << title << endl;
+
+    ConfigurePrecision<T>( msg );
 
     const Int height = A.Height();
     const Int width = A.Width();
     for( Int i=0; i<height; ++i )
     {
         for( Int j=0; j<width; ++j )
-            os << A.Get(i,j) << " ";
-        os << endl;
+            msg << A.Get(i,j) << " ";
+        msg << endl;
     }
-    os << endl;
+    msg << endl;
+    os << msg.str();
 }
 
 template<typename T>
@@ -67,15 +93,20 @@ template<typename T>
 void Print( const vector<T>& x, string title, ostream& os )
 {
     EL_DEBUG_CSE
-    if( title != "" )
-        os << title << endl;
 
-    ConfigurePrecision<T>( os );
+    ostringstream msg;
+
+    if( title != "" )
+        msg << title << endl;
+
+    ConfigurePrecision<T>( msg );
 
     const Int length = x.size();
     for( Int i=0; i<length; ++i )
-        os << x[i] << " ";
-    os << endl;
+        msg << x[i] << " ";
+    msg << endl;
+
+    os << msg.str();
 }
 
 #define PROTO(T) \

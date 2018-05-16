@@ -12,13 +12,39 @@
 
 namespace El {
 
+
 // Draw each entry from a normal PDF
-template<typename F>
-void MakeGaussian( Matrix<F>& A, F mean, Base<F> stddev )
+template<typename F,Device D,typename>
+void MakeGaussian( Matrix<F,D>& A, F mean, Base<F> stddev )
 {
     EL_DEBUG_CSE
     auto sampleNormal = [=]() { return SampleNormal(mean,stddev); };
     EntrywiseFill( A, function<F()>(sampleNormal) );
+}
+
+template<typename F, Device D, typename, typename>
+void MakeGaussian( Matrix<F,D>& A, F mean, Base<F> stddev )
+{
+    LogicError("MakeGaussian: Bad type/device combination.");
+}
+
+template <typename F>
+void MakeGaussian(AbstractMatrix<F>& A, F mean, Base<F> stddev)
+{
+    EL_DEBUG_CSE
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        MakeGaussian(static_cast<Matrix<F,Device::CPU>&>(A), mean, stddev);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        MakeGaussian(static_cast<Matrix<F,Device::GPU>&>(A), mean, stddev);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("MakeGaussian: Bad device.");
+    }
 }
 
 template<typename F>
@@ -31,7 +57,7 @@ void MakeGaussian( AbstractDistMatrix<F>& A, F mean, Base<F> stddev )
 }
 
 template<typename F>
-void Gaussian( Matrix<F>& A, Int m, Int n, F mean, Base<F> stddev )
+void Gaussian( AbstractMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev )
 {
     EL_DEBUG_CSE
     A.Resize( m, n );
@@ -49,11 +75,11 @@ void Gaussian
 
 #define PROTO(F) \
   template void MakeGaussian \
-  ( Matrix<F>& A, F mean, Base<F> stddev ); \
+  ( AbstractMatrix<F>& A, F mean, Base<F> stddev ); \
   template void MakeGaussian \
   ( AbstractDistMatrix<F>& A, F mean, Base<F> stddev ); \
   template void Gaussian \
-  ( Matrix<F>& A, Int m, Int n, F mean, Base<F> stddev ); \
+  ( AbstractMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev ); \
   template void Gaussian \
   ( AbstractDistMatrix<F>& A, Int m, Int n, F mean, Base<F> stddev );
 

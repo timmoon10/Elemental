@@ -87,6 +87,10 @@ void Spy
 // =====
 template<typename T>
 void Write
+( const AbstractMatrix<T>& A, string basename="Matrix",
+  FileFormat format=BINARY, string title="" );
+template<typename T>
+void Write
 ( const Matrix<T>& A, string basename="Matrix", FileFormat format=BINARY,
   string title="" );
 template<typename T>
