@@ -310,7 +310,12 @@ Matrix<Ring, Device::CPU>::LockedBuffer(Int i, Int j) const EL_NO_EXCEPT
 
 template<typename Ring>
 void Matrix<Ring, Device::CPU>::SetMemoryMode(unsigned int mode)
-{ memory_.SetMode(mode); }
+{
+    const auto oldBuffer = memory_.Buffer();
+    memory_.SetMode(mode);
+    if (data_ == oldBuffer)
+        data_ = memory_.Buffer();
+}
 
 template<typename Ring>
 unsigned int Matrix<Ring, Device::CPU>::MemoryMode() const EL_NO_EXCEPT
