@@ -37,6 +37,12 @@ void InitializeCUDA(int argc, char* argv[])
             env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK");
         if (!env)
             env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK");
+        if (!env)
+            // This returns a list if more than one gpu is present in the
+            // resource set, for example:
+            // CUDA_VISIBLE_DEVICES=0,1,2,3
+            // std::atoi picks the first one
+            env = std::getenv("CUDA_VISIBLE_DEVICES");
 
         if (env)
         {
