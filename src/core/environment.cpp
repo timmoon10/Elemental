@@ -176,6 +176,10 @@ void Initialize( int& argc, char**& argv )
 
 #ifdef HYDROGEN_HAVE_CUDA
     InitializeCUDA(argc,argv);
+   
+#ifdef HYDROGEN_USES_ALUMINUM
+/// YOO: Initialize Aluminum here if it is used
+#endif
 #endif
 
 #ifdef EL_HAVE_QT5
@@ -227,8 +231,12 @@ void Finalize()
 #ifdef EL_HAVE_QT5
         FinalizeQt5();
 #endif
-        if( ::elemInitializedMpi )
+        if( ::elemInitializedMpi ){
+#ifdef HYDROGEN_USES_ALUMINUM
+    	/// YOO: Finalize e Aluminum here if it is used
+#endif
             mpi::Finalize();
+        }
 
 
         EmptyBlocksizeStack();
