@@ -132,25 +132,14 @@ struct MemHelper<G,Device::GPU>
 
     static void Delete( G*& ptr, unsigned int mode )
     {
-
-        // Deallocate memory
-        cudaError_t status = cudaSuccess;
         switch (mode) {
-        case 0: status = cudaFree(ptr); break;
+        case 0: EL_CHECK_CUDA(cudaFree(ptr)); break;
 #ifdef HYDROGEN_HAVE_CUB
-        case 1: status = cubMemPool.DeviceFree(reinterpret_cast<void*>(ptr)); break;
+        case 1: EL_CHECK_CUDA(cubMemPool.DeviceFree(reinterpret_cast<void*>(ptr))); break;
 #endif // HYDROGEN_HAVE_CUB
         default: RuntimeError("Invalid GPU memory deallocation mode");
         }
         ptr = nullptr;
-
-        // Check for errors
-        if (status != cudaSuccess)
-        {
-            RuntimeError("Failed to deallocate GPU memory with message: ",
-                         "\"", cudaGetErrorString(status), "\"");
-        }
-
     }
 
     static void MemZero( G* buffer, size_t numEntries, unsigned int mode )
@@ -260,12 +249,9 @@ void Memory<G,D>::SetMode(unsigned int mode)
 {
     if (size_ > 0 && mode_ != mode)
     {
-        G* newRawBuffer = MemHelper<G,D>::New(size_, mode);
-        G* newBuffer = newRawBuffer;
-        MemCopy(newBuffer, buffer_, size_);
         MemHelper<G,D>::Delete(rawBuffer_, mode_);
-        rawBuffer_ = newRawBuffer;
-        buffer_ = newBuffer;
+        rawBuffer_ = MemHelper<G,D>::New(size_, mode);
+        buffer_ = rawBuffer_;
     }
     mode_ = mode;
 }
