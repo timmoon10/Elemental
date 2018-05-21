@@ -4,11 +4,13 @@
 use gcc-4.9.3p
 module load cudatoolkit/8.0
 
-if (`hostname | gawk '/surface/ {print "yes"}'` == "yes") then
+
+#if (`hostname | gawk '/surface/ {print "yes"}'` == "yes") then
+if (`hostname|grep surface -c` == 1) then
 	set NCCL_DIR="/usr/workspace/wsb/brain/nccl2/nccl_2.1.15-1+cuda9.1_x86_64/"
-else if (`hostname | gawk '/pascal/ {print "yes"}'` == "yes") then
+else if (`hostname|grep pascal -c` == 1) then
 	set NCCL_DIR="/usr/workspace/wsb/brain/nccl2/nccl_2.1.15-1+cuda9.1_x86_64/"
-else if (`hostname | gawk '/ray/ {print "yes"}'` == "yes") then
+else if (`hostname|grep ray -c` == 1) then
 	set NCCL_DIR="/usr/workspace/wsb/brain/nccl2/nccl_2.0.5-3+cuda8.0_ppc64el/"
 endif
 
@@ -18,7 +20,7 @@ endif
 set path = ( /usr/workspace/wsb/brain/utils/toss2/cmake-3.9.6/bin /usr/workspace/wsb/brain/utils/toss2/ninja/bin /usr/global/tools/mpi/sideinstalls/chaos_5_x86_64_ib/mvapich2-2.2/install-gcc-cuda/bin $path )
 
 # Adds the CUDA-aware MPI library to the LD_LIBRARY path to ensure preference
-setenv LD_LIBRARY_PATH /usr/global/tools/mpi/sideinstalls/chaos_5_x86_64_ib/mvapich2-2.2/install-gcc-cuda/lib:/g/g0/ayoo/aluminum/Aluminum/:${LD_LIBRARY_PATH}
+setenv LD_LIBRARY_PATH /usr/global/tools/mpi/sideinstalls/chaos_5_x86_64_ib/mvapich2-2.2/install-gcc-cuda/lib:/g/g0/ayoo/aluminum/Aluminum/:${NCCL_DIR}/lib:${LD_LIBRARY_PATH}
 
 # Trick CMake into picking the right MPI
 setenv CMAKE_PREFIX_PATH /usr/global/tools/mpi/sideinstalls/chaos_5_x86_64_ib/mvapich2-2.2/install-gcc-cuda
