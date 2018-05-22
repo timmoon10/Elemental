@@ -349,6 +349,7 @@ struct DistData
     Int colCut, rowCut;
     int root;  // relevant for [o ,o ]/[MD,* ]/[* ,MD]
     const Grid* grid;
+    Device device;
 
     DistData() { }
 
@@ -358,7 +359,7 @@ struct DistData
           blockHeight(A.BlockHeight()), blockWidth(A.BlockWidth()),
           colAlign(A.ColAlign()), rowAlign(A.RowAlign()),
           colCut(A.ColCut()), rowCut(A.RowCut()),
-          root(A.Root()), grid(&A.Grid())
+          root(A.Root()), grid(&A.Grid()), device(A.GetLocalDevice())
     { }
 };
 inline bool operator==(const DistData& A, const DistData& B)
@@ -371,7 +372,8 @@ inline bool operator==(const DistData& A, const DistData& B)
           (A.colCut == B.colCut) &&
           (A.rowCut == B.rowCut) &&
           (A.root == B.root) &&
-          (A.grid == B.grid)); }
+          (A.grid == B.grid) &&
+          (A.device == B.device)); }
 inline bool operator!=(const DistData& A, const DistData& B)
 { return !(A == B); }
 

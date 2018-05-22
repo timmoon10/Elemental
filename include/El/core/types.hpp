@@ -511,6 +511,36 @@ enum FileFormat
 }
 using namespace FileFormatNS;
 
+// Metafunction for "And"
+template <typename... Ts> struct And;
+template <> struct And<> : std::true_type {};
+template <typename T, typename... Ts>
+struct And<T,Ts...>
+{
+    static constexpr bool value = T::value && And<Ts...>::value;
+};
+
+// Metafunction for "Or"
+template <typename... Ts> struct Or;
+template <> struct Or<> : std::false_type {};
+template <typename T, typename... Ts>
+struct Or<T,Ts...>
+{
+    static constexpr bool value = T::value || Or<Ts...>::value;
+};
+
+// Metafunction for "Not"
+template <typename T> struct Not
+{
+    static constexpr bool value = !T::value;
+};
+
+// Metafunction for enum equality
+template <typename EnumT, EnumT A, EnumT B>
+struct EnumSame : std::false_type {};
+template <typename EnumT, EnumT A>
+struct EnumSame<EnumT,A,A> : std::true_type {};
+
 } // namespace El
 
 #endif // ifndef EL_TYPES_HPP

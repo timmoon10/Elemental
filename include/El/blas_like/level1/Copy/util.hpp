@@ -9,14 +9,19 @@
 #ifndef EL_BLAS_COPY_UTIL_HPP
 #define EL_BLAS_COPY_UTIL_HPP
 
-namespace El {
-namespace copy {
-namespace util {
+#ifdef HYDROGEN_HAVE_CUDA
+#include "../GPU/Copy.hpp"
+#endif
 
-
-
+namespace El
+{
+namespace copy
+{
+namespace util
+{
 namespace details
 {
+
 template <typename T, Device D, bool=IsDeviceValidType_v<T,D>()>
 struct Impl
 {
@@ -192,17 +197,17 @@ struct Impl<T, Device::GPU, true>
     {
         if (colStrideA == 1 && colStrideB == 1)
         {
-            cudaMemcpy2D(B, rowStrideB*sizeof(T),
-                         A, rowStrideA*sizeof(T), height*sizeof(T), width,
-                         cudaMemcpyDeviceToDevice);
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(B, rowStrideB*sizeof(T),
+                                            A, rowStrideA*sizeof(T),
+                                            height*sizeof(T), width,
+                                            cudaMemcpyDeviceToDevice,
+                                            GPUManager::Stream()));
         }
         else
         {
-            // FIXME
-            for (Int j = 0; j < width; ++j)
-                cublas::Copy(height,
-                             A+j*rowStrideA, colStrideA,
-                             B+j*rowStrideB, colStrideB);
+            Copy_GPU_impl(height, width,
+                          A, colStrideA, rowStrideA,
+                          B, colStrideB, rowStrideB);
         }
     }
 
@@ -211,27 +216,16 @@ struct Impl<T, Device::GPU, true>
                                T const* A,Int ALDim,
                                T* BPortions, Int portionSize)
     {
-        {
-            cudaError_t error = cudaGetLastError();
-            if (error != cudaSuccess)
-                RuntimeError("Previously existing error: ",
-                             cudaGetErrorString(error));
-        }
         for (Int k=0; k<rowStride; ++k)
         {
             const Int rowShift = Shift_(k, rowAlign, rowStride);
             const Int localWidth = Length_(width, rowShift, rowStride);
-
-            auto error =
-                cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
-                                  A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
-                                  height*sizeof(T), localWidth,
-                                  cudaMemcpyDeviceToDevice);
-            if (error != cudaSuccess)
-                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                             cudaGetErrorString(error));
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
+                                            A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
+                                            height*sizeof(T), localWidth,
+                                            cudaMemcpyDeviceToDevice,
+                                            GPUManager::Stream()));
         }
-        cudaThreadSynchronize();
     }
 
     static void RowStridedUnpack(Int height, Int width,
@@ -239,27 +233,16 @@ struct Impl<T, Device::GPU, true>
                                  T const* APortions, Int portionSize,
                                  T* B, Int BLDim)
     {
-        {
-            cudaError_t error = cudaGetLastError();
-            if (error != cudaSuccess)
-                RuntimeError("Previously existing error: ",
-                             cudaGetErrorString(error));
-        }
         for (Int k=0; k<rowStride; ++k)
         {
             const Int rowShift = Shift_(k, rowAlign, rowStride);
             const Int localWidth = Length_(width, rowShift, rowStride);
-
-            auto error =
-                cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
-                                  APortions+k*portionSize, height*sizeof(T),
-                                  height*sizeof(T), localWidth,
-                                  cudaMemcpyDeviceToDevice);
-            if (error != cudaSuccess)
-                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                             cudaGetErrorString(error));
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
+                                            APortions+k*portionSize, height*sizeof(T),
+                                            height*sizeof(T), localWidth,
+                                            cudaMemcpyDeviceToDevice,
+                                            GPUManager::Stream()));
         }
-        cudaThreadSynchronize();
     }
 
     static void PartialRowStridedPack
@@ -272,21 +255,17 @@ struct Impl<T, Device::GPU, true>
     {
         for (Int k=0; k<rowStrideUnion; ++k)
         {
-            const Int rowShift =
-                Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
+            const Int rowShift = Shift_(rowRankPart+k*rowStridePart,
+                                        rowAlign, rowStride);
             const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
             const Int localWidth = Length_(width, rowShift, rowStride);
-
-            auto error = cudaMemcpy2DAsync(
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(
                 BPortions + k*portionSize, height*sizeof(T),
                 A + rowOffset*ALDim, rowStrideUnion*ALDim*sizeof(T),
                 height*sizeof(T), localWidth,
-                cudaMemcpyDeviceToDevice);
-            if (error != cudaSuccess)
-                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                             cudaGetErrorString(error));
+                cudaMemcpyDeviceToDevice,
+                GPUManager::Stream()));
         }
-        cudaThreadSynchronize();
     }
 
     static void PartialRowStridedUnpack
@@ -299,20 +278,17 @@ struct Impl<T, Device::GPU, true>
     {
         for (Int k=0; k<rowStrideUnion; ++k)
         {
-            const Int rowShift =
-                Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
+            const Int rowShift = Shift_(rowRankPart+k*rowStridePart,
+                                        rowAlign, rowStride);
             const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
             const Int localWidth = Length_(width, rowShift, rowStride);
-            auto error = cudaMemcpy2DAsync(
+            EL_CHECK_CUDA(cudaMemcpy2DAsync(
                 B + rowOffset*BLDim, rowStrideUnion*BLDim*sizeof(T),
                 APortions + k*portionSize, height*sizeof(T),
                 height*sizeof(T), localWidth,
-                cudaMemcpyDeviceToDevice);
-            if (error != cudaSuccess)
-                RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                             cudaGetErrorString(error));
+                cudaMemcpyDeviceToDevice,
+                GPUManager::Stream()));
         }
-        cudaThreadSynchronize();
     }
 
     static void PartialColStridedColumnPack
@@ -338,7 +314,7 @@ struct Impl<T, Device::GPU, true>
                  &A[colOffset],             colStrideUnion, localHeight);
 #endif
         }
-        cudaThreadSynchronize();
+        cudaDeviceSynchronize();
     }
 
 };
@@ -346,6 +322,7 @@ struct Impl<T, Device::GPU, true>
 
 template <Device SrcD, Device DestD> struct InterDevice;
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <>
 struct InterDevice<Device::CPU,Device::GPU>
 {
@@ -354,14 +331,14 @@ struct InterDevice<Device::CPU,Device::GPU>
                    T const* EL_RESTRICT const src, Int const src_ldim,
                    Int const height, Int const width)
     {
-        auto error = cudaMemcpy2D(
+        auto stream = GPUManager::Stream();
+        EL_CHECK_CUDA(cudaMemcpy2DAsync(
             dest, dest_ldim*sizeof(T),
             src, src_ldim*sizeof(T),
             height*sizeof(T), width,
-            cudaMemcpyHostToDevice);
-        if (error != cudaSuccess)
-            RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                         cudaGetErrorString(error));
+            cudaMemcpyHostToDevice,
+            stream));
+        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 };// InterDevice<CPU,GPU>
 
@@ -373,16 +350,17 @@ struct InterDevice<Device::GPU,Device::CPU>
                    T const* EL_RESTRICT const src, Int const src_ldim,
                    Int const height, Int const width)
     {
-        auto error = cudaMemcpy2D(
+        auto stream = GPUManager::Stream();
+        EL_CHECK_CUDA(cudaMemcpy2DAsync(
             dest, dest_ldim*sizeof(T),
             src, src_ldim*sizeof(T),
             height*sizeof(T), width,
-            cudaMemcpyDeviceToHost);
-        if (error != cudaSuccess)
-            RuntimeError("CUDA error (", cudaGetErrorName(error),"): ",
-                         cudaGetErrorString(error));
+            cudaMemcpyDeviceToHost,
+            stream));
+        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 };// InterDevice<CPU,GPU>
+#endif // HYDROGEN_HAVE_CUDA
 
 }// namespace details
 

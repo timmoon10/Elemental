@@ -19,18 +19,31 @@
 
 typedef unsigned char* UCP;
 
-/*
+#ifdef HYDROGEN_HAVE_CUDA
+#include <El/core/imports/cuda.hpp>
+#define EL_CHECK_MPI(mpi_call)                                          \
+    do                                                                  \
+    {                                                                   \
+       EL_CHECK_CUDA(cudaStreamSynchronize(GPUManager::Stream()));      \
+       CheckMpi( mpi_call );                                            \
+       EL_CHECK_CUDA(cudaDeviceSynchronize());                          \
+    }                                                                   \
+    while( 0 )
+#else
+#define EL_CHECK_MPI(mpi_call) CheckMpi( mpi_call )
+#endif // #ifdef HYDROGEN_HAVE_CUDA
+
 namespace {
 
 inline void
-SafeMpi( int mpiError ) EL_NO_RELEASE_EXCEPT
+CheckMpi( int error ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_ONLY(
-      if( mpiError != MPI_SUCCESS )
+      if( error != MPI_SUCCESS )
       {
           char errorString[MPI_MAX_ERROR_STRING];
           int lengthOfErrorString;
-          MPI_Error_string( mpiError, errorString, &lengthOfErrorString );
+          MPI_Error_string( error, errorString, &lengthOfErrorString );
           El::RuntimeError( std::string(errorString) );
       }
     )
@@ -54,7 +67,7 @@ MPI_Op NativeOp( const El::mpi::Op& op )
 }
 
 } // anonymous namespace
-*/
+
 
 namespace El {
 namespace mpi {
@@ -119,19 +132,19 @@ double Time() EL_NO_EXCEPT { return MPI_Wtime(); }
 void Create( UserFunction* func, bool commutes, Op& op ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Op_create( func, commutes, &op.op ) );
+    EL_CHECK_MPI( MPI_Op_create( func, commutes, &op.op ) );
 }
 
 void Free( Op& op ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Op_free( &op.op ) );
+    EL_CHECK_MPI( MPI_Op_free( &op.op ) );
 }
 
 void Free( Datatype& type ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Type_free( &type ) );
+    EL_CHECK_MPI( MPI_Type_free( &type ) );
 }
 
 // Communicator manipulation
@@ -142,7 +155,7 @@ int Rank( Comm comm ) EL_NO_RELEASE_EXCEPT
     if( comm != COMM_NULL )
     {
         int rank;
-        SafeMpi( MPI_Comm_rank( comm.comm, &rank ) );
+        EL_CHECK_MPI( MPI_Comm_rank( comm.comm, &rank ) );
         return rank;
     }
     else return UNDEFINED;
@@ -154,7 +167,7 @@ int Size( Comm comm ) EL_NO_RELEASE_EXCEPT
     if( comm != COMM_NULL )
     {
         int size;
-        SafeMpi( MPI_Comm_size( comm.comm, &size ) );
+        EL_CHECK_MPI( MPI_Comm_size( comm.comm, &size ) );
         return size;
     }
     else return UNDEFINED;
@@ -164,7 +177,7 @@ void Create( Comm parentComm, Group subsetGroup, Comm& subsetComm )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi(
+    EL_CHECK_MPI(
         MPI_Comm_create( parentComm.comm, subsetGroup.group, &subsetComm.comm )
     );
 }
@@ -172,26 +185,26 @@ EL_NO_RELEASE_EXCEPT
 void Dup( Comm original, Comm& duplicate ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Comm_dup( original.comm, &duplicate.comm ) );
+    EL_CHECK_MPI( MPI_Comm_dup( original.comm, &duplicate.comm ) );
 }
 
 void Split( Comm comm, int color, int key, Comm& newComm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Comm_split( comm.comm, color, key, &newComm.comm ) );
+    EL_CHECK_MPI( MPI_Comm_split( comm.comm, color, key, &newComm.comm ) );
 }
 
 void Free( Comm& comm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Comm_free( &comm.comm ) );
+    EL_CHECK_MPI( MPI_Comm_free( &comm.comm ) );
 }
 
 bool Congruent( Comm comm1, Comm comm2 ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int result;
-    SafeMpi( MPI_Comm_compare( comm1.comm, comm2.comm, &result ) );
+    EL_CHECK_MPI( MPI_Comm_compare( comm1.comm, comm2.comm, &result ) );
     return ( result == MPI_IDENT || result == MPI_CONGRUENT );
 }
 
@@ -200,9 +213,9 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_HAVE_MPI_COMM_SET_ERRHANDLER
-    SafeMpi( MPI_Comm_set_errhandler( comm.comm, errorHandler ) );
+    EL_CHECK_MPI( MPI_Comm_set_errhandler( comm.comm, errorHandler ) );
 #else
-    SafeMpi( MPI_Errhandler_set( comm.comm, errorHandler ) );
+    EL_CHECK_MPI( MPI_Errhandler_set( comm.comm, errorHandler ) );
 #endif
 }
 
@@ -214,7 +227,7 @@ void CartCreate
   bool reorder, Comm& cartComm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Cart_create
       ( comm.comm, numDims, const_cast<int*>(dimensions),
         const_cast<int*>(periods), reorder, &cartComm.comm ) );
@@ -224,7 +237,7 @@ void CartSub( Comm comm, const int* remainingDims, Comm& subComm )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi(
+    EL_CHECK_MPI(
       MPI_Cart_sub
       ( comm.comm, const_cast<int*>(remainingDims), &subComm.comm )
     );
@@ -237,7 +250,7 @@ int Rank( Group group ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int rank;
-    SafeMpi( MPI_Group_rank( group.group, &rank ) );
+    EL_CHECK_MPI( MPI_Group_rank( group.group, &rank ) );
     return rank;
 }
 
@@ -245,14 +258,14 @@ int Size( Group group ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int size;
-    SafeMpi( MPI_Group_size( group.group, &size ) );
+    EL_CHECK_MPI( MPI_Group_size( group.group, &size ) );
     return size;
 }
 
 void CommGroup( Comm comm, Group& group ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Comm_group( comm.comm, &group.group ) );
+    EL_CHECK_MPI( MPI_Comm_group( comm.comm, &group.group ) );
 }
 
 void Dup( Group group, Group& newGroup ) EL_NO_RELEASE_EXCEPT
@@ -265,14 +278,14 @@ void Dup( Group group, Group& newGroup ) EL_NO_RELEASE_EXCEPT
 void Union( Group groupA, Group groupB, Group& newGroup ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Group_union( groupA.group, groupB.group, &newGroup.group ) );
+    EL_CHECK_MPI( MPI_Group_union( groupA.group, groupB.group, &newGroup.group ) );
 }
 
 void Incl( Group group, int n, const int* ranks, Group& subGroup )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi(
+    EL_CHECK_MPI(
       MPI_Group_incl
       ( group.group, n, const_cast<int*>(ranks), &subGroup.group )
     );
@@ -282,7 +295,7 @@ void Excl( Group group, int n, const int* ranks, Group& subGroup )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi(
+    EL_CHECK_MPI(
       MPI_Group_excl
       ( group.group, n, const_cast<int*>(ranks), &subGroup.group )
     );
@@ -292,7 +305,7 @@ void Difference( Group parent, Group subset, Group& complement )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi(
+    EL_CHECK_MPI(
       MPI_Group_difference( parent.group, subset.group, &complement.group )
     );
 }
@@ -300,14 +313,14 @@ EL_NO_RELEASE_EXCEPT
 void Free( Group& group ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Group_free( &group.group ) );
+    EL_CHECK_MPI( MPI_Group_free( &group.group ) );
 }
 
 bool Congruent( Group group1, Group group2 ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int result;
-    SafeMpi( MPI_Group_compare( group1.group, group2.group, &result ) );
+    EL_CHECK_MPI( MPI_Group_compare( group1.group, group2.group, &result ) );
     return ( result == MPI_IDENT );
 }
 
@@ -355,7 +368,7 @@ void Translate
   Group newGroup,                  int* newRanks ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Group_translate_ranks
       ( origGroup.group, size, const_cast<int*>(origRanks),
         newGroup.group, newRanks ) );
@@ -403,7 +416,7 @@ void Translate
 void Barrier( Comm comm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Barrier( comm.comm ) );
+    EL_CHECK_MPI( MPI_Barrier( comm.comm ) );
 }
 
 // Test for completion
@@ -413,7 +426,7 @@ bool Test( Request<T>& request ) EL_NO_RELEASE_EXCEPT
     EL_DEBUG_CSE
     Status status;
     int flag;
-    SafeMpi( MPI_Test( &request.backend, &flag, &status ) );
+    EL_CHECK_MPI( MPI_Test( &request.backend, &flag, &status ) );
     return flag;
 }
 
@@ -432,7 +445,7 @@ template<typename T,
 void Wait( Request<T>& request, Status& status ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Wait( &request.backend, &status ) );
+    EL_CHECK_MPI( MPI_Wait( &request.backend, &status ) );
 }
 
 // Ensure that several requests finish before continuing
@@ -459,7 +472,7 @@ EL_NO_RELEASE_EXCEPT
     vector<MPI_Request> backends( numRequests );
     for( Int j=0; j<numRequests; ++j )
         backends[j] = requests[j].backend;
-    SafeMpi( MPI_Waitall( numRequests, backends.data(), statuses ) );
+    EL_CHECK_MPI( MPI_Waitall( numRequests, backends.data(), statuses ) );
     // NOTE: This write back will almost always be superfluous, but it ensures
     //       that any changes to the pointer are propagated
     for( Int j=0; j<numRequests; ++j )
@@ -479,7 +492,7 @@ template<typename T,
 void Wait( Request<T>& request, Status& status ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi( MPI_Wait( &request.backend, &status ) );
+    EL_CHECK_MPI( MPI_Wait( &request.backend, &status ) );
     if( request.receivingPacked )
     {
         Deserialize
@@ -504,7 +517,7 @@ EL_NO_RELEASE_EXCEPT
     vector<MPI_Request> backends( numRequests );
     for( Int j=0; j<numRequests; ++j )
         backends[j] = requests[j].backend;
-    SafeMpi( MPI_Waitall( numRequests, backends.data(), statuses ) );
+    EL_CHECK_MPI( MPI_Waitall( numRequests, backends.data(), statuses ) );
     // NOTE: This write back will almost always be superfluous, but it ensures
     //       that any changes to the pointer are propagated
     for( Int j=0; j<numRequests; ++j )
@@ -536,7 +549,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int flag;
-    SafeMpi( MPI_Iprobe( source, tag, comm.comm, &flag, &status ) );
+    EL_CHECK_MPI( MPI_Iprobe( source, tag, comm.comm, &flag, &status ) );
     return flag;
 }
 bool IProbe( int source, Comm comm, Status& status ) EL_NO_RELEASE_EXCEPT
@@ -547,7 +560,7 @@ int GetCount( Status& status ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int count;
-    SafeMpi( MPI_Get_count( &status, TypeMap<T>(), &count ) );
+    EL_CHECK_MPI( MPI_Get_count( &status, TypeMap<T>(), &count ) );
     return count;
 }
 
@@ -557,7 +570,7 @@ void TaggedSend( const Real* buf, int count, int to, int tag, Comm comm )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Send
       ( const_cast<Real*>(buf), count, TypeMap<Real>(), to, tag, comm.comm ) );
 }
@@ -570,12 +583,12 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Send
       ( const_cast<Complex<Real>*>(buf), 2*count, TypeMap<Real>(), to,
         tag, comm.comm ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Send
       ( const_cast<Complex<Real>*>(buf), count,
         TypeMap<Complex<Real>>(), to, tag, comm.comm ) );
@@ -590,7 +603,7 @@ void TaggedSend( const T* buf, int count, int to, int tag, Comm comm )
     EL_DEBUG_CSE
     std::vector<byte> packedBuf;
     Serialize( count, buf, packedBuf );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Send( packedBuf.data(), count, TypeMap<T>(), to, tag, comm.comm ) );
 }
 
@@ -614,7 +627,7 @@ void TaggedISend
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Isend
       ( const_cast<Real*>(buf), count, TypeMap<Real>(), to,
         tag, comm.comm, &request.backend ) );
@@ -628,12 +641,12 @@ void TaggedISend
 {
     EL_DEBUG_CSE
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Isend
       ( const_cast<Complex<Real>*>(buf), 2*count,
         TypeMap<Real>(), to, tag, comm.comm, &request.backend ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Isend
       ( const_cast<Complex<Real>*>(buf), count,
         TypeMap<Complex<Real>>(), to, tag, comm.comm, &request.backend ) );
@@ -649,7 +662,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     Serialize( count, buf, request.buffer );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Isend
       ( request.buffer.data(), count, TypeMap<T>(), to, tag, comm.comm,
         &request.backend ) );
@@ -679,7 +692,7 @@ void TaggedIRSend
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Irsend
       ( const_cast<Real*>(buf), count, TypeMap<Real>(), to,
         tag, comm.comm, &request.backend ) );
@@ -693,12 +706,12 @@ void TaggedIRSend
 {
     EL_DEBUG_CSE
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Irsend
       ( const_cast<Complex<Real>*>(buf), 2*count,
         TypeMap<Real>(), to, tag, comm.comm, &request.backend ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Irsend
       ( const_cast<Complex<Real>*>(buf), count,
         TypeMap<Complex<Real>>(), to, tag, comm.comm, &request.backend ) );
@@ -715,7 +728,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     Serialize( count, buf, request.buffer );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Irsend
       ( request.buffer.data(), count, TypeMap<T>(), to,
         tag, comm.comm, &request.backend ) );
@@ -744,7 +757,7 @@ void TaggedISSend
   Request<Real>& request ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Issend
       ( const_cast<Real*>(buf), count, TypeMap<Real>(), to,
         tag, comm.comm, &request.backend ) );
@@ -758,12 +771,12 @@ void TaggedISSend
 {
     EL_DEBUG_CSE
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Issend
       ( const_cast<Complex<Real>*>(buf), 2*count,
         TypeMap<Real>(), to, tag, comm.comm, &request.backend ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Issend
       ( const_cast<Complex<Real>*>(buf), count,
         TypeMap<Complex<Real>>(), to, tag, comm.comm, &request.backend ) );
@@ -779,7 +792,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     Serialize( count, buf, request.buffer );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Issend
       ( request.buffer.data(), count, TypeMap<T>(), to,
         tag, comm.comm, &request.backend ) );
@@ -802,7 +815,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     Status status;
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Recv( buf, count, TypeMap<Real>(), from, tag, comm.comm, &status ) );
 }
 
@@ -814,10 +827,10 @@ EL_NO_RELEASE_EXCEPT
     EL_DEBUG_CSE
     Status status;
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Recv( buf, 2*count, TypeMap<Real>(), from, tag, comm.comm, &status ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Recv
       ( buf, count, TypeMap<Complex<Real>>(), from, tag, comm.comm, &status ) );
 #endif
@@ -832,7 +845,7 @@ void TaggedRecv( T* buf, int count, int from, int tag, Comm comm )
     std::vector<byte> packedBuf;
     ReserveSerialized( count, buf, packedBuf );
     Status status;
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Recv
       ( packedBuf.data(), count, TypeMap<T>(), from, tag,
         comm.comm, &status ) );
@@ -861,7 +874,7 @@ void TaggedIRecv
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Irecv
       ( buf, count, TypeMap<Real>(), from, tag, comm.comm, &request.backend ) );
 }
@@ -875,12 +888,12 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Irecv
       ( buf, 2*count, TypeMap<Real>(), from, tag, comm.comm,
         &request.backend ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Irecv
       ( buf, count, TypeMap<Complex<Real>>(), from, tag, comm.comm,
         &request.backend ) );
@@ -899,7 +912,7 @@ EL_NO_RELEASE_EXCEPT
     request.recvCount = count;
     request.unpackedRecvBuf = buf;
     ReserveSerialized( count, buf, request.buffer );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Irecv
       ( request.buffer.data(), count, TypeMap<T>(), from, tag, comm.comm,
         &request.backend ) );
@@ -929,7 +942,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     Status status;
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Sendrecv
       ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(), to,   stag,
         rbuf,                    rc, TypeMap<Real>(), from, rtag,
@@ -946,13 +959,13 @@ EL_NO_RELEASE_EXCEPT
     EL_DEBUG_CSE
     Status status;
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Sendrecv
       ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(), to,   stag,
         rbuf,                             2*rc, TypeMap<Real>(), from, rtag,
         comm.comm, &status ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Sendrecv
       ( const_cast<Complex<Real>*>(sbuf),
         sc, TypeMap<Complex<Real>>(), to,   stag,
@@ -973,7 +986,7 @@ void TaggedSendRecv
     std::vector<byte> packedSend, packedRecv;
     Serialize( sc, sbuf, packedSend );
     ReserveSerialized( rc, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Sendrecv
       ( packedSend.data(), sc, TypeMap<T>(), to,   stag,
         packedRecv.data(), rc, TypeMap<T>(), from, rtag,
@@ -1010,7 +1023,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     Status status;
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Sendrecv_replace
       ( buf, count, TypeMap<Real>(), to, stag, from, rtag, comm.comm,
         &status ) );
@@ -1026,12 +1039,12 @@ EL_NO_RELEASE_EXCEPT
     EL_DEBUG_CSE
     Status status;
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Sendrecv_replace
       ( buf, 2*count, TypeMap<Real>(), to, stag, from, rtag, comm.comm,
         &status ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Sendrecv_replace
       ( buf, count, TypeMap<Complex<Real>>(),
         to, stag, from, rtag, comm.comm, &status ) );
@@ -1050,7 +1063,7 @@ EL_NO_RELEASE_EXCEPT
     ReserveSerialized( count, buf, packedBuf );
     Serialize( count, buf, packedBuf );
     Status status;
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Sendrecv_replace
       ( packedBuf.data(), count, TypeMap<T>(), to, stag, from, rtag,
         comm.comm, &status ) );
@@ -1070,7 +1083,7 @@ EL_NO_RELEASE_EXCEPT
     EL_DEBUG_CSE
     if( Size(comm) == 1 || count == 0 )
         return;
-    SafeMpi( MPI_Bcast( buf, count, TypeMap<Real>(), root, comm.comm ) );
+    EL_CHECK_MPI( MPI_Bcast( buf, count, TypeMap<Real>(), root, comm.comm ) );
 }
 
 template<typename Real,
@@ -1082,9 +1095,9 @@ EL_NO_RELEASE_EXCEPT
     if( Size(comm) == 1 )
         return;
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi( MPI_Bcast( buf, 2*count, TypeMap<Real>(), root, comm.comm ) );
+    EL_CHECK_MPI( MPI_Bcast( buf, 2*count, TypeMap<Real>(), root, comm.comm ) );
 #else
-    SafeMpi( MPI_Bcast( buf, count, TypeMap<Complex<Real>>(), root, comm.comm ) );
+    EL_CHECK_MPI( MPI_Bcast( buf, count, TypeMap<Complex<Real>>(), root, comm.comm ) );
 #endif
 }
 
@@ -1099,7 +1112,7 @@ EL_NO_RELEASE_EXCEPT
         return;
     std::vector<byte> packedBuf;
     Serialize( count, buf, packedBuf );
-    SafeMpi(
+    EL_CHECK_MPI(
       MPI_Bcast( packedBuf.data(), count, TypeMap<T>(), root, comm.comm )
     );
     Deserialize( count, packedBuf, buf );
@@ -1116,7 +1129,7 @@ void IBroadcast
 {
     EL_DEBUG_CSE
 #ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Ibcast
       ( buf, count, TypeMap<Real>(), root, comm.comm, &request.backend ) );
 #else
@@ -1133,11 +1146,11 @@ void IBroadcast
     EL_DEBUG_CSE
 #ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Ibcast
       ( buf, 2*count, TypeMap<Real>(), root, comm.comm, &request.backend ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Ibcast
       ( buf, count, TypeMap<Complex<Real>>(), root, comm.comm,
         &request.backend ) );
@@ -1159,7 +1172,7 @@ void IBroadcast
     request.recvCount = count;
     request.unpackedRecvBuf = buf;
     ReserveSerialized( count, buf, request.buffer );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Ibcast
       ( request.buffer.data(), count, TypeMap<Real>(), root, comm.comm,
         &request.backend ) );
@@ -1180,7 +1193,7 @@ void Gather
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Gather
       ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
         rbuf,                    rc, TypeMap<Real>(), root, comm.comm ) );
@@ -1195,13 +1208,13 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Gather
       ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
         rbuf,                             2*rc, TypeMap<Real>(),
         root, comm.comm ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Gather
       ( const_cast<Complex<Real>*>(sbuf), sc, TypeMap<Complex<Real>>(),
         rbuf,                             rc, TypeMap<Complex<Real>>(),
@@ -1227,7 +1240,7 @@ EL_NO_RELEASE_EXCEPT
 
     if( commRank == root )
         ReserveSerialized( totalRecv, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Gather
       ( packedSend.data(), sc, TypeMap<T>(),
         packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
@@ -1245,7 +1258,7 @@ void IGather
 {
     EL_DEBUG_CSE
 #ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Igather
       ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
         rbuf,                    rc, TypeMap<Real>(), root, comm.comm,
@@ -1266,13 +1279,13 @@ void IGather
     EL_DEBUG_CSE
 #ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Igather
       ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
         rbuf,                             2*rc, TypeMap<Real>(),
         root, comm.comm, &request.backend ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Igather
       ( const_cast<Complex<Real>*>(sbuf), sc, TypeMap<Complex<Real>>(),
         rbuf,                             rc, TypeMap<Complex<Real>>(),
@@ -1302,7 +1315,7 @@ void IGather
         request.unpackedRecvBuf = rbuf;
         ReserveSerialized( rc*commSize, rbuf, request.buffer );
     }
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Igather
       ( request.buffer.data(), sc, TypeMap<Real>(),
         rbuf,                  rc, TypeMap<Real>(), root, comm.comm,
@@ -1321,7 +1334,7 @@ void Gather
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Gatherv
       ( const_cast<Real*>(sbuf),
         sc,
@@ -1357,13 +1370,13 @@ EL_NO_RELEASE_EXCEPT
             rdsDouble[i] = 2*rds[i];
         }
     }
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Gatherv
       ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
         rbuf, rcsDouble.data(), rdsDouble.data(), TypeMap<Real>(),
         root, comm.comm ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Gatherv
       ( const_cast<Complex<Real>*>(sbuf),
         sc,
@@ -1398,7 +1411,7 @@ EL_NO_RELEASE_EXCEPT
 
     if( commRank == root )
         ReserveSerialized( totalRecv, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Gatherv
       ( packedSend.data(),
         sc,
@@ -1422,7 +1435,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_USE_BYTE_ALLGATHERS
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgather
       ( reinterpret_cast<UCP>(const_cast<Real*>(sbuf)),
         sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
@@ -1430,7 +1443,7 @@ EL_NO_RELEASE_EXCEPT
         sizeof(Real)*rc, MPI_UNSIGNED_CHAR,
         comm.comm ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgather
       ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
         rbuf,                    rc, TypeMap<Real>(), comm.comm ) );
@@ -1446,7 +1459,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_USE_BYTE_ALLGATHERS
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgather
       ( reinterpret_cast<UCP>(const_cast<Complex<Real>*>(sbuf)),
         2*sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
@@ -1455,13 +1468,13 @@ EL_NO_RELEASE_EXCEPT
         comm.comm ) );
 #else
  #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgather
       ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
         rbuf,                             2*rc, TypeMap<Real>(),
         comm.comm ) );
  #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgather
       ( const_cast<Complex<Real>*>(sbuf), sc, TypeMap<Complex<Real>>(),
         rbuf,                             rc, TypeMap<Complex<Real>>(),
@@ -1486,7 +1499,7 @@ EL_NO_RELEASE_EXCEPT
     Serialize( sc, sbuf, packedSend );
 
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgather
       ( packedSend.data(), sc, TypeMap<T>(),
         packedRecv.data(), rc, TypeMap<T>(), comm.comm ) );
@@ -1509,7 +1522,7 @@ EL_NO_RELEASE_EXCEPT
         byteRcs[i] = sizeof(Real)*rcs[i];
         byteRds[i] = sizeof(Real)*rds[i];
     }
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgatherv
       ( reinterpret_cast<UCP>(const_cast<Real*>(sbuf)),
         sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
@@ -1517,7 +1530,7 @@ EL_NO_RELEASE_EXCEPT
         byteRcs.data(), byteRds.data(), MPI_UNSIGNED_CHAR,
         comm.comm ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgatherv
       ( const_cast<Real*>(sbuf),
         sc,
@@ -1546,7 +1559,7 @@ EL_NO_RELEASE_EXCEPT
         byteRcs[i] = 2*sizeof(Real)*rcs[i];
         byteRds[i] = 2*sizeof(Real)*rds[i];
     }
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgatherv
       ( reinterpret_cast<UCP>(const_cast<Complex<Real>*>(sbuf)),
         2*sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
@@ -1562,12 +1575,12 @@ EL_NO_RELEASE_EXCEPT
         realRcs[i] = 2*rcs[i];
         realRds[i] = 2*rds[i];
     }
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgatherv
       ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
         rbuf, realRcs.data(), realRds.data(), TypeMap<Real>(), comm.comm ) );
  #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgatherv
       ( const_cast<Complex<Real>*>(sbuf),
         sc,
@@ -1597,7 +1610,7 @@ EL_NO_RELEASE_EXCEPT
     Serialize( sc, sbuf, packedSend );
 
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Allgatherv
       ( packedSend.data(),
         sc,
@@ -1618,7 +1631,7 @@ void Scatter
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Scatter
       ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
         rbuf,                    rc, TypeMap<Real>(), root, comm.comm ) );
@@ -1633,13 +1646,13 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Scatter
       ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
         rbuf,                             2*rc, TypeMap<Real>(), root,
         comm.comm ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Scatter
       ( const_cast<Complex<Real>*>(sbuf), sc, TypeMap<Complex<Real>>(),
         rbuf,                             rc, TypeMap<Complex<Real>>(),
@@ -1665,7 +1678,7 @@ EL_NO_RELEASE_EXCEPT
         Serialize( totalSend, sbuf, packedSend );
 
     ReserveSerialized( rc, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Scatter
       ( packedSend.data(), sc, TypeMap<T>(),
         packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
@@ -1681,14 +1694,14 @@ EL_NO_RELEASE_EXCEPT
     const int commRank = Rank( comm );
     if( commRank == root )
     {
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scatter
           ( buf,          sc, TypeMap<Real>(),
             MPI_IN_PLACE, rc, TypeMap<Real>(), root, comm.comm ) );
     }
     else
     {
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scatter
           ( 0,   sc, TypeMap<Real>(),
             buf, rc, TypeMap<Real>(), root, comm.comm ) );
@@ -1705,12 +1718,12 @@ EL_NO_RELEASE_EXCEPT
     if( commRank == root )
     {
 #ifdef EL_AVOID_COMPLEX_MPI
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scatter
           ( buf,          2*sc, TypeMap<Real>(),
             MPI_IN_PLACE, 2*rc, TypeMap<Real>(), root, comm.comm ) );
 #else
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scatter
           ( buf,          sc, TypeMap<Complex<Real>>(),
             MPI_IN_PLACE, rc, TypeMap<Complex<Real>>(), root, comm.comm ) );
@@ -1719,12 +1732,12 @@ EL_NO_RELEASE_EXCEPT
     else
     {
 #ifdef EL_AVOID_COMPLEX_MPI
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scatter
           ( 0,   2*sc, TypeMap<Real>(),
             buf, 2*rc, TypeMap<Real>(), root, comm.comm ) );
 #else
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scatter
           ( 0,   sc, TypeMap<Complex<Real>>(),
             buf, rc, TypeMap<Complex<Real>>(), root, comm.comm ) );
@@ -1750,7 +1763,7 @@ EL_NO_RELEASE_EXCEPT
         Serialize( totalSend, buf, packedSend );
 
     ReserveSerialized( rc, buf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Scatter
       ( packedSend.data(), sc, TypeMap<T>(),
         packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
@@ -1765,7 +1778,7 @@ void AllToAll
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Alltoall
       ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
         rbuf,                    rc, TypeMap<Real>(), comm.comm ) );
@@ -1780,14 +1793,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_AVOID_COMPLEX_MPI
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Alltoall
       ( const_cast<Complex<Real>*>(sbuf),
         2*sc, TypeMap<Real>(),
         rbuf,
         2*rc, TypeMap<Real>(), comm.comm ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Alltoall
       ( const_cast<Complex<Real>*>(sbuf),
         sc, TypeMap<Complex<Real>>(),
@@ -1812,7 +1825,7 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( totalSend, sbuf, packedSend );
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Alltoall
       ( packedSend.data(), sc, TypeMap<T>(),
         packedRecv.data(), rc, TypeMap<T>(), comm.comm ) );
@@ -1827,7 +1840,7 @@ void AllToAll
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Alltoallv
       ( const_cast<Real*>(sbuf),
         const_cast<int*>(scs),
@@ -1860,13 +1873,13 @@ EL_NO_RELEASE_EXCEPT
         rcsDoubled[i] = 2*rcs[i];
         rdsDoubled[i] = 2*rds[i];
     }
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Alltoallv
       ( const_cast<Complex<Real>*>(sbuf),
               scsDoubled.data(), sdsDoubled.data(), TypeMap<Real>(),
         rbuf, rcsDoubled.data(), rdsDoubled.data(), TypeMap<Real>(), comm.comm ) );
 #else
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Alltoallv
       ( const_cast<Complex<Real>*>(sbuf),
         const_cast<int*>(scs),
@@ -1896,7 +1909,7 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( totalSend, sbuf, packedSend );
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Alltoallv
       ( packedSend.data(),
         const_cast<int*>(scs), const_cast<int*>(sds), TypeMap<T>(),
@@ -1937,7 +1950,7 @@ EL_NO_RELEASE_EXCEPT
         return;
 
     MPI_Op opC = NativeOp<Real>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce
       ( const_cast<Real*>(sbuf), rbuf, count, TypeMap<Real>(),
         opC, root, comm.comm ) );
@@ -1958,7 +1971,7 @@ EL_NO_RELEASE_EXCEPT
     if( op == SUM )
     {
         MPI_Op opC = NativeOp<Real>( op );
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Reduce
           ( const_cast<Complex<Real>*>(sbuf),
             rbuf, 2*count, TypeMap<Real>(), opC,
@@ -1967,14 +1980,14 @@ EL_NO_RELEASE_EXCEPT
     else
     {
         MPI_Op opC = NativeOp<Complex<Real>>( op );
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Reduce
           ( const_cast<Complex<Real>*>(sbuf),
             rbuf, count, TypeMap<Complex<Real>>(), opC, root, comm.comm ) );
     }
 #else
     MPI_Op opC = NativeOp<Complex<Real>>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce
       ( const_cast<Complex<Real>*>(sbuf),
         rbuf, count, TypeMap<Complex<Real>>(), opC, root, comm.comm ) );
@@ -2000,7 +2013,7 @@ EL_NO_RELEASE_EXCEPT
 
     if( commRank == root )
         ReserveSerialized( count, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce
       ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
         opC, root, comm.comm ) );
@@ -2045,13 +2058,13 @@ EL_NO_RELEASE_EXCEPT
     const int commRank = Rank( comm );
     if( commRank == root )
     {
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Reduce
           ( MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, root,
             comm.comm ) );
     }
     else
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Reduce
           ( buf, 0, count, TypeMap<Real>(), opC, root, comm.comm ) );
 }
@@ -2073,13 +2086,13 @@ EL_NO_RELEASE_EXCEPT
             MPI_Op opC = NativeOp<Real>( op );
             if( commRank == root )
             {
-                SafeMpi
+                EL_CHECK_MPI
                 ( MPI_Reduce
                   ( MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC,
                     root, comm.comm ) );
             }
             else
-                SafeMpi
+                EL_CHECK_MPI
                 ( MPI_Reduce
                   ( buf, 0, 2*count, TypeMap<Real>(), opC, root, comm.comm ) );
         }
@@ -2088,13 +2101,13 @@ EL_NO_RELEASE_EXCEPT
             MPI_Op opC = NativeOp<Complex<Real>>( op );
             if( commRank == root )
             {
-                SafeMpi
+                EL_CHECK_MPI
                 ( MPI_Reduce
                   ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
                     root, comm.comm ) );
             }
             else
-                SafeMpi
+                EL_CHECK_MPI
                 ( MPI_Reduce
                   ( buf, 0, count, TypeMap<Complex<Real>>(), opC,
                     root, comm.comm ) );
@@ -2103,13 +2116,13 @@ EL_NO_RELEASE_EXCEPT
         MPI_Op opC = NativeOp<Complex<Real>>( op );
         if( commRank == root )
         {
-            SafeMpi
+            EL_CHECK_MPI
             ( MPI_Reduce
               ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
                 root, comm.comm ) );
         }
         else
-            SafeMpi
+            EL_CHECK_MPI
             ( MPI_Reduce
               ( buf, 0, count, TypeMap<Complex<Real>>(), opC, root,
                 comm.comm ) );
@@ -2137,7 +2150,7 @@ EL_NO_RELEASE_EXCEPT
 
     if( commRank == root )
         ReserveSerialized( count, buf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce
       ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
         opC, root, comm.comm ) );
@@ -2149,6 +2162,172 @@ template<typename T>
 void Reduce( T* buf, int count, int root, Comm comm )
 EL_NO_RELEASE_EXCEPT
 { Reduce( buf, count, SUM, root, comm ); }
+
+template<typename Real,
+         typename/*=EnableIf<IsPacked<Real>>*/>
+void AllReduce( const Real* sbuf, Real* rbuf, int count, Op op, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{
+    EL_DEBUG_CSE
+    if( count != 0 )
+    {
+        MPI_Op opC = NativeOp<Real>( op );
+        EL_CHECK_MPI
+        ( MPI_Allreduce
+          ( const_cast<Real*>(sbuf), rbuf, count, TypeMap<Real>(), opC,
+            comm.comm ) );
+    }
+}
+
+template<typename Real,
+         typename/*=EnableIf<IsPacked<Real>>*/>
+void AllReduce
+( const Complex<Real>* sbuf, Complex<Real>* rbuf, int count, Op op, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{
+    EL_DEBUG_CSE
+    if( count != 0 )
+    {
+#ifdef EL_AVOID_COMPLEX_MPI
+        if( op == SUM )
+        {
+            MPI_Op opC = NativeOp<Real>( op );
+            EL_CHECK_MPI
+            ( MPI_Allreduce
+                ( const_cast<Complex<Real>*>(sbuf),
+                  rbuf, 2*count, TypeMap<Real>(), opC, comm.comm ) );
+        }
+        else
+        {
+            MPI_Op opC = NativeOp<Complex<Real>>( op );
+            EL_CHECK_MPI
+            ( MPI_Allreduce
+              ( const_cast<Complex<Real>*>(sbuf),
+                rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm ) );
+        }
+#else
+        MPI_Op opC = NativeOp<Complex<Real>>( op );
+        EL_CHECK_MPI
+        ( MPI_Allreduce
+          ( const_cast<Complex<Real>*>(sbuf),
+            rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm ) );
+#endif
+    }
+}
+
+template<typename T,
+         typename/*=DisableIf<IsPacked<T>>*/,
+         typename/*=void*/>
+void AllReduce
+( const T* sbuf, T* rbuf, int count, Op op, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{
+    EL_DEBUG_CSE
+    if( count == 0 )
+        return;
+
+    MPI_Op opC = NativeOp<T>( op );
+    std::vector<byte> packedSend, packedRecv;
+    Serialize( count, sbuf, packedSend );
+
+    ReserveSerialized( count, rbuf, packedRecv );
+    EL_CHECK_MPI
+    ( MPI_Allreduce
+      ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
+        opC, comm.comm ) );
+    Deserialize( count, packedRecv, rbuf );
+}
+
+template<typename T>
+void AllReduce( const T* sbuf, T* rbuf, int count, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{ AllReduce( sbuf, rbuf, count, SUM, comm ); }
+
+template<typename T>
+T AllReduce( T sb, Op op, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{ T rb; AllReduce( &sb, &rb, 1, op, comm ); return rb; }
+
+template<typename T>
+T AllReduce( T sb, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{ return AllReduce( sb, SUM, comm ); }
+
+template<typename Real,
+         typename/*=EnableIf<IsPacked<Real>>*/>
+void AllReduce( Real* buf, int count, Op op, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{
+    EL_DEBUG_CSE
+    if( count == 0 || Size(comm) == 1 )
+        return;
+
+    MPI_Op opC = NativeOp<Real>( op );
+    EL_CHECK_MPI
+    ( MPI_Allreduce
+      ( MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, comm.comm ) );
+}
+
+template<typename Real,
+         typename/*=EnableIf<IsPacked<Real>>*/>
+void AllReduce( Complex<Real>* buf, int count, Op op, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{
+    EL_DEBUG_CSE
+    if( count == 0 || Size(comm) == 1 )
+        return;
+
+#ifdef EL_AVOID_COMPLEX_MPI
+    if( op == SUM )
+    {
+        MPI_Op opC = NativeOp<Real>( op );
+        EL_CHECK_MPI
+        ( MPI_Allreduce
+          ( MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC, comm.comm ) );
+    }
+    else
+    {
+        MPI_Op opC = NativeOp<Complex<Real>>( op );
+        EL_CHECK_MPI
+        ( MPI_Allreduce
+          ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(),
+            opC, comm.comm ) );
+    }
+#else
+    MPI_Op opC = NativeOp<Complex<Real>>( op );
+    EL_CHECK_MPI
+    ( MPI_Allreduce
+      ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
+        comm.comm ) );
+#endif
+}
+
+template<typename T,
+         typename/*=DisableIf<IsPacked<T>>*/,
+         typename/*=void*/>
+void AllReduce( T* buf, int count, Op op, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{
+    EL_DEBUG_CSE
+    if( count == 0 )
+        return;
+
+    MPI_Op opC = NativeOp<T>( op );
+    std::vector<byte> packedSend, packedRecv;
+    Serialize( count, buf, packedSend );
+
+    ReserveSerialized( count, buf, packedRecv );
+    EL_CHECK_MPI
+    ( MPI_Allreduce
+      ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
+        opC, comm.comm ) );
+    Deserialize( count, packedRecv, buf );
+}
+
+template<typename T>
+void AllReduce( T* buf, int count, Comm comm )
+EL_NO_RELEASE_EXCEPT
+{ AllReduce( buf, count, SUM, comm ); }
 
 template<typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
@@ -2165,7 +2344,7 @@ EL_NO_RELEASE_EXCEPT
     MemCopy( rbuf, &sbuf[commRank*rc], rc );
 #elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
     MPI_Op opC = NativeOp<Real>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter_block
       ( sbuf, rbuf, rc, TypeMap<Real>(), opC, comm.comm ) );
 #else
@@ -2193,12 +2372,12 @@ EL_NO_RELEASE_EXCEPT
 #elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
 # ifdef EL_AVOID_COMPLEX_MPI
     MPI_Op opC = NativeOp<Real>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter_block
       ( sbuf, rbuf, 2*rc, TypeMap<Real>(), opC, comm.comm ) );
 # else
     MPI_Op opC = NativeOp<Complex<Real>>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter_block
       ( sbuf, rbuf, rc, TypeMap<Complex<Real>>(), opC, comm.comm ) );
 # endif
@@ -2230,7 +2409,7 @@ EL_NO_RELEASE_EXCEPT
     Serialize( totalSend, sbuf, packedSend );
 
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter_block
       ( packedSend.data(), packedRecv.data(), rc, TypeMap<T>(),
         opC, comm.comm ) );
@@ -2274,7 +2453,7 @@ EL_NO_RELEASE_EXCEPT
         MemCopy( buf, &buf[commRank*rc], rc );
 #elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
     MPI_Op opC = NativeOp<Real>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter_block
       ( MPI_IN_PLACE, buf, rc, TypeMap<Real>(), opC, comm.comm ) );
 #else
@@ -2302,12 +2481,12 @@ EL_NO_RELEASE_EXCEPT
 #elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
 # ifdef EL_AVOID_COMPLEX_MPI
     MPI_Op opC = NativeOp<Real>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter_block
       ( MPI_IN_PLACE, buf, 2*rc, TypeMap<Real>(), opC, comm.comm ) );
 # else
     MPI_Op opC = NativeOp<Complex<Real>>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter_block
       ( MPI_IN_PLACE, buf, rc, TypeMap<Complex<Real>>(), opC, comm.comm ) );
 # endif
@@ -2339,7 +2518,7 @@ EL_NO_RELEASE_EXCEPT
     Serialize( totalSend, buf, packedSend );
 
     ReserveSerialized( totalRecv, buf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter_block
       ( packedSend.data(), packedRecv.data(), rc, TypeMap<T>(),
         opC, comm.comm ) );
@@ -2364,7 +2543,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     MPI_Op opC = NativeOp<Real>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter
       ( const_cast<Real*>(sbuf),
         rbuf, const_cast<int*>(rcs), TypeMap<Real>(), opC, comm.comm ) );
@@ -2387,7 +2566,7 @@ EL_NO_RELEASE_EXCEPT
         vector<int> rcsDoubled(p);
         for( int i=0; i<p; ++i )
             rcsDoubled[i] = 2*rcs[i];
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Reduce_scatter
           ( const_cast<Complex<Real>*>(sbuf),
             rbuf, rcsDoubled.data(), TypeMap<Real>(), opC, comm.comm ) );
@@ -2395,7 +2574,7 @@ EL_NO_RELEASE_EXCEPT
     else
     {
         MPI_Op opC = NativeOp<Complex<Real>>( op );
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Reduce_scatter
           ( const_cast<Complex<Real>*>(sbuf),
             rbuf, const_cast<int*>(rcs), TypeMap<Complex<Real>>(),
@@ -2403,7 +2582,7 @@ EL_NO_RELEASE_EXCEPT
     }
 #else
     MPI_Op opC = NativeOp<Complex<Real>>( op );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter
       ( const_cast<Complex<Real>*>(sbuf),
         rbuf, const_cast<int*>(rcs), TypeMap<Complex<Real>>(), opC,
@@ -2430,7 +2609,7 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( totalSend, sbuf, packedSend );
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Reduce_scatter
       ( packedSend.data(), packedRecv.data(), const_cast<int*>(rcs),
         TypeMap<T>(), opC, comm.comm ) );
@@ -2468,7 +2647,7 @@ EL_NO_RELEASE_EXCEPT
     if( count != 0 )
     {
         MPI_Op opC = NativeOp<Real>( op );
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scan
           ( const_cast<Real*>(sbuf), rbuf, count, TypeMap<Real>(),
             opC, comm.comm ) );
@@ -2489,7 +2668,7 @@ EL_NO_RELEASE_EXCEPT
         if( op == SUM )
         {
             MPI_Op opC = NativeOp<Real>( op );
-            SafeMpi
+            EL_CHECK_MPI
             ( MPI_Scan
               ( const_cast<Complex<Real>*>(sbuf),
                 rbuf, 2*count, TypeMap<Real>(), opC, comm.comm ) );
@@ -2497,14 +2676,14 @@ EL_NO_RELEASE_EXCEPT
         else
         {
             MPI_Op opC = NativeOp<Complex<Real>>( op );
-            SafeMpi
+            EL_CHECK_MPI
             ( MPI_Scan
               ( const_cast<Complex<Real>*>(sbuf),
                 rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm ) );
         }
 #else
         MPI_Op opC = NativeOp<Complex<Real>>( op );
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scan
           ( const_cast<Complex<Real>*>(sbuf),
             rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm ) );
@@ -2526,7 +2705,7 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( count, sbuf, packedSend );
     ReserveSerialized( count, rbuf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Scan
       ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
         opC, comm.comm ) );
@@ -2565,7 +2744,7 @@ EL_NO_RELEASE_EXCEPT
     if( count != 0 )
     {
         MPI_Op opC = NativeOp<Real>( op );
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scan
           ( MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, comm.comm ) );
     }
@@ -2583,21 +2762,21 @@ EL_NO_RELEASE_EXCEPT
         if( op == SUM )
         {
             MPI_Op opC = NativeOp<Real>( op );
-            SafeMpi
+            EL_CHECK_MPI
             ( MPI_Scan
               ( MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC, comm.comm ) );
         }
         else
         {
             MPI_Op opC = NativeOp<Complex<Real>>( op );
-            SafeMpi
+            EL_CHECK_MPI
             ( MPI_Scan
               ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
                 comm.comm ) );
         }
 #else
         MPI_Op opC = NativeOp<Complex<Real>>( op );
-        SafeMpi
+        EL_CHECK_MPI
         ( MPI_Scan
           ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
             comm.comm ) );
@@ -2619,7 +2798,7 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( count, buf, packedSend );
     ReserveSerialized( count, buf, packedRecv );
-    SafeMpi
+    EL_CHECK_MPI
     ( MPI_Scan
       ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
         opC, comm.comm ) );

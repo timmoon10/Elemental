@@ -13,8 +13,8 @@ namespace El {
 namespace copy {
 
 // (Collect(U),V) |-> (U,V)
-template<typename T>
-void ColFilter( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
+template <Device D, typename T>
+void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
@@ -38,7 +38,7 @@ void ColFilter( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
     const Int rowDiff = B.RowAlign() - A.RowAlign();
     if( rowDiff == 0 )
     {
-        util::InterleaveMatrix
+        util::InterleaveMatrix<T,D>
         ( localHeight, localWidth,
           A.LockedBuffer(colShift,0), colStride, A.LDim(),
           B.Buffer(),                 1,         B.LDim() );
@@ -55,13 +55,12 @@ void ColFilter( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
         const Int localWidthA = A.LocalWidth();
         const Int sendSize = localHeight*localWidthA;
         const Int recvSize = localHeight*localWidth;
-        vector<T> buffer;
-        FastResize( buffer, sendSize+recvSize );
-        T* sendBuf = &buffer[0];
-        T* recvBuf = &buffer[sendSize];
+        simple_buffer<T,D> buffer(sendSize+recvSize);
+        T* sendBuf = buffer.data();
+        T* recvBuf = buffer.data() + sendSize;
 
         // Pack
-        util::InterleaveMatrix
+        util::InterleaveMatrix<T,D>
         ( localHeight, localWidthA,
           A.LockedBuffer(colShift,0), colStride, A.LDim(),
           sendBuf,                    1,         localHeight );
@@ -72,10 +71,34 @@ void ColFilter( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
           recvBuf, recvSize, recvRowRank, B.RowComm() );
 
         // Unpack
-        util::InterleaveMatrix
+        util::InterleaveMatrix<T,D>
         ( localHeight, localWidth,
           recvBuf,    1, localHeight,
           B.Buffer(), 1, B.LDim() );
+    }
+}
+
+template <typename T>
+void ColFilter
+( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
+{
+    EL_DEBUG_CSE
+    if (A.GetLocalDevice() != B.GetLocalDevice())
+        LogicError(
+            "ColFilter: For now, A and B must be on same device.");
+
+    switch (A.GetLocalDevice())
+    {
+    case Device::CPU:
+        ColFilter_impl<Device::CPU>(A,B);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        ColFilter_impl<Device::GPU>(A,B);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("ColFilter: Bad device.");
     }
 }
 

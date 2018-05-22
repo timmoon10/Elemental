@@ -42,7 +42,7 @@ template <typename T, Device D>
 DM& DM::operator=(const DistMatrix<T,MC,STAR,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
-    DistMatrix<T> A_MC_MR(A);
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(A);
     DistMatrix<T,STAR,VR,ELEMENT,D> A_STAR_VR(A_MC_MR);
     A_MC_MR.Empty();
 
@@ -295,8 +295,58 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
   BOTH(T,VC,  STAR); \
   BOTH(T,VR,  STAR);
 
+#ifdef HYDROGEN_HAVE_CUDA
+#define INSTGPU(T,U,V)                                                  \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>&         \
+    DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=        \
+    (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&)
+
 template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+INSTGPU(float,CIRC,CIRC);
+INSTGPU(float,MC,  MR  );
+INSTGPU(float,MC,  STAR);
+INSTGPU(float,MD,  STAR);
+INSTGPU(float,MR,  MC  );
+INSTGPU(float,MR,  STAR);
+INSTGPU(float,STAR,MD  );
+INSTGPU(float,STAR,MR  );
+INSTGPU(float,STAR,STAR);
+INSTGPU(float,STAR,VC  );
+INSTGPU(float,STAR,VR  );
+INSTGPU(float,VC,  STAR);
+INSTGPU(float,VR,  STAR);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
+
 template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+INSTGPU(double,CIRC,CIRC);
+INSTGPU(double,MC,  MR  );
+INSTGPU(double,MC,  STAR);
+INSTGPU(double,MD,  STAR);
+INSTGPU(double,MR,  MC  );
+INSTGPU(double,MR,  STAR);
+INSTGPU(double,STAR,MD  );
+INSTGPU(double,STAR,MR  );
+INSTGPU(double,STAR,STAR);
+INSTGPU(double,STAR,VC  );
+INSTGPU(double,STAR,VR  );
+INSTGPU(double,VC,  STAR);
+INSTGPU(double,VR,  STAR);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

@@ -9,6 +9,10 @@
 #ifndef EL_BLAS_AXPY_UTIL_HPP
 #define EL_BLAS_AXPY_UTIL_HPP
 
+#ifdef HYDROGEN_HAVE_CUDA
+#include "../GPU/Axpy.hpp"
+#endif
+
 namespace El
 {
 namespace axpy
@@ -46,45 +50,11 @@ struct Impl<T,Device::GPU>
         T const* A, Int colStrideA, Int rowStrideA,
         T* B, Int colStrideB, Int rowStrideB )
     {
-        LogicError("Not implemented.");
+        Axpy_GPU_impl( height, width, alpha,
+                       A, colStrideA, rowStrideA,
+                       B, colStrideB, rowStrideB );
     }
 };// struct Impl<T,Device::GPU>
-
-template <>
-struct Impl<float,Device::GPU>
-{
-    static void InterleaveMatrixUpdate(
-        float alpha, Int height, Int width,
-        float const* A, Int colStrideA, Int rowStrideA,
-        float* B, Int colStrideB, Int rowStrideB )
-    {
-        // FIXME: Make one kernel
-        for (Int j=0; j < width; ++j)
-        {
-            cublas::Axpy(height, alpha,
-                         A + rowStrideA*j, colStrideA,
-                         B + rowStrideB*j, colStrideB);
-        }
-    }
-};// struct Impl<float,Device::GPU>
-
-template <>
-struct Impl<double,Device::GPU>
-{
-    static void InterleaveMatrixUpdate(
-        double alpha, Int height, Int width,
-        double const* A, Int colStrideA, Int rowStrideA,
-        double* B, Int colStrideB, Int rowStrideB )
-    {
-        // FIXME: Make one kernel
-        for (Int j=0; j < width; ++j)
-        {
-            cublas::Axpy(height, alpha,
-                         A + rowStrideA*j, colStrideA,
-                         B + rowStrideB*j, colStrideB);
-        }
-    }
-};// struct Impl<double,Device::GPU>
 #endif // HYDROGEN_HAVE_CUDA
 }// namespace details
 

@@ -139,6 +139,10 @@ void Initialize( int& argc, char**& argv )
 
     ::args = new Args( argc, argv );
 
+#ifdef HYDROGEN_HAVE_CUDA
+    InitializeCUDA(argc,argv);
+#endif
+
     ::numElemInits = 1;
     if( !mpi::Initialized() )
     {
@@ -247,6 +251,10 @@ void Finalize()
 
         FinalizeRandom();
     }
+
+#ifdef HYDROGEN_HAVE_CUDA
+    FinalizeCUDA();
+#endif
 
     EL_DEBUG_ONLY( CloseLog() )
 #ifdef HYDROGEN_HAVE_MPC

@@ -10,13 +10,12 @@
 
 namespace El {
 
-template<typename Field, Device D>
-Base<Field> EntrywiseNorm( const Matrix<Field, D>& A, Base<Field> p )
+template<typename Field>
+Base<Field> EntrywiseNorm( const AbstractMatrix<Field>& A, Base<Field> p )
 {
     EL_DEBUG_CSE
-    if(A.GetDevice() != Device::CPU) {
-      LogicError("Unsupported function for GPU Matrix");
-    }
+    if(A.GetDevice() != Device::CPU)
+      LogicError("EntrywiseNorm: Unsupported function for non-CPU Matrix");
 
     // TODO(poulson): Make this more numerically stable
     typedef Base<Field> Real;
@@ -168,8 +167,7 @@ Base<Field> SymmetricEntrywiseNorm
 }
 
 #define PROTO(Field) \
-  template Base<Field> EntrywiseNorm( const Matrix<Field, El::Device::CPU>& A, Base<Field> p ); \
-  template Base<Field> EntrywiseNorm( const Matrix<Field, El::Device::GPU>& A, Base<Field> p ); \
+  template Base<Field> EntrywiseNorm( const AbstractMatrix<Field>& A, Base<Field> p ); \
   template Base<Field> \
   EntrywiseNorm( const AbstractDistMatrix<Field>& A, Base<Field> p ); \
   template Base<Field> HermitianEntrywiseNorm \

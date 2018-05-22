@@ -27,7 +27,7 @@ namespace El {
 
 template <typename T, Device D>
 DM::DistMatrix(const El::Grid& grid, int root)
-: EM(grid,root)
+    : EM(grid,root)
 {
     if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
@@ -36,7 +36,7 @@ DM::DistMatrix(const El::Grid& grid, int root)
 
 template <typename T, Device D>
 DM::DistMatrix(Int height, Int width, const El::Grid& grid, int root)
-: EM(grid,root)
+    : EM(grid,root)
 {
     if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
@@ -46,7 +46,7 @@ DM::DistMatrix(Int height, Int width, const El::Grid& grid, int root)
 
 template <typename T, Device D>
 DM::DistMatrix(const DM& A)
-: EM(A.Grid())
+    : EM(A.Grid())
 {
     EL_DEBUG_CSE
     if (COLDIST != CIRC || ROWDIST != CIRC)
@@ -61,7 +61,7 @@ DM::DistMatrix(const DM& A)
 template <typename T, Device D>
 template<Dist U,Dist V>
 DM::DistMatrix(const DistMatrix<T,U,V,ELEMENT,D>& A)
-: EM(A.Grid())
+    : EM(A.Grid())
 {
     EL_DEBUG_CSE
     if (COLDIST != CIRC || ROWDIST != CIRC)
@@ -90,13 +90,29 @@ DM::DistMatrix(DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2> const& A)
 }
 
 template <typename T, Device D>
-DM::DistMatrix(const AbstractDistMatrix<T>& A)
-: EM(A.Grid())
+template <Dist U, Dist V, Device D2, typename>
+DM::DistMatrix(DistMatrix<T,U,V,ELEMENT,D2> const& A)
+    : EM(A.Grid())
 {
     EL_DEBUG_CSE
 
-    if (A.GetLocalDevice() != D)
-        LogicError("No cross-device construction yet!");
+    if (COLDIST != CIRC || ROWDIST != CIRC)
+        this->Matrix().FixSize();
+    this->SetShifts();
+    if (reinterpret_cast<const DM*>(&A) != this)
+        *this = A;
+    else
+        LogicError("Tried to construct DistMatrix with itself");
+}
+
+template <typename T, Device D>
+DM::DistMatrix(const AbstractDistMatrix<T>& A)
+    : EM(A.Grid())
+{
+    EL_DEBUG_CSE
+
+//    if (A.GetLocalDevice() != D)
+//        LogicError("No cross-device construction yet!");
     if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
@@ -119,8 +135,8 @@ DM::DistMatrix(const ElementalMatrix<T>& A)
 : EM(A.Grid())
 {
     EL_DEBUG_CSE
-    if (A.GetLocalDevice() != D)
-        LogicError("No cross-device construction yet!");
+//    if (A.GetLocalDevice() != D)
+//        LogicError("No cross-device construction yet!");
     if (COLDIST != CIRC || ROWDIST != CIRC)
         this->Matrix().FixSize();
     this->SetShifts();
@@ -177,20 +193,35 @@ DM::ConstructDiagonal
                         DiagRow<COLDIST,ROWDIST>(),ELEMENT,D>(g,root); }
 
 template <typename T, Device D>
+template <Device D2, typename>
+std::unique_ptr<typename DM::absType>
+DM::ConstructWithNewDevice_impl_() const
+{
+    return std::unique_ptr<absType>{
+        new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2>(
+            this->Grid(), this->Root())};
+}
+
+template <typename T, Device D>
+template <Device D2, typename, typename>
+std::unique_ptr<typename DM::absType>
+DM::ConstructWithNewDevice_impl_() const
+{
+    LogicError("DistMatrix::ConstructWithNewDevice: Incompatible type/device.");
+    return nullptr;//silence warnings
+}
+
+template <typename T, Device D>
 std::unique_ptr<typename DM::absType>
 DM::ConstructWithNewDevice(Device D2) const
 {
     switch (D2)
     {
     case Device::CPU:
-        return std::unique_ptr<absType>{
-            new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>(
-                this->Grid(), this->Root())};
+        return ConstructWithNewDevice_impl_<Device::CPU>();
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        return std::unique_ptr<absType>{
-            new DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>(
-                this->Grid(), this->Root())};
+        return ConstructWithNewDevice_impl_<Device::GPU>();
 #endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unkown device type.");
@@ -266,11 +297,21 @@ DM& DM::operator=(DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2> const& A)
 }
 
 template <typename T, Device D>
+template <Dist U, Dist V, Device D2, typename>
+DM& DM::operator=(DistMatrix<T,U,V,ELEMENT,D2> const& A)
+{
+    EL_DEBUG_CSE;
+    DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D2> A_my_distribution(A);
+    copy::Translate(A_my_distribution, *this);
+    return *this;
+}
+
+template <typename T, Device D>
 DM& DM::operator=(const AbstractDistMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    if (A.GetLocalDevice() != D)
-        LogicError("No cross-device construction yet!");
+//    if (A.GetLocalDevice() != D)
+//        LogicError("No cross-device construction yet!");
 
     // TODO: Use either AllGather or Gather if the distribution of this matrix
     //       is respectively either (STAR,STAR) or (CIRC,CIRC)
@@ -408,10 +449,10 @@ DM::Get(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
+#ifndef EL_RELEASE
       if (!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
-  )
+#endif // !EL_RELEASE
     T value;
     if (CrossRank() == this->Root())
     {
@@ -430,10 +471,10 @@ DM::GetRealPart(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
+#ifndef EL_RELEASE
       if (!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
-  )
+#endif // !EL_RELEASE
     Base<T> value;
     if (CrossRank() == this->Root())
     {
@@ -452,10 +493,10 @@ DM::GetImagPart(Int i, Int j) const
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_DEBUG_ONLY(
-      if (!this->Grid().InGrid())
-          LogicError("Get should only be called in-grid");
-    )
+#ifndef EL_RELEASE
+    if (!this->Grid().InGrid())
+        LogicError("Get should only be called in-grid");
+#endif // !EL_RELEASE
     Base<T> value;
     if (IsComplex<T>::value)
     {

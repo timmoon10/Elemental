@@ -25,8 +25,8 @@ void Read(AbstractMatrix<T>& A,
     case Device::CPU:
         Read(static_cast<Matrix<T,Device::CPU>&>(A), filename, format);
         break;
-    case Device::GPU:
 #ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
     {
         Matrix<T,Device::CPU> A_CPU;
         Read(A_CPU, filename, format);
@@ -77,7 +77,7 @@ void Read
     if( format == AUTO )
         format = DetectFormat( filename );
 
-    if( A.ColStride() == 1 && A.RowStride() == 1 )
+    if(( A.ColStride() == 1 && A.RowStride() == 1 ) && !(A.ColDist() == STAR || A.RowDist() == STAR))
     {
         if( A.CrossRank() == A.Root() && A.RedundantRank() == 0 )
         {

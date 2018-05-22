@@ -39,6 +39,7 @@ void Zeros( AbstractDistMatrix<T>& A, Int m, Int n )
 
 #define PROTO(T) \
   template void Zeros( Matrix<T>& A, Int m, Int n ); \
+  template void Zeros( AbstractMatrix<T>& A, Int m, Int n ); \
   template void Zeros( AbstractDistMatrix<T>& A, Int m, Int n );
 
 #define EL_ENABLE_DOUBLEDOUBLE

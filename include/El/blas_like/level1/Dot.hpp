@@ -30,10 +30,12 @@ T Dot( const AbstractMatrix<T>& A, const AbstractMatrix<T>& B )
       sum = Dot(static_cast<const Matrix<T,Device::CPU>&>(A),
                 static_cast<const Matrix<T,Device::CPU>&>(B));
       break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
       sum = Dot(static_cast<const Matrix<T,Device::GPU>&>(A),
                 static_cast<const Matrix<T,Device::GPU>&>(B));
       break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
       LogicError("Unsupported device type.");
     }

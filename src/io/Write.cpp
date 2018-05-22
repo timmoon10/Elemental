@@ -27,8 +27,8 @@ void Write(AbstractMatrix<T> const& A, string basename,
         Write(static_cast<Matrix<T,Device::CPU> const&>(A),
               basename, format, title);
         break;
-    case Device::GPU:
 #ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
     {
         // Copy to the CPU
         Matrix<T,Device::CPU> A_CPU{static_cast<Matrix<T,Device::GPU> const&>(A)};

@@ -77,6 +77,12 @@ option(${PROJECT_NAME}_ENABLE_CUDA
   "Search for CUDA support and enable related features if found."
   ON)
 
+if (${PROJECT_NAME}_ENABLE_CUDA)
+  option(${PROJECT_NAME}_ENABLE_CUB
+    "Search for CUB support and enable related features if found."
+    ON)
+endif ()
+
 # Legacy options, with EL_ prefix intact
 option(BINARY_SUBDIRECTORIES "Install binaries into tree based on type" ON)
 
@@ -183,12 +189,20 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
 
     find_package(CUDA) # Enable all the macros
 
+    if (${PROJECT_NAME}_ENABLE_CUB)
+      find_package(CUB REQUIRED)
+      set(HYDROGEN_HAVE_CUB TRUE)
+    else ()
+      set(HYDROGEN_HAVE_CUB FALSE)
+    endif ()
+
     if (NOT TARGET cuda::toolkit)
 
       add_library(cuda::toolkit INTERFACE IMPORTED)
 
       set_property(TARGET cuda::toolkit PROPERTY
-        INTERFACE_LINK_LIBRARIES "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}")
+        INTERFACE_LINK_LIBRARIES
+        "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}" "${CUB_LIBRARIES}")
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)

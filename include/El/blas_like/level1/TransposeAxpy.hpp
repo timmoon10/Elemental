@@ -27,6 +27,7 @@ void TransposeAxpy(
                       static_cast<Matrix<T,Device::CPU>&>(Y),
                       conjugate);
         break;
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         TransposeAxpy(alphaS,
                       static_cast<Matrix<T,Device::GPU> const&>(X),
@@ -34,6 +35,7 @@ void TransposeAxpy(
                       conjugate);
 
         break;
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Bad device for TransposeAxpy");
     }
@@ -104,6 +106,7 @@ void TransposeAxpy
     }
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <typename T, typename S,
           typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
 void TransposeAxpy(S alphaS,
@@ -150,16 +153,9 @@ void TransposeAxpy(S alphaS,
           if( mX != nY || nX != mY )
               LogicError("Nonconformal TransposeAxpy");
         )
-        if( nX <= mX )
-        {
-            for( Int j=0; j<nX; ++j )
-                cublas::Axpy( mX, alpha, &XBuf[j*ldX], 1, &YBuf[j], ldY );
-        }
-        else
-        {
-            for( Int i=0; i<mX; ++i )
-                cublas::Axpy( nX, alpha, &XBuf[i], ldX, &YBuf[i*ldY], 1 );
-        }
+        cublas::Geam(conjugate ? 'C' : 'T', 'N', nX, mX,
+                     alpha, XBuf, ldX,
+                     T(1), YBuf, ldY, YBuf, ldY);
     }
 }
 
@@ -172,6 +168,7 @@ void TransposeAxpy (S alphaS,
 {
     LogicError("TransposeAxpy: Bad type/device combo.");
 }
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename T,typename S>
 void TransposeAxpy

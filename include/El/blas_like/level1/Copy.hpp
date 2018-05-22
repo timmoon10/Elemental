@@ -9,6 +9,10 @@
 #ifndef EL_BLAS_COPY_HPP
 #define EL_BLAS_COPY_HPP
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include <El/blas_like/level1/Copy/internal_decl.hpp>
 #include <El/blas_like/level1/Copy/GeneralPurpose.hpp>
 #include <El/blas_like/level1/Copy/util.hpp>
@@ -116,6 +120,7 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
     }
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template<typename T>
 void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
 {
@@ -127,20 +132,13 @@ void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
     const Int ldB = B.LDim();
     const T* ABuf = A.LockedBuffer();
     T* BBuf = B.Buffer();
-
-    cudaError_t error = cudaGetLastError();
-    if (error != cudaSuccess)
-        RuntimeError("Previously existing error!");
-
-    error = cudaMemcpy2D(BBuf, ldB*sizeof(T),
-                         ABuf, ldA*sizeof(T),
-                         height*sizeof(T), width,
-                         cudaMemcpyDeviceToDevice);
-
-    if (error != cudaSuccess)
-        RuntimeError("cudaMemcpy error in Copy():\n\n",
-                     cudaGetErrorString(error));
+    EL_CHECK_CUDA(cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
+                                    ABuf, ldA*sizeof(T),
+                                    height*sizeof(T), width,
+                                    cudaMemcpyDeviceToDevice,
+                                    GPUManager::Stream()));
 }
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename S,typename T,
          typename/*=EnableIf<CanCast<S,T>>*/>
@@ -176,8 +174,6 @@ template<typename S,typename T,Dist U,Dist V,Device D,
 void Copy( const ElementalMatrix<S>& A, DistMatrix<T,U,V,ELEMENT,D>& B )
 {
     EL_DEBUG_CSE
-    if (A.GetLocalDevice() != D)
-        LogicError("Bad device.");
     if (A.Grid() == B.Grid() && A.ColDist() == U && A.RowDist() == V
         && A.GetLocalDevice() == D)
     {
@@ -392,10 +388,12 @@ void CopyFromNonRoot
   EL_EXTERN template void CopyFromNonRoot \
   ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers );
 
+#ifdef HYDROGEN_HAVE_CUDA
 EL_EXTERN template void Copy
 ( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
 EL_EXTERN template void Copy
 ( const Matrix<double,Device::GPU>& A, Matrix<double,Device::GPU>& B );
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

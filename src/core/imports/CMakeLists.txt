@@ -14,7 +14,7 @@ set_full_path(THIS_DIR_SOURCES
   )
 
 if (HYDROGEN_HAVE_CUDA)
-  set_full_path(CUDA_SOURCES cublas.cpp)
+  set_full_path(CUDA_SOURCES cuda.cpp cublas.cpp)
   list(APPEND THIS_DIR_SOURCES ${CUDA_SOURCES})
 endif()
 

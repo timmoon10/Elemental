@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_BLAS2_HPP
@@ -25,16 +25,37 @@ struct SymvCtrl
 // ====
 template<typename T>
 void Gemv
-( Orientation orientation,
-  T alpha, const Matrix<T>& A,
-           const Matrix<T>& x,
-  T beta,        Matrix<T>& y );
+( Orientation orientA,
+  T alpha, const AbstractMatrix<T>& A, const AbstractMatrix<T>& B,
+  T beta, AbstractMatrix<T>& C );
+
 template<typename T>
 void Gemv
+( Orientation orientA,
+  T alpha, const AbstractMatrix<T>& A, const AbstractMatrix<T>& B,
+  AbstractMatrix<T>& C );
+
+template<typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
+void Gemv
 ( Orientation orientation,
-  T alpha, const Matrix<T>& A,
-           const Matrix<T>& x,
-                 Matrix<T>& y );
+  T alpha, const Matrix<T,D>& A,
+           const Matrix<T,D>& x,
+  T beta,        Matrix<T,D>& y );
+
+template<typename T, Device D,
+         typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void Gemv
+( Orientation orientation,
+  T alpha, const Matrix<T,D>& A,
+           const Matrix<T,D>& x,
+  T beta,        Matrix<T,D>& y );
+
+template<typename T, Device D>
+void Gemv
+( Orientation orientation,
+  T alpha, const Matrix<T,D>& A,
+           const Matrix<T,D>& x,
+           Matrix<T,D>& y );
 template<typename T>
 void Gemv
 ( Orientation orientation,
@@ -71,7 +92,7 @@ template<typename T>
 void Ger( T alpha, const Matrix<T>& x, const Matrix<T>& y, Matrix<T>& A );
 template<typename T>
 void Ger
-( T alpha, const AbstractDistMatrix<T>& x, const AbstractDistMatrix<T>& y, 
+( T alpha, const AbstractDistMatrix<T>& x, const AbstractDistMatrix<T>& y,
                  AbstractDistMatrix<T>& A );
 template<typename T>
 void LocalGer
@@ -85,7 +106,7 @@ void Geru( T alpha, const Matrix<T>& x, const Matrix<T>& y, Matrix<T>& A );
 
 template<typename T>
 void Geru
-( T alpha, const AbstractDistMatrix<T>& x, const AbstractDistMatrix<T>& y, 
+( T alpha, const AbstractDistMatrix<T>& x, const AbstractDistMatrix<T>& y,
                  AbstractDistMatrix<T>& A );
 
 // Hemv
@@ -109,7 +130,7 @@ void Her( UpperOrLower uplo, Base<T> alpha, const Matrix<T>& x, Matrix<T>& A );
 
 template<typename T>
 void Her
-( UpperOrLower uplo, 
+( UpperOrLower uplo,
   Base<T> alpha, const AbstractDistMatrix<T>& x, AbstractDistMatrix<T>& A );
 
 // Her2
@@ -135,7 +156,7 @@ void QuasiTrsv
 template<typename F>
 void QuasiTrsv
 ( UpperOrLower uplo, Orientation orientation,
-  const AbstractDistMatrix<F>& A, AbstractDistMatrix<F>& x, 
+  const AbstractDistMatrix<F>& A, AbstractDistMatrix<F>& x,
   bool checkIfSingular=false );
 
 // Symv
@@ -150,7 +171,7 @@ template<typename T>
 void Symv
 ( UpperOrLower uplo,
   T alpha, const AbstractDistMatrix<T>& A, const AbstractDistMatrix<T>& x,
-  T beta,        AbstractDistMatrix<T>& y, bool conjugate=false, 
+  T beta,        AbstractDistMatrix<T>& y, bool conjugate=false,
   const SymvCtrl<T>& ctrl=SymvCtrl<T>() );
 
 // namespace symv
@@ -183,13 +204,13 @@ void LocalRowAccumulate
 // ===
 template<typename T>
 void Syr
-( UpperOrLower uplo, 
+( UpperOrLower uplo,
   T alpha, const Matrix<T>& x, Matrix<T>& A, bool conjugate=false );
 
 template<typename T>
 void Syr
 ( UpperOrLower uplo,
-  T alpha, const AbstractDistMatrix<T>& x, AbstractDistMatrix<T>& A, 
+  T alpha, const AbstractDistMatrix<T>& x, AbstractDistMatrix<T>& A,
   bool conjugate=false );
 
 // Syr2
@@ -226,7 +247,7 @@ void Trr
 template<typename T>
 void Trr
 ( UpperOrLower uplo,
-  T alpha, const AbstractDistMatrix<T>& x, const AbstractDistMatrix<T>& y, 
+  T alpha, const AbstractDistMatrix<T>& x, const AbstractDistMatrix<T>& y,
   AbstractDistMatrix<T>& A, bool conjugate=false );
 
 // Trr2
@@ -241,7 +262,7 @@ void Trr2
 template<typename T>
 void Trr2
 ( UpperOrLower uplo,
-  T alpha, const AbstractDistMatrix<T>& X, const AbstractDistMatrix<T>& Y, 
+  T alpha, const AbstractDistMatrix<T>& X, const AbstractDistMatrix<T>& Y,
   AbstractDistMatrix<T>& A, bool conjugate=false );
 
 // Trsv
@@ -267,13 +288,13 @@ enum GivensSequenceType
 
 template<typename F,typename=DisableIf<IsReal<F>>>
 void ApplyGivensSequence
-( LeftOrRight side, GivensSequenceType seqType, ForwardOrBackward direction, 
+( LeftOrRight side, GivensSequenceType seqType, ForwardOrBackward direction,
   const Matrix<Base<F>>& cList,
   const Matrix<F>& sList,
   Matrix<F>& A );
 template<typename F>
 void ApplyGivensSequence
-( LeftOrRight side, GivensSequenceType seqType, ForwardOrBackward direction, 
+( LeftOrRight side, GivensSequenceType seqType, ForwardOrBackward direction,
   const Matrix<Base<F>>& cList,
   const Matrix<Base<F>>& sList,
   Matrix<F>& A );

@@ -20,7 +20,6 @@ void ThreeValued(AbstractMatrix<T>& A, Int m, Int n, double p)
     case Device::CPU:
         ThreeValued(static_cast<Matrix<T,Device::CPU>&>(A), m, n, p);
         break;
-    case Device::GPU:
     default:
         LogicError("ThreeValued: Bad device.");
     }

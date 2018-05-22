@@ -71,19 +71,13 @@ Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::GPU> const& A)
     : Matrix{A.Height(), A.Width(), A.LDim()}
 {
     EL_DEBUG_CSE;
-    auto error = cudaMemcpy2D(data_, A.Width()*sizeof(Ring),
-                              A.LockedBuffer(), A.Width()*sizeof(Ring),
-                              A.Width()*sizeof(Ring), A.LDim(),
-                              //height_*sizeof(Ring),
-                              cudaMemcpyDeviceToHost);
-    if (error != cudaSuccess)
-    {
-        std::ostringstream oss;
-        oss << "Error in copy from GPU: "
-            << cudaGetErrorName(error) << "\ndescription: "
-            << cudaGetErrorString(error) << "\n";
-        RuntimeError(oss.str());
-    }
+    auto stream = GPUManager::Stream();
+    EL_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(Ring),
+                                    A.LockedBuffer(), A.LDim()*sizeof(Ring),
+                                    A.Height()*sizeof(Ring), A.Width(),
+                                    cudaMemcpyDeviceToHost,
+                                    stream));
+    EL_CHECK_CUDA(cudaStreamSynchronize(stream));
 }
 #endif
 
@@ -310,6 +304,17 @@ Matrix<Ring, Device::CPU>::LockedBuffer(Int i, Int j) const EL_NO_EXCEPT
     if (j == END) j = this->Width() - 1;
     return &data_[i+j*this->LDim()];
 }
+
+// Advanced functions
+// ==================
+
+template<typename Ring>
+void Matrix<Ring, Device::CPU>::SetMemoryMode(unsigned int mode)
+{ memory_.SetMode(mode); }
+
+template<typename Ring>
+unsigned int Matrix<Ring, Device::CPU>::MemoryMode() const EL_NO_EXCEPT
+{ return memory_.Mode(); }
 
 // Single-entry manipulation
 // =========================

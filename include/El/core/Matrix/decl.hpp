@@ -61,7 +61,7 @@ public:
     // Assign by copying data from a GPU
     Matrix<Ring, Device::CPU> & operator=(
         Matrix<Ring, Device::GPU> const& A);
-#endif
+#endif // HYDROGEN_HAVE_CUDA
 
     // Move assignment
     Matrix<Ring, Device::CPU>& operator=(Matrix<Ring, Device::CPU>&& A);
@@ -117,6 +117,11 @@ public:
     const Ring* LockedBuffer() const EL_NO_EXCEPT override;
     const Ring* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT override;
 
+    //
+    // Advanced functions
+    //
+    void SetMemoryMode(unsigned int mode) override;
+    unsigned int MemoryMode() const EL_NO_EXCEPT override;
 
     // Single-entry manipulation
     // =========================
@@ -155,11 +160,11 @@ public:
 
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
-    inline Ring const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
-    inline Ring const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+    inline Ring const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT override;
+    inline Ring const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT override;
 
-    inline Ring& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
-    inline Ring& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+    inline Ring& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT override;
+    inline Ring& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT override;
 
 private:
     // Member variables
@@ -220,6 +225,7 @@ private:
     int RowAlign() const EL_NO_EXCEPT;
 };
 
+#ifdef HYDROGEN_HAVE_CUDA
 // GPU version
 template <typename Ring>
 class Matrix<Ring, Device::GPU> : public AbstractMatrix<Ring>
@@ -285,6 +291,10 @@ public:
     const Matrix<Ring, Device::GPU>
     operator()(Range<Int> I, Range<Int> J) const;
 
+    // Advanced functions
+    void SetMemoryMode(unsigned int mode) override;
+    unsigned int MemoryMode() const EL_NO_EXCEPT override;
+
     // Single-entry manipulation
     // =========================
 
@@ -328,11 +338,11 @@ public:
 
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
-    inline Ring const& CRef(Int i, Int j=0) const;
-    inline Ring const& operator()(Int i, Int j=0) const;
+    inline Ring const& CRef(Int i, Int j=0) const override;
+    inline Ring const& operator()(Int i, Int j=0) const override;
 
-    inline Ring& Ref(Int i, Int j=0);
-    inline Ring& operator()(Int i, Int j=0);
+    inline Ring& Ref(Int i, Int j=0) override;
+    inline Ring& operator()(Int i, Int j=0) override;
 
 private:
 
@@ -363,6 +373,7 @@ private:
     DevicePtr<Ring> data_=nullptr;
 
 };// class Matrix<Ring,Device::GPU>
+#endif // HYDROGEN_HAVE_CUDA
 
 } // namespace El
 

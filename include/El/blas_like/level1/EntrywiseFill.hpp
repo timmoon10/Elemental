@@ -23,18 +23,16 @@ void EntrywiseFill( Matrix<T, Device::CPU>& A, function<T(void)> func )
 }
 
 // FIXME: Make proper kernel
+#ifdef HYDROGEN_HAVE_CUDA
 template <typename T>
 void EntrywiseFill(Matrix<T,Device::GPU> &A, function<T(void)> func)
 {
-#ifdef HYDROGEN_HAVE_CUDA
     EL_DEBUG_CSE
     Matrix<T,Device::CPU> CPU_Mat(A.Height(),A.Width(),A.LDim());
     EntrywiseFill(CPU_Mat, std::move(func));
     A = CPU_Mat;
-#else // HYDROGEN_HAVE_CUDA
-    LogicError("Hydrogen compiled without CUDA support");
-#endif // HYDROGEN_HAVE_CUDA
 }
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename T>
 void EntrywiseFill( AbstractDistMatrix<T>& A, function<T(void)> func )

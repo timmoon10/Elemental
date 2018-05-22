@@ -38,14 +38,12 @@ void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
     const Int BLDim = B.LDim();
     const Int CLDim = C.LDim();
 
-    // Iterate over single loop if memory is contiguous. Otherwise
-    // iterate over double loop.
-    if( ALDim == height && BLDim == height && CLDim == height )
+    switch (A.GetDevice())
     {
-
-        switch (A.GetDevice())
-        {
-        case Device::CPU:
+    case Device::CPU:
+        // Iterate over single loop if memory is contiguous. Otherwise
+        // iterate over double loop.
+        if( ALDim == height && BLDim == height && CLDim == height )
         {
             // Check if output matrix is equal to either input matrix
             if( CBuf == BBuf )
@@ -67,28 +65,7 @@ void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
                         CBuf[i] = ABuf[i] * BBuf[i];
             }
         }
-        break;
-#ifdef HYDROGEN_HAVE_CUDA
-        case Device::GPU:
-        {
-            if (CBuf == BBuf)
-                Hadamard_GPU_impl(CBuf, ABuf, CBuf, height*width);
-            else if (CBuf == ABuf)
-                Hadamard_GPU_impl(CBuf, BBuf, CBuf, height*width);
-            else
-                Hadamard_GPU_impl(ABuf, BBuf, CBuf, height*width);
-        }
-        break;
-#endif // HYDROGEN_HAVE_CUDA
-        default:
-            LogicError("Bad device type for Hadamard.");
-        }
-    }
-    else
-    {
-        switch (A.GetDevice())
-        {
-        case Device::CPU:
+        else
         {
             EL_PARALLEL_FOR
             for( Int j=0; j<width; ++j )
@@ -102,19 +79,16 @@ void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
         }
         break;
 #ifdef HYDROGEN_HAVE_CUDA
-        case Device::GPU:
-        {
-            for (Int j = 0; j < width; ++j)
-                // FIXME: probably faster to do whole thing on GPU
-                Hadamard_GPU_impl(ABuf + j*ALDim, BBuf + j*ALDim,
-                                 CBuf + j*ALDim, height);
-        }
+    case Device::GPU:
+        Hadamard_GPU_impl( height, width,
+                           ABuf, 1, ALDim, BBuf, 1, BLDim,
+                           CBuf, 1, CLDim );
         break;
 #endif // HYDROGEN_HAVE_CUDA
-        default:
-            LogicError("Bad device type for Hadamard");
-        }
+    default:
+        LogicError("Bad device type for Hadamard.");
     }
+
 }
 
 template<typename T>

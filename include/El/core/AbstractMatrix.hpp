@@ -39,6 +39,8 @@ public:
     // Advanced functions
     void SetViewType(El::ViewType viewType) EL_NO_EXCEPT;
     El::ViewType ViewType() const EL_NO_EXCEPT;
+    virtual void SetMemoryMode(unsigned int mode) = 0;
+    virtual unsigned int MemoryMode() const EL_NO_EXCEPT = 0;
 
     virtual T* Buffer() EL_NO_EXCEPT = 0;
     virtual T* Buffer(Int i, Int j) EL_NO_EXCEPT = 0;
@@ -62,29 +64,31 @@ public:
     // Type conversion
     operator Matrix<T, Device::CPU>& () {
       if(this->GetDevice() != Device::CPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+        LogicError("Illegal conversion from AbstractMatrix to incompatible CPU Matrix ref");
       }
       return static_cast<Matrix<T, Device::CPU>&>(*this);
     }
     operator Matrix<T, Device::CPU>const& () const {
       if(this->GetDevice() != Device::CPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+        LogicError("Illegal conversion from AbstractMatrix to incompatible const CPU Matrix ref");
       }
       return static_cast<const Matrix<T, Device::CPU>&>(*this);
     }
 
+#ifdef HYDROGEN_HAVE_CUDA
     operator Matrix<T, Device::GPU>& () {
       if(this->GetDevice() != Device::GPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+        LogicError("Illegal conversion from AbstractMatrix to incompatible GPU Matrix ref");
       }
       return static_cast<Matrix<T, Device::GPU>&>(*this);
     }
     operator Matrix<T, Device::GPU>const& () const {
       if(this->GetDevice() != Device::GPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible Matrix");
+        LogicError("Illegal conversion from AbstractMatrix to incompatible const GPU Matrix ref");
       }
       return static_cast<const Matrix<T, Device::GPU>&>(*this);
     }
+#endif // HYDROGEN_HAVE_CUDA
 
     // Rescaling
     AbstractMatrix<T> const& operator*=(T const& alpha);
@@ -114,11 +118,11 @@ public:
 
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
-    inline T const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
-    inline T const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT;
+    virtual T const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT = 0;
+    virtual T const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT = 0;
 
-    inline T& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
-    inline T& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT;
+    virtual T& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT = 0;
+    virtual T& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT = 0;
 
 protected:
 
@@ -264,8 +268,13 @@ template <typename T>
 inline void AbstractMatrix<T>::Resize_(
     Int height, Int width, Int leadingDimension)
 {
-    this->SetSize_(height, width, leadingDimension);
-    do_resize_();
+    if (height != this->Height()
+        || width != this->Width()
+        || leadingDimension != this->LDim())
+    {
+        this->SetSize_(height, width, leadingDimension);
+        do_resize_();
+    }
 }
 
 template <typename T>
@@ -339,8 +348,10 @@ T AbstractMatrix<T>::Get(Int i, Int j) const
     {
     case Device::CPU:
         return static_cast<const Matrix<T,Device::CPU>*>(this)->Get(i,j);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         return static_cast<const Matrix<T,Device::GPU>*>(this)->Get(i,j);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
         return T{};
@@ -355,8 +366,10 @@ void AbstractMatrix<T>::Set(Int i, Int j, T const& alpha)
     {
     case Device::CPU:
         static_cast<Matrix<T,Device::CPU>*>(this)->Set(i,j, alpha);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         static_cast<Matrix<T,Device::GPU>*>(this)->Set(i,j, alpha);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
@@ -379,11 +392,14 @@ AbstractMatrix<T>::operator*=(T const& alpha)
     switch(this->GetDevice()) {
     case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->operator*=(alpha);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator*=(alpha);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
+    return *this;// silence compiler warning
 }
 
 // Addition/subtraction
@@ -398,11 +414,14 @@ AbstractMatrix<T>::operator+=(AbstractMatrix<T> const& A)
     switch(this->GetDevice()) {
     case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->operator+=(A);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator+=(A);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
+    return *this;// silence compiler warning
 }
 
 template<typename T>
@@ -415,11 +434,14 @@ AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
     switch(this->GetDevice()) {
     case Device::CPU:
       return static_cast<Matrix<T,Device::CPU>*>(this)->operator-=(A);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
       return static_cast<Matrix<T,Device::GPU>*>(this)->operator-=(A);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
+    return *this;// silence compiler warning
 }
 
 // Basic queries
@@ -500,6 +522,7 @@ AbstractMatrix<T>::operator-=(AbstractMatrix<T> const& A)
 
 // Return a reference to a single entry without error-checking
 // ===========================================================
+#if 0
 template<typename T>
 T const& AbstractMatrix<T>::CRef(Int i, Int j) const
     EL_NO_RELEASE_EXCEPT
@@ -508,8 +531,10 @@ T const& AbstractMatrix<T>::CRef(Int i, Int j) const
     {
     case Device::CPU:
         return static_cast<Matrix<T,Device::CPU> const*>(this)->CRef(i,j);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         return static_cast<Matrix<T,Device::GPU> const*>(this)->CRef(i,j);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
@@ -523,10 +548,13 @@ T const& AbstractMatrix<T>::operator()(Int i, Int j) const
     {
     case Device::CPU:
         return static_cast<Matrix<T,Device::CPU> const*>(this)->operator()(i,j);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         return static_cast<Matrix<T,Device::GPU> const*>(this)->operator()(i,j);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
+        throw std::logic_error("");
     }
 }
 
@@ -538,8 +566,10 @@ T& AbstractMatrix<T>::Ref(Int i, Int j)
     {
     case Device::CPU:
         return static_cast<Matrix<T,Device::CPU>*>(this)->Ref(i,j);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         return static_cast<Matrix<T,Device::GPU>*>(this)->Ref(i,j);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
@@ -553,12 +583,14 @@ T& AbstractMatrix<T>::operator()(Int i, Int j)
     {
     case Device::CPU:
         return (static_cast<Matrix<T,Device::CPU>*>(this))->operator()(i,j);
+#ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         return (static_cast<Matrix<T,Device::GPU>*>(this))->operator()(i,j);
+#endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Unsupported device type.");
     }
 }
-
+#endif // 0
 }// namespace El
 #endif // HYDROGEN_ABSTRACTMATRIX_HPP_

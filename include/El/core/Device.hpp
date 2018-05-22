@@ -1,16 +1,30 @@
 #ifndef EL_CORE_DEVICE_HPP_
 #define EL_CORE_DEVICE_HPP_
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-
 namespace El
 {
 
 // Special typedef to help distinguish host/device memory
 template <typename T> using DevicePtr = T*;
 
-enum class Device : unsigned char { CPU, GPU };
+enum class Device : unsigned char
+{
+    CPU
+#ifdef HYDROGEN_HAVE_CUDA
+    , GPU
+#endif
+};
+
+template <Device D>
+std::string DeviceName();
+
+template <> inline std::string DeviceName<Device::CPU>()
+{ return "CPU"; }
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <> inline std::string DeviceName<Device::GPU>()
+{ return "GPU"; }
+#endif
 
 // A trait to determine if the given (scalar) type is valid for a
 // given device type.
@@ -20,13 +34,20 @@ struct IsDeviceValidType : std::false_type {};
 template <typename T>
 struct IsDeviceValidType<T,Device::CPU> : std::true_type {};
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <> struct IsDeviceValidType< float,Device::GPU> : std::true_type {};
 template <> struct IsDeviceValidType<double,Device::GPU> : std::true_type {};
+#endif
 
 // Constexpr function wrapping the value above
 template <typename T, Device D>
 constexpr bool IsDeviceValidType_v() { return IsDeviceValidType<T,D>::value; }
 
+// Predicate to test if two devices are the same
+template <Device D1, Device D2>
+using SameDevice = EnumSame<Device,D1,D2>;
+
+// A simple data management class for temporary contiguous memory blocks
 template <typename T, Device D> class simple_buffer;
 
 template <typename T>
@@ -61,20 +82,18 @@ public:
     T* data() noexcept { return data_; }
     T const* data() const noexcept { return data_; }
 
+#ifdef HYDROGEN_HAVE_CUDA
     void shallowCopyIfPossible(simple_buffer<T,Device::GPU>& A)
     {
         // Shallow copy not possible
-
         this->allocate(A.size());
-        auto error = cudaMemcpy(data_, A.data(), size_*sizeof(T),
-                                cudaMemcpyDeviceToHost);
-        if (error != cudaSuccess)
-        {
-            RuntimeError(
-                "Error in cudaMemcpy.\n\ncudaError = ",
-                cudaGetErrorString(error));
-        }
+        auto stream = GPUManager::Stream();
+        EL_CHECK_CUDA(cudaMemcpyAsync(data_, A.data(), size_*sizeof(T),
+                                      cudaMemcpyDeviceToHost,
+                                      stream));
+        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
+#endif // HYDROGEN_HAVE_CUDA
 
     void shallowCopyIfPossible(simple_buffer<T,Device::CPU>& A)
     {
@@ -103,25 +122,31 @@ public:
     simple_buffer(size_t size, T const& value)
         : simple_buffer(size)
     {
-        // FIXME
-        if (value != T(0))
-            LogicError("Cannot value-initialize to nonzero value on GPU.");
-
-        auto error = cudaMemset(data_, value, size*sizeof(T));
-        if (error != cudaSuccess)
-            RuntimeError("simple_buffer: cudaMemset failed with message: \"",
-                         cudaGetErrorString(error), "\"");
+        if( value == T(0) )
+        {
+            EL_CHECK_CUDA(cudaMemsetAsync(data_, 0x0, size*sizeof(T),
+                                          GPUManager::Stream()));
+        }
+        else
+        {
+            simple_buffer<T,Device::CPU> cpuBuffer(size, value);
+            shallowCopyIfPossible(cpuBuffer);
+        }
     }
 
     ~simple_buffer()
     {
         if (data_ && own_data_)
         {
-            auto error = cudaFree(data_);
-            if (error != cudaSuccess)
+            try
             {
-                std::cerr << "Error in destructor. About to terminate.\n\n"
-                          << "cudaError = " << cudaGetErrorString(error)
+                EL_CHECK_CUDA(cudaFree(data_));
+            }
+            catch (std::exception const& e)
+            {
+                std::cerr << "cudaFree error detected:\n\n"
+                          << e.what() << std::endl
+                          << "std::terminate() will be called."
                           << std::endl;
                 std::terminate();
             }
@@ -138,27 +163,15 @@ public:
         }
 
         T* ptr;
-        auto error = cudaMalloc(&ptr, size*sizeof(T));
-        if (error != cudaSuccess)
-            RuntimeError("simple_buffer: cudaMalloc failed with message: \"",
-                         cudaGetErrorString(error), "\"");
-        else
+        EL_CHECK_CUDA(cudaMalloc(&ptr, size*sizeof(T)));
+        std::swap(data_,ptr);
+        const bool own_ptr = own_data_;
+        own_data_ = true;
+        size_ = size;
+        if (ptr && own_ptr)
         {
-            std::swap(data_,ptr);
-            const bool own_ptr = own_data_;
-            own_data_ = true;
-            size_ = size;
-            if (ptr && own_ptr)
-            {
-                auto error = cudaFree(ptr);
-                if (error != cudaSuccess)
-                {
-                    RuntimeError(
-                        "Error in with cudaMemcpy.\n\n"
-                        "cudaError = ", cudaGetErrorString(error));
-                }
-                ptr = nullptr;
-            }
+            EL_CHECK_CUDA(cudaFree(ptr));
+            ptr = nullptr;
         }
     }
 
@@ -170,16 +183,12 @@ public:
     void shallowCopyIfPossible(simple_buffer<T,Device::CPU>& A)
     {
         // Shallow copy not possible
-
         this->allocate(A.size());
-        auto error = cudaMemcpy(data_, A.data(), size_*sizeof(T),
-                                cudaMemcpyHostToDevice);
-        if (error != cudaSuccess)
-        {
-            RuntimeError(
-                "Error in cudaMemcpy.\n\ncudaError = ",
-                cudaGetErrorString(error));
-        }
+        auto stream = GPUManager::Stream();
+        EL_CHECK_CUDA(cudaMemcpyAsync(data_, A.data(), size_*sizeof(T),
+                                      cudaMemcpyHostToDevice,
+                                      stream));
+        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 
     void shallowCopyIfPossible(simple_buffer<T,Device::GPU>& A)

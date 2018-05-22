@@ -134,6 +134,8 @@ void Jordan( AbstractDistMatrix<T>& J, Int n, T lambda );
 template<typename T>
 void Ones( Matrix<T>& A, Int m, Int n );
 template<typename T>
+void Ones( AbstractMatrix<T>& A, Int m, Int n );
+template<typename T>
 void Ones( AbstractDistMatrix<T>& A, Int m, Int n );
 
 // Toeplitz
@@ -566,10 +568,6 @@ void MakeGaussian
 template<typename Field>
 void Gaussian
 ( AbstractMatrix<Field>& A, Int m, Int n,
-  Field mean=0, Base<Field> stddev=1 );
-template<typename Field, Device Dev>
-void Gaussian
-( Matrix<Field, Dev>& A, Int m, Int n,
   Field mean=0, Base<Field> stddev=1 );
 template<typename Field>
 void Gaussian

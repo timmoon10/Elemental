@@ -129,7 +129,7 @@ DM& DM::operator=(const DistMatrix<T,STAR,VC,ELEMENT,D>& A)
 {
     EL_DEBUG_CSE
     DistMatrix<T,STAR,VR,ELEMENT,D> A_STAR_VR(A);
-    DistMatrix<T> A_MC_MR(this->Grid());
+    DistMatrix<T,MC,MR,ELEMENT,D> A_MC_MR(this->Grid());
     A_MC_MR.AlignColsWith(*this);
     A_MC_MR = A_STAR_VR;
     A_STAR_VR.Empty();
@@ -301,38 +301,63 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
   BOTH(T,VC,  STAR,Device::CPU); \
   BOTH(T,VR,  STAR,Device::CPU);
 
-template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
-SELF(float,CIRC,CIRC,Device::GPU);
-SELF(float,MC,  MR  ,Device::GPU);
-SELF(float,MD,  STAR,Device::GPU);
-SELF(float,MR,  MC  ,Device::GPU);
-SELF(float,MR,  STAR,Device::GPU);
-SELF(float,STAR,MC  ,Device::GPU);
-SELF(float,STAR,MD  ,Device::GPU);
-SELF(float,STAR,MR  ,Device::GPU);
-SELF(float,STAR,STAR,Device::GPU);
-SELF(float,STAR,VC  ,Device::GPU);
-SELF(float,STAR,VR  ,Device::GPU);
-SELF(float,VC,  STAR,Device::GPU);
-SELF(float,VR,  STAR,Device::GPU);
+#ifdef HYDROGEN_HAVE_CUDA
+#define INSTGPU(T,U,V)                                                  \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>&         \
+    DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=        \
+    (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&)
 
+template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+INSTGPU(float,CIRC,CIRC);
+INSTGPU(float,MC,  MR  );
+INSTGPU(float,MD,  STAR);
+INSTGPU(float,MR,  MC  );
+INSTGPU(float,MR,  STAR);
+INSTGPU(float,STAR,MC  );
+INSTGPU(float,STAR,MD  );
+INSTGPU(float,STAR,MR  );
+INSTGPU(float,STAR,STAR);
+INSTGPU(float,STAR,VC  );
+INSTGPU(float,STAR,VR  );
+INSTGPU(float,VC,  STAR);
+INSTGPU(float,VR,  STAR);
 template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix
    (const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>& A);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
 
 template class DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
-SELF(double,CIRC,CIRC,Device::GPU);
-SELF(double,MC,  MR  ,Device::GPU);
-SELF(double,MD,  STAR,Device::GPU);
-SELF(double,MR,  MC  ,Device::GPU);
-SELF(double,MR,  STAR,Device::GPU);
-SELF(double,STAR,MC  ,Device::GPU);
-SELF(double,STAR,MD  ,Device::GPU);
-SELF(double,STAR,MR  ,Device::GPU);
-SELF(double,STAR,STAR,Device::GPU);
-SELF(double,STAR,VC  ,Device::GPU);
-SELF(double,STAR,VR  ,Device::GPU);
-SELF(double,VC,  STAR,Device::GPU);
-SELF(double,VR,  STAR,Device::GPU);
+INSTGPU(double,CIRC,CIRC);
+INSTGPU(double,MC,  MR  );
+INSTGPU(double,MD,  STAR);
+INSTGPU(double,MR,  MC  );
+INSTGPU(double,MR,  STAR);
+INSTGPU(double,STAR,MC  );
+INSTGPU(double,STAR,MD  );
+INSTGPU(double,STAR,MR  );
+INSTGPU(double,STAR,STAR);
+INSTGPU(double,STAR,VC  );
+INSTGPU(double,STAR,VR  );
+INSTGPU(double,VC,  STAR);
+INSTGPU(double,VR,  STAR);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix
+   (const DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>& A);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
+
+#endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
