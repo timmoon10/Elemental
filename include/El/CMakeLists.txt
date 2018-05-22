@@ -15,6 +15,7 @@ add_subdirectory(io)
 add_subdirectory(lapack_like)
 add_subdirectory(macros)
 add_subdirectory(matrices)
+add_subdirectory(hydrogen)
 
 # Propagate the files up the tree
 set(HEADERS "${HEADERS}" "${THIS_DIR_HEADERS}" PARENT_SCOPE)

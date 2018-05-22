@@ -13,6 +13,9 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
+#include "mpi_utils.hpp"
+/// Only AllReduce is kept in collectives.hpp
+#include "mpi_collectives.hpp"
 
 typedef unsigned char* UCP;
 
@@ -64,6 +67,7 @@ MPI_Op NativeOp( const El::mpi::Op& op )
 }
 
 } // anonymous namespace
+
 
 namespace El {
 namespace mpi {
