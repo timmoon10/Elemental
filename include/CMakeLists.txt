@@ -2,7 +2,6 @@
 set_full_path(THIS_DIR_HEADERS
   El.hpp
   El-lite.hpp
-  #hydrogen.hpp
   )
 
 # Add the subdirectories
