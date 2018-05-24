@@ -18,83 +18,60 @@ void InitializeCUDA(int argc, char* argv[])
 {
 
     int numDevices = 0;
-    int device = -1;
+    int device = 0;
     cudaDeviceProp deviceProp;
 
     EL_FORCE_CHECK_CUDA(
         cudaGetDeviceCount(&numDevices));
-
-    // Choose device by parsing command-line arguments
-    // if (argc > 0) { device = std::atoi(argv[0]); }
-
-    // Choose device by parsing environment variables
-    if (device < 0)
+    switch (numDevices)
     {
-        char* env = nullptr;
-        if (!env)
-            env = std::getenv("SLURM_LOCALID");
-        if (!env)
-            env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK");
-        if (!env)
-            env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK");
-        if (!env)
-            // This returns a list if more than one gpu is present in the
-            // resource set, for example:
-            // CUDA_VISIBLE_DEVICES=0,1,2,3
-            // std::atoi picks the first one
-            env = std::getenv("CUDA_VISIBLE_DEVICES");
+    case 0: return;
+    case 1: device = 0; break;
+    default:
 
-        if (env)
+        // Get local rank (rank within compute node)
+        int localRank = 0;
+        std::string env;
+        if (env.empty()) { env = std::getenv("SLURM_LOCALID"); }
+        if (env.empty()) { env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK"); }
+        if (env.empty()) { env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK"); }
+        if (!env.empty()) { localRank = std::atoi(env.c_str()); }
+        
+        // Try assigning GPUs to local ranks in round-robin fashion
+        device = localRank % numDevices;
+
+        // Check GPU compute mode
+        EL_FORCE_CHECK_CUDA(
+            cudaGetDeviceProperties(&deviceProp, device));
+        switch (deviceProp.computeMode)
         {
-            // Allocate devices amongst ranks in round-robin fashion
-            int const localRank = std::atoi(env);
-            device = localRank % numDevices;
-
-            // If device is shared amongst MPI ranks, check its
-            // compute mode
+        case cudaComputeModeExclusive:
+        case cudaComputeModeExclusiveProcess:
             if (localRank >= numDevices)
             {
-                EL_FORCE_CHECK_CUDA(
-                    cudaGetDeviceProperties(&deviceProp, device));
-                switch(deviceProp.computeMode)
-                {
-                case cudaComputeModeExclusive:
-                    cudaDeviceReset();
-                    RuntimeError("Attempted to share CUDA device ",device,
-                                 " amongst multiple MPI ranks, ",
-                                 "but it is set to cudaComputeModeExclusive");
-                    break;
-                case cudaComputeModeExclusiveProcess:
-                    cudaDeviceReset();
-                    RuntimeError("Attempted to share CUDA device ",device,
-                                 " amongst multiple MPI ranks, "
-                                 "but it is set to "
-                                 "cudaComputeModeExclusiveProcess");
-                    break;
-                }
+                cudaDeviceReset();
+                RuntimeError("CUDA device ",device," has a compute mode "
+                             "that does not permit sharing amongst ",
+                             "multiple MPI ranks");
             }
+            else
+            {
+                // Let CUDA handle GPU assignments
+                EL_FORCE_CHECK_CUDA(cudaGetDevice(&device));
+            }
+            break;
         }
+
     }
 
-    // Check device compute mode
-    if (device < 0)
-        device = 0;
-
+    // Check GPU compute mode
     EL_FORCE_CHECK_CUDA(
         cudaGetDeviceProperties(&deviceProp, device));
-
-    switch(deviceProp.computeMode)
+    if (deviceProp.computeMode == cudaComputeModeProhibited)
     {
-    case cudaComputeModeExclusive:
-    case cudaComputeModeExclusiveProcess:
-        // Let CUDA handle GPU assignments
-        EL_FORCE_CHECK_CUDA(cudaGetDevice(&device));
-        break;
-    case cudaComputeModeProhibited:
         cudaDeviceReset();
         RuntimeError("CUDA Device ",device,
                      " is set with ComputeModeProhibited");
-        break;
     }
 
     // Instantiate CUDA manager
@@ -112,7 +89,6 @@ GPUManager::GPUManager(int device)
     // Check if device is valid
     EL_FORCE_CHECK_CUDA(
         cudaGetDeviceCount(&numDevices_));
-
     if (device_ < 0 || device_ >= numDevices_)
     {
         RuntimeError("Attempted to set invalid CUDA device ",
