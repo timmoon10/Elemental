@@ -251,6 +251,9 @@ template<typename T> struct IsStdField<Complex<T>>
 #include <El/core/imports/cuda.hpp>
 #include <El/core/imports/cublas.hpp>
 #endif // HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_CUB
+#include <El/core/imports/cub.hpp>
+#endif // HYDROGEN_HAVE_CUB
 #include <El/core/imports/lapack.hpp>
 #include <El/core/imports/flame.hpp>
 #include <El/core/imports/mkl.hpp>

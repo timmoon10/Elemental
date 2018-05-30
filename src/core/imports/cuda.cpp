@@ -1,5 +1,8 @@
 #include "El-lite.hpp"
 #include "El/core/imports/cuda.hpp"
+#ifdef HYDROGEN_HAVE_CUB
+#include "El/core/imports/cub.hpp"
+#endif // HYDROGEN_HAVE_CUB
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -80,6 +83,9 @@ void InitializeCUDA(int argc, char* argv[])
 
 void FinalizeCUDA()
 {
+#ifdef HYDROGEN_HAVE_CUB
+    cub::DestroyMemoryPool();
+#endif // HYDROGEN_HAVE_CUB
     GPUManager::Destroy();
 }
 

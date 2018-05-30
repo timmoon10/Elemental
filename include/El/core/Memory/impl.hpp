@@ -15,9 +15,6 @@
 #ifdef HYDROGEN_HAVE_CUDA
 #include <cuda_runtime.h>
 #endif // HYDROGEN_HAVE_CUDA
-#ifdef HYDROGEN_HAVE_CUB
-#include "cub/util_allocator.cuh"
-#endif // HYDROGEN_HAVE_CUB
 
 #include "El/hydrogen_config.h"
 #include "decl.hpp"
@@ -86,11 +83,6 @@ struct MemHelper<G,Device::CPU>
 
 #ifdef HYDROGEN_HAVE_CUDA
 
-#ifdef HYDROGEN_HAVE_CUB
-// GPU memory pool
-cub::CachingDeviceAllocator cubMemPool(2u);
-#endif // HYDROGEN_HAVE_CUB
-
 template <typename G>
 struct MemHelper<G,Device::GPU>
 {
@@ -104,11 +96,9 @@ struct MemHelper<G,Device::GPU>
         case 0: status = cudaMalloc(&ptr, size * sizeof(G)); break;
 #ifdef HYDROGEN_HAVE_CUB
         case 1:
-            {
-                status = cubMemPool.DeviceAllocate(reinterpret_cast<void**>(&ptr),
-                                                   size * sizeof(G),
-                                                   GPUManager::Stream());
-            }
+            status = cub::MemoryPool().DeviceAllocate(reinterpret_cast<void**>(&ptr),
+                                                      size * sizeof(G),
+                                                      GPUManager::Stream());
             break;
 #endif // HYDROGEN_HAVE_CUB
         default: RuntimeError("Invalid GPU memory allocation mode");
@@ -135,7 +125,9 @@ struct MemHelper<G,Device::GPU>
         switch (mode) {
         case 0: EL_CHECK_CUDA(cudaFree(ptr)); break;
 #ifdef HYDROGEN_HAVE_CUB
-        case 1: EL_CHECK_CUDA(cubMemPool.DeviceFree(reinterpret_cast<void*>(ptr))); break;
+        case 1:
+            EL_CHECK_CUDA(cub::MemoryPool().DeviceFree(reinterpret_cast<void*>(ptr)));
+            break;
 #endif // HYDROGEN_HAVE_CUB
         default: RuntimeError("Invalid GPU memory deallocation mode");
         }

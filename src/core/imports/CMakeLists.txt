@@ -17,6 +17,10 @@ if (HYDROGEN_HAVE_CUDA)
   set_full_path(CUDA_SOURCES cuda.cpp cublas.cpp)
   list(APPEND THIS_DIR_SOURCES ${CUDA_SOURCES})
 endif()
+if (HYDROGEN_HAVE_CUB)
+  set_full_path(CUB_SOURCES cub.cpp)
+  list(APPEND THIS_DIR_SOURCES ${CUB_SOURCES})
+endif()
 
 # Add the subdirectories
 add_subdirectory(blas)
