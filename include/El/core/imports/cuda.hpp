@@ -110,6 +110,8 @@ public:
 
     /** Create new singleton instance of CUDA manager. */
     static void Create( int device = 0 );
+    /** Initilize CUBLAS. */
+    static void InitializeCUBLAS();
     /** Destroy singleton instance of CUDA manager. */
     static void Destroy();
     /** Get singleton instance of CUDA manager. */

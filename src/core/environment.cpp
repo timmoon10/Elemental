@@ -178,6 +178,10 @@ void Initialize( int& argc, char**& argv )
 #endif
     }
 
+#ifdef HYDROGEN_HAVE_CUDA
+    InitializeCUBLAS();
+#endif
+    
 #ifdef EL_HAVE_QT5
     InitializeQt5( argc, argv );
 #endif
