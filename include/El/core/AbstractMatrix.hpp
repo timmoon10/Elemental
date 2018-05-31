@@ -10,7 +10,7 @@ class AbstractMatrix
 public:
     AbstractMatrix() = default;
     AbstractMatrix(AbstractMatrix<T> const&) = default;
-    AbstractMatrix& operator=(AbstractMatrix<T> const&) = default;
+    AbstractMatrix<T>& operator=(AbstractMatrix<T> const& A);
     AbstractMatrix(AbstractMatrix<T>&&) = default;
     AbstractMatrix& operator=(AbstractMatrix<T>&&) = default;
 
@@ -89,7 +89,6 @@ public:
       return static_cast<const Matrix<T, Device::GPU>&>(*this);
     }
 #endif // HYDROGEN_HAVE_CUDA
-
     // Rescaling
     AbstractMatrix<T> const& operator*=(T const& alpha);
 
@@ -382,6 +381,17 @@ void AbstractMatrix<T>::Set(Entry<T> const& entry)
 
 // Operator overloading
 // ====================
+
+// Assignment
+// ----------
+template<typename T>
+AbstractMatrix<T>&
+AbstractMatrix<T>::operator=(AbstractMatrix<T> const& A)
+{
+    EL_DEBUG_CSE
+    Copy( A, *this );
+    return *this;
+}
 
 // Rescaling
 // ---------
