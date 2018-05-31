@@ -388,6 +388,7 @@ template<typename T>
 AbstractMatrix<T>&
 AbstractMatrix<T>::operator=(AbstractMatrix<T> const& A)
 {
+    EL_DEBUG_CSE
     Copy( A, *this );
     return *this;
 }
