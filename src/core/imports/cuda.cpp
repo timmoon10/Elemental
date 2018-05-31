@@ -34,12 +34,12 @@ void InitializeCUDA(int argc, char* argv[])
 
         // Get local rank (rank within compute node)
         int localRank = 0;
-        std::string env;
-        if (env.empty()) { env = std::getenv("SLURM_LOCALID"); }
-        if (env.empty()) { env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK"); }
-        if (env.empty()) { env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK"); }
-        if (!env.empty()) { localRank = std::atoi(env.c_str()); }
-        
+        char* env=nullptr;
+        if (!env) { env = std::getenv("SLURM_LOCALID"); }
+        if (!env) { env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK"); }
+        if (!env) { env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK"); }
+        if (env) { localRank = std::atoi(env); }
+
         // Try assigning GPUs to local ranks in round-robin fashion
         device = localRank % numDevices;
 
