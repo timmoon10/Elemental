@@ -105,13 +105,16 @@ GPUManager::GPUManager(int device)
     // Initialize CUDA and cuBLAS objects
     EL_FORCE_CHECK_CUDA(cudaSetDevice(device_));
     EL_FORCE_CHECK_CUDA(cudaStreamCreate(&stream_));
-    EL_FORCE_CHECK_CUBLAS(cublasCreate(&cublasHandle_));
-    EL_FORCE_CHECK_CUBLAS(cublasSetStream(cublasHandle_, stream_));
-    EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cublasHandle_,
-                                               CUBLAS_POINTER_MODE_HOST));
 }
 
-
+void GPUManager::InitializeCUBLAS()
+{
+    EL_FORCE_CHECK_CUBLAS(cublasCreate(&Instance()->cublasHandle_));
+    EL_FORCE_CHECK_CUBLAS(cublasSetStream(cuBLASHandle(), Stream()));
+    EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cuBLASHandle(),
+                                               CUBLAS_POINTER_MODE_HOST));
+}
+    
 GPUManager::~GPUManager()
 {
     try
