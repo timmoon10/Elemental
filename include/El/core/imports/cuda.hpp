@@ -85,7 +85,12 @@ struct CudaError : std::runtime_error
   EL_FORCE_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)
 #endif // #ifdef EL_RELEASE
 
-/** Initialize CUDA environment. */
+/** Initialize CUDA environment.
+ *  We assume that all MPI ranks within a compute node have access to
+ *  exactly one unique GPU or to the same (possibly empty) list of
+ *  GPUs. GPU assignments can be controled with the
+ *  CUDA_VISIBLE_DEVICES environment variable.
+ */
 void InitializeCUDA(int,char*[]);
 /** Finalize CUDA environment. */
 void FinalizeCUDA();
@@ -105,6 +110,8 @@ public:
 
     /** Create new singleton instance of CUDA manager. */
     static void Create( int device = 0 );
+    /** Initilize CUBLAS. */
+    static void InitializeCUBLAS();
     /** Destroy singleton instance of CUDA manager. */
     static void Destroy();
     /** Get singleton instance of CUDA manager. */
