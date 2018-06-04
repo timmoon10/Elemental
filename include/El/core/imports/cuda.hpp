@@ -124,6 +124,13 @@ public:
     static void SetDevice( int device );
     /** Get CUDA stream. */
     static cudaStream_t Stream();
+    /** Synchronize CUDA stream. */
+    static void SynchronizeStream();
+    /** Synchronize CUDA device.
+     *  If checkError is true, an exception will be thrown if an error
+     *  from an asynchronous CUDA kernel is detected.
+     */
+    static void SynchronizeDevice( bool checkError = false );
     /** Get cuBLAS handle. */
     static cublasHandle_t cuBLASHandle();
 

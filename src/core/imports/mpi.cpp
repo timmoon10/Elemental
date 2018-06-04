@@ -18,13 +18,12 @@ typedef unsigned char* UCP;
 
 #ifdef HYDROGEN_HAVE_CUDA
 #include <El/core/imports/cuda.hpp>
-#define EL_CHECK_MPI(mpi_call)                                          \
-    do                                                                  \
-    {                                                                   \
-       EL_CHECK_CUDA(cudaStreamSynchronize(GPUManager::Stream()));      \
-       CheckMpi( mpi_call );                                            \
-       EL_CHECK_CUDA(cudaDeviceSynchronize());                          \
-    }                                                                   \
+#define EL_CHECK_MPI(mpi_call)                  \
+    do                                          \
+    {                                           \
+        GPUManager::SynchronizeStream();        \
+        CheckMpi( mpi_call );                   \
+    }                                           \
     while( 0 )
 #else
 #define EL_CHECK_MPI(mpi_call) CheckMpi( mpi_call )
