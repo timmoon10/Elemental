@@ -179,13 +179,39 @@ cudaStream_t GPUManager::Stream()
     return Instance()->stream_;
 }
 
+void GPUManager::SynchronizeStream()
+{
+    EL_CHECK_CUDA(
+        cudaSetDevice(Device()));
+    EL_CHECK_CUDA(
+        cudaStreamSynchronize(Stream()));
+}
+
+void GPUManager::SynchronizeDevice( bool checkError )
+{
+    EL_CHECK_CUDA(
+        cudaSetDevice(Device()));
+    if (checkError)
+    {
+        // Synchronize with error check
+        EL_CUDA_SYNC(true);
+    }
+    else
+    {
+        // Synchronize with no error check in release build
+        EL_CHECK_CUDA(
+            cudaDeviceSynchronize());
+    }
+}
+
 cublasHandle_t GPUManager::cuBLASHandle()
 {
     auto* instance = Instance();
     auto handle = instance->cublasHandle_;
-    EL_CHECK_CUBLAS(cublasSetStream(handle, instance->stream_));
-    EL_CHECK_CUBLAS(cublasSetPointerMode(handle,
-                                         CUBLAS_POINTER_MODE_HOST));
+    EL_CHECK_CUBLAS(
+        cublasSetStream(handle, instance->stream_));
+    EL_CHECK_CUBLAS(
+        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
     return handle;
 }
 
