@@ -267,7 +267,10 @@ template<typename T> struct IsStdField<Complex<T>>
 
 #include <El/core/Memory.hpp>
 
-namespace El {
+#include <El/core/SimpleBuffer.hpp>
+
+namespace El
+{
 
 template <typename T=double> class AbstractMatrix;
 template<typename T=double, Device D=Device::CPU> class Matrix;

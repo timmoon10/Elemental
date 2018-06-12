@@ -320,47 +320,6 @@ struct Impl<T, Device::GPU, true>
 };
 #endif // HYDROGEN_HAVE_CUDA
 
-template <Device SrcD, Device DestD> struct InterDevice;
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <>
-struct InterDevice<Device::CPU,Device::GPU>
-{
-    template <typename T>
-    static void MemCopy2D(T * EL_RESTRICT const dest, Int const dest_ldim,
-                   T const* EL_RESTRICT const src, Int const src_ldim,
-                   Int const height, Int const width)
-    {
-        auto stream = GPUManager::Stream();
-        EL_CHECK_CUDA(cudaMemcpy2DAsync(
-            dest, dest_ldim*sizeof(T),
-            src, src_ldim*sizeof(T),
-            height*sizeof(T), width,
-            cudaMemcpyHostToDevice,
-            stream));
-        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
-    }
-};// InterDevice<CPU,GPU>
-
-template <>
-struct InterDevice<Device::GPU,Device::CPU>
-{
-    template <typename T>
-    static void MemCopy2D(T * EL_RESTRICT const dest, Int const dest_ldim,
-                   T const* EL_RESTRICT const src, Int const src_ldim,
-                   Int const height, Int const width)
-    {
-        auto stream = GPUManager::Stream();
-        EL_CHECK_CUDA(cudaMemcpy2DAsync(
-            dest, dest_ldim*sizeof(T),
-            src, src_ldim*sizeof(T),
-            height*sizeof(T), width,
-            cudaMemcpyDeviceToHost,
-            stream));
-        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
-    }
-};// InterDevice<CPU,GPU>
-#endif // HYDROGEN_HAVE_CUDA
 
 }// namespace details
 
@@ -375,7 +334,7 @@ void InterDeviceMemCopy2D(
     if ((dest_ldim < height) || (src_ldim < height))
         LogicError("InterDeviceMemCopy2D: Bad ldim/height.");
 #endif // !EL_RELEASE
-    details::InterDevice<SrcD,DestD>::MemCopy2D(
+    InterDeviceCopy<SrcD,DestD>::MemCopy2D(
         dest, dest_ldim, src, src_ldim, height, width);
 }
 
