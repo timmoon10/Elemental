@@ -12,12 +12,34 @@
 namespace El
 {
 
+template <Device D>
+constexpr unsigned DefaultMemoryMode();
+
+template <>
+constexpr unsigned DefaultMemoryMode<Device::CPU>()
+{
+    return 0;
+}
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <>
+constexpr unsigned DefaultMemoryMode<Device::GPU>()
+{
+#ifdef HYDROGEN_HAVE_CUB
+    return 1;
+#else
+    return 0;
+#endif
+}
+#endif // HYDROGEN_HAVE_CUB
+
+
 template<typename G, Device D=Device::CPU>
 class Memory
 {
 public:
     Memory();
-    Memory(size_t size, unsigned int mode = 0);
+    Memory(size_t size, unsigned int mode);
     ~Memory();
 
     Memory(Memory<G,D>&& mem);
@@ -39,7 +61,7 @@ private:
     size_t size_;
     G* rawBuffer_;
     G* buffer_;
-    unsigned int mode_;
+    unsigned int mode_ = DefaultMemoryMode<D>();
 };// class Memory
 
 } // namespace El

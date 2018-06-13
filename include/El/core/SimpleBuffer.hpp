@@ -10,8 +10,10 @@ class simple_buffer
 {
 public:
     simple_buffer() = default;
-    explicit simple_buffer(size_t size, unsigned int mode = 0);
-    explicit simple_buffer(size_t size, T const& value, unsigned int mode = 0);
+    explicit simple_buffer(size_t size,
+                           unsigned int mode = DefaultMemoryMode<D>());
+    explicit simple_buffer(size_t size, T const& value,
+                           unsigned int mode = DefaultMemoryMode<D>());
 
     void allocate(size_t size);
 
