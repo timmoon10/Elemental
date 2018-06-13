@@ -39,6 +39,7 @@ class Memory
 {
 public:
     Memory();
+    Memory(size_t size);
     Memory(size_t size, unsigned int mode);
     ~Memory();
 
