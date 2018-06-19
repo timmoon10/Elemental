@@ -14,7 +14,6 @@ namespace El
 namespace copy
 {
 
-// FIXME (trb 03/06/18) -- Need to do the GPU impl
 template<typename T,Dist U,Dist V,Device D1,Device D2>
 void TranslateBetweenGrids
 (DistMatrix<T,U,V,ELEMENT,D1> const& A,
@@ -301,51 +300,45 @@ void TranslateBetweenGrids
     const Int rankA = A.RedundantRank();
     const Int rankB = B.RedundantRank();
 
-    // Compute and allocate the amount of required memory
-    Int requiredMemory = height*width;
-    if(rankA == 0)
-        requiredMemory += height*width;
-    if(B.Participating())
-        requiredMemory += height*width;
-
-    // FIXME: properly allocate stuff
     simple_buffer<T,D1> sendBuffer(rankA == 0 ? height*width : 0);
-    simple_buffer<T,D2> bcastBuf(B.Participating() ? height*width : 0);
-
-    T* sendBuf = sendBuffer.data();
-    T* bcastBuffer = bcastBuf.data();
+    simple_buffer<T,D2> bcastBuffer(B.Participating() ? height*width : 0);
 
     // Send from the root of A to the root of B's matrix's grid
     mpi::Request<T> sendRequest;
     if(rankA == 0)
     {
+        if (sendBuffer.size() != size_t(height*width))
+            RuntimeError("TranslateBetweenGrids: Bad sendBuffer size!");
+
         util::InterleaveMatrix<T,D1>
         (height, width,
-          A.LockedBuffer(), 1, A.LDim(),
-          sendBuf,          1, height);
+         A.LockedBuffer(), 1, A.LDim(),
+         sendBuffer.data(), 1, height);
         // TODO(poulson): Use mpi::Translate instead?
         const Int recvRank = (usingViewingB ? B.Grid().VCToViewing(0) : 0);
         mpi::ISend
-        (sendBuf, height*width, recvRank, activeCommB, sendRequest);
+        (sendBuffer.data(), height*width, recvRank, activeCommB, sendRequest);
     }
 
     // Receive on the root of B's matrix's grid and then broadcast
     // over the owning communicator
     if(B.Participating())
     {
+        if (bcastBuffer.size() != size_t(height*width))
+            RuntimeError("TranslateBetweenGrids: Bad bcastBuffer size!");
         if(rankB == 0)
         {
             // TODO(poulson): Use mpi::Translate instead?
             const Int sendRank =
               (usingViewingA ? A.Grid().VCToViewing(0) : 0);
-            mpi::Recv(bcastBuffer, height*width, sendRank, activeCommB);
+            mpi::Recv(bcastBuffer.data(), height*width, sendRank, activeCommB);
         }
 
-        mpi::Broadcast(bcastBuffer, height*width, 0, B.RedundantComm());
+        mpi::Broadcast(bcastBuffer.data(), height*width, 0, B.RedundantComm());
 
         util::InterleaveMatrix<T,D2>
             (height, width,
-             bcastBuffer, 1, height,
+             bcastBuffer.data(), 1, height,
              B.Buffer(),  1, B.LDim());
     }
 
