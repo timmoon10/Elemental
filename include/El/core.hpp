@@ -91,14 +91,6 @@ class BigFloat;
 template<typename Real>
 class Complex;
 
-// Convert CMake configuration into a typedef and an enum
-typedef EL_FORT_LOGICAL FortranLogical;
-enum FortranLogicalEnum
-{
-  FORTRAN_TRUE=EL_FORT_TRUE,
-  FORTRAN_FALSE=EL_FORT_FALSE
-};
-
 template<typename S,typename T>
 using IsSame = std::is_same<S,T>;
 
