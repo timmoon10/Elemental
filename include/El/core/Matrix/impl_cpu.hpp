@@ -56,7 +56,7 @@ Matrix<Ring, Device::CPU>::Matrix
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::CPU> const& A)
-    : AbstractMatrix<Ring>{A}
+  : AbstractMatrix<Ring>(A)
 {
     EL_DEBUG_CSE
     if (&A != this)
@@ -83,7 +83,7 @@ Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::GPU> const& A)
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Matrix<Ring, Device::CPU>&& A) EL_NO_EXCEPT
-    : AbstractMatrix<Ring>{A},
+  : AbstractMatrix<Ring>(A),
       memory_(std::move(A.memory_)), data_(nullptr)
 {
     std::swap(data_, A.data_);
