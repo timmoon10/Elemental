@@ -36,9 +36,8 @@ namespace mpi {
 
 struct Comm
 {
-    static unsigned long count;
     MPI_Comm comm;
-    Comm( MPI_Comm mpiComm=MPI_COMM_WORLD ) EL_NO_EXCEPT : comm(mpiComm) {printf("COMM %lu\n", count++); }
+    Comm( MPI_Comm mpiComm=MPI_COMM_WORLD ) EL_NO_EXCEPT : comm(mpiComm) { }
 
     inline int Rank() const EL_NO_RELEASE_EXCEPT;
     inline int Size() const EL_NO_RELEASE_EXCEPT;

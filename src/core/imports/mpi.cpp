@@ -69,7 +69,6 @@ MPI_Op NativeOp( const El::mpi::Op& op )
 namespace El {
 namespace mpi {
 
-unsigned long Comm::count = 0UL;
 const int ANY_SOURCE = MPI_ANY_SOURCE;
 const int ANY_TAG = MPI_ANY_TAG;
 #ifdef EL_HAVE_MPI_QUERY_THREAD
