@@ -19,6 +19,8 @@ if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   set(HYDROGEN_RELEASE_BUILD TRUE)
 endif ()
 
+find_package(Aluminum)
+
 # Prevent in-source builds
 if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   message(FATAL_ERROR
@@ -244,6 +246,8 @@ if (${PROJECT_NAME}_ENABLE_OPENMP)
   endif ()
 endif (${PROJECT_NAME}_ENABLE_OPENMP)
 
+find_package(MPI 3.0 REQUIRED COMPONENTS CXX)
+
 include(FindAndVerifyMPI)
 include(FindAndVerifyLAPACK)
 include(FindAndVerifyExtendedPrecision)
@@ -284,22 +288,26 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-set(ALUMINUM_HOME /usr/workspace/wsb/brain/aluminum)
-set(ALUMINUM_INC ${ALUMINUM_HOME}/include)
-set(ALUMINUM_LIB ${ALUMINUM_HOME}/lib)
-include_directories(${ALUMINUM_INC})
+find_package(Aluminum REQUIRED
+  HINTS Aluminum_DIR $ENV{ALUMINUM_DIR}
+  PATH_SUFFIXES lib/cmake/aluminum)
 
-set(NCCLINC ${NCCL_HOME}/include)
-set(NCCLLIB ${NCCL_HOME}/lib)
-include_directories(${NCCLINC})
+#set(ALUMINUM_INC ${ALUMINUM_INC_DIR})
+#set(ALUMINUM_LIB ${ALUMINUM_LIB_DIR})
+#include_directories(${ALUMINUM_INC})
+
+#set(NCCLINC ${NCCL_HOME}/include)
+#set(NCCLLIB ${NCCL_HOME}/lib)
+#include_directories(${NCCLINC})
 
 #link_directories(/usr/workspace/wsb/brain/aluminum/lib)
 # Your-external "mylib", add GLOBAL if the imported library is located in directories above the current.
-add_library( Al SHARED IMPORTED )
+#add_library( Al SHARED IMPORTED )
 # You can define two import-locations: one for debug and one for release.
-set_target_properties( Al  PROPERTIES IMPORTED_LOCATION ${ALUMINUM_LIB}/libAl.so)
+#set_target_properties( Al  PROPERTIES IMPORTED_LOCATION ${ALUMINUM_LIB}/libAl.so)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Al )
+#target_link_libraries(${PROJECT_NAME} PRIVATE Al )
+target_link_libraries(${PROJECT_NAME} PUBLIC AL::Al)
 
 if (TARGET OpenMP::OpenMP_CXX)
   target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)

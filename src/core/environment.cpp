@@ -178,6 +178,7 @@ void Initialize( int& argc, char**& argv )
     InitializeCUDA(argc,argv);
 #ifdef HYDROGEN_USES_ALUMINUM
 /// YOO: Initialize Aluminum here if it is used
+//NCCL INITIALIZE
 #endif
 #endif
 
@@ -231,9 +232,6 @@ void Finalize()
         FinalizeQt5();
 #endif
         if( ::elemInitializedMpi ){
-#ifdef HYDROGEN_USES_ALUMINUM
-    	/// YOO: Finalize e Aluminum here if it is used
-#endif
             mpi::Finalize();
         }
 

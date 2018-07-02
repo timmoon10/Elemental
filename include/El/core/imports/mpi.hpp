@@ -12,6 +12,15 @@
 #ifndef EL_IMPORTS_MPI_HPP
 #define EL_IMPORTS_MPI_HPP
 
+#ifdef HYDROGEN_USES_ALUMINUM
+#include <Al.hpp>
+#ifdef HYDROGEN_USES_NCCL2
+#include <nccl_impl.hpp>
+#endif
+#endif // HYDROGEN_USES_ALUMINUM
+
+#include <stdlib.h>
+
 namespace El {
 
 using std::function;
@@ -37,10 +46,28 @@ namespace mpi {
 struct Comm
 {
     MPI_Comm comm;
+#ifndef HYDROGEN_USES_ALUMINUM
     Comm( MPI_Comm mpiComm=MPI_COMM_WORLD ) EL_NO_EXCEPT : comm(mpiComm) { }
+#else
+#ifdef HYDROGEN_USES_NCCL2
+    using aluminum_comm_type = Al::NCCLCommunicator;
+#else
+    using aluminum_comm_type = Al::MPICommunicator;
+#endif
+
+    std::shared_ptr<aluminum_comm_type> aluminum_comm;
+    Comm( MPI_Comm mpiComm=MPI_COMM_WORLD) EL_NO_EXCEPT 
+      : comm(mpiComm),
+        aluminum_comm(std::make_shared<aluminum_comm_type>(mpiComm)) {}
+
+    Comm( const Comm& comm_cpy ) EL_NO_EXCEPT 
+        : comm(comm_cpy.comm),
+          aluminum_comm(std::make_shared<aluminum_comm_type>(comm_cpy.comm)) {}
+#endif // HYDROGEN_USES_ALUMINUM
 
     inline int Rank() const EL_NO_RELEASE_EXCEPT;
     inline int Size() const EL_NO_RELEASE_EXCEPT;
+  
 };
 inline bool operator==( const Comm& a, const Comm& b ) EL_NO_EXCEPT
 { return a.comm == b.comm; }
@@ -116,6 +143,7 @@ const Group GROUP_NULL = MPI_GROUP_NULL;
 const Comm COMM_NULL = MPI_COMM_NULL;
 const Comm COMM_SELF = MPI_COMM_SELF;
 const Comm COMM_WORLD = MPI_COMM_WORLD;
+
 const ErrorHandler ERRORS_RETURN = MPI_ERRORS_RETURN;
 const ErrorHandler ERRORS_ARE_FATAL = MPI_ERRORS_ARE_FATAL;
 const Group GROUP_EMPTY = MPI_GROUP_EMPTY;

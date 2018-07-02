@@ -14,6 +14,7 @@
 */
 #include <El-lite.hpp>
 #include "mpi_utils.hpp"
+
 /// Only AllReduce is kept in collectives.hpp
 #include "mpi_collectives.hpp"
 
@@ -48,22 +49,50 @@ bool GroupSameSizeAsInteger() EL_NO_EXCEPT
 // ==========================
 
 void Initialize( int& argc, char**& argv ) EL_NO_EXCEPT
-{ MPI_Init( &argc, &argv ); }
+{ 
+    MPI_Init( &argc, &argv ); 
+#ifdef HYDROGEN_USES_ALUMINUM
+#ifndef HYDROGEN_USES_NCCL2
+    Al::Initialize(argc, argv);
+#else
+#endif // HYDROGEN_USES_NCCL2
+#endif // HYDROGEN_USES_ALUMINUM
+}
+
 
 int InitializeThread( int& argc, char**& argv, int required ) EL_NO_EXCEPT
 {
     int provided;
+
 #ifdef EL_HAVE_MPI_INIT_THREAD
     MPI_Init_thread( &argc, &argv, required, &provided );
 #else
     MPI_Init( &argc, &argv );
     provided = 0; // equivalent to MPI_THREAD_SINGLE
 #endif
+
+#ifdef HYDROGEN_USES_ALUMINUM
+#ifndef HYDROGEN_USES_NCCL2
+    Al::Initialize(argc, argv);
+#else
+#endif // HYDROGEN_USES_NCCL2
+#endif // HYDROGEN_USES_ALUMINUM
+
     return provided;
 }
 
 void Finalize() EL_NO_EXCEPT
-{ MPI_Finalize(); }
+{ 
+#ifdef HYDROGEN_USES_ALUMINUM
+#ifndef HYDROGEN_USES_NCCL2
+/// Making sure finalizing Aluminum before finalizing MPI.
+    Al::Finalize(false);
+#else
+#endif
+#endif // HYDROGEN_USES_ALUMINUM
+
+    MPI_Finalize(); 
+}
 
 bool Initialized() EL_NO_EXCEPT
 {
@@ -2796,19 +2825,6 @@ EL_NO_RELEASE_EXCEPT
   EL_NO_RELEASE_EXCEPT; \
   template void Reduce( T* buf, int count, int root, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce \
-  ( const T* sbuf, T* rbuf, int count, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( const T* sbuf, T* rbuf, int count, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T AllReduce( T sb, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T AllReduce( T sb, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( T* buf, int count, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( T* buf, int count, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
   template void ReduceScatter( T* sbuf, T* rbuf, int rc, Op op, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
   template void ReduceScatter( T* sbuf, T* rbuf, int rc, Comm comm ) \
@@ -2916,3 +2932,19 @@ MPI_PROTO(Entry<Complex<BigFloat>>)
 
 } // namespace mpi
 } // namespace El
+
+/*
+  template void AllReduce \
+  ( const T* sbuf, T* rbuf, int count, Op op, Comm comm ) \
+  EL_NO_RELEASE_EXCEPT; \
+  template void AllReduce( const T* sbuf, T* rbuf, int count, Comm comm ) \
+  EL_NO_RELEASE_EXCEPT; \
+  template T AllReduce( T sb, Op op, Comm comm ) \
+  EL_NO_RELEASE_EXCEPT; \
+  template T AllReduce( T sb, Comm comm ) \
+  EL_NO_RELEASE_EXCEPT; \
+  template void AllReduce( T* buf, int count, Op op, Comm comm ) \
+  EL_NO_RELEASE_EXCEPT; \
+  template void AllReduce( T* buf, int count, Comm comm ) \
+  EL_NO_RELEASE_EXCEPT; \
+*/
