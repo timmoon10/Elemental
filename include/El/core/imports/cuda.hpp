@@ -54,6 +54,18 @@ struct CudaError : std::runtime_error
         }                                                               \
         EL_CUDA_SYNC(false);                                            \
     } while (0)
+#define EL_FORCE_CHECK_CUDA_NOSYNC(cuda_call)                           \
+    do                                                                  \
+    {                                                                   \
+        /* Call CUDA API routine, synchronizing before and after to */  \
+        /* check for errors. */                                         \
+        cudaError_t status_CHECK_CUDA = cuda_call ;                     \
+        if( status_CHECK_CUDA != cudaSuccess ) {                        \
+            cudaDeviceReset();                                          \
+            throw CudaError(status_CHECK_CUDA,__FILE__,__LINE__,false); \
+        }                                                               \
+        EL_CUDA_SYNC(false);                                            \
+    } while (0)
 #define EL_LAUNCH_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)      \
     do                                                          \
     {                                                           \
@@ -134,7 +146,7 @@ public:
     /** Get cuBLAS handle. */
     static cublasHandle_t cuBLASHandle();
 
-private:  
+private:
 
     /** Singleton instance. */
     static std::unique_ptr<GPUManager> instance_;
