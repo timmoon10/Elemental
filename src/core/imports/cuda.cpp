@@ -24,7 +24,7 @@ void InitializeCUDA(int argc, char* argv[])
     int device = 0;
     cudaDeviceProp deviceProp;
 
-    EL_FORCE_CHECK_CUDA(
+    EL_FORCE_CHECK_CUDA_NOSYNC(
         cudaGetDeviceCount(&numDevices));
     switch (numDevices)
     {
@@ -44,7 +44,7 @@ void InitializeCUDA(int argc, char* argv[])
         device = localRank % numDevices;
 
         // Check GPU compute mode
-        EL_FORCE_CHECK_CUDA(
+        EL_FORCE_CHECK_CUDA_NOSYNC(
             cudaGetDeviceProperties(&deviceProp, device));
         switch (deviceProp.computeMode)
         {
@@ -60,7 +60,7 @@ void InitializeCUDA(int argc, char* argv[])
             else
             {
                 // Let CUDA handle GPU assignments
-                EL_FORCE_CHECK_CUDA(cudaGetDevice(&device));
+                EL_FORCE_CHECK_CUDA_NOSYNC(cudaGetDevice(&device));
             }
             break;
         }
@@ -68,7 +68,7 @@ void InitializeCUDA(int argc, char* argv[])
     }
 
     // Check GPU compute mode
-    EL_FORCE_CHECK_CUDA(
+    EL_FORCE_CHECK_CUDA_NOSYNC(
         cudaGetDeviceProperties(&deviceProp, device));
     if (deviceProp.computeMode == cudaComputeModeProhibited)
     {
@@ -93,7 +93,7 @@ GPUManager::GPUManager(int device)
     : numDevices_{0}, device_{device}, stream_{nullptr}, cublasHandle_{nullptr}
 {
     // Check if device is valid
-    EL_FORCE_CHECK_CUDA(
+    EL_FORCE_CHECK_CUDA_NOSYNC(
         cudaGetDeviceCount(&numDevices_));
     if (device_ < 0 || device_ >= numDevices_)
     {
@@ -103,7 +103,7 @@ GPUManager::GPUManager(int device)
     }
 
     // Initialize CUDA and cuBLAS objects
-    EL_FORCE_CHECK_CUDA(cudaSetDevice(device_));
+    EL_FORCE_CHECK_CUDA_NOSYNC(cudaSetDevice(device_));
     EL_FORCE_CHECK_CUDA(cudaStreamCreate(&stream_));
 }
 
@@ -114,7 +114,7 @@ void GPUManager::InitializeCUBLAS()
     EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cuBLASHandle(),
                                                CUBLAS_POINTER_MODE_HOST));
 }
-    
+
 GPUManager::~GPUManager()
 {
     try
