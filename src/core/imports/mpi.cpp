@@ -20,22 +20,6 @@
 
 typedef unsigned char* UCP;
 
-/*
-#ifdef HYDROGEN_HAVE_CUDA
-#include <El/core/imports/cuda.hpp>
-#define EL_CHECK_MPI(mpi_call)                                          \
-    do                                                                  \
-    {                                                                   \
-       EL_CHECK_CUDA(cudaStreamSynchronize(GPUManager::Stream()));      \
-       CheckMpi( mpi_call );                                            \
-       EL_CHECK_CUDA(cudaDeviceSynchronize());                          \
-    }                                                                   \
-    while( 0 )
-#else
-#define EL_CHECK_MPI(mpi_call) CheckMpi( mpi_call )
-#endif // #ifdef HYDROGEN_HAVE_CUDA
-*/
-
 namespace El {
 namespace mpi {
 
@@ -54,7 +38,6 @@ void Initialize( int& argc, char**& argv ) EL_NO_EXCEPT
 #ifdef HYDROGEN_USES_ALUMINUM
 #ifndef HYDROGEN_USES_NCCL2
     Al::Initialize(argc, argv);
-#else
 #endif // HYDROGEN_USES_NCCL2
 #endif // HYDROGEN_USES_ALUMINUM
 }
@@ -2932,19 +2915,3 @@ MPI_PROTO(Entry<Complex<BigFloat>>)
 
 } // namespace mpi
 } // namespace El
-
-/*
-  template void AllReduce \
-  ( const T* sbuf, T* rbuf, int count, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( const T* sbuf, T* rbuf, int count, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T AllReduce( T sb, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T AllReduce( T sb, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( T* buf, int count, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( T* buf, int count, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-*/

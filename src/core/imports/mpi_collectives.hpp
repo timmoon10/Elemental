@@ -97,6 +97,7 @@ void aluminum_allreduce( Real* rbuf, int count, Op op, Comm comm )
 {
     MPI_Op mpi_op = op.op;
     Al::ReductionOperator red_op = Al::internal::mpi::MPI_Op2ReductionOperator (mpi_op);
+
     if(typeid(TypeMap<Real>()) == typeid(MPI_CHAR)){
       Al::Allreduce<backend, char>((char*)rbuf, count, red_op, *(comm.aluminum_comm));
     }

@@ -19,8 +19,6 @@
 #endif
 #endif // HYDROGEN_USES_ALUMINUM
 
-#include <stdlib.h>
-
 namespace El {
 
 using std::function;
