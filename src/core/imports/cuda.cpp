@@ -1,5 +1,8 @@
 #include "El-lite.hpp"
 #include "El/core/imports/cuda.hpp"
+#ifdef HYDROGEN_HAVE_CUB
+#include "El/core/imports/cub.hpp"
+#endif // HYDROGEN_HAVE_CUB
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -18,83 +21,60 @@ void InitializeCUDA(int argc, char* argv[])
 {
 
     int numDevices = 0;
-    int device = -1;
+    int device = 0;
     cudaDeviceProp deviceProp;
 
-    EL_FORCE_CHECK_CUDA(
+    EL_FORCE_CHECK_CUDA_NOSYNC(
         cudaGetDeviceCount(&numDevices));
-
-    // Choose device by parsing command-line arguments
-    // if (argc > 0) { device = std::atoi(argv[0]); }
-
-    // Choose device by parsing environment variables
-    if (device < 0)
+    switch (numDevices)
     {
-        char* env = nullptr;
-        if (!env)
-            env = std::getenv("SLURM_LOCALID");
-        if (!env)
-            env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK");
-        if (!env)
-            env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK");
-        if (!env)
-            // This returns a list if more than one gpu is present in the
-            // resource set, for example:
-            // CUDA_VISIBLE_DEVICES=0,1,2,3
-            // std::atoi picks the first one
-            env = std::getenv("CUDA_VISIBLE_DEVICES");
+    case 0: return;
+    case 1: device = 0; break;
+    default:
 
-        if (env)
+        // Get local rank (rank within compute node)
+        int localRank = 0;
+        char* env=nullptr;
+        if (!env) { env = std::getenv("SLURM_LOCALID"); }
+        if (!env) { env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK"); }
+        if (!env) { env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK"); }
+        if (env) { localRank = std::atoi(env); }
+
+        // Try assigning GPUs to local ranks in round-robin fashion
+        device = localRank % numDevices;
+
+        // Check GPU compute mode
+        EL_FORCE_CHECK_CUDA_NOSYNC(
+            cudaGetDeviceProperties(&deviceProp, device));
+        switch (deviceProp.computeMode)
         {
-            // Allocate devices amongst ranks in round-robin fashion
-            int const localRank = std::atoi(env);
-            device = localRank % numDevices;
-
-            // If device is shared amongst MPI ranks, check its
-            // compute mode
+        case cudaComputeModeExclusive:
+        case cudaComputeModeExclusiveProcess:
             if (localRank >= numDevices)
             {
-                EL_FORCE_CHECK_CUDA(
-                    cudaGetDeviceProperties(&deviceProp, device));
-                switch(deviceProp.computeMode)
-                {
-                case cudaComputeModeExclusive:
-                    cudaDeviceReset();
-                    RuntimeError("Attempted to share CUDA device ",device,
-                                 " amongst multiple MPI ranks, ",
-                                 "but it is set to cudaComputeModeExclusive");
-                    break;
-                case cudaComputeModeExclusiveProcess:
-                    cudaDeviceReset();
-                    RuntimeError("Attempted to share CUDA device ",device,
-                                 " amongst multiple MPI ranks, "
-                                 "but it is set to "
-                                 "cudaComputeModeExclusiveProcess");
-                    break;
-                }
+                cudaDeviceReset();
+                RuntimeError("CUDA device ",device," has a compute mode "
+                             "that does not permit sharing amongst ",
+                             "multiple MPI ranks");
             }
+            else
+            {
+                // Let CUDA handle GPU assignments
+                EL_FORCE_CHECK_CUDA_NOSYNC(cudaGetDevice(&device));
+            }
+            break;
         }
+
     }
 
-    // Check device compute mode
-    if (device < 0)
-        device = 0;
-
-    EL_FORCE_CHECK_CUDA(
+    // Check GPU compute mode
+    EL_FORCE_CHECK_CUDA_NOSYNC(
         cudaGetDeviceProperties(&deviceProp, device));
-
-    switch(deviceProp.computeMode)
+    if (deviceProp.computeMode == cudaComputeModeProhibited)
     {
-    case cudaComputeModeExclusive:
-    case cudaComputeModeExclusiveProcess:
-        // Let CUDA handle GPU assignments
-        EL_FORCE_CHECK_CUDA(cudaGetDevice(&device));
-        break;
-    case cudaComputeModeProhibited:
         cudaDeviceReset();
         RuntimeError("CUDA Device ",device,
                      " is set with ComputeModeProhibited");
-        break;
     }
 
     // Instantiate CUDA manager
@@ -103,6 +83,9 @@ void InitializeCUDA(int argc, char* argv[])
 
 void FinalizeCUDA()
 {
+#ifdef HYDROGEN_HAVE_CUB
+    cub::DestroyMemoryPool();
+#endif // HYDROGEN_HAVE_CUB
     GPUManager::Destroy();
 }
 
@@ -110,9 +93,8 @@ GPUManager::GPUManager(int device)
     : numDevices_{0}, device_{device}, stream_{nullptr}, cublasHandle_{nullptr}
 {
     // Check if device is valid
-    EL_FORCE_CHECK_CUDA(
+    EL_FORCE_CHECK_CUDA_NOSYNC(
         cudaGetDeviceCount(&numDevices_));
-
     if (device_ < 0 || device_ >= numDevices_)
     {
         RuntimeError("Attempted to set invalid CUDA device ",
@@ -121,14 +103,17 @@ GPUManager::GPUManager(int device)
     }
 
     // Initialize CUDA and cuBLAS objects
-    EL_FORCE_CHECK_CUDA(cudaSetDevice(device_));
+    EL_FORCE_CHECK_CUDA_NOSYNC(cudaSetDevice(device_));
     EL_FORCE_CHECK_CUDA(cudaStreamCreate(&stream_));
-    EL_FORCE_CHECK_CUBLAS(cublasCreate(&cublasHandle_));
-    EL_FORCE_CHECK_CUBLAS(cublasSetStream(cublasHandle_, stream_));
-    EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cublasHandle_,
-                                               CUBLAS_POINTER_MODE_HOST));
 }
 
+void GPUManager::InitializeCUBLAS()
+{
+    EL_FORCE_CHECK_CUBLAS(cublasCreate(&Instance()->cublasHandle_));
+    EL_FORCE_CHECK_CUBLAS(cublasSetStream(cuBLASHandle(), Stream()));
+    EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cuBLASHandle(),
+                                               CUBLAS_POINTER_MODE_HOST));
+}
 
 GPUManager::~GPUManager()
 {
@@ -194,13 +179,39 @@ cudaStream_t GPUManager::Stream()
     return Instance()->stream_;
 }
 
+void GPUManager::SynchronizeStream()
+{
+    EL_CHECK_CUDA(
+        cudaSetDevice(Device()));
+    EL_CHECK_CUDA(
+        cudaStreamSynchronize(Stream()));
+}
+
+void GPUManager::SynchronizeDevice( bool checkError )
+{
+    EL_CHECK_CUDA(
+        cudaSetDevice(Device()));
+    if (checkError)
+    {
+        // Synchronize with error check
+        EL_CUDA_SYNC(true);
+    }
+    else
+    {
+        // Synchronize with no error check in release build
+        EL_CHECK_CUDA(
+            cudaDeviceSynchronize());
+    }
+}
+
 cublasHandle_t GPUManager::cuBLASHandle()
 {
     auto* instance = Instance();
     auto handle = instance->cublasHandle_;
-    EL_CHECK_CUBLAS(cublasSetStream(handle, instance->stream_));
-    EL_CHECK_CUBLAS(cublasSetPointerMode(handle,
-                                         CUBLAS_POINTER_MODE_HOST));
+    EL_CHECK_CUBLAS(
+        cublasSetStream(handle, instance->stream_));
+    EL_CHECK_CUBLAS(
+        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
     return handle;
 }
 

@@ -90,6 +90,10 @@ struct CublasError : std::runtime_error
 #define EL_CHECK_CUBLAS(cublas_call) EL_FORCE_CHECK_CUBLAS(cublas_call)
 #endif // #ifdef EL_RELEASE
 
+/** Initialize CUBLAS.
+ *  This must be called after MPI_Init is called with MVAPICH2-GDR.
+ */
+void InitializeCUBLAS();
 
 namespace cublas
 {

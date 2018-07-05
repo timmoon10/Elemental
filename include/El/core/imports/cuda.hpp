@@ -54,6 +54,18 @@ struct CudaError : std::runtime_error
         }                                                               \
         EL_CUDA_SYNC(false);                                            \
     } while (0)
+#define EL_FORCE_CHECK_CUDA_NOSYNC(cuda_call)                           \
+    do                                                                  \
+    {                                                                   \
+        /* Call CUDA API routine, synchronizing before and after to */  \
+        /* check for errors. */                                         \
+        cudaError_t status_CHECK_CUDA = cuda_call ;                     \
+        if( status_CHECK_CUDA != cudaSuccess ) {                        \
+            cudaDeviceReset();                                          \
+            throw CudaError(status_CHECK_CUDA,__FILE__,__LINE__,false); \
+        }                                                               \
+        EL_CUDA_SYNC(false);                                            \
+    } while (0)
 #define EL_LAUNCH_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)      \
     do                                                          \
     {                                                           \
@@ -85,7 +97,12 @@ struct CudaError : std::runtime_error
   EL_FORCE_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)
 #endif // #ifdef EL_RELEASE
 
-/** Initialize CUDA environment. */
+/** Initialize CUDA environment.
+ *  We assume that all MPI ranks within a compute node have access to
+ *  exactly one unique GPU or to the same (possibly empty) list of
+ *  GPUs. GPU assignments can be controled with the
+ *  CUDA_VISIBLE_DEVICES environment variable.
+ */
 void InitializeCUDA(int,char*[]);
 /** Finalize CUDA environment. */
 void FinalizeCUDA();
@@ -105,6 +122,8 @@ public:
 
     /** Create new singleton instance of CUDA manager. */
     static void Create( int device = 0 );
+    /** Initilize CUBLAS. */
+    static void InitializeCUBLAS();
     /** Destroy singleton instance of CUDA manager. */
     static void Destroy();
     /** Get singleton instance of CUDA manager. */
@@ -117,10 +136,17 @@ public:
     static void SetDevice( int device );
     /** Get CUDA stream. */
     static cudaStream_t Stream();
+    /** Synchronize CUDA stream. */
+    static void SynchronizeStream();
+    /** Synchronize CUDA device.
+     *  If checkError is true, an exception will be thrown if an error
+     *  from an asynchronous CUDA kernel is detected.
+     */
+    static void SynchronizeDevice( bool checkError = false );
     /** Get cuBLAS handle. */
     static cublasHandle_t cuBLASHandle();
 
-private:  
+private:
 
     /** Singleton instance. */
     static std::unique_ptr<GPUManager> instance_;

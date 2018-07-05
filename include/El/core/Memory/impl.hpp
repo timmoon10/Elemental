@@ -1,10 +1,10 @@
 /*
-   Copyright (c) 2009-2016, Jack Poulson
-   All rights reserved.
+  Copyright (c) 2009-2016, Jack Poulson
+  All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License,
-   which can be found in the LICENSE file in the root directory, or at
-   http://opensource.org/licenses/BSD-2-Clause
+  This file is part of Elemental and is under the BSD 2-Clause License,
+  which can be found in the LICENSE file in the root directory, or at
+  http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_CORE_MEMORY_IMPL_HPP_
 #define EL_CORE_MEMORY_IMPL_HPP_
@@ -15,9 +15,6 @@
 #ifdef HYDROGEN_HAVE_CUDA
 #include <cuda_runtime.h>
 #endif // HYDROGEN_HAVE_CUDA
-#ifdef HYDROGEN_HAVE_CUB
-#include "cub/util_allocator.cuh"
-#endif // HYDROGEN_HAVE_CUB
 
 #include "El/hydrogen_config.h"
 #include "decl.hpp"
@@ -42,16 +39,16 @@ struct MemHelper<G,Device::CPU>
         case 0: ptr = new G[size]; break;
 #ifdef HYDROGEN_HAVE_CUDA
         case 1:
+        {
+            // Pinned memory
+            auto error = cudaMallocHost(&ptr, size);
+            if (error != cudaSuccess)
             {
-                // Pinned memory
-                auto error = cudaMallocHost(&ptr, size);
-                if (error != cudaSuccess)
-                {
-                    RuntimeError("Failed to allocate pinned memory with message: ",
-                                 "\"", cudaGetErrorString(error), "\"");
-                }
+                RuntimeError("Failed to allocate pinned memory with message: ",
+                             "\"", cudaGetErrorString(error), "\"");
             }
-            break;
+        }
+        break;
 #endif // HYDROGEN_HAVE_CUDA
         default: RuntimeError("Invalid CPU memory allocation mode");
         }
@@ -63,16 +60,16 @@ struct MemHelper<G,Device::CPU>
         case 0: delete[] ptr; break;
 #ifdef HYDROGEN_HAVE_CUDA
         case 1:
+        {
+            // Pinned memory
+            auto error = cudaFreeHost(ptr);
+            if (error != cudaSuccess)
             {
-                // Pinned memory
-                auto error = cudaFreeHost(ptr);
-                if (error != cudaSuccess)
-                {
-                    RuntimeError("Failed to free pinned memory with message: ",
-                                 "\"", cudaGetErrorString(error), "\"");
-                }
+                RuntimeError("Failed to free pinned memory with message: ",
+                             "\"", cudaGetErrorString(error), "\"");
             }
-            break;
+        }
+        break;
 #endif // HYDROGEN_HAVE_CUDA
         default: RuntimeError("Invalid CPU memory deallocation mode");
         }
@@ -85,11 +82,6 @@ struct MemHelper<G,Device::CPU>
 };
 
 #ifdef HYDROGEN_HAVE_CUDA
-
-#ifdef HYDROGEN_HAVE_CUB
-// GPU memory pool
-cub::CachingDeviceAllocator cubMemPool(2u);
-#endif // HYDROGEN_HAVE_CUB
 
 template <typename G>
 struct MemHelper<G,Device::GPU>
@@ -104,11 +96,9 @@ struct MemHelper<G,Device::GPU>
         case 0: status = cudaMalloc(&ptr, size * sizeof(G)); break;
 #ifdef HYDROGEN_HAVE_CUB
         case 1:
-            {
-                status = cubMemPool.DeviceAllocate(reinterpret_cast<void**>(&ptr),
-                                                   size * sizeof(G),
-                                                   GPUManager::Stream());
-            }
+            status = cub::MemoryPool().DeviceAllocate(reinterpret_cast<void**>(&ptr),
+                                                      size * sizeof(G),
+                                                      GPUManager::Stream());
             break;
 #endif // HYDROGEN_HAVE_CUB
         default: RuntimeError("Invalid GPU memory allocation mode");
@@ -135,7 +125,9 @@ struct MemHelper<G,Device::GPU>
         switch (mode) {
         case 0: EL_CHECK_CUDA(cudaFree(ptr)); break;
 #ifdef HYDROGEN_HAVE_CUB
-        case 1: EL_CHECK_CUDA(cubMemPool.DeviceFree(reinterpret_cast<void*>(ptr))); break;
+        case 1:
+            EL_CHECK_CUDA(cub::MemoryPool().DeviceFree(reinterpret_cast<void*>(ptr)));
+            break;
 #endif // HYDROGEN_HAVE_CUB
         default: RuntimeError("Invalid GPU memory deallocation mode");
         }
@@ -157,17 +149,22 @@ struct MemHelper<G,Device::GPU>
 
 template<typename G, Device D>
 Memory<G,D>::Memory()
-: size_(0), rawBuffer_(nullptr), buffer_(nullptr), mode_(0)
+    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}
 { }
 
 template<typename G, Device D>
+Memory<G,D>::Memory(size_t size)
+    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}
+{ Require(size); }
+
+template<typename G, Device D>
 Memory<G,D>::Memory(size_t size, unsigned int mode)
-: size_(0), rawBuffer_(nullptr), buffer_(nullptr), mode_(mode)
+    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}, mode_{mode}
 { Require(size); }
 
 template<typename G, Device D>
 Memory<G,D>::Memory(Memory<G,D>&& mem)
-: size_(mem.size_), rawBuffer_(nullptr), buffer_(nullptr), mode_(0)
+    : size_{mem.size_}, rawBuffer_{nullptr}, buffer_{nullptr}, mode_{mem.mode_}
 { ShallowSwap(mem); }
 
 template<typename G, Device D>

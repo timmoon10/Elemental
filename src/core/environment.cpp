@@ -175,11 +175,7 @@ void Initialize( int& argc, char**& argv )
     }
 
 #ifdef HYDROGEN_HAVE_CUDA
-    InitializeCUDA(argc,argv);
-#ifdef HYDROGEN_USES_ALUMINUM
-/// YOO: Initialize Aluminum here if it is used
-//NCCL INITIALIZE
-#endif
+    InitializeCUBLAS();
 #endif
 
 #ifdef EL_HAVE_QT5

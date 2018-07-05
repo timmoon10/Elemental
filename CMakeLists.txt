@@ -77,7 +77,7 @@ option(${PROJECT_NAME}_ENABLE_MPC
 
 option(${PROJECT_NAME}_ENABLE_CUDA
   "Search for CUDA support and enable related features if found."
-  ON)
+  OFF)
 
 if (${PROJECT_NAME}_ENABLE_CUDA)
   option(${PROJECT_NAME}_ENABLE_CUB
@@ -224,9 +224,7 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
 
 endif (${PROJECT_NAME}_ENABLE_CUDA)
 
-# FIXME: GET RID OF FORTRAN
 include(detect/CXX)
-include(detect/Fortran)
 
 #
 # Find third-party libraries

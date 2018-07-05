@@ -123,40 +123,40 @@ struct Request
 };
 
 // Standard constants
-const int ANY_SOURCE = MPI_ANY_SOURCE;
-const int ANY_TAG = MPI_ANY_TAG;
+extern const int ANY_SOURCE;
+extern const int ANY_TAG;
 #ifdef EL_HAVE_MPI_QUERY_THREAD
-const int THREAD_SINGLE = MPI_THREAD_SINGLE;
-const int THREAD_FUNNELED = MPI_THREAD_FUNNELED;
-const int THREAD_SERIALIZED = MPI_THREAD_SERIALIZED;
-const int THREAD_MULTIPLE = MPI_THREAD_MULTIPLE;
+extern const int THREAD_SINGLE;
+extern const int THREAD_FUNNELED;
+extern const int THREAD_SERIALIZED;
+extern const int THREAD_MULTIPLE;
 #else
-const int THREAD_SINGLE = 0;
-const int THREAD_FUNNELED = 1;
-const int THREAD_SERIALIZED = 2;
-const int THREAD_MULTIPLE = 3;
+extern const int THREAD_SINGLE;
+extern const int THREAD_FUNNELED;
+extern const int THREAD_SERIALIZED;
+extern const int THREAD_MULTIPLE;
 #endif
-const int UNDEFINED = MPI_UNDEFINED;
-const Group GROUP_NULL = MPI_GROUP_NULL;
-const Comm COMM_NULL = MPI_COMM_NULL;
-const Comm COMM_SELF = MPI_COMM_SELF;
-const Comm COMM_WORLD = MPI_COMM_WORLD;
 
-const ErrorHandler ERRORS_RETURN = MPI_ERRORS_RETURN;
-const ErrorHandler ERRORS_ARE_FATAL = MPI_ERRORS_ARE_FATAL;
-const Group GROUP_EMPTY = MPI_GROUP_EMPTY;
-const Op MAX = MPI_MAX;
-const Op MIN = MPI_MIN;
-const Op MAXLOC = MPI_MAXLOC;
-const Op MINLOC = MPI_MINLOC;
-const Op PROD = MPI_PROD;
-const Op SUM = MPI_SUM;
-const Op LOGICAL_AND = MPI_LAND;
-const Op LOGICAL_OR = MPI_LOR;
-const Op LOGICAL_XOR = MPI_LXOR;
-const Op BINARY_AND = MPI_BAND;
-const Op BINARY_OR = MPI_BOR;
-const Op BINARY_XOR = MPI_BXOR;
+extern const int UNDEFINED;
+extern const Group GROUP_NULL;
+extern const Comm COMM_NULL;// = MPI_COMM_NULL;
+extern const Comm COMM_SELF;// = MPI_COMM_SELF;
+extern const Comm COMM_WORLD;// = MPI_COMM_WORLD;
+extern const ErrorHandler ERRORS_RETURN;
+extern const ErrorHandler ERRORS_ARE_FATAL;
+extern const Group GROUP_EMPTY;
+extern const Op MAX;
+extern const Op MIN;
+extern const Op MAXLOC;
+extern const Op MINLOC;
+extern const Op PROD;
+extern const Op SUM;
+extern const Op LOGICAL_AND;
+extern const Op LOGICAL_OR;
+extern const Op LOGICAL_XOR;
+extern const Op BINARY_AND;
+extern const Op BINARY_OR;
+extern const Op BINARY_XOR;
 
 template<typename T>
 struct Types

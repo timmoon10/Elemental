@@ -9,6 +9,10 @@
 namespace El
 {
 
+void InitializeCUBLAS()
+{
+    GPUManager::InitializeCUBLAS();
+}
 namespace cublas
 {
 

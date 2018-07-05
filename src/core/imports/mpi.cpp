@@ -23,6 +23,40 @@ typedef unsigned char* UCP;
 namespace El {
 namespace mpi {
 
+const int ANY_SOURCE = MPI_ANY_SOURCE;
+const int ANY_TAG = MPI_ANY_TAG;
+#ifdef EL_HAVE_MPI_QUERY_THREAD
+const int THREAD_SINGLE = MPI_THREAD_SINGLE;
+const int THREAD_FUNNELED = MPI_THREAD_FUNNELED;
+const int THREAD_SERIALIZED = MPI_THREAD_SERIALIZED;
+const int THREAD_MULTIPLE = MPI_THREAD_MULTIPLE;
+#else
+const int THREAD_SINGLE = 0;
+const int THREAD_FUNNELED = 1;
+const int THREAD_SERIALIZED = 2;
+const int THREAD_MULTIPLE = 3;
+#endif
+const int UNDEFINED = MPI_UNDEFINED;
+const Group GROUP_NULL = MPI_GROUP_NULL;
+const Comm COMM_NULL = MPI_COMM_NULL;
+const Comm COMM_SELF = MPI_COMM_SELF;
+const Comm COMM_WORLD = MPI_COMM_WORLD;
+const ErrorHandler ERRORS_RETURN = MPI_ERRORS_RETURN;
+const ErrorHandler ERRORS_ARE_FATAL = MPI_ERRORS_ARE_FATAL;
+const Group GROUP_EMPTY = MPI_GROUP_EMPTY;
+const Op MAX = MPI_MAX;
+const Op MIN = MPI_MIN;
+const Op MAXLOC = MPI_MAXLOC;
+const Op MINLOC = MPI_MINLOC;
+const Op PROD = MPI_PROD;
+const Op SUM = MPI_SUM;
+const Op LOGICAL_AND = MPI_LAND;
+const Op LOGICAL_OR = MPI_LOR;
+const Op LOGICAL_XOR = MPI_LXOR;
+const Op BINARY_AND = MPI_BAND;
+const Op BINARY_OR = MPI_BOR;
+const Op BINARY_XOR = MPI_BXOR;
+
 bool CommSameSizeAsInteger() EL_NO_EXCEPT
 { return sizeof(MPI_Comm) == sizeof(int); }
 
@@ -110,19 +144,19 @@ double Time() EL_NO_EXCEPT { return MPI_Wtime(); }
 void Create( UserFunction* func, bool commutes, Op& op ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Op_create( func, commutes, &op.op ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Op_create( func, commutes, &op.op ) );
 }
 
 void Free( Op& op ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Op_free( &op.op ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Op_free( &op.op ) );
 }
 
 void Free( Datatype& type ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Type_free( &type ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Type_free( &type ) );
 }
 
 // Communicator manipulation
@@ -133,7 +167,7 @@ int Rank( Comm comm ) EL_NO_RELEASE_EXCEPT
     if( comm != COMM_NULL )
     {
         int rank;
-        EL_CHECK_MPI( MPI_Comm_rank( comm.comm, &rank ) );
+        EL_CHECK_MPI_NO_DATA( MPI_Comm_rank( comm.comm, &rank ) );
         return rank;
     }
     else return UNDEFINED;
@@ -145,7 +179,7 @@ int Size( Comm comm ) EL_NO_RELEASE_EXCEPT
     if( comm != COMM_NULL )
     {
         int size;
-        EL_CHECK_MPI( MPI_Comm_size( comm.comm, &size ) );
+        EL_CHECK_MPI_NO_DATA( MPI_Comm_size( comm.comm, &size ) );
         return size;
     }
     else return UNDEFINED;
@@ -155,7 +189,7 @@ void Create( Comm parentComm, Group subsetGroup, Comm& subsetComm )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI(
+    EL_CHECK_MPI_NO_DATA(
         MPI_Comm_create( parentComm.comm, subsetGroup.group, &subsetComm.comm )
     );
 }
@@ -163,26 +197,26 @@ EL_NO_RELEASE_EXCEPT
 void Dup( Comm original, Comm& duplicate ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Comm_dup( original.comm, &duplicate.comm ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Comm_dup( original.comm, &duplicate.comm ) );
 }
 
 void Split( Comm comm, int color, int key, Comm& newComm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Comm_split( comm.comm, color, key, &newComm.comm ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Comm_split( comm.comm, color, key, &newComm.comm ) );
 }
 
 void Free( Comm& comm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Comm_free( &comm.comm ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Comm_free( &comm.comm ) );
 }
 
 bool Congruent( Comm comm1, Comm comm2 ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int result;
-    EL_CHECK_MPI( MPI_Comm_compare( comm1.comm, comm2.comm, &result ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Comm_compare( comm1.comm, comm2.comm, &result ) );
     return ( result == MPI_IDENT || result == MPI_CONGRUENT );
 }
 
@@ -191,9 +225,9 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 #ifdef EL_HAVE_MPI_COMM_SET_ERRHANDLER
-    EL_CHECK_MPI( MPI_Comm_set_errhandler( comm.comm, errorHandler ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Comm_set_errhandler( comm.comm, errorHandler ) );
 #else
-    EL_CHECK_MPI( MPI_Errhandler_set( comm.comm, errorHandler ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Errhandler_set( comm.comm, errorHandler ) );
 #endif
 }
 
@@ -205,7 +239,7 @@ void CartCreate
   bool reorder, Comm& cartComm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI
+    EL_CHECK_MPI_NO_DATA
     ( MPI_Cart_create
       ( comm.comm, numDims, const_cast<int*>(dimensions),
         const_cast<int*>(periods), reorder, &cartComm.comm ) );
@@ -215,7 +249,7 @@ void CartSub( Comm comm, const int* remainingDims, Comm& subComm )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI(
+    EL_CHECK_MPI_NO_DATA(
       MPI_Cart_sub
       ( comm.comm, const_cast<int*>(remainingDims), &subComm.comm )
     );
@@ -228,7 +262,7 @@ int Rank( Group group ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int rank;
-    EL_CHECK_MPI( MPI_Group_rank( group.group, &rank ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Group_rank( group.group, &rank ) );
     return rank;
 }
 
@@ -236,14 +270,14 @@ int Size( Group group ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int size;
-    EL_CHECK_MPI( MPI_Group_size( group.group, &size ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Group_size( group.group, &size ) );
     return size;
 }
 
 void CommGroup( Comm comm, Group& group ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Comm_group( comm.comm, &group.group ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Comm_group( comm.comm, &group.group ) );
 }
 
 void Dup( Group group, Group& newGroup ) EL_NO_RELEASE_EXCEPT
@@ -256,14 +290,15 @@ void Dup( Group group, Group& newGroup ) EL_NO_RELEASE_EXCEPT
 void Union( Group groupA, Group groupB, Group& newGroup ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Group_union( groupA.group, groupB.group, &newGroup.group ) );
+    EL_CHECK_MPI_NO_DATA(
+        MPI_Group_union( groupA.group, groupB.group, &newGroup.group ) );
 }
 
 void Incl( Group group, int n, const int* ranks, Group& subGroup )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI(
+    EL_CHECK_MPI_NO_DATA(
       MPI_Group_incl
       ( group.group, n, const_cast<int*>(ranks), &subGroup.group )
     );
@@ -273,7 +308,7 @@ void Excl( Group group, int n, const int* ranks, Group& subGroup )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI(
+    EL_CHECK_MPI_NO_DATA(
       MPI_Group_excl
       ( group.group, n, const_cast<int*>(ranks), &subGroup.group )
     );
@@ -283,7 +318,7 @@ void Difference( Group parent, Group subset, Group& complement )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI(
+    EL_CHECK_MPI_NO_DATA(
       MPI_Group_difference( parent.group, subset.group, &complement.group )
     );
 }
@@ -291,14 +326,14 @@ EL_NO_RELEASE_EXCEPT
 void Free( Group& group ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Group_free( &group.group ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Group_free( &group.group ) );
 }
 
 bool Congruent( Group group1, Group group2 ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int result;
-    EL_CHECK_MPI( MPI_Group_compare( group1.group, group2.group, &result ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Group_compare( group1.group, group2.group, &result ) );
     return ( result == MPI_IDENT );
 }
 
@@ -346,7 +381,7 @@ void Translate
   Group newGroup,                  int* newRanks ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI
+    EL_CHECK_MPI_NO_DATA
     ( MPI_Group_translate_ranks
       ( origGroup.group, size, const_cast<int*>(origRanks),
         newGroup.group, newRanks ) );
@@ -394,7 +429,7 @@ void Translate
 void Barrier( Comm comm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Barrier( comm.comm ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Barrier( comm.comm ) );
 }
 
 // Test for completion
@@ -404,7 +439,7 @@ bool Test( Request<T>& request ) EL_NO_RELEASE_EXCEPT
     EL_DEBUG_CSE
     Status status;
     int flag;
-    EL_CHECK_MPI( MPI_Test( &request.backend, &flag, &status ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Test( &request.backend, &flag, &status ) );
     return flag;
 }
 
@@ -423,7 +458,7 @@ template<typename T,
 void Wait( Request<T>& request, Status& status ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Wait( &request.backend, &status ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Wait( &request.backend, &status ) );
 }
 
 // Ensure that several requests finish before continuing
@@ -470,7 +505,7 @@ template<typename T,
 void Wait( Request<T>& request, Status& status ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI( MPI_Wait( &request.backend, &status ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Wait( &request.backend, &status ) );
     if( request.receivingPacked )
     {
         Deserialize
@@ -495,7 +530,7 @@ EL_NO_RELEASE_EXCEPT
     vector<MPI_Request> backends( numRequests );
     for( Int j=0; j<numRequests; ++j )
         backends[j] = requests[j].backend;
-    EL_CHECK_MPI( MPI_Waitall( numRequests, backends.data(), statuses ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Waitall( numRequests, backends.data(), statuses ) );
     // NOTE: This write back will almost always be superfluous, but it ensures
     //       that any changes to the pointer are propagated
     for( Int j=0; j<numRequests; ++j )
@@ -527,7 +562,8 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int flag;
-    EL_CHECK_MPI( MPI_Iprobe( source, tag, comm.comm, &flag, &status ) );
+    EL_CHECK_MPI_NO_DATA(
+        MPI_Iprobe( source, tag, comm.comm, &flag, &status ) );
     return flag;
 }
 bool IProbe( int source, Comm comm, Status& status ) EL_NO_RELEASE_EXCEPT
@@ -538,7 +574,7 @@ int GetCount( Status& status ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     int count;
-    EL_CHECK_MPI( MPI_Get_count( &status, TypeMap<T>(), &count ) );
+    EL_CHECK_MPI_NO_DATA( MPI_Get_count( &status, TypeMap<T>(), &count ) );
     return count;
 }
 

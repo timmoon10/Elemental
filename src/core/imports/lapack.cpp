@@ -10,10 +10,16 @@
 #include <El/lapack_like.hpp>
 #include <El/blas_like/level1/Givens.hpp>
 
-using El::FortranLogical;
 using El::BlasInt;
 using El::scomplex;
 using El::dcomplex;
+
+// This is actually impossible to determine without access to the
+// compiler with which LAPACK was compiled. Since there's no standard
+// ABI for LOGICAL interop, we go with a common choice.
+using FortranLogical = int;
+#define FORTRAN_FALSE 0
+#define FORTRAN_TRUE 1
 
 extern "C" {
 

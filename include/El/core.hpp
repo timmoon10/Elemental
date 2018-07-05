@@ -91,14 +91,6 @@ class BigFloat;
 template<typename Real>
 class Complex;
 
-// Convert CMake configuration into a typedef and an enum
-typedef EL_FORT_LOGICAL FortranLogical;
-enum FortranLogicalEnum
-{
-  FORTRAN_TRUE=EL_FORT_TRUE,
-  FORTRAN_FALSE=EL_FORT_FALSE
-};
-
 template<typename S,typename T>
 using IsSame = std::is_same<S,T>;
 
@@ -251,6 +243,9 @@ template<typename T> struct IsStdField<Complex<T>>
 #include <El/core/imports/cuda.hpp>
 #include <El/core/imports/cublas.hpp>
 #endif // HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_CUB
+#include <El/core/imports/cub.hpp>
+#endif // HYDROGEN_HAVE_CUB
 #include <El/core/imports/lapack.hpp>
 #include <El/core/imports/flame.hpp>
 #include <El/core/imports/mkl.hpp>
@@ -264,7 +259,10 @@ template<typename T> struct IsStdField<Complex<T>>
 
 #include <El/core/Memory.hpp>
 
-namespace El {
+#include <El/core/SimpleBuffer.hpp>
+
+namespace El
+{
 
 template <typename T=double> class AbstractMatrix;
 template<typename T=double, Device D=Device::CPU> class Matrix;
