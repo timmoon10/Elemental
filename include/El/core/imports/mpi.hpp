@@ -12,12 +12,13 @@
 #ifndef EL_IMPORTS_MPI_HPP
 #define EL_IMPORTS_MPI_HPP
 
-#ifdef HYDROGEN_USES_ALUMINUM
+#ifdef HYDROGEN_HAVE_ALUMINUM
 #include <Al.hpp>
-#ifdef HYDROGEN_USES_NCCL2
+#ifdef HYDROGEN_HAVE_NCCL2
+#include "core/imports/cuda.hpp"
 #include <nccl_impl.hpp>
-#endif
-#endif // HYDROGEN_USES_ALUMINUM
+#endif // HYDROGEN_HAVE_NCCL2
+#endif // HYDROGEN_HAVE_ALUMINUM
 
 namespace El {
 
@@ -44,28 +45,31 @@ namespace mpi {
 struct Comm
 {
     MPI_Comm comm;
-#ifndef HYDROGEN_USES_ALUMINUM
+#ifndef HYDROGEN_HAVE_ALUMINUM
     Comm( MPI_Comm mpiComm=MPI_COMM_WORLD ) EL_NO_EXCEPT : comm(mpiComm) { }
 #else
-#ifdef HYDROGEN_USES_NCCL2
+#ifdef HYDROGEN_HAVE_NCCL2
     using aluminum_comm_type = Al::NCCLCommunicator;
 #else
     using aluminum_comm_type = Al::MPICommunicator;
-#endif
+#endif // HYDROGEN_HAVE_NCCL2
 
     std::shared_ptr<aluminum_comm_type> aluminum_comm;
-    Comm( MPI_Comm mpiComm=MPI_COMM_WORLD) EL_NO_EXCEPT 
+    Comm(MPI_Comm mpiComm=MPI_COMM_WORLD) EL_NO_EXCEPT
       : comm(mpiComm),
-        aluminum_comm(std::make_shared<aluminum_comm_type>(mpiComm)) {}
+        aluminum_comm{std::make_shared<aluminum_comm_type>(mpiComm
+#ifdef HYDROGEN_HAVE_NCCL2
+                      , GPUManager::Stream()
+#endif
+                )}
+    {}
 
-    Comm( const Comm& comm_cpy ) EL_NO_EXCEPT 
-        : comm(comm_cpy.comm),
-          aluminum_comm(std::make_shared<aluminum_comm_type>(comm_cpy.comm)) {}
-#endif // HYDROGEN_USES_ALUMINUM
+    Comm(Comm const& comm_cpy) EL_NO_EXCEPT = default;
+#endif // HYDROGEN_HAVE_ALUMINUM
 
     inline int Rank() const EL_NO_RELEASE_EXCEPT;
     inline int Size() const EL_NO_RELEASE_EXCEPT;
-  
+
 };
 inline bool operator==( const Comm& a, const Comm& b ) EL_NO_EXCEPT
 { return a.comm == b.comm; }

@@ -14,20 +14,22 @@
 */
 #include <El-lite.hpp>
 #include "mpi_utils.hpp"
-#ifdef HYDROGEN_USES_ALUMINUM
+#ifdef HYDROGEN_HAVE_ALUMINUM
 #include "Al.hpp"
-#ifdef HYDROGEN_USES_NCCL2
+#ifdef HYDROGEN_HAVE_NCCL2
 #include "nccl_impl.hpp"
 #endif
-#endif //HYDROGEN_USES_ALUMINUM
+#endif //HYDROGEN_HAVE_ALUMINUM
 
 typedef unsigned char* UCP;
 
-namespace El {
-namespace mpi {
+namespace El
+{
+namespace mpi
+{
 
-#ifdef HYDROGEN_USES_ALUMINUM
-#ifndef HYDROGEN_USES_NCCL2
+#ifdef HYDROGEN_HAVE_ALUMINUM
+#ifndef HYDROGEN_HAVE_NCCL2
 using backend = ::Al::MPIBackend;
 #else
 using backend = ::Al::NCCLBackend;
@@ -159,7 +161,7 @@ EL_NO_RELEASE_EXCEPT
     EL_DEBUG_CSE
     if( count != 0 )
     {
-#ifndef HYDROGEN_USES_ALUMINUM
+#ifndef HYDROGEN_HAVE_ALUMINUM
         MPI_Op opC = NativeOp<Real>( op );
         EL_CHECK_MPI
         ( MPI_Allreduce
@@ -257,7 +259,7 @@ EL_NO_RELEASE_EXCEPT
     if( count == 0 || Size(comm) == 1 )
         return;
 
-#ifndef HYDROGEN_USES_ALUMINUM
+#ifndef HYDROGEN_HAVE_ALUMINUM
     MPI_Op opC = NativeOp<Real>( op );
     EL_CHECK_MPI
     ( MPI_Allreduce
@@ -403,6 +405,3 @@ MPI_ALLREDUCE_PROTO(Entry<Complex<BigFloat>>)
 
 } // namespace mpi
 } // namespace El
-
-
-

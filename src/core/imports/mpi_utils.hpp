@@ -29,18 +29,20 @@
     while( 0 )
 #else
 #define EL_CHECK_MPI(mpi_call) CheckMpi( mpi_call )
-#endif 
+#endif
+
+#define EL_CHECK_MPI_NO_DATA(mpi_call) CheckMpi( mpi_call )
 
 namespace {
 
 inline void
 CheckMpi( int error ) EL_NO_RELEASE_EXCEPT
 {
-    EL_DEBUG_ONLY( 
+    EL_DEBUG_ONLY(
       if( error != MPI_SUCCESS )
       {
           char errorString[MPI_MAX_ERROR_STRING];
-          int lengthOfErrorString; 
+          int lengthOfErrorString;
           MPI_Error_string( error, errorString, &lengthOfErrorString );
           El::RuntimeError( std::string(errorString) );
       }
@@ -66,4 +68,3 @@ MPI_Op NativeOp( const El::mpi::Op& op )
 
 }
 #endif // ifndef EL_IMPORTS_MPIUTILS_HPP
-

@@ -67,13 +67,13 @@ bool GroupSameSizeAsInteger() EL_NO_EXCEPT
 // ==========================
 
 void Initialize( int& argc, char**& argv ) EL_NO_EXCEPT
-{ 
-    MPI_Init( &argc, &argv ); 
-#ifdef HYDROGEN_USES_ALUMINUM
-#ifndef HYDROGEN_USES_NCCL2
+{
+    MPI_Init( &argc, &argv );
+#ifdef HYDROGEN_HAVE_ALUMINUM
+#ifndef HYDROGEN_HAVE_NCCL2
     Al::Initialize(argc, argv);
-#endif // HYDROGEN_USES_NCCL2
-#endif // HYDROGEN_USES_ALUMINUM
+#endif // HYDROGEN_HAVE_NCCL2
+#endif // HYDROGEN_HAVE_ALUMINUM
 }
 
 
@@ -88,27 +88,27 @@ int InitializeThread( int& argc, char**& argv, int required ) EL_NO_EXCEPT
     provided = 0; // equivalent to MPI_THREAD_SINGLE
 #endif
 
-#ifdef HYDROGEN_USES_ALUMINUM
-#ifndef HYDROGEN_USES_NCCL2
+#ifdef HYDROGEN_HAVE_ALUMINUM
+#ifndef HYDROGEN_HAVE_NCCL2
     Al::Initialize(argc, argv);
 #else
-#endif // HYDROGEN_USES_NCCL2
-#endif // HYDROGEN_USES_ALUMINUM
+#endif // HYDROGEN_HAVE_NCCL2
+#endif // HYDROGEN_HAVE_ALUMINUM
 
     return provided;
 }
 
 void Finalize() EL_NO_EXCEPT
-{ 
-#ifdef HYDROGEN_USES_ALUMINUM
-#ifndef HYDROGEN_USES_NCCL2
-/// Making sure finalizing Aluminum before finalizing MPI.
+{
+#ifdef HYDROGEN_HAVE_ALUMINUM
+#ifndef HYDROGEN_HAVE_NCCL2
+    // Making sure finalizing Aluminum before finalizing MPI.
     Al::Finalize(false);
 #else
-#endif
-#endif // HYDROGEN_USES_ALUMINUM
+#endif // HYDROGEN_HAVE_NCCL2
+#endif // HYDROGEN_HAVE_ALUMINUM
 
-    MPI_Finalize(); 
+    MPI_Finalize();
 }
 
 bool Initialized() EL_NO_EXCEPT
