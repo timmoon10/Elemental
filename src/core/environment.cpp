@@ -227,10 +227,8 @@ void Finalize()
 #ifdef EL_HAVE_QT5
         FinalizeQt5();
 #endif
-        if( ::elemInitializedMpi ){
+        if( ::elemInitializedMpi )
             mpi::Finalize();
-        }
-
 
         EmptyBlocksizeStack();
 
