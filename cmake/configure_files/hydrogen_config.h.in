@@ -20,6 +20,9 @@
 #cmakedefine HYDROGEN_HAVE_MKL
 #cmakedefine HYDROGEN_HAVE_MKL_GEMMT
 
+// Communication stuff
+#cmakedefine HYDROGEN_HAVE_ALUMINUM
+
 // CUDA stuff
 #cmakedefine HYDROGEN_HAVE_CUDA
 #cmakedefine HYDROGEN_HAVE_NCCL2

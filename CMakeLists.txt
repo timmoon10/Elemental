@@ -19,8 +19,6 @@ if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   set(HYDROGEN_RELEASE_BUILD TRUE)
 endif ()
 
-find_package(Aluminum)
-
 # Prevent in-source builds
 if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   message(FATAL_ERROR
@@ -46,13 +44,6 @@ elseif (CXX_COMPILER_HAS_WPEDANTIC_FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wpedantic")
 endif ()
 
-if(USE_ALUMINUM)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHYDROGEN_USES_ALUMINUM")
-  if(USE_NCCL)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHYDROGEN_USES_NCCL2")
-  endif ()
-endif ()
-  
 # Configuration options
 option(${PROJECT_NAME}_EXPORT_PACKAGE_REGISTRY
   "Export the build directory to the user's CMake package registry." OFF)
@@ -73,6 +64,10 @@ option(${PROJECT_NAME}_ENABLE_QD
 
 option(${PROJECT_NAME}_ENABLE_MPC
   "Search for MPC(+MPFR+GMP) library and enable related features if found."
+  OFF)
+
+option(${PROJECT_NAME}_ENABLE_ALUMINUM
+  "Enable the Aluminum package for improved Allreduces."
   OFF)
 
 option(${PROJECT_NAME}_ENABLE_CUDA
@@ -175,6 +170,27 @@ mark_as_advanced(${PROJECT_NAME}_VECTOR_WARNINGS)
 #
 # Check the compiler features
 #
+
+if (${PROJECT_NAME}_ENABLE_ALUMINUM)
+  find_package(Aluminum)
+
+  if (Aluminum_FOUND)
+    set(HYDROGEN_HAVE_ALUMINUM TRUE)
+    message(STATUS "Aluminum support enabled.")
+
+    if (AL_HAS_NCCL)
+      set(HYDROGEN_HAVE_NCCL2 TRUE)
+      message(STATUS "Aluminum detected with NCCL2 support.")
+    else ()
+      set(HYDROGEN_HAVE_NCCL2 FALSE)
+    endif ()
+  else ()
+    set(HYDROGEN_HAVE_ALUMINUM TRUE)
+    set(HYDROGEN_HAVE_NCCL2 FALSE)
+    set(${PROJECT_NAME}_ENABLE_ALUMINUM FALSE)
+    message(WARNING "Aluminum support requested but not found. Disabling.")
+  endif (Aluminum_FOUND)
+endif (${PROJECT_NAME}_ENABLE_ALUMINUM)
 
 if (${PROJECT_NAME}_ENABLE_CUDA)
 
