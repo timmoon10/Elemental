@@ -21,8 +21,6 @@
 #endif
 #endif //HYDROGEN_HAVE_ALUMINUM
 
-typedef unsigned char* UCP;
-
 namespace El
 {
 namespace mpi
