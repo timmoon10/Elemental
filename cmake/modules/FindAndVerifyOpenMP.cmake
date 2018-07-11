@@ -1,3 +1,5 @@
+
+# Attempt to use the built-in module
 find_package(OpenMP COMPONENTS CXX)
 
 if (NOT OpenMP_FOUND AND APPLE)
@@ -71,3 +73,65 @@ set_property(TARGET OpenMP::OpenMP_CXX PROPERTY
 
 set(OpenMP_FOUND ${_OPENMP_TEST_RUNS})
 
+if (OpenMP_FOUND)
+  set(EL_HAVE_OPENMP TRUE)
+else ()
+  set(EL_HAVE_OPENMP FALSE)
+endif ()
+
+if (EL_HAVE_OPENMP)
+  set(CMAKE_REQUIRED_FLAGS ${OpenMP_CXX_FLAGS})
+  set(OMP_COLLAPSE_CODE
+    "#include <omp.h>
+     int main( int argc, char* argv[] )
+     {
+         int k[100];
+     #pragma omp collapse(2)
+         for( int i=0; i<10; ++i )
+             for( int j=0; j<10; ++j )
+                 k[i+j*10] = i+j;
+         return 0;
+     }")
+  check_cxx_source_compiles("${OMP_COLLAPSE_CODE}" EL_HAVE_OMP_COLLAPSE)
+  set(CMAKE_REQUIRED_FLAGS)
+else ()
+  set(EL_HAVE_OMP_COLLAPSE FALSE)
+endif ()
+
+# See if we have 'simd' support, which was introduced in OpenMP 4.0
+if (EL_HAVE_OPENMP)
+  set(CMAKE_REQUIRED_FLAGS ${OpenMP_CXX_FLAGS})
+  set(OMP_SIMD_CODE
+      "#include <omp.h>
+       int main( int argc, char* argv[] )
+       {
+           int k[10];
+       #pragma omp simd
+           for( int i=0; i<10; ++i )
+               k[i] = i;
+           return 0;
+       }")
+  check_cxx_source_compiles("${OMP_SIMD_CODE}" EL_HAVE_OMP_SIMD)
+  set(CMAKE_REQUIRED_FLAGS)
+else ()
+  set(EL_HAVE_OMP_SIMD FALSE)
+endif ()
+
+# See if we have 'taskloop' support, which was introduced in OpenMP 4.0
+if (EL_HAVE_OPENMP)
+  set(CMAKE_REQUIRED_FLAGS ${OpenMP_CXX_FLAGS})
+  set(OMP_TASKLOOP_CODE
+      "#include <omp.h>
+       int main( int argc, char* argv[] )
+       {
+           int k[10];
+       #pragma omp taskloop
+           for( int i=0; i<10; ++i )
+               k[i] = i;
+           return 0;
+       }")
+  check_cxx_source_compiles("${OMP_TASKLOOP_CODE}" HYDROGEN_HAVE_OMP_TASKLOOP)
+  set(CMAKE_REQUIRED_FLAGS)
+else ()
+  set(HYDROGEN_HAVE_OMP_TASKLOOP FALSE)
+endif ()
