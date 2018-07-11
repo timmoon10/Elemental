@@ -118,7 +118,7 @@ else ()
 endif ()
 
 # See if we have 'taskloop' support, which was introduced in OpenMP 4.0
-if (EL_HAVE_OPENMP)
+if (EL_HAVE_OPENMP AND ${PROJECT_NAME}_ENABLE_OMP_TASKLOOP)
   set(CMAKE_REQUIRED_FLAGS ${OpenMP_CXX_FLAGS})
   set(OMP_TASKLOOP_CODE
       "#include <omp.h>
@@ -132,6 +132,8 @@ if (EL_HAVE_OPENMP)
        }")
   check_cxx_source_compiles("${OMP_TASKLOOP_CODE}" HYDROGEN_HAVE_OMP_TASKLOOP)
   set(CMAKE_REQUIRED_FLAGS)
+  set(${PROJECT_NAME}_ENABLE_OMP_TASKLOOP ${HYDROGEN_HAVE_OMP_TASKLOOP})
 else ()
   set(HYDROGEN_HAVE_OMP_TASKLOOP FALSE)
+  set(${PROJECT_NAME}_ENABLE_OMP_TASKLOOP FALSE)
 endif ()
