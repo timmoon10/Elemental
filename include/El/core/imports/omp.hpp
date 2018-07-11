@@ -10,13 +10,13 @@
 #define EL_IMPORTS_OMP_HPP
 #ifdef EL_HYBRID
 # include <omp.h>
-# if defined(EL_HAVE_OMP_TASKLOOP) && defined(EL_USE_OMP_TASKLOOP)
+# if defined(HYDROGEN_HAVE_OMP_TASKLOOP)
 #   define EL_PARALLEL_FOR _Pragma("omp taskloop default(shared)")
 # else
 #   define EL_PARALLEL_FOR _Pragma("omp parallel for")
 # endif
 # ifdef EL_HAVE_OMP_COLLAPSE
-#   if defined(EL_HAVE_OMP_TASKLOOP) && defined(EL_USE_OMP_TASKLOOP)
+#   if defined(HYDROGEN_HAVE_OMP_TASKLOOP)
 #     define EL_PARALLEL_FOR_COLLAPSE2 _Pragma("omp taskloop collapse(2) default(shared)")
 #   else
 #     define EL_PARALLEL_FOR_COLLAPSE2 _Pragma("omp parallel for collapse(2)")
