@@ -1,15 +1,21 @@
 #ifndef HYDROGEN_IMPORTS_ALUMINUM_HPP_
 #define HYDROGEN_IMPORTS_ALUMINUM_HPP_
 
+#ifdef HYDROGEN_HAVE_ALUMINUM
 #include <Al.hpp>
 
 #ifdef HYDROGEN_HAVE_NCCL2
 #include <nccl_impl.hpp>
 #endif // HYDROGEN_HAVE_NCCL2
-
+#endif // HYDROGEN_HAVE_ALUMINUM
 
 namespace El
 {
+
+#ifndef HYDROGEN_HAVE_ALUMINUM
+template <typename T> struct IsAluminumTypeT : std::false_type {};
+
+#else
 
 // A function to convert an MPI MPI_Op into an Aluminum operator
 Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op);
@@ -139,6 +145,8 @@ static_assert(false, "No GPU backend available.");
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
 #endif // HYDROGEN_HAVE_NCCL2
 #endif // HYDROGEN_HAVE_CUDA
+
+#endif // ndefined(HYDROGEN_HAVE_ALUMINUM)
 
 } // namespace El
 
