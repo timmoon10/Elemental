@@ -37,12 +37,18 @@ const int THREAD_SERIALIZED = 2;
 const int THREAD_MULTIPLE = 3;
 #endif
 const int UNDEFINED = MPI_UNDEFINED;
-const Group GROUP_NULL = MPI_GROUP_NULL;
+#ifdef HYDROGEN_HAVE_ALUMINUM
+const Comm COMM_NULL(internal::DelayCtorType{}, MPI_COMM_NULL);
+const Comm COMM_SELF(internal::DelayCtorType{}, MPI_COMM_SELF);
+const Comm COMM_WORLD(internal::DelayCtorType{}, MPI_COMM_WORLD);
+#else
 const Comm COMM_NULL = MPI_COMM_NULL;
 const Comm COMM_SELF = MPI_COMM_SELF;
 const Comm COMM_WORLD = MPI_COMM_WORLD;
+#endif
 const ErrorHandler ERRORS_RETURN = MPI_ERRORS_RETURN;
 const ErrorHandler ERRORS_ARE_FATAL = MPI_ERRORS_ARE_FATAL;
+const Group GROUP_NULL = MPI_GROUP_NULL;
 const Group GROUP_EMPTY = MPI_GROUP_EMPTY;
 const Op MAX = MPI_MAX;
 const Op MIN = MPI_MIN;
@@ -73,6 +79,10 @@ void Initialize( int& argc, char**& argv ) EL_NO_EXCEPT
 #ifndef HYDROGEN_HAVE_NCCL2
     Al::Initialize(argc, argv);
 #endif // HYDROGEN_HAVE_NCCL2
+
+    // BLERG
+    const_cast<Comm&>(COMM_SELF) = MPI_COMM_SELF;
+    const_cast<Comm&>(COMM_WORLD) = MPI_COMM_WORLD;
 #endif // HYDROGEN_HAVE_ALUMINUM
 }
 

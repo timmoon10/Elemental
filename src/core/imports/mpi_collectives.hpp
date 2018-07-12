@@ -15,333 +15,343 @@
 #include <El-lite.hpp>
 #include "mpi_utils.hpp"
 #ifdef HYDROGEN_HAVE_ALUMINUM
-#include "Al.hpp"
-#ifdef HYDROGEN_HAVE_NCCL2
-#include "nccl_impl.hpp"
-#endif
+#include <El/core/imports/aluminum.hpp>
 #endif //HYDROGEN_HAVE_ALUMINUM
 
 namespace El
 {
+
+Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op)
+{
+    switch (op)
+    {
+    case MPI_SUM:
+        return Al::ReductionOperator::sum;
+    case MPI_PROD:
+        return Al::ReductionOperator::prod;
+    case MPI_MIN:
+        return Al::ReductionOperator::min;
+    case MPI_MAX:
+        return Al::ReductionOperator::max;
+    default:
+        LogicError("Given reduction operator not supported.");
+    }
+    // Silence compiler warning
+    return Al::ReductionOperator::sum;
+}
+
 namespace mpi
 {
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
-#ifndef HYDROGEN_HAVE_NCCL2
-using backend = ::Al::MPIBackend;
-#else
-using backend = ::Al::NCCLBackend;
-#endif
 
-template<typename Real>
-void aluminum_allreduce( const Real* sbuf, Real* rbuf, int count, Op op, Comm comm )
+// Attempted Aluminum dispatch and it was successful ; call Aluminum
+template <typename BackendT, typename Real,
+          typename=EnableIf<IsAlTypeT<Real,BackendT>>>
+void aluminum_allreduce(
+    Real const* sbuf, Real* rbuf, int count, Op op, Comm comm)
 {
-    MPI_Op mpi_op = op.op;
-    Al::ReductionOperator red_op = Al::internal::mpi::MPI_Op2ReductionOperator (mpi_op);
-
-    if(TypeMap<Real>() == MPI_UNSIGNED_CHAR){
-      Al::Allreduce<backend, unsigned char>((unsigned char*)sbuf, (unsigned char*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_INT){
-      Al::Allreduce<backend, int>((int*)sbuf, (int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_CHAR){
-      Al::Allreduce<backend, char>((char*)sbuf, (char*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_UNSIGNED){
-      Al::Allreduce<backend, unsigned int>((unsigned int*)sbuf, (unsigned int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_LONG_LONG){
-      Al::Allreduce<backend, long long int>((long long int*)sbuf, (long long int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_UNSIGNED_LONG_LONG){
-      Al::Allreduce<backend, unsigned long long int>((unsigned long long int*)sbuf, (unsigned long long int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_FLOAT){
-      Al::Allreduce<backend, float>((float*)sbuf, (float*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_DOUBLE){
-      Al::Allreduce<backend, double>((double*)sbuf, (double*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-#ifndef HYDROGEN_USES_NCCL2
-    else if(TypeMap<Real>() == MPI_SIGNED_CHAR){
-      Al::Allreduce<backend, signed char>((signed char*)sbuf, (signed char*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_SHORT){
-      Al::Allreduce<backend, short>((short*)sbuf, (short*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_UNSIGNED_SHORT){
-      Al::Allreduce<backend, unsigned short>((unsigned short*)sbuf, (unsigned short*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_LONG_INT){
-      Al::Allreduce<backend, long int>((long int*)sbuf, (long int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_UNSIGNED_LONG){
-      Al::Allreduce<backend, unsigned long int>((unsigned long int*)sbuf, (unsigned long int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(TypeMap<Real>() == MPI_LONG_DOUBLE){
-      Al::Allreduce<backend, long double>((long double*)sbuf, (long double*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-#endif
-    else{
-      MPI_Op opC = NativeOp<Real>( op );
-      EL_CHECK_MPI
-      ( MPI_Allreduce
-            ( const_cast<Real*>(sbuf), rbuf, count, TypeMap<Real>(), opC,
-              comm.comm ) );
-    }
+    EL_DEBUG_CSE
+    auto red_op = MPI_Op2ReductionOperator(op.op);
+    Al::Allreduce<BackendT>(sbuf, rbuf, count, red_op, *comm.aluminum_comm);
 }
 
-template<typename Real>
-void aluminum_allreduce( Real* rbuf, int count, Op op, Comm comm )
+// Attempted Aluminum dispatch and it failed ; call Hydrogen's fallback
+template <typename BackendT, typename Real,
+          typename=DisableIf<IsAlTypeT<Real,BackendT>>,
+          typename=void>
+void aluminum_allreduce(
+    Real const* sbuf, Real* rbuf, int count, Op op, Comm comm)
 {
-    MPI_Op mpi_op = op.op;
-    Al::ReductionOperator red_op = Al::internal::mpi::MPI_Op2ReductionOperator (mpi_op);
-
-    if(typeid(TypeMap<Real>()) == typeid(MPI_CHAR)){
-      Al::Allreduce<backend, char>((char*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_UNSIGNED_CHAR)){
-      Al::Allreduce<backend, unsigned char>((unsigned char*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_INT)){
-      Al::Allreduce<backend, int>((int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_UNSIGNED)){
-      Al::Allreduce<backend, unsigned int>((unsigned int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_LONG_LONG)){
-      Al::Allreduce<backend, long long int>((long long int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_UNSIGNED_LONG_LONG)){
-      Al::Allreduce<backend, unsigned long long int>((unsigned long long int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_FLOAT)){
-      Al::Allreduce<backend, float>((float*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_DOUBLE)){
-      Al::Allreduce<backend, double>((double*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-#ifndef HYDROGEN_USES_NCCL2
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_SIGNED_CHAR)){
-      Al::Allreduce<backend, signed char>((signed char*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_SHORT)){
-      Al::Allreduce<backend, short>((short*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_UNSIGNED_SHORT)){
-      Al::Allreduce<backend, unsigned short>((unsigned short*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_LONG_INT)){
-      Al::Allreduce<backend, long int>((long int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_UNSIGNED_LONG)){
-      Al::Allreduce<backend, unsigned long int>((unsigned long int*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-    else if(typeid(TypeMap<Real>()) == typeid(MPI_LONG_DOUBLE)){
-      Al::Allreduce<backend, long double>((long double*)rbuf, count, red_op, *(comm.aluminum_comm));
-    }
-#endif
-    else{
-      MPI_Op opC = NativeOp<Real>( op );
-      EL_CHECK_MPI
-      ( MPI_Allreduce
-        ( MPI_IN_PLACE, rbuf, count, TypeMap<Real>(), opC, comm.comm ) );
-    }
+    EL_DEBUG_CSE
+    fallback_allreduce(sbuf, rbuf, count, op, comm);
 }
-#endif
+
+// IN_PLACE version
+
+// Attempted Aluminum dispatch and it was successful ; call Aluminum
+template <typename BackendT, typename Real,
+          typename=EnableIf<IsAlTypeT<Real,BackendT>>>
+void aluminum_allreduce(
+    Real* rbuf, int count, Op op, Comm comm)
+{
+    EL_DEBUG_CSE
+    auto red_op = MPI_Op2ReductionOperator(op.op);
+    Al::Allreduce<BackendT>(rbuf, count, red_op, *comm.aluminum_comm);
+}
+
+// Attempted Aluminum dispatch and it failed ; call Hydrogen's fallback
+template <typename BackendT, typename Real,
+          typename=DisableIf<IsAlTypeT<Real,BackendT>>,
+          typename=void>
+void aluminum_allreduce(
+    Real* rbuf, int count, Op op, Comm comm)
+{
+    EL_DEBUG_CSE
+    fallback_allreduce(rbuf, count, op, std::move(comm));
+}
+
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+
+// Fallback impls in plain ol' MPI
 
 template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllReduce( const Real* sbuf, Real* rbuf, int count, Op op, Comm comm )
+         typename=EnableIf<IsPacked<Real>>>
+void fallback_allreduce(
+    Real const* sbuf, Real* rbuf, int count, Op op, Comm comm)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if( count != 0 )
-    {
-#ifndef HYDROGEN_HAVE_ALUMINUM
-        MPI_Op opC = NativeOp<Real>( op );
-        EL_CHECK_MPI
-        ( MPI_Allreduce
-          ( const_cast<Real*>(sbuf), rbuf, count, TypeMap<Real>(), opC,
-            comm.comm ) );
-#else
-    aluminum_allreduce<Real>(sbuf, rbuf, count, op, comm );
-#endif
-    }
+    MPI_Op opC = NativeOp<Real>(op);
+    EL_CHECK_MPI(
+        MPI_Allreduce(
+            const_cast<Real*>(sbuf), rbuf,
+            count, TypeMap<Real>(), opC, comm.comm));
+
 }
 
 template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllReduce
-( const Complex<Real>* sbuf, Complex<Real>* rbuf, int count, Op op, Comm comm )
+         typename=EnableIf<IsPacked<Real>>>
+void fallback_allreduce(
+    Complex<Real> const* sbuf, Complex<Real>* rbuf, int count, Op op, Comm comm)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if( count != 0 )
+    if (count != 0)
     {
 #ifdef EL_AVOID_COMPLEX_MPI
-        if( op == SUM )
+        if (op == SUM)
         {
-            MPI_Op opC = NativeOp<Real>( op );
+            MPI_Op opC = NativeOp<Real>(op);
             EL_CHECK_MPI
-            ( MPI_Allreduce
-                ( const_cast<Complex<Real>*>(sbuf),
-                  rbuf, 2*count, TypeMap<Real>(), opC, comm.comm ) );
+            (MPI_Allreduce
+                (const_cast<Complex<Real>*>(sbuf),
+                  rbuf, 2*count, TypeMap<Real>(), opC, comm.comm));
         }
         else
         {
-            MPI_Op opC = NativeOp<Complex<Real>>( op );
+            MPI_Op opC = NativeOp<Complex<Real>>(op);
             EL_CHECK_MPI
-            ( MPI_Allreduce
-              ( const_cast<Complex<Real>*>(sbuf),
-                rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm ) );
+            (MPI_Allreduce
+              (const_cast<Complex<Real>*>(sbuf),
+                rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm));
         }
 #else
-        MPI_Op opC = NativeOp<Complex<Real>>( op );
+        MPI_Op opC = NativeOp<Complex<Real>>(op);
         EL_CHECK_MPI
-        ( MPI_Allreduce
-          ( const_cast<Complex<Real>*>(sbuf),
-            rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm ) );
+        (MPI_Allreduce
+          (const_cast<Complex<Real>*>(sbuf),
+            rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm));
 #endif
     }
 }
 
 template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void AllReduce
-( const T* sbuf, T* rbuf, int count, Op op, Comm comm )
+         typename=DisableIf<IsPacked<T>>,
+         typename=void>
+void fallback_allreduce
+(const T* sbuf, T* rbuf, int count, Op op, Comm comm)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if( count == 0 )
+    if (count == 0)
         return;
 
-    MPI_Op opC = NativeOp<T>( op );
+    MPI_Op opC = NativeOp<T>(op);
     std::vector<byte> packedSend, packedRecv;
-//XXX
-//CHECK WHAT SERIALIZE AND DESERIALIZE DO
-//
-    Serialize( count, sbuf, packedSend );
 
-    ReserveSerialized( count, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Allreduce
-      ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
-        opC, comm.comm ) );
-    Deserialize( count, packedRecv, rbuf );
+    Serialize(count, sbuf, packedSend);
+
+    ReserveSerialized(count, rbuf, packedRecv);
+    EL_CHECK_MPI(
+        MPI_Allreduce(
+            packedSend.data(), packedRecv.data(),
+            count, TypeMap<T>(), opC, comm.comm));
+    Deserialize(count, packedRecv, rbuf);
 }
 
-template<typename T>
-void AllReduce( const T* sbuf, T* rbuf, int count, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ AllReduce( sbuf, rbuf, count, SUM, comm ); }
-
-template<typename T>
-T AllReduce( T sb, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ T rb; AllReduce( &sb, &rb, 1, op, comm ); return rb; }
-
-template<typename T>
-T AllReduce( T sb, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ return AllReduce( sb, SUM, comm ); }
-
 template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllReduce( Real* buf, int count, Op op, Comm comm )
+         typename=EnableIf<IsPacked<Real>>>
+void fallback_allreduce(Real* buf, int count, Op op, Comm comm)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if( count == 0 || Size(comm) == 1 )
+    if (count == 0 || Size(comm) == 1)
         return;
 
-#ifndef HYDROGEN_HAVE_ALUMINUM
-    MPI_Op opC = NativeOp<Real>( op );
-    EL_CHECK_MPI
-    ( MPI_Allreduce
-      ( MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, comm.comm ) );
-#else
-    aluminum_allreduce<Real>( buf, count, op, comm );
-#endif
+    MPI_Op opC = NativeOp<Real>(op);
+    EL_CHECK_MPI(
+        MPI_Allreduce(
+            MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, comm.comm));
 }
 
 template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllReduce( Complex<Real>* buf, int count, Op op, Comm comm )
+         typename=EnableIf<IsPacked<Real>>>
+void fallback_allreduce(Complex<Real>* buf, int count, Op op, Comm comm)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if( count == 0 || Size(comm) == 1 )
+    if (count == 0 || Size(comm) == 1)
         return;
 
 #ifdef EL_AVOID_COMPLEX_MPI
-    if( op == SUM )
+    if (op == SUM)
     {
-        MPI_Op opC = NativeOp<Real>( op );
+        MPI_Op opC = NativeOp<Real>(op);
         EL_CHECK_MPI
-        ( MPI_Allreduce
-          ( MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC, comm.comm ) );
+        (MPI_Allreduce
+          (MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC, comm.comm));
     }
     else
     {
-        MPI_Op opC = NativeOp<Complex<Real>>( op );
+        MPI_Op opC = NativeOp<Complex<Real>>(op);
         EL_CHECK_MPI
-        ( MPI_Allreduce
-          ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(),
-            opC, comm.comm ) );
+        (MPI_Allreduce
+          (MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(),
+            opC, comm.comm));
     }
 #else
-    MPI_Op opC = NativeOp<Complex<Real>>( op );
+    MPI_Op opC = NativeOp<Complex<Real>>(op);
     EL_CHECK_MPI
-    ( MPI_Allreduce
-      ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
-        comm.comm ) );
+    (MPI_Allreduce
+      (MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
+        comm.comm));
 #endif
 }
 
 template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void AllReduce( T* buf, int count, Op op, Comm comm )
+         typename=DisableIf<IsPacked<T>>,
+         typename=void>
+void fallback_allreduce(T* buf, int count, Op op, Comm comm)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    if( count == 0 )
+    if (count == 0)
         return;
 
-    MPI_Op opC = NativeOp<T>( op );
+    MPI_Op opC = NativeOp<T>(op);
     std::vector<byte> packedSend, packedRecv;
-    Serialize( count, buf, packedSend );
+    Serialize(count, buf, packedSend);
 
-    ReserveSerialized( count, buf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Allreduce
-      ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
-        opC, comm.comm ) );
-    Deserialize( count, packedRecv, buf );
+    ReserveSerialized(count, buf, packedRecv);
+    EL_CHECK_MPI(
+        MPI_Allreduce(
+            packedSend.data(), packedRecv.data(),
+            count, TypeMap<T>(), opC, comm.comm));
+    Deserialize(count, packedRecv, buf);
 }
 
-template<typename T>
-void AllReduce( T* buf, int count, Comm comm )
+//
+// THE REAL THING
+//
+template <typename T,
+          typename/*=EnableIf<IsAluminumTypeT<T>>*/>
+void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm)
+{
+    EL_DEBUG_CSE
+    if (count == 0)
+        return;
+
+#ifdef HYDROGEN_HAVE_CUDA
+    auto sbuf_on_device = IsGPUMemory(sbuf), rbuf_on_device = IsGPUMemory(rbuf);
+
+    // All memory is on the device
+    if (sbuf_on_device && rbuf_on_device)
+        aluminum_allreduce<GPUBackend>(sbuf, rbuf, count, op, std::move(comm));
+    // All memory is on the host
+    else if (!sbuf_on_device && !rbuf_on_device)
+        aluminum_allreduce<CPUBackend>(sbuf, rbuf, count, op, std::move(comm));
+    // Some memory is on the host; some is on the device
+    else
+        fallback_allreduce(sbuf, rbuf, count, op, std::move(comm));
+#else
+    aluminum_allreduce<CPUBackend>(sbuf, rbuf, count, op, std::move(comm));
+#endif // HYDROGEN_HAVE_CUDA
+
+}
+
+template <typename T,
+          typename/*=DisableIf<IsAluminumTypeT<T>>*/,
+          typename/*=void*/>
+void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm)
+{
+    EL_DEBUG_CSE
+    if (count != 0)
+        fallback_allreduce(sbuf, rbuf, count, op, std::move(comm));
+}
+
+// The IN_PLACE versions
+template<typename T,
+         typename/*=EnableIf<IsAluminumTypeT<T>>*/>
+void AllReduce(T* rbuf, int count, Op op, Comm comm)
 EL_NO_RELEASE_EXCEPT
-{ AllReduce( buf, count, SUM, comm ); }
+{
+    EL_DEBUG_CSE
+    if (count == 0 || Size(comm) == 1)
+        return;
+
+#ifdef HYDROGEN_HAVE_CUDA
+    auto rbuf_on_device = IsGPUMemory(rbuf);
+
+    // All memory is on the device
+    if (rbuf_on_device)
+        aluminum_allreduce<GPUBackend>(rbuf, count, op, std::move(comm));
+    else
+        aluminum_allreduce<CPUBackend>(rbuf, count, op, std::move(comm));
+#else
+    aluminum_allreduce<CPUBackend>(rbuf, count, op, std::move(comm));
+#endif // HYDROGEN_HAVE_CUDA
+}
+
+template <typename T,
+          typename/*=DisableIf<IsAluminumTypeT<T>>*/,
+          typename/*=void*/>
+void AllReduce(T* rbuf, int count, Op op, Comm comm)
+{
+    EL_DEBUG_CSE
+    if (count != 0)
+        fallback_allreduce(rbuf, count, op, std::move(comm));
+}
+
+//
+// Things that call the "REAL" thing
+//
+
+template<typename T>
+void AllReduce(const T* sbuf, T* rbuf, int count, Comm comm)
+EL_NO_RELEASE_EXCEPT
+{ AllReduce(sbuf, rbuf, count, SUM, std::move(comm)); }
+
+template<typename T>
+T AllReduce(T sb, Op op, Comm comm)
+EL_NO_RELEASE_EXCEPT
+{ T rb; AllReduce(&sb, &rb, 1, op, std::move(comm)); return rb; }
+
+template<typename T>
+T AllReduce(T sb, Comm comm)
+EL_NO_RELEASE_EXCEPT
+{ return AllReduce(sb, SUM, std::move(comm)); }
+
+template<typename T>
+void AllReduce(T* buf, int count, Comm comm)
+EL_NO_RELEASE_EXCEPT
+{ AllReduce(buf, count, SUM, std::move(comm)); }
 
 
 #define MPI_ALLREDUCE_PROTO(T) \
   template void AllReduce \
-  ( const T* sbuf, T* rbuf, int count, Op op, Comm comm ) \
+  (const T* sbuf, T* rbuf, int count, Op op, Comm comm) \
   EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( const T* sbuf, T* rbuf, int count, Comm comm ) \
+  template void AllReduce(const T* sbuf, T* rbuf, int count, Comm comm) \
   EL_NO_RELEASE_EXCEPT; \
-  template T AllReduce( T sb, Op op, Comm comm ) \
+  template T AllReduce(T sb, Op op, Comm comm) \
   EL_NO_RELEASE_EXCEPT; \
-  template T AllReduce( T sb, Comm comm ) \
+  template T AllReduce(T sb, Comm comm) \
   EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( T* buf, int count, Op op, Comm comm ) \
+  template void AllReduce(T* buf, int count, Op op, Comm comm) \
   EL_NO_RELEASE_EXCEPT; \
-  template void AllReduce( T* buf, int count, Comm comm ) \
+  template void AllReduce(T* buf, int count, Comm comm) \
   EL_NO_RELEASE_EXCEPT;
 
 MPI_ALLREDUCE_PROTO(byte)

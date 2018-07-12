@@ -97,6 +97,28 @@ struct CudaError : std::runtime_error
   EL_FORCE_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)
 #endif // #ifdef EL_RELEASE
 
+// Function to determine if a pointer is GPU memory
+inline bool IsGPUMemory(const void* ptr)
+{
+    cudaPointerAttributes attrs;
+    auto err = cudaPointerGetAttributes(&attrs, ptr);
+    if (err == cudaErrorInvalidValue)
+    {
+        if ((err = cudaGetLastError()) == cudaErrorInvalidValue)
+            return false;
+        else
+            EL_FORCE_CHECK_CUDA(err);
+    }
+    else
+    {
+        if ((err = cudaGetLastError()) == cudaSuccess)
+            return (attrs.memoryType == cudaMemoryTypeDevice);
+        else
+            EL_FORCE_CHECK_CUDA(err);
+    }
+    return false;// silence compiler warning
+}
+
 /** Initialize CUDA environment.
  *  We assume that all MPI ranks within a compute node have access to
  *  exactly one unique GPU or to the same (possibly empty) list of

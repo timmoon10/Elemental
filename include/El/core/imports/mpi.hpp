@@ -13,11 +13,10 @@
 #define EL_IMPORTS_MPI_HPP
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
-#include <Al.hpp>
-#ifdef HYDROGEN_HAVE_NCCL2
-#include "core/imports/cuda.hpp"
-#include <nccl_impl.hpp>
-#endif // HYDROGEN_HAVE_NCCL2
+#if defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
+#include "cuda.hpp"
+#endif // defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
+#include "aluminum.hpp"
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 namespace El {
@@ -42,35 +41,79 @@ namespace mpi {
 #endif
 #endif
 
+// Yes, I realize there's some code duplication here, but it's SO MUCH
+// EASIER for the human to read I really don't care... The
+// preprocessor is the only thing that could care, but it doesn't get
+// feelings. Bwahahaha.
+
+#ifndef HYDROGEN_HAVE_ALUMINUM
+
 struct Comm
 {
     MPI_Comm comm;
-#ifndef HYDROGEN_HAVE_ALUMINUM
-    Comm( MPI_Comm mpiComm=MPI_COMM_WORLD ) EL_NO_EXCEPT : comm(mpiComm) { }
-#else
-#ifdef HYDROGEN_HAVE_NCCL2
-    using aluminum_comm_type = Al::NCCLCommunicator;
-#else
-    using aluminum_comm_type = Al::MPICommunicator;
-#endif // HYDROGEN_HAVE_NCCL2
-
-    std::shared_ptr<aluminum_comm_type> aluminum_comm;
-    Comm(MPI_Comm mpiComm=MPI_COMM_WORLD) EL_NO_EXCEPT
-      : comm(mpiComm),
-        aluminum_comm{std::make_shared<aluminum_comm_type>(mpiComm
-#ifdef HYDROGEN_HAVE_NCCL2
-                      , GPUManager::Stream()
-#endif
-                )}
-    {}
-
-    Comm(Comm const& comm_cpy) EL_NO_EXCEPT = default;
-#endif // HYDROGEN_HAVE_ALUMINUM
+    Comm(MPI_Comm mpiComm=MPI_COMM_WORLD) EL_NO_EXCEPT : comm(mpiComm) { }
 
     inline int Rank() const EL_NO_RELEASE_EXCEPT;
     inline int Size() const EL_NO_RELEASE_EXCEPT;
 
 };
+
+#else
+namespace internal
+{
+struct DelayCtorType {};
+}// namespace internal
+
+struct Comm
+{
+#if defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
+    using aluminum_comm_type = GPUBackend::comm_type;
+#else
+    using aluminum_comm_type = CPUBackend::comm_type;
+#endif // defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
+
+    // Hack to handle global objects, MPI_COMM could be int or void*...
+    explicit Comm(internal::DelayCtorType const&,
+                  MPI_Comm mpicomm) EL_NO_EXCEPT : comm(mpicomm) {}
+#ifdef HYDROGEN_HAVE_NCCL2
+    Comm(MPI_Comm mpiComm=MPI_COMM_WORLD);
+#else
+    Comm(MPI_Comm mpiComm=MPI_COMM_WORLD) EL_NO_EXCEPT;
+#endif
+
+    // These do soft copies
+    Comm(Comm const& comm_cpy) EL_NO_EXCEPT = default;
+    Comm& operator=(Comm const& comm_cpy) EL_NO_EXCEPT = default;
+    Comm(Comm&& comm_cpy) EL_NO_EXCEPT = default;
+    Comm& operator=(Comm&& comm_cpy) EL_NO_EXCEPT = default;
+
+    inline int Rank() const EL_NO_RELEASE_EXCEPT;
+    inline int Size() const EL_NO_RELEASE_EXCEPT;
+
+    MPI_Comm comm;
+    std::shared_ptr<aluminum_comm_type> aluminum_comm;
+};
+
+
+inline
+#ifdef HYDROGEN_HAVE_NCCL2
+Comm::Comm(MPI_Comm mpiComm)
+#else
+Comm::Comm(MPI_Comm mpiComm) EL_NO_EXCEPT
+#endif
+: comm(mpiComm),
+    aluminum_comm{
+    std::make_shared<aluminum_comm_type>(
+        mpiComm
+#if defined(HYDROGEN_HAVE_NCCL2) || defined(HYDROGEN_HAVE_AL_MPI_CUDA)
+        , GPUManager::Stream()
+#endif
+        )}
+{}
+
+
+#endif // HYDROGEN_HAVE_ALUMINUM
+
 inline bool operator==( const Comm& a, const Comm& b ) EL_NO_EXCEPT
 { return a.comm == b.comm; }
 inline bool operator!=( const Comm& a, const Comm& b ) EL_NO_EXCEPT
@@ -965,17 +1008,12 @@ void Reduce( T* buf, int count, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
 
 // AllReduce
 // ---------
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void AllReduce( const Real* sbuf, Real* rbuf, int count, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void AllReduce
-( const Complex<Real>* sbuf, Complex<Real>* rbuf, int count, Op op, Comm comm )
+template<typename T,
+         typename=EnableIf<IsAluminumTypeT<T>>>
+void AllReduce( const T* sbuf, T* rbuf, int count, Op op, Comm comm )
 EL_NO_RELEASE_EXCEPT;
 template<typename T,
-         typename=DisableIf<IsPacked<T>>,
+         typename=DisableIf<IsAluminumTypeT<T>>,
          typename=void>
 void AllReduce( const T* sbuf, T* rbuf, int count, Op op, Comm comm )
 EL_NO_RELEASE_EXCEPT;
@@ -1021,16 +1059,12 @@ T AllReduce( T sb, Comm comm ) EL_NO_RELEASE_EXCEPT;
 
 // Single-buffer AllReduce
 // -----------------------
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void AllReduce( Real* buf, int count, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void AllReduce( Complex<Real>* buf, int count, Op op, Comm comm )
+template<typename T,
+         typename=EnableIf<IsAluminumTypeT<T>>>
+void AllReduce( T* buf, int count, Op op, Comm comm )
 EL_NO_RELEASE_EXCEPT;
 template<typename T,
-         typename=DisableIf<IsPacked<T>>,
+         typename=DisableIf<IsAluminumTypeT<T>>,
          typename=void>
 void AllReduce( T* buf, int count, Op op, Comm comm )
 EL_NO_RELEASE_EXCEPT;
