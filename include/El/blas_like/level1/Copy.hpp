@@ -97,7 +97,12 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
     if( ldA == height && ldB == height )
     {
 #ifdef _OPENMP
+#if defined(HYDROGEN_HAVE_OMP_TASKLOOP)
+        #pragma omp taskloop default(shared)
+        for(int i = 0; i < omp_get_num_threads(); ++i)
+#else
         #pragma omp parallel
+#endif
         {
             const Int numThreads = omp_get_num_threads();
             const Int thread = omp_get_thread_num();
