@@ -50,8 +50,10 @@ template <>
 struct IsAlTypeT<double, Al::NCCLBackend> : std::true_type {};
 #endif // HYDROGEN_HAVE_NCCL2
 
-template <typename T>
-struct IsAlTypeT<T, Al::MPICUDABackend> : IsAlTypeT<T, Al::MPIBackend> {};
+#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
+template <>
+struct IsAlTypeT<float, Al::MPICUDABackend> : std::true_type {};
+#endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
 template <typename T, typename BackendT>
 constexpr bool IsAlType() { return IsAlTypeT<T,BackendT>::value; }
@@ -125,17 +127,17 @@ constexpr bool IsGPUMemCompatible()
 
 using CPUBackend = ::Al::MPIBackend;
 
-// Prefer the MPI-CUDA backend
+// Prefer the NCCL2 backend
 #ifdef HYDROGEN_HAVE_CUDA
-#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
-using GPUBackend = ::Al::MPICUDABackend;
-#else
 #ifdef HYDROGEN_HAVE_NCCL2
 using GPUBackend = ::Al::NCCLBackend;
 #else
+#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
+using GPUBackend = ::Al::MPICUDABackend;
+#else
 static_assert(false, "No GPU backend available.");
-#endif // HYDROGEN_HAVE_NCCL2
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
+#endif // HYDROGEN_HAVE_NCCL2
 #endif // HYDROGEN_HAVE_CUDA
 
 } // namespace El
