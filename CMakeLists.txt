@@ -171,35 +171,6 @@ mark_as_advanced(${PROJECT_NAME}_VECTOR_WARNINGS)
 # Check the compiler features
 #
 
-if (${PROJECT_NAME}_ENABLE_ALUMINUM)
-  find_package(Aluminum)
-
-  if (Aluminum_FOUND)
-    set(HYDROGEN_HAVE_ALUMINUM TRUE)
-    message(STATUS "Aluminum support enabled.")
-
-    if (AL_HAS_NCCL)
-      set(HYDROGEN_HAVE_NCCL2 TRUE)
-      message(STATUS "Aluminum detected with NCCL2 backend support.")
-    else ()
-      set(HYDROGEN_HAVE_NCCL2 FALSE)
-    endif ()
-
-    if (AL_HAS_MPI_CUDA)
-      set(HYDROGEN_HAVE_AL_MPI_CUDA TRUE)
-      message(STATUS "Aluminum detected with MPI-CUDA backend support.")
-    else ()
-      set(HYDROGEN_HAVE_AL_MPI_CUDA FALSE)
-    endif (AL_HAS_MPI_CUDA)
-  else ()
-    set(HYDROGEN_HAVE_ALUMINUM FALSE)
-    set(HYDROGEN_HAVE_NCCL2 FALSE)
-    set(HYDROGEN_HAVE_AL_MPI_CUDA FALSE)
-    set(${PROJECT_NAME}_ENABLE_ALUMINUM FALSE)
-    message(WARNING "Aluminum support requested but not found. Disabling.")
-  endif (Aluminum_FOUND)
-endif (${PROJECT_NAME}_ENABLE_ALUMINUM)
-
 if (${PROJECT_NAME}_ENABLE_CUDA)
 
   include(CheckLanguage)
@@ -247,6 +218,35 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
   endif ()
 
 endif (${PROJECT_NAME}_ENABLE_CUDA)
+
+if (${PROJECT_NAME}_ENABLE_ALUMINUM)
+  find_package(Aluminum)
+
+  if (Aluminum_FOUND)
+    set(HYDROGEN_HAVE_ALUMINUM TRUE)
+    message(STATUS "Aluminum support enabled.")
+
+    if (HYDROGEN_HAVE_CUDA AND AL_HAS_NCCL)
+      set(HYDROGEN_HAVE_NCCL2 TRUE)
+      message(STATUS "Aluminum detected with NCCL2 backend support.")
+    else ()
+      set(HYDROGEN_HAVE_NCCL2 FALSE)
+    endif (HYDROGEN_HAVE_CUDA AND AL_HAS_NCCL)
+
+    if (HYDROGEN_HAVE_CUDA AND AL_HAS_MPI_CUDA)
+      set(HYDROGEN_HAVE_AL_MPI_CUDA TRUE)
+      message(STATUS "Aluminum detected with MPI-CUDA backend support.")
+    else ()
+      set(HYDROGEN_HAVE_AL_MPI_CUDA FALSE)
+    endif (HYDROGEN_HAVE_CUDA AND AL_HAS_MPI_CUDA)
+  else ()
+    set(HYDROGEN_HAVE_ALUMINUM FALSE)
+    set(HYDROGEN_HAVE_NCCL2 FALSE)
+    set(HYDROGEN_HAVE_AL_MPI_CUDA FALSE)
+    set(${PROJECT_NAME}_ENABLE_ALUMINUM FALSE)
+    message(WARNING "Aluminum support requested but not found. Disabling.")
+  endif (Aluminum_FOUND)
+endif (${PROJECT_NAME}_ENABLE_ALUMINUM)
 
 include(detect/CXX)
 
@@ -308,7 +308,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC AL::Al)
+if (TARGET AL::Al)
+  target_link_libraries(${PROJECT_NAME} PUBLIC AL::Al)
+endif ()
 
 if (TARGET OpenMP::OpenMP_CXX)
   target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)

@@ -76,9 +76,7 @@ void Initialize( int& argc, char**& argv ) EL_NO_EXCEPT
 {
     MPI_Init( &argc, &argv );
 #ifdef HYDROGEN_HAVE_ALUMINUM
-#ifndef HYDROGEN_HAVE_NCCL2
     Al::Initialize(argc, argv);
-#endif // HYDROGEN_HAVE_NCCL2
 
     // BLERG
     const_cast<Comm&>(COMM_SELF) = MPI_COMM_SELF;
@@ -99,10 +97,11 @@ int InitializeThread( int& argc, char**& argv, int required ) EL_NO_EXCEPT
 #endif
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
-#ifndef HYDROGEN_HAVE_NCCL2
     Al::Initialize(argc, argv);
-#else
-#endif // HYDROGEN_HAVE_NCCL2
+
+    // BLERG
+    const_cast<Comm&>(COMM_SELF) = MPI_COMM_SELF;
+    const_cast<Comm&>(COMM_WORLD) = MPI_COMM_WORLD;
 #endif // HYDROGEN_HAVE_ALUMINUM
 
     return provided;
@@ -111,11 +110,8 @@ int InitializeThread( int& argc, char**& argv, int required ) EL_NO_EXCEPT
 void Finalize() EL_NO_EXCEPT
 {
 #ifdef HYDROGEN_HAVE_ALUMINUM
-#ifndef HYDROGEN_HAVE_NCCL2
     // Making sure finalizing Aluminum before finalizing MPI.
-    Al::Finalize(false);
-#else
-#endif // HYDROGEN_HAVE_NCCL2
+    Al::Finalize();
 #endif // HYDROGEN_HAVE_ALUMINUM
 
     MPI_Finalize();

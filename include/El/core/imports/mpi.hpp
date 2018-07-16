@@ -12,19 +12,20 @@
 #ifndef EL_IMPORTS_MPI_HPP
 #define EL_IMPORTS_MPI_HPP
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
 #if defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
 #include "cuda.hpp"
 #endif // defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
-#include "aluminum.hpp"
-#endif // HYDROGEN_HAVE_ALUMINUM
 
-namespace El {
+#include "aluminum.hpp"
+
+namespace El
+{
 
 using std::function;
 using std::vector;
 
-namespace mpi {
+namespace mpi
+{
 
 #if defined(EL_HAVE_MPI3_NONBLOCKING_COLLECTIVES) || \
     defined(EL_HAVE_MPIX_NONBLOCKING_COLLECTIVES)

@@ -21,6 +21,7 @@
 namespace El
 {
 
+#ifdef HYDROGEN_HAVE_ALUMINUM
 Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op)
 {
     switch (op)
@@ -39,6 +40,7 @@ Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op)
     // Silence compiler warning
     return Al::ReductionOperator::sum;
 }
+#endif // HYDROGEN_HAVE_ALUMINUM
 
 namespace mpi
 {
@@ -253,6 +255,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm)
     if (count == 0)
         return;
 
+#ifdef HYDROGEN_HAVE_ALUMINUM
 #ifdef HYDROGEN_HAVE_CUDA
     auto sbuf_on_device = IsGPUMemory(sbuf), rbuf_on_device = IsGPUMemory(rbuf);
 
@@ -268,7 +271,9 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm)
 #else
     aluminum_allreduce<CPUBackend>(sbuf, rbuf, count, op, std::move(comm));
 #endif // HYDROGEN_HAVE_CUDA
-
+#else
+    fallback_allreduce(sbuf, rbuf, count, op, std::move(comm));
+#endif // HYDROGEN_HAVE_ALUMINUM
 }
 
 template <typename T,
@@ -291,6 +296,7 @@ EL_NO_RELEASE_EXCEPT
     if (count == 0 || Size(comm) == 1)
         return;
 
+#ifdef HYDROGEN_HAVE_ALUMINUM
 #ifdef HYDROGEN_HAVE_CUDA
     auto rbuf_on_device = IsGPUMemory(rbuf);
 
@@ -302,6 +308,9 @@ EL_NO_RELEASE_EXCEPT
 #else
     aluminum_allreduce<CPUBackend>(rbuf, count, op, std::move(comm));
 #endif // HYDROGEN_HAVE_CUDA
+#else
+    fallback_allreduce(rbuf, count, op, std::move(comm));
+#endif // HYDROGEN_HAVE_ALUMINUM
 }
 
 template <typename T,
