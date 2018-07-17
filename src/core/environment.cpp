@@ -139,6 +139,10 @@ void Initialize( int& argc, char**& argv )
 
     ::args = new Args( argc, argv );
 
+#ifdef HYDROGEN_HAVE_CUDA
+    InitializeCUDA(argc, argv);
+#endif // HYDROGEN_HAVE_CUDA
+
     ::numElemInits = 1;
     if( !mpi::Initialized() )
     {
