@@ -14,9 +14,8 @@
 */
 #include <El-lite.hpp>
 #include "mpi_utils.hpp"
-#ifdef HYDROGEN_HAVE_ALUMINUM
+
 #include <El/core/imports/aluminum.hpp>
-#endif //HYDROGEN_HAVE_ALUMINUM
 
 namespace El
 {

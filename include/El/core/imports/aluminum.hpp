@@ -3,10 +3,6 @@
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
 #include <Al.hpp>
-
-#ifdef HYDROGEN_HAVE_NCCL2
-#include <nccl_impl.hpp>
-#endif // HYDROGEN_HAVE_NCCL2
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 namespace El
