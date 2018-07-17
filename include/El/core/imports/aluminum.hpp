@@ -127,15 +127,15 @@ constexpr bool IsGPUMemCompatible()
 // FIXME: We need to account for the fact that CUDA might be enabled
 // in Hydrogen but Aluminum might not have a GPU backend enabled.
 
-using CPUBackend = ::Al::MPIBackend;
+using CPUBackend = Al::MPIBackend;
 
 // Prefer the NCCL2 backend
 #ifdef HYDROGEN_HAVE_CUDA
 #ifdef HYDROGEN_HAVE_NCCL2
-using GPUBackend = ::Al::NCCLBackend;
+using GPUBackend = Al::NCCLBackend;
 #else
 #ifdef HYDROGEN_HAVE_AL_MPI_CUDA
-using GPUBackend = ::Al::MPICUDABackend;
+using GPUBackend = Al::MPICUDABackend;
 #else
 static_assert(false, "No GPU backend available.");
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
