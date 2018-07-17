@@ -320,9 +320,48 @@ struct Impl<T, Device::GPU, true>
 };
 #endif // HYDROGEN_HAVE_CUDA
 
+template <Device D>
+struct StridedMemCopy_impl
+{
+    template <typename... Args>
+    static void call(Args&&... args)
+    {
+        StridedMemCopy(std::forward<Args>(args)...);
+    }
+};
+
+template <>
+struct StridedMemCopy_impl<Device::GPU>
+{
+    template <typename T>
+    static void call(T* dest, Int const& destStride,
+                     T const* source, Int const& sourceStride,
+                     Int const& numEntries)
+    {
+        cublas::Copy(numEntries, source, sourceStride, dest, destStride);
+    }
+};// StridedMemCopy_impl<GPU,T>
 
 }// namespace details
 
+template <Device D, typename T,
+          typename=EnableIf<IsDeviceValidType<T,D>>>
+void DeviceStridedMemCopy(
+    T* dest, Int destStride,
+    const T* source, Int sourceStride, Int numEntries)
+{
+    details::StridedMemCopy_impl<D>::call(
+        dest, destStride, source, sourceStride, numEntries);
+}
+
+template <Device D, typename T,
+          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=void>
+void DeviceStridedMemCopy(
+    T*, Int const&, T const*, Int const&, Int const&)
+{
+    LogicError("Devicestridedmemcopy: Bad device/type combination.");
+}
 
 template <Device SrcD, Device DestD, typename T>
 void InterDeviceMemCopy2D(
