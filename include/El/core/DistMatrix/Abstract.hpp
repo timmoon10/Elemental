@@ -295,6 +295,15 @@ public:
 
     virtual Device GetLocalDevice() const EL_NO_EXCEPT = 0;
 
+    // Static functions
+    // ================
+
+    // Instantiate with runtime template arguments
+    static type* Instantiate
+    (const El::Grid& grid=Grid::Default(), int root=0,
+     Dist colDist=MC, Dist rowDist=MR, DistWrap wrap=ELEMENT,
+     Device dev=Device::CPU);
+  
 private:
     // Member variables
     // ================
