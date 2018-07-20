@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_IMPORTS_LAPACK_HPP
@@ -17,29 +17,30 @@ namespace lapack {
 // =================================
 template<typename T>
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const T* A, BlasInt lda, T* B, BlasInt ldb );
 
+#ifdef HYDROGEN_USE_LAPACK
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const float* A, BlasInt lda, float* B, BlasInt ldb );
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const double* A, BlasInt lda, double* B, BlasInt ldb );
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const scomplex* A, BlasInt lda, scomplex* B, BlasInt ldb );
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const dcomplex* A, BlasInt lda, dcomplex* B, BlasInt ldb );
 template<typename T>
 void Copy
-( char uplo, BlasInt m, BlasInt n, 
+( char uplo, BlasInt m, BlasInt n,
   const T* A, BlasInt lda, T* B, BlasInt ldb );
 
 // Generate a Householder reflector
 // ================================
-// NOTE: 
+// NOTE:
 // Since LAPACK chooses to use the identity matrix, rather than a single
 // coordinate negation, in cases where the mass is already entirely in the
 // first entry, and the identity matrix cannot be represented as a Householder
@@ -69,13 +70,13 @@ F Reflector( BlasInt n, F& chi, F* x, BlasInt incx );
 template<typename F>
 void ApplyReflector
 ( bool onLeft, BlasInt m, BlasInt n,
-  const F* v, BlasInt vInc, 
+  const F* v, BlasInt vInc,
   const F& tau,
         F* C, BlasInt CLDim );
 template<typename F>
 void ApplyReflector
 ( bool onLeft, BlasInt m, BlasInt n,
-  const F* v, BlasInt vInc, 
+  const F* v, BlasInt vInc,
   const F& tau,
         F* C, BlasInt CLDim,
         F* work );
@@ -96,10 +97,10 @@ void SymmetricTridiagEig
 // Floating-point range
 // ^^^^^^^^^^^^^^^^^^^^
 BlasInt SymmetricTridiagEig
-( BlasInt n, float* d, float* e, float* w, 
+( BlasInt n, float* d, float* e, float* w,
   float vl, float vu, float abstol=0 );
 BlasInt SymmetricTridiagEig
-( BlasInt n, double* d, double* e, double* w, 
+( BlasInt n, double* d, double* e, double* w,
   double vl, double vu, double abstol=0 );
 
 // Index range
@@ -117,10 +118,10 @@ void SymmetricTridiagEig
 // All eigenpairs
 // ^^^^^^^^^^^^^^
 void SymmetricTridiagEig
-( BlasInt n, 
+( BlasInt n,
   float* d, float* e, float* w, float* Z, BlasInt ldZ, float abstol=0 );
 void SymmetricTridiagEig
-( BlasInt n, 
+( BlasInt n,
   double* d, double* e, double* w, double* Z, BlasInt ldZ, double abstol=0 );
 
 // Floating-point range
@@ -194,25 +195,25 @@ void HermitianEig
 // All eigenpairs
 // ^^^^^^^^^^^^^^
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   float* A, BlasInt ldA,
   float* w,
   float* Z, BlasInt ldZ,
   float abstol=0 );
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   double* A, BlasInt ldA,
   double* w,
   double* Z, BlasInt ldZ,
   double abstol=0 );
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   scomplex* A, BlasInt ldA,
   float* w,
   scomplex* Z, BlasInt ldZ,
   float abstol=0 );
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   dcomplex* A, BlasInt ldA,
   double* w,
   dcomplex* Z, BlasInt ldZ,
@@ -221,28 +222,28 @@ void HermitianEig
 // Floating-point range
 // ^^^^^^^^^^^^^^^^^^^^
 BlasInt HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   float* A, BlasInt ldA,
   float* w,
   float* Z, BlasInt ldZ,
   float vl, float vu,
   float abstol=0 );
 BlasInt HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   double* A, BlasInt ldA,
   double* w,
   double* Z, BlasInt ldZ,
   double vl, double vu,
   double abstol=0 );
 BlasInt HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   scomplex* A, BlasInt ldA,
   float* w,
   scomplex* Z, BlasInt ldZ,
   float vl, float vu,
   float abstol=0 );
 BlasInt HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   dcomplex* A, BlasInt ldA,
   double* w,
   dcomplex* Z, BlasInt ldZ,
@@ -252,28 +253,28 @@ BlasInt HermitianEig
 // Index range
 // ^^^^^^^^^^^
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   float* A, BlasInt ldA,
   float* w,
   float* Z, BlasInt ldZ,
   BlasInt il, BlasInt iu,
   float abstol=0 );
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   double* A, BlasInt ldA,
   double* w,
   double* Z, BlasInt ldZ,
   BlasInt il, BlasInt iu,
   double abstol=0 );
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   scomplex* A, BlasInt ldA,
   float* w,
   scomplex* Z, BlasInt ldZ,
   BlasInt il, BlasInt iu,
   float abstol=0 );
 void HermitianEig
-( char uplo, BlasInt n, 
+( char uplo, BlasInt n,
   dcomplex* A, BlasInt ldA,
   double* w,
   dcomplex* Z, BlasInt ldZ,
@@ -285,28 +286,28 @@ void HermitianEig
 
 void DivideAndConquerSVD
 ( BlasInt m, BlasInt n,
-  float* A, BlasInt ldA, 
+  float* A, BlasInt ldA,
   float* s,
   float* U, BlasInt ldU,
   float* VT, BlasInt ldVT,
   bool thin=true );
 void DivideAndConquerSVD
 ( BlasInt m, BlasInt n,
-  double* A, BlasInt ldA, 
+  double* A, BlasInt ldA,
   double* s,
   double* U, BlasInt ldU,
   double* VT, BlasInt ldVT,
   bool thin=true );
 void DivideAndConquerSVD
 ( BlasInt m, BlasInt n,
-  scomplex* A, BlasInt ldA, 
+  scomplex* A, BlasInt ldA,
   float* s,
   scomplex* U, BlasInt ldU,
   scomplex* VH, BlasInt ldVH,
   bool thin=true );
 void DivideAndConquerSVD
 ( BlasInt m, BlasInt n,
-  dcomplex* A, BlasInt ldA, 
+  dcomplex* A, BlasInt ldA,
   double* s,
   dcomplex* U, BlasInt ldU,
   dcomplex* VH, BlasInt ldVH,
@@ -317,28 +318,28 @@ void DivideAndConquerSVD
 
 void QRSVD
 ( BlasInt m, BlasInt n,
-  float* A, BlasInt ldA, 
+  float* A, BlasInt ldA,
   float* s,
   float* U, BlasInt ldU,
   float* VT, BlasInt ldVT,
   bool thin=true, bool avoidU=false, bool avoidV=false );
 void QRSVD
 ( BlasInt m, BlasInt n,
-  double* A, BlasInt ldA, 
+  double* A, BlasInt ldA,
   double* s,
   double* U, BlasInt ldU,
   double* VT, BlasInt ldVT,
   bool thin=true, bool avoidU=false, bool avoidV=false );
 void QRSVD
 ( BlasInt m, BlasInt n,
-  scomplex* A, BlasInt ldA, 
+  scomplex* A, BlasInt ldA,
   float* s,
   scomplex* U, BlasInt ldU,
   scomplex* VH, BlasInt ldVH,
   bool thin=true, bool avoidU=false, bool avoidV=false );
 void QRSVD
 ( BlasInt m, BlasInt n,
-  dcomplex* A, BlasInt ldA, 
+  dcomplex* A, BlasInt ldA,
   double* s,
   dcomplex* U, BlasInt ldU,
   dcomplex* VH, BlasInt ldVH,
@@ -365,13 +366,13 @@ void BidiagSVDQRAlg
 ( char uplo, BlasInt n, BlasInt numColsVT, BlasInt numRowsU,
   float* d, float* e, float* VT, BlasInt ldVT, float* U, BlasInt ldU );
 void BidiagSVDQRAlg
-( char uplo, BlasInt n, BlasInt numColsVT, BlasInt numRowsU, 
+( char uplo, BlasInt n, BlasInt numColsVT, BlasInt numRowsU,
   double* d, double* e, double* VT, BlasInt ldVT, double* U, BlasInt ldU );
 void BidiagSVDQRAlg
 ( char uplo, BlasInt n, BlasInt numColsVH, BlasInt numRowsU,
   float* d, float* e, scomplex* VH, BlasInt ldVH, scomplex* U, BlasInt ldU );
 void BidiagSVDQRAlg
-( char uplo, BlasInt n, BlasInt numColsVH, BlasInt numRowsU, 
+( char uplo, BlasInt n, BlasInt numColsVH, BlasInt numRowsU,
   double* d, double* e, dcomplex* VH, BlasInt ldVH, dcomplex* U, BlasInt ldU );
 
 // Reduce a general square matrix to upper Hessenberg form
@@ -438,7 +439,7 @@ bool Solve4x4FullPiv
 
 // Small Sylvester
 // ===============
-// Solve a 1x1, 1x2, 2x1, or 2x2 real Sylvester equation, 
+// Solve a 1x1, 1x2, 2x1, or 2x2 real Sylvester equation,
 //
 //   op_C(C) X +- X op_D(D) = scale*B,
 //
@@ -471,7 +472,7 @@ bool SmallSylvester
 template<typename Real>
 void AdjacentSchurExchange
 ( BlasInt n,
-  Real* T, BlasInt TLDim, 
+  Real* T, BlasInt TLDim,
   BlasInt j1,
   BlasInt n1,
   BlasInt n2,
@@ -480,7 +481,7 @@ void AdjacentSchurExchange
 template<typename Real>
 void AdjacentSchurExchange
 ( BlasInt n,
-  Real* T, BlasInt TLDim, 
+  Real* T, BlasInt TLDim,
   Real* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt n1,
@@ -491,7 +492,7 @@ void AdjacentSchurExchange
 template<typename Real>
 void SchurExchange
 ( BlasInt n,
-  Real* T, BlasInt TLDim, 
+  Real* T, BlasInt TLDim,
   BlasInt j1,
   BlasInt j2,
   Real* work,
@@ -499,7 +500,7 @@ void SchurExchange
 template<typename Real>
 void SchurExchange
 ( BlasInt n,
-  Real* T, BlasInt TLDim, 
+  Real* T, BlasInt TLDim,
   Real* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt j2,
@@ -509,13 +510,13 @@ void SchurExchange
 template<typename Real>
 void SchurExchange
 ( BlasInt n,
-  Complex<Real>* T, BlasInt TLDim, 
+  Complex<Real>* T, BlasInt TLDim,
   BlasInt j1,
   BlasInt j2 );
 template<typename Real>
 void SchurExchange
 ( BlasInt n,
-  Complex<Real>* T, BlasInt TLDim, 
+  Complex<Real>* T, BlasInt TLDim,
   Complex<Real>* Q, BlasInt QLDim,
   BlasInt j1,
   BlasInt j2 );
@@ -552,7 +553,7 @@ void HessenbergSchur
 ( BlasInt n,
   float* H, BlasInt ldH,
   scomplex* w,
-  float* Q, BlasInt ldQ, 
+  float* Q, BlasInt ldQ,
   bool fullTriangle=true,
   bool multiplyQ=false,
   bool useAED=true );
@@ -560,7 +561,7 @@ void HessenbergSchur
 ( BlasInt n,
   double* H, BlasInt ldH,
   dcomplex* w,
-  double* Q, BlasInt ldQ, 
+  double* Q, BlasInt ldQ,
   bool fullTriangle=true,
   bool multiplyQ=false,
   bool useAED=true );
@@ -568,7 +569,7 @@ void HessenbergSchur
 ( BlasInt n,
   scomplex* H, BlasInt ldH,
   scomplex* w,
-  scomplex* Q, BlasInt ldQ, 
+  scomplex* Q, BlasInt ldQ,
   bool fullTriangle=false,
   bool multiplyQ=false,
   bool useAED=true );
@@ -576,7 +577,7 @@ void HessenbergSchur
 ( BlasInt n,
   dcomplex* H, BlasInt ldH,
   dcomplex* w,
-  dcomplex* Q, BlasInt ldQ, 
+  dcomplex* Q, BlasInt ldQ,
   bool fullTriangle=false,
   bool multiplyQ=false,
   bool useAED=true );
@@ -623,28 +624,28 @@ void Schur
 ( BlasInt n,
   float* A, BlasInt ldA,
   scomplex* w,
-  float* Q, BlasInt ldQ, 
+  float* Q, BlasInt ldQ,
   bool fullTriangle=true,
   bool time=false );
 void Schur
 ( BlasInt n,
   double* A, BlasInt ldA,
   dcomplex* w,
-  double* Q, BlasInt ldQ, 
+  double* Q, BlasInt ldQ,
   bool fullTriangle=true,
   bool time=false );
 void Schur
 ( BlasInt n,
   scomplex* A, BlasInt ldA,
   scomplex* w,
-  scomplex* Q, BlasInt ldQ, 
+  scomplex* Q, BlasInt ldQ,
   bool fullTriangle=true,
   bool time=false );
 void Schur
 ( BlasInt n,
   dcomplex* A, BlasInt ldA,
   dcomplex* w,
-  dcomplex* Q, BlasInt ldQ, 
+  dcomplex* Q, BlasInt ldQ,
   bool fullTriangle=true,
   bool time=false );
 
@@ -700,41 +701,42 @@ void Eig
   bool time=false );
 
 void Eig
-( BlasInt n, 
+( BlasInt n,
   float* A, BlasInt ldA,
   scomplex* w,
   scomplex* X, BlasInt ldX,
   bool time=false );
 void Eig
-( BlasInt n, 
+( BlasInt n,
   float* A, BlasInt ldA,
   scomplex* w,
   float* XPacked, BlasInt ldX,
   bool time=false );
 void Eig
-( BlasInt n, 
+( BlasInt n,
   double* A, BlasInt ldA,
   dcomplex* w,
   dcomplex* X, BlasInt ldX,
   bool time=false );
 void Eig
-( BlasInt n, 
+( BlasInt n,
   double* A, BlasInt ldA,
   dcomplex* w,
   double* XPacked, BlasInt ldX,
   bool time=false );
 void Eig
-( BlasInt n, 
+( BlasInt n,
   scomplex* A, BlasInt ldA,
   scomplex* w,
   scomplex* X, BlasInt ldX,
   bool time=false );
 void Eig
-( BlasInt n, 
+( BlasInt n,
   dcomplex* A, BlasInt ldA,
   dcomplex* w,
   dcomplex* X, BlasInt ldX,
   bool time=false );
+#endif // HYDROGEN_USE_LAPACK
 
 } // namespace lapack
 

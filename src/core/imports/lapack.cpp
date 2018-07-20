@@ -385,6 +385,20 @@ template void Copy
         Complex<BigFloat>* B, BlasInt ldb );
 #endif
 
+template void Copy
+( char uplo, BlasInt m, BlasInt n,
+  const float* A, BlasInt lda, float* B, BlasInt ldb );
+template void Copy
+( char uplo, BlasInt m, BlasInt n,
+  const double* A, BlasInt lda, double* B, BlasInt ldb );
+template void Copy
+( char uplo, BlasInt m, BlasInt n,
+  const scomplex* A, BlasInt lda, scomplex* B, BlasInt ldb );
+template void Copy
+( char uplo, BlasInt m, BlasInt n,
+  const dcomplex* A, BlasInt lda, dcomplex* B, BlasInt ldb );
+
+#ifdef HYDROGEN_USE_ESSL_WITH_LAPACK
 void Copy
 ( char uplo, BlasInt m, BlasInt n,
   const float* A, BlasInt lda, float* B, BlasInt ldb )
@@ -705,7 +719,6 @@ template void ApplyReflector
 
 // Compute the EVD of a symmetric tridiagonal matrix
 // =================================================
-
 BlasInt SymmetricTridiagEigWrapper
 ( char job,
   char range,
@@ -4618,9 +4631,12 @@ void Schur
     else if( info > 0 )
         RuntimeError("chseqr's failed to compute all eigenvalues");
 }
+#endif // HYDROGEN_USE_ESSL_WITH_LAPACK
 
 } // namespace lapack
 } // namespace El
 
+#ifdef HYDROGEN_USE_ESSL_WITH_LAPACK
 #include "./lapack/TriangEig.hpp"
 #include "./lapack/Schur.hpp"
+#endif // HYDROGEN_USE_ESSL_WITH_LAPACK
