@@ -307,6 +307,7 @@ struct Impl<T, Device::GPU, true>
             const Int localHeight = Length_(height, colShift, colStride);
 
             (void)colOffset;
+            (void)localHeight;
             LogicError("PartialColStridedColumnPack<T,GPU>: Not implemented.");
 #if 0
             StridedMemCopy
