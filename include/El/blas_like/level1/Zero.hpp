@@ -35,10 +35,17 @@ void Zero( AbstractMatrix<T>& A )
         if( width == 1 || ALDim == height )
         {
 #ifdef _OPENMP
+#if defined(HYDROGEN_HAVE_OMP_TASKLOOP)
+            const Int numThreads = omp_get_num_threads();
+            #pragma omp taskloop default(shared)
+            for(Int thread = 0; thread < numThreads; ++thread)
+            {
+#else
             #pragma omp parallel
             {
                 const Int numThreads = omp_get_num_threads();
                 const Int thread = omp_get_thread_num();
+#endif
                 const Int chunk = (size + numThreads - 1) / numThreads;
                 const Int start = Min(chunk * thread, size);
                 const Int end = Min(chunk * (thread + 1), size);

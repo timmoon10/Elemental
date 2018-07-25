@@ -119,7 +119,11 @@ GPUManager::~GPUManager()
 {
     try
     {
-        EL_FORCE_CHECK_CUDA(cudaSetDevice(device_));
+        // Destroy CUDA resources only when the device is still active
+        cudaError_t e = cudaSetDevice(device_);
+        if (e != cudaSuccess)
+            return;
+
         if (cublasHandle_ != nullptr)
             EL_FORCE_CHECK_CUBLAS(cublasDestroy(cublasHandle_));
 
@@ -128,7 +132,7 @@ GPUManager::~GPUManager()
     }
     catch (std::exception const& e)
     {
-        std::cerr << "cudaFree error detected:\n\n"
+        std::cerr << "Error detected in ~GPUManager():\n\n"
                   << e.what() << std::endl
                   << "std::terminate() will be called."
                   << std::endl;

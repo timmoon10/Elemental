@@ -33,4 +33,6 @@
 #cmakedefine HYDROGEN_MPI_IS_OPENMPI
 #cmakedefine HYDROGEN_MPI_IS_MVAPICH2
 
+#cmakedefine HYDROGEN_HAVE_OMP_TASKLOOP
+
 #endif /* HYDROGEN_CONFIG_H */

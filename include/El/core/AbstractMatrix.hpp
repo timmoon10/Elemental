@@ -272,8 +272,8 @@ inline void AbstractMatrix<T>::Resize_(
         || leadingDimension != this->LDim())
     {
         this->SetSize_(height, width, leadingDimension);
-        do_resize_();
     }
+    do_resize_();
 }
 
 template <typename T>

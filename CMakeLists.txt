@@ -114,6 +114,11 @@ mark_as_advanced(${PROJECT_NAME}_ENABLE_VALGRIND)
 option(${PROJECT_NAME}_ENABLE_OPENMP
   "Enable OpenMP support in Hydrogen" OFF)
 
+if (${PROJECT_NAME}_ENABLE_OPENMP)
+  option(${PROJECT_NAME}_ENABLE_OMP_TASKLOOP
+    "Use taskloops instead of parallel for" OFF)
+endif ()
+
 # At one point, a bug was found in IBM's C++ compiler for Blue Gene/P,
 # where OpenMP statements of the form a[i] += alpha b[i], with complex data,
 # would segfault and/or return incorrect results
@@ -258,12 +263,10 @@ if (${PROJECT_NAME}_ENABLE_OPENMP)
   include(FindAndVerifyOpenMP)
   if (OpenMP_FOUND)
     set(EL_HYBRID ON)
-    set(EL_HAVE_OPENMP TRUE)
   else ()
     message(WARNING "Requested OpenMP support but OpenMP support was either "
       "not found or not functional.")
     set(EL_HYBRID OFF)
-    set(EL_HAVE_OPENMP FALSE)
     set(${PROJECT_NAME}_ENABLE_OPENMP OFF)
   endif ()
 endif (${PROJECT_NAME}_ENABLE_OPENMP)

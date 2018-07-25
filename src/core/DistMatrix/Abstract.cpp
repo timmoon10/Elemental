@@ -7,6 +7,7 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
+#include <El/core/DistMatrix.hpp>
 #include <El/blas_like/level1/Copy.hpp>
 #include <El/blas_like/level1/Scale.hpp>
 
@@ -446,6 +447,106 @@ AbstractDistMatrix<T>::AssertSameSize(Int height, Int width) const
 {
     if(Height() != height || Width() != width)
         LogicError("Assertion that matrices be the same size failed");
+}
+
+// Static functions
+// ================
+
+namespace
+{
+
+template<typename T, DistWrap wrap, Device dev>
+AbstractDistMatrix<T>*
+Instantiate_(const El::Grid& grid, int root, Dist colDist, Dist rowDist)
+{
+#define EL_DISTMATRIX_INSTANTIATE(U, V)                         \
+    if(colDist == U && rowDist == V)                            \
+        return new DistMatrix<T,U,V,wrap,dev>(grid, root);
+    EL_DISTMATRIX_INSTANTIATE(CIRC, CIRC)
+    EL_DISTMATRIX_INSTANTIATE(MC,   MR)
+    EL_DISTMATRIX_INSTANTIATE(MC,   STAR)
+    EL_DISTMATRIX_INSTANTIATE(MD,   STAR)
+    EL_DISTMATRIX_INSTANTIATE(MR,   MC)
+    EL_DISTMATRIX_INSTANTIATE(MR,   STAR)
+    EL_DISTMATRIX_INSTANTIATE(STAR, MC)
+    EL_DISTMATRIX_INSTANTIATE(STAR, MD)
+    EL_DISTMATRIX_INSTANTIATE(STAR, MR)
+    EL_DISTMATRIX_INSTANTIATE(STAR, STAR)
+    EL_DISTMATRIX_INSTANTIATE(STAR, VC)
+    EL_DISTMATRIX_INSTANTIATE(STAR, VR)
+    EL_DISTMATRIX_INSTANTIATE(VC,   STAR)
+    EL_DISTMATRIX_INSTANTIATE(VR,   STAR)
+#undef EL_DISTMATRIX_INSTANTIATE
+    LogicError
+    ("Invalid template arguments for DistMatrix "
+     "(colDist=",Int(colDist),", rowDist=",Int(rowDist),", "
+     "wrap=",Int(wrap),", dev=",Int(dev),")");
+    return nullptr;
+}
+
+} // namespace <anon>
+
+template<typename T>
+AbstractDistMatrix<T>*
+AbstractDistMatrix<T>::Instantiate
+(const El::Grid& grid, int root,
+ Dist colDist, Dist rowDist, DistWrap wrap, Device dev)
+{
+#define EL_DISTMATRIX_INSTANTIATE(TWrap, TDev)                          \
+    if(wrap == TWrap && dev == TDev)                                    \
+        return Instantiate_<T,TWrap,TDev>(grid, root, colDist, rowDist);
+    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::CPU)
+    EL_DISTMATRIX_INSTANTIATE(BLOCK,   Device::CPU)
+#undef EL_DISTMATRIX_INSTANTIATE
+    LogicError
+    ("Invalid template arguments for DistMatrix "
+     "(colDist=",Int(colDist),", rowDist=",Int(rowDist),", "
+     "wrap=",Int(wrap),", dev=",Int(dev),")");
+    return nullptr;
+}
+
+template<>
+AbstractDistMatrix<float>*
+AbstractDistMatrix<float>::Instantiate
+(const El::Grid& grid, int root,
+ Dist colDist, Dist rowDist, DistWrap wrap, Device dev)
+{
+#define EL_DISTMATRIX_INSTANTIATE(TWrap, TDev)                          \
+    if(wrap == TWrap && dev == TDev)                                    \
+        return Instantiate_<float,TWrap,TDev>(grid, root, colDist, rowDist);
+    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::CPU)
+    EL_DISTMATRIX_INSTANTIATE(BLOCK,   Device::CPU)
+#ifdef HYDROGEN_HAVE_CUDA
+    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::GPU)
+#endif // HYDROGEN_HAVE_CUDA
+#undef EL_DISTMATRIX_INSTANTIATE
+    LogicError
+    ("Invalid template arguments for DistMatrix "
+     "(colDist=",Int(colDist),", rowDist=",Int(rowDist),", "
+     "wrap=",Int(wrap),", dev=",Int(dev),")");
+    return nullptr;
+}
+
+template<>
+AbstractDistMatrix<double>*
+AbstractDistMatrix<double>::Instantiate
+(const El::Grid& grid, int root,
+ Dist colDist, Dist rowDist, DistWrap wrap, Device dev)
+{
+#define EL_DISTMATRIX_INSTANTIATE(TWrap, TDev)                          \
+    if(wrap == TWrap && dev == TDev)                                    \
+        return Instantiate_<double,TWrap,TDev>(grid, root, colDist, rowDist);
+    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::CPU)
+    EL_DISTMATRIX_INSTANTIATE(BLOCK,   Device::CPU)
+#ifdef HYDROGEN_HAVE_CUDA
+    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::GPU)
+#endif // HYDROGEN_HAVE_CUDA
+#undef EL_DISTMATRIX_INSTANTIATE
+    LogicError
+    ("Invalid template arguments for DistMatrix "
+     "(colDist=",Int(colDist),", rowDist=",Int(rowDist),", "
+     "wrap=",Int(wrap),", dev=",Int(dev),")");
+    return nullptr;
 }
 
 // Private section
