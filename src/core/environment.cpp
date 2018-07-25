@@ -140,8 +140,8 @@ void Initialize( int& argc, char**& argv )
     ::args = new Args( argc, argv );
 
 #ifdef HYDROGEN_HAVE_CUDA
-    InitializeCUDA(argc,argv);
-#endif
+    InitializeCUDA(argc, argv);
+#endif // HYDROGEN_HAVE_CUDA
 
     ::numElemInits = 1;
     if( !mpi::Initialized() )
@@ -181,7 +181,7 @@ void Initialize( int& argc, char**& argv )
 #ifdef HYDROGEN_HAVE_CUDA
     InitializeCUBLAS();
 #endif
-    
+
 #ifdef EL_HAVE_QT5
     InitializeQt5( argc, argv );
 #endif
@@ -233,7 +233,6 @@ void Finalize()
 #endif
         if( ::elemInitializedMpi )
             mpi::Finalize();
-
 
         EmptyBlocksizeStack();
 
