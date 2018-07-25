@@ -20,7 +20,7 @@ void Copy
 ( char uplo, BlasInt m, BlasInt n,
   const T* A, BlasInt lda, T* B, BlasInt ldb );
 
-#ifdef HYDROGEN_USE_LAPACK
+#ifdef HYDROGEN_HAVE_LAPACK
 void Copy
 ( char uplo, BlasInt m, BlasInt n,
   const float* A, BlasInt lda, float* B, BlasInt ldb );
@@ -736,7 +736,7 @@ void Eig
   dcomplex* w,
   dcomplex* X, BlasInt ldX,
   bool time=false );
-#endif // HYDROGEN_USE_LAPACK
+#endif // HYDROGEN_HAVE_LAPACK
 
 } // namespace lapack
 

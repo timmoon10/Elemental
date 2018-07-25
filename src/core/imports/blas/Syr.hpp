@@ -284,7 +284,7 @@ void Syr
         double* A, BlasInt ALDim )
 { EL_BLAS(dsyr)( &uplo, &m, &alpha, x, &incx, A, &ALDim ); }
 
-#ifdef HYDROGEN_USE_LAPACK
+#ifdef HYDROGEN_HAVE_LAPACK
 void Syr
 ( char uplo, BlasInt m,
   const scomplex& alpha,
@@ -304,7 +304,7 @@ void Syr
     // Recall that 'zsyr' is an LAPACK auxiliary routine
     EL_LAPACK(zsyr)( &uplo, &m, &alpha, x, &incx, A, &ALDim );
 }
-#endif // HYDROGEN_USE_LAPACK
+#endif // HYDROGEN_HAVE_LAPACK
 
 } // namespace blas
 } // namespace El

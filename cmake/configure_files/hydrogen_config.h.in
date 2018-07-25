@@ -17,6 +17,8 @@
 #cmakedefine HYDROGEN_HAVE_QD
 #cmakedefine HYDROGEN_HAVE_MPC
 
+#cmakedefine HYDROGEN_HAVE_LAPACK
+
 #cmakedefine HYDROGEN_HAVE_MKL
 #cmakedefine HYDROGEN_HAVE_MKL_GEMMT
 

@@ -385,6 +385,8 @@ template void Copy
         Complex<BigFloat>* B, BlasInt ldb );
 #endif
 
+#ifndef HYDROGEN_HAVE_LAPACK
+
 template void Copy
 ( char uplo, BlasInt m, BlasInt n,
   const float* A, BlasInt lda, float* B, BlasInt ldb );
@@ -398,7 +400,8 @@ template void Copy
 ( char uplo, BlasInt m, BlasInt n,
   const dcomplex* A, BlasInt lda, dcomplex* B, BlasInt ldb );
 
-#ifdef HYDROGEN_USE_ESSL_WITH_LAPACK
+#else
+
 void Copy
 ( char uplo, BlasInt m, BlasInt n,
   const float* A, BlasInt lda, float* B, BlasInt ldb )
@@ -4631,12 +4634,12 @@ void Schur
     else if( info > 0 )
         RuntimeError("chseqr's failed to compute all eigenvalues");
 }
-#endif // HYDROGEN_USE_ESSL_WITH_LAPACK
+#endif // HYDROGEN_HAVE_LAPACK
 
 } // namespace lapack
 } // namespace El
 
-#ifdef HYDROGEN_USE_ESSL_WITH_LAPACK
+#ifdef HYDROGEN_HAVE_LAPACK
 #include "./lapack/TriangEig.hpp"
 #include "./lapack/Schur.hpp"
-#endif // HYDROGEN_USE_ESSL_WITH_LAPACK
+#endif // HYDROGEN_HAVE_LAPACK

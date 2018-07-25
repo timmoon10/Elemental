@@ -440,7 +440,7 @@ void Symv
         double* y, BlasInt incy )
 { EL_BLAS(dsymv)( &uplo, &m, &alpha, A, &ALDim, x, &incx, &beta, y, &incy ); }
 
-#ifdef HYDROGEN_USE_ESSL_WITH_LAPACK
+#ifdef HYDROGEN_HAVE_LAPACK
 void Symv
 ( char uplo, BlasInt m,
   const scomplex& alpha,
@@ -464,7 +464,7 @@ void Symv
     // Recall that 'zsymv' is an LAPACK auxiliary routine
     EL_LAPACK(zsymv)( &uplo, &m, &alpha, A, &ALDim, x, &incx, &beta, y, &incy );
 }
-#endif // HYDROGEN_USE_ESSL_WITH_LAPACK
+#endif // HYDROGEN_HAVE_LAPACK
 
 } // namespace blas
 } // namespace El
