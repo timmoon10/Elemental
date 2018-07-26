@@ -365,6 +365,11 @@ void Copy(Matrix<T,D1> const&, Matrix<T,D2>&);
 template <typename T, Device D1, Device D2>
 void CopyAsync(Matrix<T,D1> const&, Matrix<T,D2>&);
 
+template <typename T>
+void CopyAsync(ElementalMatrix<T> const& A, ElementalMatrix<T>& B);
+template <typename T>
+void CopyAsync(AbstractDistMatrix<T> const& A, AbstractDistMatrix<T>& B);
+
 template<typename S,typename T,
          typename=EnableIf<CanCast<S,T>>>
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B );
