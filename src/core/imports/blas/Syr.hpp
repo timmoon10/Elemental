@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 
@@ -90,55 +90,55 @@ void Her
 template void Her
 ( char uplo, BlasInt m,
   const Int& alpha,
-  const Int* x, BlasInt incx, 
+  const Int* x, BlasInt incx,
         Int* A, BlasInt ALDim );
 #ifdef HYDROGEN_HAVE_QD
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const DoubleDouble& alpha,
   const DoubleDouble* x, BlasInt incx,
         DoubleDouble* A, BlasInt ALDim );
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const QuadDouble& alpha,
   const QuadDouble* x, BlasInt incx,
         QuadDouble* A, BlasInt ALDim );
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const DoubleDouble& alpha,
   const Complex<DoubleDouble>* x, BlasInt incx,
         Complex<DoubleDouble>* A, BlasInt ALDim );
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const QuadDouble& alpha,
   const Complex<QuadDouble>* x, BlasInt incx,
         Complex<QuadDouble>* A, BlasInt ALDim );
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Quad& alpha,
   const Quad* x, BlasInt incx,
         Quad* A, BlasInt ALDim );
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Quad& alpha,
-  const Complex<Quad>* x, BlasInt incx, 
+  const Complex<Quad>* x, BlasInt incx,
         Complex<Quad>* A, BlasInt ALDim );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigInt& alpha,
   const BigInt* x, BlasInt incx,
         BigInt* A, BlasInt ALDim );
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigFloat& alpha,
   const BigFloat* x, BlasInt incx,
         BigFloat* A, BlasInt ALDim );
 template void Her
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigFloat& alpha,
   const Complex<BigFloat>* x, BlasInt incx,
         Complex<BigFloat>* A, BlasInt ALDim );
@@ -216,55 +216,55 @@ void Syr
 template void Syr
 ( char uplo, BlasInt m,
   const Int& alpha,
-  const Int* x, BlasInt incx, 
+  const Int* x, BlasInt incx,
         Int* A, BlasInt ALDim );
 #ifdef HYDROGEN_HAVE_QD
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const DoubleDouble& alpha,
   const DoubleDouble* x, BlasInt incx,
         DoubleDouble* A, BlasInt ALDim );
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const QuadDouble& alpha,
   const QuadDouble* x, BlasInt incx,
         QuadDouble* A, BlasInt ALDim );
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<DoubleDouble>& alpha,
   const Complex<DoubleDouble>* x, BlasInt incx,
         Complex<DoubleDouble>* A, BlasInt ALDim );
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<QuadDouble>& alpha,
   const Complex<QuadDouble>* x, BlasInt incx,
         Complex<QuadDouble>* A, BlasInt ALDim );
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Quad& alpha,
   const Quad* x, BlasInt incx,
         Quad* A, BlasInt ALDim );
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<Quad>& alpha,
-  const Complex<Quad>* x, BlasInt incx, 
+  const Complex<Quad>* x, BlasInt incx,
         Complex<Quad>* A, BlasInt ALDim );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigInt& alpha,
   const BigInt* x, BlasInt incx,
         BigInt* A, BlasInt ALDim );
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigFloat& alpha,
   const BigFloat* x, BlasInt incx,
         BigFloat* A, BlasInt ALDim );
 template void Syr
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<BigFloat>& alpha,
   const Complex<BigFloat>* x, BlasInt incx,
         Complex<BigFloat>* A, BlasInt ALDim );
@@ -284,6 +284,7 @@ void Syr
         double* A, BlasInt ALDim )
 { EL_BLAS(dsyr)( &uplo, &m, &alpha, x, &incx, A, &ALDim ); }
 
+#ifdef HYDROGEN_HAVE_LAPACK
 void Syr
 ( char uplo, BlasInt m,
   const scomplex& alpha,
@@ -291,7 +292,7 @@ void Syr
         scomplex* A, BlasInt ALDim )
 {
     // Recall that 'csyr' is an LAPACK auxiliary routine
-    EL_LAPACK(csyr)( &uplo, &m, &alpha, x, &incx, A, &ALDim ); 
+    EL_LAPACK(csyr)( &uplo, &m, &alpha, x, &incx, A, &ALDim );
 }
 
 void Syr
@@ -301,8 +302,9 @@ void Syr
         dcomplex* A, BlasInt ALDim )
 {
     // Recall that 'zsyr' is an LAPACK auxiliary routine
-    EL_LAPACK(zsyr)( &uplo, &m, &alpha, x, &incx, A, &ALDim ); 
+    EL_LAPACK(zsyr)( &uplo, &m, &alpha, x, &incx, A, &ALDim );
 }
+#endif // HYDROGEN_HAVE_LAPACK
 
 } // namespace blas
 } // namespace El
