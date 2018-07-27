@@ -307,6 +307,96 @@ void Copy( const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B )
     }
 }
 
+template <typename T, Dist U, Dist V, Device D1, Device D2,
+          typename=typename std::enable_if<(D1!=D2)>::type>
+void CopyAsync(DistMatrix<T,U,V,ELEMENT,D1> const& A,
+               DistMatrix<T,U,V,ELEMENT,D2>& B)
+{
+    EL_DEBUG_CSE
+#ifndef EL_RELEASE
+    auto const Adata = A.DistData(), Bdata = B.DistData();
+    if (!((Adata.blockHeight == Bdata.blockHeight) &&
+          (Adata.blockWidth == Bdata.blockWidth) &&
+          (Adata.colAlign == Bdata.colAlign) &&
+          (Adata.rowAlign == Bdata.rowAlign) &&
+          (Adata.colCut == Bdata.colCut) &&
+          (Adata.rowCut == Bdata.rowCut) &&
+          (Adata.root == Bdata.root) &&
+          (Adata.grid == Bdata.grid)))
+    {
+        LogicError("CopyAsync: "
+                   "A and B must have the same DistData, except device.");
+    }
+#endif // !defined(EL_RELEASE)
+    B.Resize(A.Height(), A.Width());
+    CopyAsync(A.LockedMatrix(), B.Matrix());
+}
+
+template <typename T, Dist U, Dist V, Device D1, Device D2,
+          typename=typename std::enable_if<(D1==D2)>::type,
+          typename=void>
+void CopyAsync(DistMatrix<T,U,V,ELEMENT,D1> const& A,
+               DistMatrix<T,U,V,ELEMENT,D2>& B)
+{
+    LogicError("CopyAsync: Invalid for D1 == D2.");
+}
+
+template <typename T, Dist U, Dist V, Device D>
+void CopyAsync(ElementalMatrix<T> const& A, DistMatrix<T,U,V,ELEMENT,D>& B)
+{
+    EL_DEBUG_CSE
+    if ((A.ColDist() == U) && (A.RowDist() == V))
+    {
+        switch (A.GetLocalDevice())
+        {
+        case Device::CPU:
+            CopyAsync(
+                static_cast<DistMatrix<T,U,V,ELEMENT,Device::CPU> const&>(A),
+                B);
+#ifdef HYDROGEN_HAVE_CUDA
+        case Device::GPU:
+            CopyAsync(
+                static_cast<DistMatrix<T,U,V,ELEMENT,Device::GPU> const&>(A),
+                B);
+#endif // HYDROGEN_HAVE_CUDA
+        default:
+            LogicError("CopyAsync: Unknown device type.");
+        }
+    }
+    else
+        LogicError("CopyAsync requires A and B to have the same distribution.");
+}
+
+template <typename T>
+void CopyAsync(ElementalMatrix<T> const& A, ElementalMatrix<T>& B)
+{
+    EL_DEBUG_CSE
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                              \
+    (B.ColDist() == CDIST) && (B.RowDist() == RDIST)                \
+        && (B.Wrap() == WRAP) && (B.GetLocalDevice() == DEVICE)
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                            \
+    auto& BCast =                                                   \
+        static_cast<DistMatrix<T,CDIST,RDIST,ELEMENT,DEVICE>&>(B);  \
+    CopyAsync(A, BCast);
+    #include <El/macros/DeviceGuardAndPayload.h>
+}
+
+
+template <typename T>
+void CopyAsync(AbstractDistMatrix<T> const& A, AbstractDistMatrix<T>& B)
+{
+    EL_DEBUG_CSE
+    const DistWrap wrapA = A.Wrap(), wrapB = B.Wrap();
+    if (wrapA == ELEMENT && wrapB == ELEMENT)
+    {
+        auto& ACast = static_cast<const ElementalMatrix<T>&>(A);
+        auto& BCast = static_cast<ElementalMatrix<T>&>(B);
+        CopyAsync(ACast, BCast);
+    }
+    else
+        LogicError("CopyAsync only implemented for ElementalMatrix.");
+}
+
 template<typename S,typename T,
          typename/*=EnableIf<CanCast<S,T>>*/>
 void Copy( const AbstractDistMatrix<S>& A, AbstractDistMatrix<T>& B )
@@ -409,7 +499,10 @@ void CopyFromNonRoot
   ( const Matrix<T>& A, DistMatrix<T,CIRC,CIRC,BLOCK>& B, \
     bool includingViewers ); \
   EL_EXTERN template void CopyFromNonRoot \
-  ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers );
+  ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers ); \
+  EL_EXTERN template void CopyAsync \
+  ( const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B ); \
+
 
 #ifdef HYDROGEN_HAVE_CUDA
 EL_EXTERN template void Copy
