@@ -34,6 +34,25 @@ include (modules/FindAndVerifyOpenMP)
 #   the same.
 include (modules/FindAndVerifyMPI)
 
+# Aluminum
+set(_HYDROGEN_HAVE_ALUMINUM @HYDROGEN_HAVE_ALUMINUM@)
+set(_HYDROGEN_HAVE_NCCL2 @HYDROGEN_HAVE_NCCL2@)
+set(_HYDROGEN_HAVE_AL_MPI_CUDA @HYDROGEN_HAVE_AL_MPI_CUDA@)
+if (_HYDROGEN_HAVE_ALUMINUM)
+  find_package(Aluminum REQUIRED)
+
+  if (_HYDROGEN_HAVE_NCCL2 AND NOT AL_HAS_NCCL)
+    message(FATAL_ERROR
+      "Hydrogen expects NCCL2 support "
+      "but Aluminum does not have NCCL2 support.")
+  endif ()
+  if (_HYDROGEN_HAVE_AL_MPI_CUDA AND NOT AL_HAS_MPI_CUDA)
+    message(FATAL_ERROR
+      "Hydrogen expects MPI-CUDA support "
+      "but Aluminum does not have MPI-CUDA support.")
+  endif ()
+endif (_HYDROGEN_HAVE_ALUMINUM)
+
 # Math libraries
 set(_HYDROGEN_HAVE_QUADMATH "@HYDROGEN_HAVE_QUADMATH@")
 set(_HYDROGEN_HAVE_QD "@HYDROGEN_HAVE_QD@")

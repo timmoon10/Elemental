@@ -24,7 +24,9 @@ endif()
 
 # Add the subdirectories
 add_subdirectory(blas)
-add_subdirectory(lapack)
+if (HYDROGEN_HAVE_LAPACK)
+  add_subdirectory(lapack)
+endif ()
 add_subdirectory(mpfr)
 add_subdirectory(scalapack)
 

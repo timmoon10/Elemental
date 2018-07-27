@@ -65,7 +65,7 @@ void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
     }
 }
 
-template<typename T, Device SrcD, Device DestD>
+template<typename T, Device SrcD, Device DestD, typename>
 void Copy(const Matrix<T,SrcD>& A, Matrix<T,DestD>& B)
 {
     EL_DEBUG_CSE
@@ -78,6 +78,22 @@ void Copy(const Matrix<T,SrcD>& A, Matrix<T,DestD>& B)
     T* EL_RESTRICT BBuf = B.Buffer();
 
     copy::util::InterDeviceMemCopy2D<SrcD,DestD>(
+        BBuf, ldB, ABuf, ldA, height, width);
+}
+
+template<typename T, Device SrcD, Device DestD>
+void CopyAsync(const Matrix<T,SrcD>& A, Matrix<T,DestD>& B)
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize(height, width);
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* EL_RESTRICT ABuf = A.LockedBuffer();
+    T* EL_RESTRICT BBuf = B.Buffer();
+
+    copy::util::InterDeviceMemCopy2DAsync<SrcD,DestD>(
         BBuf, ldB, ABuf, ldA, height, width);
 }
 
@@ -399,7 +415,23 @@ void CopyFromNonRoot
 EL_EXTERN template void Copy
 ( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
 EL_EXTERN template void Copy
+( const Matrix<float,Device::GPU>& A, Matrix<float,Device::CPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<float,Device::CPU>& A, Matrix<float,Device::GPU>& B );
+EL_EXTERN template void CopyAsync
+( const Matrix<float,Device::GPU>& A, Matrix<float,Device::CPU>& B );
+EL_EXTERN template void CopyAsync
+( const Matrix<float,Device::CPU>& A, Matrix<float,Device::GPU>& B );
+EL_EXTERN template void Copy
 ( const Matrix<double,Device::GPU>& A, Matrix<double,Device::GPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<double,Device::GPU>& A, Matrix<double,Device::CPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<double,Device::CPU>& A, Matrix<double,Device::GPU>& B );
+EL_EXTERN template void CopyAsync
+( const Matrix<double,Device::GPU>& A, Matrix<double,Device::CPU>& B );
+EL_EXTERN template void CopyAsync
+( const Matrix<double,Device::CPU>& A, Matrix<double,Device::GPU>& B );
 #endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE

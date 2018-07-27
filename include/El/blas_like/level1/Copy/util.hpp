@@ -378,6 +378,20 @@ void InterDeviceMemCopy2D(
         dest, dest_ldim, src, src_ldim, height, width);
 }
 
+template <Device SrcD, Device DestD, typename T>
+void InterDeviceMemCopy2DAsync(
+    T * EL_RESTRICT const dest, Int const dest_ldim,
+    T const* EL_RESTRICT const src, Int const src_ldim,
+    Int const height, Int const width)
+{
+#ifndef EL_RELEASE
+    if ((dest_ldim < height) || (src_ldim < height))
+        LogicError("InterDeviceMemCopy2D: Bad ldim/height.");
+#endif // !EL_RELEASE
+    InterDeviceCopy<SrcD,DestD>::MemCopy2DAsync(
+        dest, dest_ldim, src, src_ldim, height, width);
+}
+
 template<typename T, Device D>
 void InterleaveMatrix
 (Int height, Int width,

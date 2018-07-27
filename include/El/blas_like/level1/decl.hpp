@@ -359,6 +359,12 @@ template<typename S,typename T,
          typename=EnableIf<CanCast<S,T>>>
 void Copy( const Matrix<S>& A, Matrix<T>& B );
 
+template <typename T, Device D1, Device D2,
+          typename = typename std::enable_if<(D1!=D2)>::type>
+void Copy(Matrix<T,D1> const&, Matrix<T,D2>&);
+template <typename T, Device D1, Device D2>
+void CopyAsync(Matrix<T,D1> const&, Matrix<T,D2>&);
+
 template<typename S,typename T,
          typename=EnableIf<CanCast<S,T>>>
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B );

@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 
@@ -61,7 +61,7 @@ template<typename T>
 void Hemv
 ( char uplo, BlasInt m,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T* x, BlasInt incx,
   const T& beta,
         T* y, BlasInt incy )
@@ -105,7 +105,7 @@ void Hemv
         }
 
         // Multiply with the adjoint of the strictly lower triangle
-        for( BlasInt j=0; j<m; ++j ) 
+        for( BlasInt j=0; j<m; ++j )
         {
             for( BlasInt i=j+1; i<m; ++i )
             {
@@ -131,7 +131,7 @@ void Hemv
         }
 
         // Multiply with the adjoint of the strictly upper triangle
-        for( BlasInt j=0; j<m; ++j ) 
+        for( BlasInt j=0; j<m; ++j )
         {
             for( BlasInt i=0; i<j; ++i )
             {
@@ -145,78 +145,78 @@ void Hemv
 }
 
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Int& alpha,
-  const Int* A, BlasInt ALDim, 
-  const Int* x, BlasInt incx, 
+  const Int* A, BlasInt ALDim,
+  const Int* x, BlasInt incx,
   const Int& beta,
         Int* y, BlasInt incy );
 #ifdef HYDROGEN_HAVE_QD
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const DoubleDouble& alpha,
-  const DoubleDouble* A, BlasInt ALDim, 
-  const DoubleDouble* x, BlasInt incx, 
+  const DoubleDouble* A, BlasInt ALDim,
+  const DoubleDouble* x, BlasInt incx,
   const DoubleDouble& beta,
         DoubleDouble* y, BlasInt incy );
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const QuadDouble& alpha,
-  const QuadDouble* A, BlasInt ALDim, 
-  const QuadDouble* x, BlasInt incx, 
+  const QuadDouble* A, BlasInt ALDim,
+  const QuadDouble* x, BlasInt incx,
   const QuadDouble& beta,
         QuadDouble* y, BlasInt incy );
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<DoubleDouble>& alpha,
-  const Complex<DoubleDouble>* A, BlasInt ALDim, 
-  const Complex<DoubleDouble>* x, BlasInt incx, 
+  const Complex<DoubleDouble>* A, BlasInt ALDim,
+  const Complex<DoubleDouble>* x, BlasInt incx,
   const Complex<DoubleDouble>& beta,
         Complex<DoubleDouble>* y, BlasInt incy );
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<QuadDouble>& alpha,
-  const Complex<QuadDouble>* A, BlasInt ALDim, 
-  const Complex<QuadDouble>* x, BlasInt incx, 
+  const Complex<QuadDouble>* A, BlasInt ALDim,
+  const Complex<QuadDouble>* x, BlasInt incx,
   const Complex<QuadDouble>& beta,
         Complex<QuadDouble>* y, BlasInt incy );
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Quad& alpha,
-  const Quad* A, BlasInt ALDim, 
-  const Quad* x, BlasInt incx, 
+  const Quad* A, BlasInt ALDim,
+  const Quad* x, BlasInt incx,
   const Quad& beta,
         Quad* y, BlasInt incy );
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<Quad>& alpha,
-  const Complex<Quad>* A, BlasInt ALDim, 
-  const Complex<Quad>* x, BlasInt incx, 
+  const Complex<Quad>* A, BlasInt ALDim,
+  const Complex<Quad>* x, BlasInt incx,
   const Complex<Quad>& beta,
         Complex<Quad>* y, BlasInt incy );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigInt& alpha,
-  const BigInt* A, BlasInt ALDim, 
-  const BigInt* x, BlasInt incx, 
+  const BigInt* A, BlasInt ALDim,
+  const BigInt* x, BlasInt incx,
   const BigInt& beta,
         BigInt* y, BlasInt incy );
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigFloat& alpha,
-  const BigFloat* A, BlasInt ALDim, 
-  const BigFloat* x, BlasInt incx, 
+  const BigFloat* A, BlasInt ALDim,
+  const BigFloat* x, BlasInt incx,
   const BigFloat& beta,
         BigFloat* y, BlasInt incy );
 template void Hemv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<BigFloat>& alpha,
-  const Complex<BigFloat>* A, BlasInt ALDim, 
-  const Complex<BigFloat>* x, BlasInt incx, 
+  const Complex<BigFloat>* A, BlasInt ALDim,
+  const Complex<BigFloat>* x, BlasInt incx,
   const Complex<BigFloat>& beta,
         Complex<BigFloat>* y, BlasInt incy );
 #endif
@@ -224,7 +224,7 @@ template void Hemv
 void Hemv
 ( char uplo, BlasInt m,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* x, BlasInt incx,
   const float& beta,
         float* y, BlasInt incy )
@@ -233,7 +233,7 @@ void Hemv
 void Hemv
 ( char uplo, BlasInt m,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* x, BlasInt incx,
   const double& beta,
         double* y, BlasInt incy )
@@ -242,7 +242,7 @@ void Hemv
 void Hemv
 ( char uplo, BlasInt m,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* x, BlasInt incx,
   const scomplex& beta,
         scomplex* y, BlasInt incy )
@@ -251,7 +251,7 @@ void Hemv
 void Hemv
 ( char uplo, BlasInt m,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* x, BlasInt incx,
   const dcomplex& beta,
         dcomplex* y, BlasInt incy )
@@ -262,7 +262,7 @@ template<typename T>
 void Symv
 ( char uplo, BlasInt m,
   const T& alpha,
-  const T* A, BlasInt ALDim, 
+  const T* A, BlasInt ALDim,
   const T* x, BlasInt incx,
   const T& beta,
         T* y, BlasInt incy )
@@ -306,7 +306,7 @@ void Symv
         }
 
         // Multiply with the transpose of the strictly lower triangle
-        for( BlasInt j=0; j<m; ++j ) 
+        for( BlasInt j=0; j<m; ++j )
         {
             for( BlasInt i=j+1; i<m; ++i )
             {
@@ -332,7 +332,7 @@ void Symv
         }
 
         // Multiply with the transpose of the strictly upper triangle
-        for( BlasInt j=0; j<m; ++j ) 
+        for( BlasInt j=0; j<m; ++j )
         {
             for( BlasInt i=0; i<j; ++i )
             {
@@ -346,78 +346,78 @@ void Symv
 }
 
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Int& alpha,
-  const Int* A, BlasInt ALDim, 
-  const Int* x, BlasInt incx, 
+  const Int* A, BlasInt ALDim,
+  const Int* x, BlasInt incx,
   const Int& beta,
         Int* y, BlasInt incy );
 #ifdef HYDROGEN_HAVE_QD
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const DoubleDouble& alpha,
-  const DoubleDouble* A, BlasInt ALDim, 
-  const DoubleDouble* x, BlasInt incx, 
+  const DoubleDouble* A, BlasInt ALDim,
+  const DoubleDouble* x, BlasInt incx,
   const DoubleDouble& beta,
         DoubleDouble* y, BlasInt incy );
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const QuadDouble& alpha,
-  const QuadDouble* A, BlasInt ALDim, 
-  const QuadDouble* x, BlasInt incx, 
+  const QuadDouble* A, BlasInt ALDim,
+  const QuadDouble* x, BlasInt incx,
   const QuadDouble& beta,
         QuadDouble* y, BlasInt incy );
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<DoubleDouble>& alpha,
-  const Complex<DoubleDouble>* A, BlasInt ALDim, 
-  const Complex<DoubleDouble>* x, BlasInt incx, 
+  const Complex<DoubleDouble>* A, BlasInt ALDim,
+  const Complex<DoubleDouble>* x, BlasInt incx,
   const Complex<DoubleDouble>& beta,
         Complex<DoubleDouble>* y, BlasInt incy );
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<QuadDouble>& alpha,
-  const Complex<QuadDouble>* A, BlasInt ALDim, 
-  const Complex<QuadDouble>* x, BlasInt incx, 
+  const Complex<QuadDouble>* A, BlasInt ALDim,
+  const Complex<QuadDouble>* x, BlasInt incx,
   const Complex<QuadDouble>& beta,
         Complex<QuadDouble>* y, BlasInt incy );
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Quad& alpha,
-  const Quad* A, BlasInt ALDim, 
-  const Quad* x, BlasInt incx, 
+  const Quad* A, BlasInt ALDim,
+  const Quad* x, BlasInt incx,
   const Quad& beta,
         Quad* y, BlasInt incy );
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<Quad>& alpha,
-  const Complex<Quad>* A, BlasInt ALDim, 
-  const Complex<Quad>* x, BlasInt incx, 
+  const Complex<Quad>* A, BlasInt ALDim,
+  const Complex<Quad>* x, BlasInt incx,
   const Complex<Quad>& beta,
         Complex<Quad>* y, BlasInt incy );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigInt& alpha,
-  const BigInt* A, BlasInt ALDim, 
-  const BigInt* x, BlasInt incx, 
+  const BigInt* A, BlasInt ALDim,
+  const BigInt* x, BlasInt incx,
   const BigInt& beta,
         BigInt* y, BlasInt incy );
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const BigFloat& alpha,
-  const BigFloat* A, BlasInt ALDim, 
-  const BigFloat* x, BlasInt incx, 
+  const BigFloat* A, BlasInt ALDim,
+  const BigFloat* x, BlasInt incx,
   const BigFloat& beta,
         BigFloat* y, BlasInt incy );
 template void Symv
-( char uplo, BlasInt m, 
+( char uplo, BlasInt m,
   const Complex<BigFloat>& alpha,
-  const Complex<BigFloat>* A, BlasInt ALDim, 
-  const Complex<BigFloat>* x, BlasInt incx, 
+  const Complex<BigFloat>* A, BlasInt ALDim,
+  const Complex<BigFloat>* x, BlasInt incx,
   const Complex<BigFloat>& beta,
         Complex<BigFloat>* y, BlasInt incy );
 #endif
@@ -425,7 +425,7 @@ template void Symv
 void Symv
 ( char uplo, BlasInt m,
   const float& alpha,
-  const float* A, BlasInt ALDim, 
+  const float* A, BlasInt ALDim,
   const float* x, BlasInt incx,
   const float& beta,
         float* y, BlasInt incy )
@@ -434,16 +434,17 @@ void Symv
 void Symv
 ( char uplo, BlasInt m,
   const double& alpha,
-  const double* A, BlasInt ALDim, 
+  const double* A, BlasInt ALDim,
   const double* x, BlasInt incx,
   const double& beta,
         double* y, BlasInt incy )
 { EL_BLAS(dsymv)( &uplo, &m, &alpha, A, &ALDim, x, &incx, &beta, y, &incy ); }
 
+#ifdef HYDROGEN_HAVE_LAPACK
 void Symv
 ( char uplo, BlasInt m,
   const scomplex& alpha,
-  const scomplex* A, BlasInt ALDim, 
+  const scomplex* A, BlasInt ALDim,
   const scomplex* x, BlasInt incx,
   const scomplex& beta,
         scomplex* y, BlasInt incy )
@@ -455,7 +456,7 @@ void Symv
 void Symv
 ( char uplo, BlasInt m,
   const dcomplex& alpha,
-  const dcomplex* A, BlasInt ALDim, 
+  const dcomplex* A, BlasInt ALDim,
   const dcomplex* x, BlasInt incx,
   const dcomplex& beta,
         dcomplex* y, BlasInt incy )
@@ -463,6 +464,7 @@ void Symv
     // Recall that 'zsymv' is an LAPACK auxiliary routine
     EL_LAPACK(zsymv)( &uplo, &m, &alpha, A, &ALDim, x, &incx, &beta, y, &incy );
 }
+#endif // HYDROGEN_HAVE_LAPACK
 
 } // namespace blas
 } // namespace El

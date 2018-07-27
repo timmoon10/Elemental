@@ -141,8 +141,8 @@ check_function_exists(dgemm BLAS_NO_USE_UNDERSCORE)
 check_function_exists(dgemm_ BLAS_USE_UNDERSCORE)
 
 set(CMAKE_REQUIRED_LIBRARIES "${LAPACK_LINKER_FLAGS}" "${LAPACK_LIBRARIES}")
-check_function_exists(dgetrs LAPACK_NO_USE_UNDERSCORE)
-check_function_exists(dgetrs_ LAPACK_USE_UNDERSCORE)
+check_function_exists(dlacpy LAPACK_NO_USE_UNDERSCORE)
+check_function_exists(dlacpy_ LAPACK_NO_USE_UNDERSCORE)
 
 # If both dgemm and dgemm_ are found, don't use the suffix
 if (BLAS_NO_USE_UNDERSCORE)
@@ -155,6 +155,7 @@ else ()
   message(FATAL_ERROR "Could not determine BLAS suffix!")
 endif ()
 
+set(${UPPER_PROJECT_NAME}_HAVE_LAPACK ON)
 if (LAPACK_NO_USE_UNDERSCORE)
   unset(${UPPER_PROJECT_NAME}_LAPACK_SUFFIX)
   message(STATUS "Using LAPACK with no symbol mangling.")
@@ -162,7 +163,9 @@ elseif (LAPACK_USE_UNDERSCORE)
   set(${UPPER_PROJECT_NAME}_LAPACK_SUFFIX "_")
   message(STATUS "Using LAPACK with trailing underscore.")
 else ()
-  message(FATAL_ERROR "Could not determine LAPACK suffix!")
+  message(STATUS
+    "Could not find LAPACK's copy function. Disabling LAPACK support.")
+  set(${UPPER_PROJECT_NAME}_HAVE_LAPACK)
 endif ()
 
 # Check a few MKL features
@@ -171,3 +174,4 @@ if (${UPPER_PROJECT_NAME}_HAVE_MKL)
   check_function_exists(dgemmt  ${UPPER_PROJECT_NAME}_HAVE_MKL_GEMMT)
   check_function_exists(dgemmt_ ${UPPER_PROJECT_NAME}_HAVE_MKL_GEMMT)
 endif ()
+set(CMAKE_REQUIRED_LIBRARIES)
