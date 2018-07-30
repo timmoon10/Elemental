@@ -7,7 +7,6 @@ set_full_path(THIS_DIR_SOURCES
   mpfr.cpp
   mpi.cpp
   openblas.cpp
-  pmrrr.cpp
   qd.cpp
   qt5.cpp
   scalapack.cpp
