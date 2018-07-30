@@ -307,8 +307,7 @@ void Copy( const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B )
     }
 }
 
-template <typename T, Dist U, Dist V, Device D1, Device D2,
-          typename=typename std::enable_if<(D1!=D2)>::type>
+template <typename T, Dist U, Dist V, Device D1, Device D2>
 void CopyAsync(DistMatrix<T,U,V,ELEMENT,D1> const& A,
                DistMatrix<T,U,V,ELEMENT,D2>& B)
 {
@@ -332,14 +331,12 @@ void CopyAsync(DistMatrix<T,U,V,ELEMENT,D1> const& A,
     CopyAsync(A.LockedMatrix(), B.Matrix());
 }
 
-template <typename T, Dist U, Dist V, Device D1, Device D2,
-          typename=typename std::enable_if<(D1==D2)>::type,
-          typename=void>
-void CopyAsync(DistMatrix<T,U,V,ELEMENT,D1> const& A,
-               DistMatrix<T,U,V,ELEMENT,D2>& B)
+template <typename T, Dist U, Dist V, Device D>
+void CopyAsync(DistMatrix<T,U,V,ELEMENT,D> const& A,
+               DistMatrix<T,U,V,ELEMENT,D>& B)
 {
-    LogicError("CopyAsync: Invalid for (D1=", DeviceName<D1>(), ") == (D2=",
-               DeviceName<D2>(), ").");
+    LogicError("CopyAsync: Both matrices on same device (D=",
+               DeviceName<D>(), ").");
 }
 
 template <typename T, Dist U, Dist V, Device D>
