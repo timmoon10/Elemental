@@ -267,17 +267,13 @@ template <typename T>
 inline void AbstractMatrix<T>::Resize_(
     Int height, Int width, Int leadingDimension)
 {
-    if (height > this->Height()
-        || width > this->Width()
+    if (height != this->Height()
+        || width != this->Width()
         || leadingDimension != this->LDim())
     {
-        this->Empty(false);
+        this->SetSize_(height, width, leadingDimension);
     }
-    this->SetSize_(height, width, leadingDimension);
-    if (!this->Viewing())
-    {
-        do_resize_();
-    }
+    do_resize_();
 }
 
 template <typename T>
