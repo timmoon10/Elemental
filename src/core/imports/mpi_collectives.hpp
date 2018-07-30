@@ -23,19 +23,17 @@ namespace El
 #ifdef HYDROGEN_HAVE_ALUMINUM
 Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op)
 {
-    switch (op)
-    {
-    case MPI_SUM:
+    if (op == MPI_SUM)
         return Al::ReductionOperator::sum;
-    case MPI_PROD:
+    else if (op == MPI_PROD)
         return Al::ReductionOperator::prod;
-    case MPI_MIN:
+    else if (op == MPI_MIN)
         return Al::ReductionOperator::min;
-    case MPI_MAX:
+    else if (op == MPI_MAX)
         return Al::ReductionOperator::max;
-    default:
+    else
         LogicError("Given reduction operator not supported.");
-    }
+
     // Silence compiler warning
     return Al::ReductionOperator::sum;
 }
