@@ -142,7 +142,7 @@ check_function_exists(dgemm_ BLAS_USE_UNDERSCORE)
 
 set(CMAKE_REQUIRED_LIBRARIES "${LAPACK_LINKER_FLAGS}" "${LAPACK_LIBRARIES}")
 check_function_exists(dlacpy LAPACK_NO_USE_UNDERSCORE)
-check_function_exists(dlacpy_ LAPACK_NO_USE_UNDERSCORE)
+check_function_exists(dlacpy_ LAPACK_USE_UNDERSCORE)
 
 # If both dgemm and dgemm_ are found, don't use the suffix
 if (BLAS_NO_USE_UNDERSCORE)

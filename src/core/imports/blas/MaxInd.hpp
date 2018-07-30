@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 
@@ -33,7 +33,7 @@ BlasInt MaxInd( BlasInt n, const F* x, BlasInt incx )
     Real absVal;
     Real maxAbsVal = -1;
     BlasInt maxAbsInd = -1;
-    for( BlasInt i=0; i<n; ++i ) 
+    for( BlasInt i=0; i<n; ++i )
     {
         absVal = Abs(x[i*incx]);
         if( absVal > maxAbsVal )
@@ -41,7 +41,7 @@ BlasInt MaxInd( BlasInt n, const F* x, BlasInt incx )
             maxAbsVal = absVal;
             maxAbsInd = i;
         }
-    } 
+    }
     return maxAbsInd;
 }
 template BlasInt MaxInd
@@ -71,6 +71,7 @@ template BlasInt MaxInd
 ( BlasInt n, const Complex<BigFloat>* x, BlasInt incx );
 #endif
 
+#ifdef HYDROGEN_HAVE_LAPACK
 BlasInt MaxInd( BlasInt n, const float* x, BlasInt incx )
 {
     return EL_LAPACK(isamax)( &n, x, &incx ) - 1;
@@ -90,6 +91,12 @@ BlasInt MaxInd( BlasInt n, const dcomplex* x, BlasInt incx )
 {
     return EL_LAPACK(izamax)( &n, x, &incx ) - 1;
 }
+#else
+template BlasInt MaxInd( BlasInt n, const float* x, BlasInt incx );
+template BlasInt MaxInd( BlasInt n, const double* x, BlasInt incx );
+template BlasInt MaxInd( BlasInt n, const scomplex* x, BlasInt incx );
+template BlasInt MaxInd( BlasInt n, const dcomplex* x, BlasInt incx );
+#endif // HYDROGEN_HAVE_LAPACK
 
 } // namespace blas
 } // namespace El
