@@ -275,14 +275,6 @@ include(FindAndVerifyMPI)
 include(FindAndVerifyLAPACK)
 include(FindAndVerifyExtendedPrecision)
 
-# External projects build internally
-# TODO Investigate why
-add_subdirectory(external/pmrrr)
-
-# Add SuiteSparse (TODO: Why bundled here?)
-add_subdirectory(external/suite_sparse)
-include_directories(external/suite_sparse/include)
-
 # Macro for setting up full paths
 macro(set_full_path VAR)
   unset(__tmp_names)
@@ -318,7 +310,6 @@ endif ()
 if (TARGET OpenMP::OpenMP_CXX)
   target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
 endif ()
-target_link_libraries(${PROJECT_NAME} PUBLIC pmrrr)
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)
 target_link_libraries(${PROJECT_NAME} PUBLIC EP::extended_precision)
