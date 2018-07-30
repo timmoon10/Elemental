@@ -351,11 +351,13 @@ void CopyAsync(ElementalMatrix<T> const& A, DistMatrix<T,U,V,ELEMENT,D>& B)
             CopyAsync(
                 static_cast<DistMatrix<T,U,V,ELEMENT,Device::CPU> const&>(A),
                 B);
+            break;
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
             CopyAsync(
                 static_cast<DistMatrix<T,U,V,ELEMENT,Device::GPU> const&>(A),
                 B);
+            break;
 #endif // HYDROGEN_HAVE_CUDA
         default:
             LogicError("CopyAsync: Unknown device type.");
