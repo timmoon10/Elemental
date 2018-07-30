@@ -16,9 +16,9 @@ namespace copy
 
 // TODO(poulson): Generalize the below implementation
 // FIXME (trb 03/06/18) -- Need to do the GPU impl
-template<typename T,Dist U,Dist V,Device D,typename>
-void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
-                   DistMatrix<T,V,U,ELEMENT,D>& B)
+template<typename T,Dist U,Dist V,typename>
+void TransposeDist(DistMatrix<T,U,V,ELEMENT,Device::CPU> const& A,
+                   DistMatrix<T,V,U,ELEMENT,Device::CPU>& B)
 {
     EL_DEBUG_CSE
     AssertSameGrids(A, B);
@@ -38,10 +38,6 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
     }
     else if (A.Width() == 1)
     {
-        if (D != Device::CPU)
-            LogicError(
-                "TransposeDist: This branch not implemented for device.");
-
         const Int height = A.Height();
         const Int maxLocalHeight = MaxLength(height,distSize);
         const Int portionSize = mpi::Pad(maxLocalHeight);
@@ -53,7 +49,7 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
         const Int recvRankB =
             (recvRankA/colStrideA)+rowStrideA*(recvRankA%colStrideA);
 
-        simple_buffer<T,D> buffer((colStrideA+rowStrideA)*portionSize);
+        simple_buffer<T,Device::CPU> buffer((colStrideA+rowStrideA)*portionSize);
         T* sendBuf = buffer.data();
         T* recvBuf = buffer.data() + colStrideA*portionSize;
 
@@ -74,9 +70,6 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
                 const Int offset = (shift-AColShift) / colStrideA;
                 const Int thisLocalHeight = Length_(height,shift,distSize);
 
-                // FIXME
-                if (D != Device::CPU)
-                    LogicError("FIXME");
                 for (Int iLoc=0; iLoc<thisLocalHeight; ++iLoc)
                     data[iLoc] = ABuf[offset+iLoc*rowStrideA];
             }
@@ -119,10 +112,6 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
     }
     else if (A.Height() == 1)
     {
-        if (D != Device::CPU)
-            LogicError(
-                "TransposeDist: This branch not implemented for device.");
-
         const Int width = A.Width();
         const Int maxLocalWidth = MaxLength(width,distSize);
         const Int portionSize = mpi::Pad(maxLocalWidth);
@@ -134,7 +123,7 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
         const Int recvRankA =
             (recvRankB/rowStrideA)+colStrideA*(recvRankB%rowStrideA);
 
-        simple_buffer<T,D> buffer((colStrideA+rowStrideA)*portionSize);
+        simple_buffer<T,Device::CPU> buffer((colStrideA+rowStrideA)*portionSize);
         T* sendBuf = buffer.data();
         T* recvBuf = buffer.data() + rowStrideA*portionSize;
 
@@ -197,10 +186,12 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
     {
         if (A.Height() >= A.Width())
         {
-            DistMatrix<T,ProductDist<U,V>(),ProductDistPartner<U,V>(),ELEMENT,D>
-              A_ProdDistA(A);
-            DistMatrix<T,ProductDist<V,U>(),ProductDistPartner<V,U>(),ELEMENT,D>
-              A_ProdDistB(g);
+            DistMatrix<T,ProductDist<U,V>(),ProductDistPartner<U,V>(),
+                       ELEMENT,Device::CPU>
+                A_ProdDistA(A);
+            DistMatrix<T,ProductDist<V,U>(),ProductDistPartner<V,U>(),
+                       ELEMENT,Device::CPU>
+                A_ProdDistB(g);
             A_ProdDistB.AlignColsWith(B);
             A_ProdDistB = A_ProdDistA;
             A_ProdDistA.Empty();
@@ -208,9 +199,11 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
         }
         else
         {
-            DistMatrix<T,ProductDistPartner<V,U>(),ProductDist<V,U>(),ELEMENT,D>
+            DistMatrix<T,ProductDistPartner<V,U>(),ProductDist<V,U>(),
+                       ELEMENT,Device::CPU>
                 A_ProdDistB(A);
-            DistMatrix<T,ProductDistPartner<U,V>(),ProductDist<U,V>(),ELEMENT,D>
+            DistMatrix<T,ProductDistPartner<U,V>(),ProductDist<U,V>(),
+                       ELEMENT,Device::CPU>
                 A_ProdDistA(g);
 
             A_ProdDistA.AlignRowsWith(B);
@@ -221,13 +214,65 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
     }
 }
 
+// FIXME (trb): This should work just fine, but it might not have
+// optimal performance for row/column vectors (A.Height() or A.Width()
+// equal to 1). See CPU impl above for what would have to happen for
+// these special cases.
+template <typename T, Dist U, Dist V, typename>
+void TransposeDist(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
+                   DistMatrix<T,V,U,ELEMENT,Device::GPU>& B)
+{
+    EL_DEBUG_CSE
+    AssertSameGrids(A, B);
+
+    const Grid& g = B.Grid();
+    B.Resize(A.Height(), A.Width());
+    if (!B.Participating())
+        return;
+
+    if (A.DistSize() == 1 && B.DistSize() == 1)
+    {
+        Copy(A.LockedMatrix(), B.Matrix());
+    }
+    else
+    {
+        if (A.Height() >= A.Width())
+        {
+            DistMatrix<T,ProductDist<U,V>(),ProductDistPartner<U,V>(),
+                       ELEMENT,Device::GPU>
+                A_ProdDistA(A);
+            DistMatrix<T,ProductDist<V,U>(),ProductDistPartner<V,U>(),
+                       ELEMENT,Device::GPU>
+                A_ProdDistB(g);
+            A_ProdDistB.AlignColsWith(B);
+            A_ProdDistB = A_ProdDistA;
+            A_ProdDistA.Empty();
+            B = A_ProdDistB;
+        }
+        else
+        {
+            DistMatrix<T,ProductDistPartner<V,U>(),ProductDist<V,U>(),
+                       ELEMENT,Device::GPU>
+                A_ProdDistB(A);
+            DistMatrix<T,ProductDistPartner<U,V>(),ProductDist<U,V>(),
+                       ELEMENT,Device::GPU>
+                A_ProdDistA(g);
+
+            A_ProdDistA.AlignRowsWith(B);
+            A_ProdDistA = A_ProdDistB;
+            A_ProdDistB.Empty();
+            B = A_ProdDistA;
+        }
+    }
+
+}
+
 template<typename T,Dist U,Dist V,Device D,typename,typename>
 void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
                    DistMatrix<T,V,U,ELEMENT,D>& B)
 {
     LogicError("TransposeDist: Device/type combination not valid.");
 }
-
 
 } // namespace copy
 } // namespace El

@@ -21,7 +21,52 @@ namespace util
 {
 namespace details
 {
+template <Device D>
+struct StridedMemCopy_impl
+{
+    template <typename... Args>
+    static void call(Args&&... args)
+    {
+        StridedMemCopy(std::forward<Args>(args)...);
+    }
+};
 
+#ifdef HYDROGEN_HAVE_CUDA
+template <>
+struct StridedMemCopy_impl<Device::GPU>
+{
+    template <typename T>
+    static void call(T* dest, Int const& destStride,
+                     T const* source, Int const& sourceStride,
+                     Int const& numEntries)
+    {
+        cublas::Copy(numEntries, source, sourceStride, dest, destStride);
+    }
+};// StridedMemCopy_impl<GPU,T>
+#endif // HYDROGEN_HAVE_CUDA
+}// namespace details
+
+template <Device D, typename T,
+          typename=EnableIf<IsDeviceValidType<T,D>>>
+void DeviceStridedMemCopy(
+    T* dest, Int destStride,
+    const T* source, Int sourceStride, Int numEntries)
+{
+    details::StridedMemCopy_impl<D>::call(
+        dest, destStride, source, sourceStride, numEntries);
+}
+
+template <Device D, typename T,
+          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=void>
+void DeviceStridedMemCopy(
+    T*, Int const&, T const*, Int const&, Int const&)
+{
+    LogicError("Devicestridedmemcopy: Bad device/type combination.");
+}
+
+namespace details
+{
 template <typename T, Device D, bool=IsDeviceValidType_v<T,D>()>
 struct Impl
 {
@@ -291,13 +336,13 @@ struct Impl<T, Device::GPU, true>
         }
     }
 
-    static void PartialColStridedColumnPack
-    (Int height,
-     Int colAlign, Int colStride,
-     Int colStrideUnion, Int colStridePart, Int colRankPart,
-     Int colShiftA,
-     const T* A,
-     T* BPortions, Int portionSize)
+    static void PartialColStridedColumnPack(
+        Int height,
+        Int colAlign, Int colStride,
+        Int colStrideUnion, Int colStridePart, Int colRankPart,
+        Int colShiftA,
+        const T* A,
+        T* BPortions, Int portionSize)
     {
         for (Int k=0; k<colStrideUnion; ++k)
         {
@@ -306,21 +351,15 @@ struct Impl<T, Device::GPU, true>
             const Int colOffset = (colShift-colShiftA) / colStridePart;
             const Int localHeight = Length_(height, colShift, colStride);
 
-            (void)colOffset;
-            (void)localHeight;
-            LogicError("PartialColStridedColumnPack<T,GPU>: Not implemented.");
-#if 0
-            StridedMemCopy
-                (&BPortions[k*portionSize], 1,
-                 &A[colOffset],             colStrideUnion, localHeight);
-#endif
+            DeviceStridedMemCopy<Device::GPU>(
+                BPortions + k*portionSize, 1,
+                A + colOffset, colStrideUnion, localHeight);
         }
-        cudaDeviceSynchronize();
     }
 
 };
-#endif // HYDROGEN_HAVE_CUDA
 
+#endif // HYDROGEN_HAVE_CUDA
 
 }// namespace details
 
