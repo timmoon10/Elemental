@@ -15,7 +15,6 @@ namespace copy
 {
 
 // TODO(poulson): Generalize the below implementation
-// FIXME (trb 03/06/18) -- Need to do the GPU impl
 template<typename T,Dist U,Dist V,typename>
 void TransposeDist(DistMatrix<T,U,V,ELEMENT,Device::CPU> const& A,
                    DistMatrix<T,V,U,ELEMENT,Device::CPU>& B)
@@ -214,6 +213,8 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,Device::CPU> const& A,
     }
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
+
 // FIXME (trb): This should work just fine, but it might not have
 // optimal performance for row/column vectors (A.Height() or A.Width()
 // equal to 1). See CPU impl above for what would have to happen for
@@ -266,6 +267,8 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
     }
 
 }
+
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename T,Dist U,Dist V,Device D,typename,typename>
 void TransposeDist(DistMatrix<T,U,V,ELEMENT,D> const& A,
