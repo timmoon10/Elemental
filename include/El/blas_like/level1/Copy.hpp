@@ -338,7 +338,8 @@ template <typename T, Dist U, Dist V, Device D1, Device D2,
 void CopyAsync(DistMatrix<T,U,V,ELEMENT,D1> const& A,
                DistMatrix<T,U,V,ELEMENT,D2>& B)
 {
-    LogicError("CopyAsync: Invalid for D1 == D2.");
+    LogicError("CopyAsync: Invalid for (D1=", DeviceName<D1>(), ") == (D2=",
+               DeviceName<D2>(), ").");
 }
 
 template <typename T, Dist U, Dist V, Device D>
