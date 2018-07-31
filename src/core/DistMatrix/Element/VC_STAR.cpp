@@ -265,20 +265,20 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
     SELF(T,U,V,D);                                \
     OTHER(T,U,V,D)
 #define PROTO(T) \
-    template class DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>;      \
-    BOTH(T,CIRC,CIRC,Device::CPU);                                                  \
-    BOTH(T,MC,  MR ,Device::CPU);                                                   \
-    BOTH(T,MC,  STAR,Device::CPU);                                                  \
-    BOTH(T,MD,  STAR,Device::CPU);                                                  \
-    BOTH(T,MR,  MC ,Device::CPU);                                                   \
-    BOTH(T,MR,  STAR,Device::CPU);                                                  \
-    BOTH(T,STAR,MC ,Device::CPU);                                                   \
-    BOTH(T,STAR,MD ,Device::CPU);                                                   \
-    BOTH(T,STAR,MR ,Device::CPU);                                                   \
-    BOTH(T,STAR,STAR,Device::CPU);                                                  \
-    BOTH(T,STAR,VC ,Device::CPU);                                                   \
-    BOTH(T,STAR,VR ,Device::CPU);                                                   \
-    OTHER(T,VC,  STAR,Device::CPU);                                                 \
+    template class DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>;   \
+    BOTH(T,CIRC,CIRC,Device::CPU);                                      \
+    BOTH(T,MC,  MR ,Device::CPU);                                       \
+    BOTH(T,MC,  STAR,Device::CPU);                                      \
+    BOTH(T,MD,  STAR,Device::CPU);                                      \
+    BOTH(T,MR,  MC ,Device::CPU);                                       \
+    BOTH(T,MR,  STAR,Device::CPU);                                      \
+    BOTH(T,STAR,MC ,Device::CPU);                                       \
+    BOTH(T,STAR,MD ,Device::CPU);                                       \
+    BOTH(T,STAR,MR ,Device::CPU);                                       \
+    BOTH(T,STAR,STAR,Device::CPU);                                      \
+    BOTH(T,STAR,VC ,Device::CPU);                                       \
+    BOTH(T,STAR,VR ,Device::CPU);                                       \
+    OTHER(T,VC,  STAR,Device::CPU);                                     \
     BOTH(T,VR,  STAR,Device::CPU);
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -289,6 +289,12 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
     DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=        \
     (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
     template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&);                     \
+                                                                        \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>&         \
+    DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=        \
     (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&)
 
 template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
