@@ -41,7 +41,7 @@ struct MemHelper<G,Device::CPU>
         case 1:
         {
             // Pinned memory
-            auto error = cudaMallocHost(&ptr, size);
+            auto error = cudaMallocHost(&ptr, size * sizeof(G));
             if (error != cudaSuccess)
             {
                 RuntimeError("Failed to allocate pinned memory with message: ",
