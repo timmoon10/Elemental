@@ -271,7 +271,11 @@ template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
     (DistMatrix<T,U,V,ELEMENT,Device::CPU> const&);                     \
     template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix \
     (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&);                     \
+                                                                        \
     template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix \
+    (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&);                     \
+    template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>&         \
+    DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=        \
     (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&)
 
 template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
