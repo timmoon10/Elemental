@@ -190,6 +190,7 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
     endif ()
 
     find_package(CUDA) # Enable all the macros
+    find_package(NVML REQUIRED)
 
     if (${PROJECT_NAME}_ENABLE_CUB)
       find_package(CUB REQUIRED)
@@ -204,7 +205,7 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_LINK_LIBRARIES
-        "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}" "${CUB_LIBRARIES}")
+        "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}" "${CUB_LIBRARIES}" "${NVML_LIBRARIES}")
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)
