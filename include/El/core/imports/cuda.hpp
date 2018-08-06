@@ -151,7 +151,7 @@ public:
     /** Get singleton instance of CUDA manager. */
     static GPUManager* Instance();
     /** Get number of visible CUDA devices. */
-    static int NumDevices();
+    static Unsigned NumDevices();
     /** Get currently active CUDA device. */
     static int Device();
     /** Set active CUDA device. */
@@ -174,7 +174,7 @@ private:
     static std::unique_ptr<GPUManager> instance_;
 
     /** Number of visible CUDA devices. */
-    int numDevices_;
+    unsigned int numDevices_;
     /** Currently active CUDA device. */
     int device_;
     /** CUDA stream. */
