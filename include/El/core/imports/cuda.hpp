@@ -151,7 +151,7 @@ public:
     /** Get singleton instance of CUDA manager. */
     static GPUManager* Instance();
     /** Get number of visible CUDA devices. */
-    static unsigned int NumDevices();
+    static Unsigned NumDevices();
     /** Get currently active CUDA device. */
     static int Device();
     /** Set active CUDA device. */
