@@ -138,7 +138,7 @@ GPUManager* GPUManager::Instance()
     return instance_.get();
 }
 
-unsigned int GPUManager::NumDevices()
+Unsigned GPUManager::NumDevices()
 {
     return Instance()->numDevices_;
 }
