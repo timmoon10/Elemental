@@ -57,6 +57,21 @@ endif (_HYDROGEN_HAVE_ALUMINUM)
 set(_HYDROGEN_HAVE_CUDA @HYDROGEN_HAVE_CUDA@)
 if (_HYDROGEN_HAVE_CUDA)
   find_package(NVML REQUIRED)
+
+  if (NOT TARGET cuda::toolkit)
+    add_library(cuda::toolkit INTERFACE IMPORTED)
+  endif ()
+
+  set_property(TARGET cuda::toolkit PROPERTY
+    INTERFACE_LINK_LIBRARIES
+    "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}" "${CUB_LIBRARIES}"
+    "${NVML_LIBRARIES}")
+
+  set_property(TARGET cuda::toolkit PROPERTY
+    INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)
+
+  set_property(TARGET cuda::toolkit PROPERTY
+    INTERFACE_INCLUDE_DIRECTORIES "${CUDA_INCLUDE_DIRS}")
 endif ()
 
 # Math libraries
