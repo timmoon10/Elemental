@@ -105,6 +105,7 @@ GPUManager::GPUManager(int device)
     // Initialize CUDA and cuBLAS objects
     EL_FORCE_CHECK_CUDA_NOSYNC(cudaSetDevice(device_));
     EL_FORCE_CHECK_CUDA(cudaStreamCreate(&stream_));
+    EL_FORCE_CHECK_CUDA(cudaEventCreate(&event_));
 }
 
 void GPUManager::InitializeCUBLAS()
@@ -129,6 +130,9 @@ GPUManager::~GPUManager()
 
         if (stream_ != nullptr)
             EL_FORCE_CHECK_CUDA(cudaStreamDestroy(stream_));
+
+        if (event_ != nullptr)
+            EL_FORCE_CHECK_CUDA(cudaEventDestroy(event_));
     }
     catch (std::exception const& e)
     {
@@ -181,6 +185,11 @@ void GPUManager::SetDevice(int device)
 cudaStream_t GPUManager::Stream()
 {
     return Instance()->stream_;
+}
+
+cudaEvent_t GPUManager::Event()
+{
+    return Instance()->event_;
 }
 
 void GPUManager::SynchronizeStream()
