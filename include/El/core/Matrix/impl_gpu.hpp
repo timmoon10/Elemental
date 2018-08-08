@@ -70,7 +70,7 @@ Matrix<Ring, Device::GPU>::Matrix(Matrix<Ring, Device::CPU> const& A)
     : Matrix{A.Height(), A.Width(), A.LDim()}
 {
     EL_DEBUG_CSE;
-    auto stream = GPUManager::Stream();
+    auto stream = this->Stream();
     EL_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(Ring),
                                     A.LockedBuffer(), A.LDim()*sizeof(Ring),
                                     A.Height()*sizeof(Ring), A.Width(),
@@ -359,7 +359,7 @@ Ring Matrix<Ring, Device::GPU>::Get(Int i, Int j) const
     EL_DEBUG_ONLY(this->AssertValidEntry(i, j))
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    auto stream = GPUManager::Stream();
+    auto stream = this->Stream();
     Ring val = Ring(0);
     EL_CHECK_CUDA(cudaMemcpyAsync( &val, &data_[i+j*this->LDim()],
                                    sizeof(Ring), cudaMemcpyDeviceToHost,
@@ -395,7 +395,7 @@ void Matrix<Ring, Device::GPU>::Set(Int i, Int j, Ring const& alpha)
         )
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    auto stream = GPUManager::Stream();
+    auto stream = this->Stream();
     EL_CHECK_CUDA(cudaMemcpyAsync( &data_[i+j*this->LDim()], &alpha,
                                    sizeof(Ring), cudaMemcpyHostToDevice,
                                    stream ));
@@ -627,6 +627,18 @@ Ring& Matrix<Ring, Device::GPU>::operator()(Int i, Int j)
 {
     LogicError("Attempted to get reference to entry of a GPU matrix");
     return data_[0];
+}
+
+template <typename Ring>
+cudaStream_t Matrix<Ring, Device::GPU>::Stream() const
+{
+    return GPUManager::Stream();
+}
+
+template <typename Ring>
+cudaEvent_t Matrix<Ring, Device::GPU>::Event() const
+{
+    return GPUManager::Event();
 }
 
 #if 0

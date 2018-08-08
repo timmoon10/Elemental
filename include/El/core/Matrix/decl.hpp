@@ -344,6 +344,9 @@ public:
     inline Ring& Ref(Int i, Int j=0) override;
     inline Ring& operator()(Int i, Int j=0) override;
 
+    cudaStream_t Stream() const;
+    cudaEvent_t Event() const;
+
 private:
 
     Int do_get_memory_size_() const EL_NO_EXCEPT override;
