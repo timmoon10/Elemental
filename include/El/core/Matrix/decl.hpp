@@ -347,8 +347,8 @@ public:
     cudaStream_t Stream() const;
     cudaEvent_t Event() const;
 
-    void SetStream(cudaStream_t stream) noexcept;
-    void SetEvent(cudaEvent_t event) noexcept;
+    void SetStream(cudaStream_t stream) EL_NO_EXCEPT;
+    void SetEvent(cudaEvent_t event) EL_NO_EXCEPT;
 
 private:
 

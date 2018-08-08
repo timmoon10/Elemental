@@ -642,13 +642,13 @@ cudaEvent_t Matrix<Ring, Device::GPU>::Event() const
 }
 
 template <typename Ring>
-void Matrix<Ring, Device::GPU>::SetStream(cudaStream_t stream) noexcept
+void Matrix<Ring, Device::GPU>::SetStream(cudaStream_t stream) EL_NO_EXCEPT
 {
     stream_ = stream;
 }
 
 template <typename Ring>
-void Matrix<Ring, Device::GPU>::SetEvent(cudaEvent_t event) noexcept
+void Matrix<Ring, Device::GPU>::SetEvent(cudaEvent_t event) EL_NO_EXCEPT
 {
     event_ = event;
 }
