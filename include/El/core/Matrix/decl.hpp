@@ -347,6 +347,9 @@ public:
     cudaStream_t Stream() const;
     cudaEvent_t Event() const;
 
+    void SetStream(cudaStream_t stream) noexcept;
+    void SetEvent(cudaEvent_t event) noexcept;
+
 private:
 
     Int do_get_memory_size_() const EL_NO_EXCEPT override;
@@ -374,6 +377,9 @@ private:
     Memory<Ring,Device::GPU> memory_;
 
     DevicePtr<Ring> data_=nullptr;
+
+    cudaStream_t stream_ = GPUManager::Stream();
+    cudaEvent_t event_ = GPUManager::Event();
 
 };// class Matrix<Ring,Device::GPU>
 #endif // HYDROGEN_HAVE_CUDA

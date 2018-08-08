@@ -632,13 +632,25 @@ Ring& Matrix<Ring, Device::GPU>::operator()(Int i, Int j)
 template <typename Ring>
 cudaStream_t Matrix<Ring, Device::GPU>::Stream() const
 {
-    return GPUManager::Stream();
+    return stream_;
 }
 
 template <typename Ring>
 cudaEvent_t Matrix<Ring, Device::GPU>::Event() const
 {
-    return GPUManager::Event();
+    return event_;
+}
+
+template <typename Ring>
+void Matrix<Ring, Device::GPU>::SetStream(cudaStream_t stream) noexcept
+{
+    stream_ = stream;
+}
+
+template <typename Ring>
+void Matrix<Ring, Device::GPU>::SetEvent(cudaEvent_t event) noexcept
+{
+    event_ = event;
 }
 
 #if 0
