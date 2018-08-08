@@ -58,29 +58,70 @@ void Gemm(Orientation orientA, Orientation orientB,
 
 namespace
 {
-
-template <Device D> struct BLASHelper;
-
-template <>
-struct BLASHelper<Device::CPU>
+template <typename T>
+static void Gemm_impl(
+    Orientation orientA, Orientation orientB,
+    T alpha,
+    Matrix<T,Device::CPU> const& A, Matrix<T,Device::CPU> const& B,
+    T beta, Matrix<T,Device::CPU>& C)
 {
-    template <typename... Ts>
-    static void Gemm(Ts&&... args)
-    {
-        blas::Gemm(std::forward<Ts>(args)...);
-    }
-};// struct BLASHelper<T,Device::CPU>
+    const char transA = OrientationToChar(orientA);
+    const char transB = OrientationToChar(orientB);
+    const Int m = C.Height();
+    const Int n = C.Width();
+    const Int k = (orientA == NORMAL ? A.Width() : A.Height());
+
+    blas::Gemm(transA, transB, m, n, k,
+               alpha, A.LockedBuffer(), A.LDim(),
+               B.LockedBuffer(), B.LDim(),
+               beta, C.Buffer(), C.LDim());
+}
 
 #ifdef HYDROGEN_HAVE_CUDA
-template <>
-struct BLASHelper<Device::GPU>
+template <typename T>
+static void Gemm_impl(
+    Orientation orientA, Orientation orientB,
+    T alpha,
+    Matrix<T,Device::GPU> const& A, Matrix<T,Device::GPU> const& B,
+    T beta, Matrix<T,Device::GPU>& C)
 {
-    template <typename... Ts>
-    static void Gemm(Ts&&... args)
-    {
-        cublas::Gemm(std::forward<Ts>(args)...);
-    }
-};// struct BLASHelper<T,Device::GPU>
+    const char transA = OrientationToChar(orientA);
+    const char transB = OrientationToChar(orientB);
+    const Int m = C.Height();
+    const Int n = C.Width();
+    const Int k = (orientA == NORMAL ? A.Width() : A.Height());
+
+    EL_CHECK_CUDA(cudaEventRecord(A.Event(), A.Stream()));
+    EL_CHECK_CUDA(cudaEventRecord(B.Event(), B.Stream()));
+
+    EL_CHECK_CUDA(cudaStreamWaitEvent(C.Stream(), A.Event(), 0));
+    EL_CHECK_CUDA(cudaStreamWaitEvent(C.Stream(), B.Event(), 0));
+
+    // Keep the old stream so we can restore it. I don't know if this
+    // is necessary, but it might be good to keep the cuBLAS handle
+    // "looking const" outside this function.
+    cudaStream_t old_stream;
+    EL_CHECK_CUBLAS(
+        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
+    EL_CHECK_CUBLAS(
+        cublasSetStream(GPUManager::cuBLASHandle(), C.Stream()));
+
+    cublas::Gemm(transA, transB, m, n, k,
+                 alpha, A.LockedBuffer(), A.LDim(),
+                 B.LockedBuffer(), B.LDim(),
+                 beta, C.Buffer(), C.LDim());
+
+    EL_CHECK_CUBLAS(
+        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
+
+    // Place an event in the stream after the call to cuBLAS.
+    EL_CHECK_CUDA(cudaEventRecord(C.Event(), C.Stream()));
+
+    // Make sure A and B are memory-safe until the GEMM has finished.
+    EL_CHECK_CUDA(cudaStreamWaitEvent(A.Stream(), C.Event(), 0));
+    EL_CHECK_CUDA(cudaStreamWaitEvent(B.Stream(), C.Event(), 0));
+}
+
 #endif // HYDROGEN_HAVE_CUDA
 
 }// namespace <anon>
@@ -133,18 +174,11 @@ void Gemm
                        "  B: ", B.Height(), "x", B.Width(), '\n',
                        "  C: ", C.Height(), "x", C.Width());
     }
-    const char transA = OrientationToChar(orientA);
-    const char transB = OrientationToChar(orientB);
-    const Int m = C.Height();
-    const Int n = C.Width();
+
     const Int k = (orientA == NORMAL ? A.Width() : A.Height());
     if (k != 0)
     {
-        BLASHelper<D>::Gemm(
-            transA, transB, m, n, k,
-            alpha, A.LockedBuffer(), A.LDim(),
-            B.LockedBuffer(), B.LDim(),
-            beta, C.Buffer(), C.LDim());
+        Gemm_impl(orientA, orientB, alpha, A, B, beta, C);
     }
     else
     {
