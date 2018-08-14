@@ -56,13 +56,13 @@ void Hadamard_GPU_impl(
     size_t height, size_t width,
     T const* X, size_t colStrideX, size_t rowStrideX,
     T const* Y, size_t colStrideY, size_t rowStrideY,
-    T* Z, size_t colStrideZ, size_t rowStrideZ )
+    T* Z, size_t colStrideZ, size_t rowStrideZ,
+    cudaStream_t stream)
 {
     if( height <= 0 || width <= 0 ) { return; }
     const size_t size = height * width;
     const size_t blockDim = 256;
     const size_t gridDim = (size + blockDim - 1) / blockDim;
-    auto stream = GPUManager::Stream();
     if( colStrideX == 1 && rowStrideX == height
         && colStrideY == 1 && rowStrideY == height
         && colStrideZ == 1 && rowStrideZ == height )
@@ -102,11 +102,11 @@ template void Hadamard_GPU_impl(
     size_t, size_t,
     float const*, size_t, size_t,
     float const*, size_t, size_t,
-    float*, size_t, size_t);
+    float*, size_t, size_t, cudaStream_t);
 template void Hadamard_GPU_impl(
     size_t, size_t,
     double const*, size_t, size_t,
     double const*, size_t, size_t,
-    double*, size_t, size_t);
+    double*, size_t, size_t, cudaStream_t);
 
 }// namespace El

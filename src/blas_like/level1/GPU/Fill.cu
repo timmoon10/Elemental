@@ -5,7 +5,7 @@
 
 namespace
 {
-  
+
 template <typename T>
 __global__ void Fill1D_kernel( size_t size, T value, T* buffer )
 {
@@ -37,14 +37,13 @@ namespace El
 template <typename T, typename>
 void Fill_GPU_impl(
     size_t height, size_t width, T const& value,
-    T* buffer, size_t ldim )
+    T* buffer, size_t ldim, cudaStream_t stream)
 {
     if( height <= 0 || width <= 0 ) { return; }
-    
+
     const size_t size = height * width;
     const size_t blockDim = 256;
     const size_t gridDim = (size + blockDim - 1) / blockDim;
-    cudaStream_t stream = GPUManager::Stream();
     if( value == T(0) )
     {
         if( width == 1 || ldim == height )
@@ -78,8 +77,8 @@ void Fill_GPU_impl(
 }
 
 template void Fill_GPU_impl(
-    size_t, size_t, float const&, float*, size_t);
+    size_t, size_t, float const&, float*, size_t, cudaStream_t);
 template void Fill_GPU_impl(
-    size_t, size_t, double const&, double*, size_t);
+    size_t, size_t, double const&, double*, size_t, cudaStream_t);
 
 }// namespace El

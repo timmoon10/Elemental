@@ -29,13 +29,13 @@ template <typename T, typename>
 void Copy_GPU_impl(
     size_t height, size_t width,
     T const* X, size_t colStrideX, size_t rowStrideX,
-    T* Y, size_t colStrideY, size_t rowStrideY )
+    T* Y, size_t colStrideY, size_t rowStrideY,
+    cudaStream_t stream)
 {
     if( height <= 0 || width <= 0 ) { return; }
     const size_t size = height * width;
     const size_t blockDim = 256;
     const size_t gridDim = (size + blockDim - 1) / blockDim;
-    cudaStream_t stream = GPUManager::Stream();
     EL_CHECK_CUDA_KERNEL( Copy_kernel<T>,
                           gridDim, blockDim, 0, stream,
                           ( height, width,
@@ -44,8 +44,10 @@ void Copy_GPU_impl(
 }
 
 template void Copy_GPU_impl(
-    size_t, size_t, float const*, size_t, size_t, float*, size_t, size_t);
+    size_t, size_t,
+    float const*, size_t, size_t, float*, size_t, size_t, cudaStream_t);
 template void Copy_GPU_impl(
-    size_t, size_t, double const*, size_t, size_t, double*, size_t, size_t);
+    size_t, size_t,
+    double const*, size_t, size_t, double*, size_t, size_t, cudaStream_t);
 
 }// namespace El
