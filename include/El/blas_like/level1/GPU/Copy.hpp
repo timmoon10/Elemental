@@ -6,13 +6,14 @@ namespace El
 
 template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
 void Copy_GPU_impl(size_t, size_t, T const*, size_t, size_t, T*, size_t, size_t,
-                   cudaStream_t stream = GPUManager::Stream());
+                   cudaStream_t = GPUManager::Stream());
 
 template <typename T,
           typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
           typename=void>
 void Copy_GPU_impl(size_t, size_t,
-                   T const*, size_t, size_t, T*, size_t, size_t, cudaStream_t)
+                   T const*, size_t, size_t, T*, size_t, size_t,
+                   cudaStream_t = GPUManager::Stream())
 {
     LogicError("Copy: Type not valid on GPU.");
 }
