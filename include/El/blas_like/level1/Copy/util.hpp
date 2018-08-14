@@ -265,11 +265,12 @@ struct Impl<T, Device::GPU, true>
         {
             const Int rowShift = Shift_(k, rowAlign, rowStride);
             const Int localWidth = Length_(width, rowShift, rowStride);
-            EL_CHECK_CUDA(cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
-                                            A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
-                                            height*sizeof(T), localWidth,
-                                            cudaMemcpyDeviceToDevice,
-                                            GPUManager::Stream()));
+            EL_CHECK_CUDA(
+                cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
+                                  A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
+                                  height*sizeof(T), localWidth,
+                                  cudaMemcpyDeviceToDevice,
+                                  GPUManager::Stream()));
         }
     }
 
@@ -282,11 +283,12 @@ struct Impl<T, Device::GPU, true>
         {
             const Int rowShift = Shift_(k, rowAlign, rowStride);
             const Int localWidth = Length_(width, rowShift, rowStride);
-            EL_CHECK_CUDA(cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
-                                            APortions+k*portionSize, height*sizeof(T),
-                                            height*sizeof(T), localWidth,
-                                            cudaMemcpyDeviceToDevice,
-                                            GPUManager::Stream()));
+            EL_CHECK_CUDA(
+                cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
+                                  APortions+k*portionSize, height*sizeof(T),
+                                  height*sizeof(T), localWidth,
+                                  cudaMemcpyDeviceToDevice,
+                                  GPUManager::Stream()));
         }
     }
 
@@ -362,35 +364,6 @@ struct Impl<T, Device::GPU, true>
 #endif // HYDROGEN_HAVE_CUDA
 
 }// namespace details
-
-
-template <Device SrcD, Device DestD, typename T>
-void InterDeviceMemCopy2D(
-    T * EL_RESTRICT const dest, Int const dest_ldim,
-    T const* EL_RESTRICT const src, Int const src_ldim,
-    Int const height, Int const width)
-{
-#ifndef EL_RELEASE
-    if ((dest_ldim < height) || (src_ldim < height))
-        LogicError("InterDeviceMemCopy2D: Bad ldim/height.");
-#endif // !EL_RELEASE
-    InterDeviceCopy<SrcD,DestD>::MemCopy2D(
-        dest, dest_ldim, src, src_ldim, height, width);
-}
-
-template <Device SrcD, Device DestD, typename T>
-void InterDeviceMemCopy2DAsync(
-    T * EL_RESTRICT const dest, Int const dest_ldim,
-    T const* EL_RESTRICT const src, Int const src_ldim,
-    Int const height, Int const width)
-{
-#ifndef EL_RELEASE
-    if ((dest_ldim < height) || (src_ldim < height))
-        LogicError("InterDeviceMemCopy2D: Bad ldim/height.");
-#endif // !EL_RELEASE
-    InterDeviceCopy<SrcD,DestD>::MemCopy2DAsync(
-        dest, dest_ldim, src, src_ldim, height, width);
-}
 
 template<typename T, Device D>
 void InterleaveMatrix

@@ -359,11 +359,16 @@ template<typename S,typename T,
          typename=EnableIf<CanCast<S,T>>>
 void Copy( const Matrix<S>& A, Matrix<T>& B );
 
-template <typename T, Device D1, Device D2,
-          typename = typename std::enable_if<(D1!=D2)>::type>
-void Copy(Matrix<T,D1> const&, Matrix<T,D2>&);
-template <typename T, Device D1, Device D2>
-void CopyAsync(Matrix<T,D1> const&, Matrix<T,D2>&);
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T>
+void Copy(Matrix<T,Device::CPU> const&, Matrix<T,Device::GPU>&);
+template <typename T>
+void Copy(Matrix<T,Device::GPU> const&, Matrix<T,Device::CPU>&);
+template <typename T>
+void CopyAsync(Matrix<T,Device::CPU> const&, Matrix<T,Device::GPU>&);
+template <typename T>
+void CopyAsync(Matrix<T,Device::GPU> const&, Matrix<T,Device::CPU>&);
+#endif // HYDROGEN_HAVE_CUDA
 
 template <typename T>
 void CopyAsync(ElementalMatrix<T> const& A, ElementalMatrix<T>& B);
