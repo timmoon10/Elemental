@@ -26,6 +26,7 @@ void Scatter
     const Int colStride = B.ColStride();
     const Int rowStride = B.RowStride();
     B.Resize(m, n);
+
     if (B.CrossSize() != 1 || B.RedundantSize() != 1)
     {
         // TODO(poulson):
@@ -45,6 +46,9 @@ void Scatter
     if (target == mpi::UNDEFINED)
         return;
 
+    SyncInfo<D> syncInfoA(A.LockedMatrix()),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
     if (B.DistSize() == 1)
     {
         Copy(A.LockedMatrix(), B.Matrix());
@@ -60,16 +64,16 @@ void Scatter
         recvBuf = buffer.data() + sendSize;
 
         // Pack the send buffer
-        copy::util::StridedPack<T,D>
-        (m, n,
-          B.ColAlign(), colStride,
-          B.RowAlign(), rowStride,
-          A.LockedBuffer(), A.LDim(),
-          sendBuf,          pkgSize);
+        copy::util::StridedPack(
+            m, n,
+            B.ColAlign(), colStride,
+            B.RowAlign(), rowStride,
+            A.LockedBuffer(), A.LDim(),
+            sendBuf,          pkgSize, syncInfoA);
 
         // Scatter from the root
-        mpi::Scatter
-        (sendBuf, pkgSize, recvBuf, pkgSize, target, B.DistComm());
+        mpi::Scatter(
+            sendBuf, pkgSize, recvBuf, pkgSize, target, B.DistComm());
     }
     else
     {
@@ -77,16 +81,16 @@ void Scatter
         recvBuf = buffer.data();
 
         // Perform the receiving portion of the scatter from the non-root
-        mpi::Scatter
-        (static_cast<T*>(0), pkgSize,
-          recvBuf,            pkgSize, target, B.DistComm());
+        mpi::Scatter(
+            static_cast<T*>(0), pkgSize,
+            recvBuf,            pkgSize, target, B.DistComm());
     }
 
     // Unpack
-    copy::util::InterleaveMatrix<T,D>
-    (B.LocalHeight(), B.LocalWidth(),
-      recvBuf,    1, B.LocalHeight(),
-      B.Buffer(), 1, B.LDim());
+    copy::util::InterleaveMatrix(
+        B.LocalHeight(), B.LocalWidth(),
+        recvBuf,    1, B.LocalHeight(),
+        B.Buffer(), 1, B.LDim(), syncInfoB);
 }
 
 template<typename T>

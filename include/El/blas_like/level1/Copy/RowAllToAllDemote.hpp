@@ -38,6 +38,7 @@ void RowAllToAllDemote
     const Int maxLocalWidth = MaxLength(width,rowStride);
     const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
 
+    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
     if(rowDiff == 0)
     {
         if(B.PartialUnionRowStride() == 1)
@@ -51,25 +52,25 @@ void RowAllToAllDemote
             T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
             // Pack
-            util::PartialRowStridedPack<T,D>
-            (A.LocalHeight(), width,
-              rowAlign, rowStride,
-              rowStrideUnion, rowStridePart, rowRankPart,
-              A.RowShift(),
-              A.LockedBuffer(), A.LDim(),
-              firstBuf,         portionSize);
+            util::PartialRowStridedPack(
+                A.LocalHeight(), width,
+                rowAlign, rowStride,
+                rowStrideUnion, rowStridePart, rowRankPart,
+                A.RowShift(),
+                A.LockedBuffer(), A.LDim(),
+                firstBuf,         portionSize, syncInfoA);
 
             // Simultaneously Scatter in rows and Gather in columns
-            mpi::AllToAll
-            (firstBuf,  portionSize,
-              secondBuf, portionSize, B.PartialUnionRowComm());
+            mpi::AllToAll(
+                firstBuf,  portionSize,
+                secondBuf, portionSize, B.PartialUnionRowComm());
 
             // Unpack
-            util::ColStridedUnpack<T,D>
-            (height, B.LocalWidth(),
-              A.ColAlign(), rowStrideUnion,
-              secondBuf, portionSize,
-              B.Buffer(), B.LDim());
+            util::ColStridedUnpack(
+                height, B.LocalWidth(),
+                A.ColAlign(), rowStrideUnion,
+                secondBuf, portionSize,
+                B.Buffer(), B.LDim(), syncInfoB);
         }
     }
     else
@@ -86,31 +87,32 @@ void RowAllToAllDemote
         T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
         // Pack
-        util::PartialRowStridedPack<T,D>
-        (A.LocalHeight(), width,
-          rowAlign, rowStride,
-          rowStrideUnion, rowStridePart, sendRowRankPart,
-          A.RowShift(),
-          A.LockedBuffer(), A.LDim(),
-          secondBuf,        portionSize);
+        util::PartialRowStridedPack(
+            A.LocalHeight(), width,
+            rowAlign, rowStride,
+            rowStrideUnion, rowStridePart, sendRowRankPart,
+            A.RowShift(),
+            A.LockedBuffer(), A.LDim(),
+            secondBuf,        portionSize,
+            syncInfoA);
 
         // Simultaneously Scatter in rows and Gather in columns
-        mpi::AllToAll
-        (secondBuf, portionSize,
-          firstBuf,  portionSize, B.PartialUnionRowComm());
+        mpi::AllToAll(
+            secondBuf, portionSize,
+            firstBuf,  portionSize, B.PartialUnionRowComm());
 
         // Realign the result
-        mpi::SendRecv
-        (firstBuf,  rowStrideUnion*portionSize, sendRowRankPart,
-          secondBuf, rowStrideUnion*portionSize, recvRowRankPart,
-          B.PartialRowComm());
+        mpi::SendRecv(
+            firstBuf,  rowStrideUnion*portionSize, sendRowRankPart,
+            secondBuf, rowStrideUnion*portionSize, recvRowRankPart,
+            B.PartialRowComm());
 
         // Unpack
-        util::ColStridedUnpack<T,D>
-        (height, B.LocalWidth(),
-          A.ColAlign(), rowStrideUnion,
-          secondBuf,  portionSize,
-          B.Buffer(), B.LDim());
+        util::ColStridedUnpack(
+            height, B.LocalWidth(),
+            A.ColAlign(), rowStrideUnion,
+            secondBuf,  portionSize,
+            B.Buffer(), B.LDim(), syncInfoB);
     }
 }
 

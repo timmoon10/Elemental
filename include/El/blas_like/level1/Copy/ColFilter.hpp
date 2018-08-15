@@ -36,12 +36,18 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
     const Int localWidth = B.LocalWidth();
 
     const Int rowDiff = B.RowAlign() - A.RowAlign();
+
+    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
     if( rowDiff == 0 )
     {
-        util::InterleaveMatrix<T,D>
-        ( localHeight, localWidth,
-          A.LockedBuffer(colShift,0), colStride, A.LDim(),
-          B.Buffer(),                 1,         B.LDim() );
+        util::InterleaveMatrix(
+            localHeight, localWidth,
+            A.LockedBuffer(colShift,0), colStride, A.LDim(),
+            B.Buffer(),                 1,         B.LDim(),
+            syncInfoA);
+        // FIXME: need to sync A and B
     }
     else
     {
@@ -60,10 +66,11 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
         T* recvBuf = buffer.data() + sendSize;
 
         // Pack
-        util::InterleaveMatrix<T,D>
-        ( localHeight, localWidthA,
-          A.LockedBuffer(colShift,0), colStride, A.LDim(),
-          sendBuf,                    1,         localHeight );
+        util::InterleaveMatrix(
+            localHeight, localWidthA,
+            A.LockedBuffer(colShift,0), colStride, A.LDim(),
+            sendBuf,                    1,         localHeight,
+            syncInfoA);
 
         // Realign
         mpi::SendRecv
@@ -71,10 +78,10 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
           recvBuf, recvSize, recvRowRank, B.RowComm() );
 
         // Unpack
-        util::InterleaveMatrix<T,D>
-        ( localHeight, localWidth,
-          recvBuf,    1, localHeight,
-          B.Buffer(), 1, B.LDim() );
+        util::InterleaveMatrix(
+            localHeight, localWidth,
+            recvBuf,    1, localHeight,
+            B.Buffer(), 1, B.LDim(), syncInfoB);
     }
 }
 
@@ -183,7 +190,7 @@ void ColFilter
         util::InterleaveMatrix
         ( localHeight, localWidth,
           recvBuf,    1, localHeight,
-          B.Buffer(), 1, B.LDim() );
+          B.Buffer(), 1, B.LDim(), SyncInfo<Device::CPU>{} );
     }
 }
 

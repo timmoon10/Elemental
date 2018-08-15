@@ -37,6 +37,11 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
 
     if (A.Participating())
     {
+        // FIXME (trb): Actually sync properly after calls that use these!
+        SyncInfo<D>
+            syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+            syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
         const Int rowDiff = B.RowAlign()-A.RowAlign();
         if (rowDiff == 0)
         {
@@ -62,24 +67,25 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 T* recvBuf = buffer.data() + portionSize;
 
                 // Pack
-                util::InterleaveMatrix<T,D>
-                (A.LocalHeight(), localWidth,
-                  A.LockedBuffer(), 1, A.LDim(),
-                  sendBuf,          1, A.LocalHeight());
+                util::InterleaveMatrix(
+                    A.LocalHeight(), localWidth,
+                    A.LockedBuffer(), 1, A.LDim(),
+                    sendBuf,          1, A.LocalHeight(), syncInfoA);
 
                 // Communicate
                 mpi::AllGather
                 (sendBuf, portionSize, recvBuf, portionSize, A.ColComm());
 
                 // Unpack
-                util::ColStridedUnpack<T,D>
-                (height, localWidth, A.ColAlign(), colStride,
-                  recvBuf,    portionSize,
-                  B.Buffer(), B.LDim());
+                util::ColStridedUnpack(
+                    height, localWidth, A.ColAlign(), colStride,
+                    recvBuf,    portionSize,
+                    B.Buffer(), B.LDim(), syncInfoA);
             }
         }
         else
         {
+
 #ifdef EL_UNALIGNED_WARNINGS
             if (A.Grid().Rank() == 0)
                 cerr << "Unaligned [U,V] -> [* ,V]." << endl;
@@ -101,8 +107,9 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                     bcastBuf   = buffer.data() + localWidth;
 
                     // Pack
-                    util::DeviceStridedMemCopy<D>(
-                        sendBuf, 1, A.LockedBuffer(), A.LDim(), localWidth);
+                    util::DeviceStridedMemCopy(
+                        sendBuf, 1, A.LockedBuffer(), A.LDim(), localWidth,
+                        syncInfoA);
 
                     // Communicate
                     mpi::SendRecv
@@ -116,11 +123,12 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 }
 
                 // Communicate
-                mpi::Broadcast
-                (bcastBuf, localWidthB, A.ColAlign(), A.ColComm());
+                mpi::Broadcast(
+                    bcastBuf, localWidthB, A.ColAlign(), A.ColComm());
 
-                util::DeviceStridedMemCopy<D>(
-                    B.Buffer(), B.LDim(), bcastBuf, 1, localWidthB);
+                util::DeviceStridedMemCopy(
+                    B.Buffer(), B.LDim(), bcastBuf, 1, localWidthB,
+                    syncInfoB);
             }
             else
             {
@@ -135,10 +143,11 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 T* secondBuf = buffer.data() + portionSize;
 
                 // Pack
-                util::InterleaveMatrix<T,D>
-                (A.LocalHeight(), A.LocalWidth(),
-                  A.LockedBuffer(), 1, A.LDim(),
-                  secondBuf,        1, A.LocalHeight());
+                util::InterleaveMatrix(
+                    A.LocalHeight(), A.LocalWidth(),
+                    A.LockedBuffer(), 1, A.LDim(),
+                    secondBuf,        1, A.LocalHeight(),
+                    syncInfoA);
 
                 // Realign
                 mpi::SendRecv
@@ -151,10 +160,10 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                   secondBuf, portionSize, A.ColComm());
 
                 // Unpack the contents of each member of the column team
-                util::ColStridedUnpack<T,D>
-                (height, B.LocalWidth(), A.ColAlign(), colStride,
-                  secondBuf,  portionSize,
-                  B.Buffer(), B.LDim());
+                util::ColStridedUnpack(
+                    height, B.LocalWidth(), A.ColAlign(), colStride,
+                    secondBuf,  portionSize,
+                    B.Buffer(), B.LDim(), syncInfoA);
             }
         }
     }
@@ -252,21 +261,22 @@ void ColAllGather
                 T* recvBuf = &buffer[portionSize];
 
                 // Pack
-                util::InterleaveMatrix
-                (A.LocalHeight(), localWidth,
-                  A.LockedBuffer(), 1, A.LDim(),
-                  sendBuf,          1, A.LocalHeight());
+                util::InterleaveMatrix(
+                    A.LocalHeight(), localWidth,
+                    A.LockedBuffer(), 1, A.LDim(),
+                    sendBuf,          1, A.LocalHeight(),
+                    SyncInfo<Device::CPU>{});
 
                 // Communicate
-                mpi::AllGather
-                (sendBuf, portionSize, recvBuf, portionSize, A.ColComm());
+                mpi::AllGather(
+                    sendBuf, portionSize, recvBuf, portionSize, A.ColComm());
 
                 // Unpack
-                util::BlockedColStridedUnpack
-                (height, localWidth, A.ColAlign(), colStride,
-                  A.BlockHeight(), A.ColCut(),
-                  recvBuf, portionSize,
-                  B.Buffer(), B.LDim());
+                util::BlockedColStridedUnpack(
+                    height, localWidth, A.ColAlign(), colStride,
+                    A.BlockHeight(), A.ColCut(),
+                    recvBuf, portionSize,
+                    B.Buffer(), B.LDim());
             }
         }
         else
@@ -304,26 +314,27 @@ void ColAllGather
                 T* secondBuf = &buffer[portionSize];
 
                 // Pack
-                util::InterleaveMatrix
-                (localHeightA, localWidth,
-                  A.LockedBuffer(), 1, A.LDim(),
-                  secondBuf,        1, localHeightA);
+                util::InterleaveMatrix(
+                    localHeightA, localWidth,
+                    A.LockedBuffer(), 1, A.LDim(),
+                    secondBuf,        1, localHeightA,
+                    SyncInfo<Device::CPU>{});
 
                 // Realign
-                mpi::SendRecv
-                (secondBuf, portionSize, sendRowRank,
-                  firstBuf,  portionSize, recvRowRank, A.RowComm());
+                mpi::SendRecv(
+                    secondBuf, portionSize, sendRowRank,
+                    firstBuf,  portionSize, recvRowRank, A.RowComm());
 
                 // Perform the column AllGather
-                mpi::AllGather
-                (firstBuf,  portionSize,
-                  secondBuf, portionSize, A.ColComm());
+                mpi::AllGather(
+                    firstBuf,  portionSize,
+                    secondBuf, portionSize, A.ColComm());
 
                 // Unpack
-                util::BlockedColStridedUnpack
-                (height, localWidthB, A.ColAlign(), colStride,
-                  blockHeight, colCut, secondBuf, portionSize,
-                  B.Buffer(), B.LDim());
+                util::BlockedColStridedUnpack(
+                    height, localWidthB, A.ColAlign(), colStride,
+                    blockHeight, colCut, secondBuf, portionSize,
+                    B.Buffer(), B.LDim());
             }
         }
     }

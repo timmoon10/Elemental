@@ -277,6 +277,8 @@ class DistMatrix;
 
 } // namespace El
 
+#include <El/core/SyncInfo.hpp>
+
 #include <El/core/AbstractMatrix.hpp>
 #include <El/core/Matrix/decl.hpp>
 #include <El/core/DistMap/decl.hpp>

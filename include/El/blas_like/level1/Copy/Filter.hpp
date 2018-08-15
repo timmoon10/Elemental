@@ -24,12 +24,16 @@ void Filter
     if( !B.Participating() )
         return;
 
+    SyncInfo<D> syncInfoA(A.LockedMatrix());
+
     const Int colShift = B.ColShift();
     const Int rowShift = B.RowShift();
-    util::InterleaveMatrix<T,D>
-    ( B.LocalHeight(), B.LocalWidth(),
-      A.LockedBuffer(colShift,rowShift), B.ColStride(), B.RowStride()*A.LDim(),
-      B.Buffer(),                        1,             B.LDim() );
+    util::InterleaveMatrix(
+        B.LocalHeight(), B.LocalWidth(),
+        A.LockedBuffer(colShift,rowShift), B.ColStride(), B.RowStride()*A.LDim(),
+        B.Buffer(),                        1,             B.LDim(),
+        syncInfoA);
+    // FIXME: Need to sync A and B here
 }
 
 template<typename T,Dist U,Dist V,Device D,typename,typename>

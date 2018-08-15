@@ -112,8 +112,8 @@ void TranslateBetweenGrids
             for(int j=0; j<rowStrideA; ++j)
                 ranks[i+j*colStrideA] = j+i*rowStrideA;
     }
-    mpi::Translate
-    (owningGroupA, sizeA, ranks.data(), viewingCommB, rankMap.data());
+    mpi::Translate(
+        owningGroupA, sizeA, ranks.data(), viewingCommB, rankMap.data());
 
     // Have each member of A's grid individually send to all numRow x numCol
     // processes in order, while the members of this grid receive from all
@@ -126,6 +126,9 @@ void TranslateBetweenGrids
 
     simple_buffer<T,D1> send_buf(inAGrid ? maxSendSize : 0);
     simple_buffer<T,D2> recv_buf(inBGrid ? maxSendSize : 0);
+
+    SyncInfo<D1> syncInfoA(A.LockedMatrix());
+    SyncInfo<D2> syncInfoB(B.LockedMatrix());
 
     T* sendBuf = send_buf.data();
     T* recvBuf = recv_buf.data();
@@ -147,11 +150,11 @@ void TranslateBetweenGrids
                 // Pack the data
                 Int sendHeight = Length(mLocA,colSend,numColSends);
                 Int sendWidth = Length(nLocA,rowSend,numRowSends);
-                copy::util::InterleaveMatrix<T,D1>
-                (sendHeight, sendWidth,
-                  A.LockedBuffer(colSend,rowSend),
-                  numColSends, numRowSends*A.LDim(),
-                  sendBuf, 1, sendHeight);
+                copy::util::InterleaveMatrix(
+                    sendHeight, sendWidth,
+                    A.LockedBuffer(colSend,rowSend),
+                    numColSends, numRowSends*A.LDim(),
+                    sendBuf, 1, sendHeight, syncInfoA);
                 // Send data
                 const Int recvVCRank = recvRow + recvCol*colStride;
                 const Int recvViewingRank = B.Grid().VCToViewing(recvVCRank);
@@ -208,11 +211,12 @@ void TranslateBetweenGrids
                           viewingCommB);
 
                         // Unpack the data
-                        copy::util::InterleaveMatrix<T,D2>
-                        (sendHeight, sendWidth,
-                          recvBuf, 1, sendHeight,
-                          B.Buffer(localColOffset,localRowOffset),
-                          colLCM/colStride, (rowLCM/rowStride)*B.LDim());
+                        copy::util::InterleaveMatrix(
+                            sendHeight, sendWidth,
+                            recvBuf, 1, sendHeight,
+                            B.Buffer(localColOffset,localRowOffset),
+                            colLCM/colStride, (rowLCM/rowStride)*B.LDim(),
+                            syncInfoB);
 
                         // Set up the next send col
                         sendCol = Mod(sendCol+rowStride,rowStrideA);
@@ -303,6 +307,9 @@ void TranslateBetweenGrids
     simple_buffer<T,D1> sendBuffer(rankA == 0 ? height*width : 0);
     simple_buffer<T,D2> bcastBuffer(B.Participating() ? height*width : 0);
 
+    SyncInfo<D1> syncInfoA(A.LockedMatrix());
+    SyncInfo<D2> syncInfoB(B.LockedMatrix());
+
     // Send from the root of A to the root of B's matrix's grid
     mpi::Request<T> sendRequest;
     if(rankA == 0)
@@ -310,14 +317,14 @@ void TranslateBetweenGrids
         if (sendBuffer.size() != size_t(height*width))
             RuntimeError("TranslateBetweenGrids: Bad sendBuffer size!");
 
-        util::InterleaveMatrix<T,D1>
-        (height, width,
-         A.LockedBuffer(), 1, A.LDim(),
-         sendBuffer.data(), 1, height);
+        util::InterleaveMatrix(
+            height, width,
+            A.LockedBuffer(), 1, A.LDim(),
+            sendBuffer.data(), 1, height, syncInfoA);
         // TODO(poulson): Use mpi::Translate instead?
         const Int recvRank = (usingViewingB ? B.Grid().VCToViewing(0) : 0);
-        mpi::ISend
-        (sendBuffer.data(), height*width, recvRank, activeCommB, sendRequest);
+        mpi::ISend(
+            sendBuffer.data(), height*width, recvRank, activeCommB, sendRequest);
     }
 
     // Receive on the root of B's matrix's grid and then broadcast
@@ -336,10 +343,10 @@ void TranslateBetweenGrids
 
         mpi::Broadcast(bcastBuffer.data(), height*width, 0, B.RedundantComm());
 
-        util::InterleaveMatrix<T,D2>
-            (height, width,
-             bcastBuffer.data(), 1, height,
-             B.Buffer(),  1, B.LDim());
+        util::InterleaveMatrix(
+            height, width,
+            bcastBuffer.data(), 1, height,
+            B.Buffer(),  1, B.LDim(), syncInfoB);
     }
 
     if(rankA == 0)

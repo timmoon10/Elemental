@@ -41,14 +41,18 @@ void PartialColFilter_impl
 
     const Int localHeight = B.LocalHeight();
 
+    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
     if( colDiff == 0 )
     {
         const Int colShift = B.ColShift();
         const Int colOffset = (colShift-colShiftA) / colStridePart;
-        util::InterleaveMatrix<T,D>
-        ( localHeight, width,
-          A.LockedBuffer(colOffset,0), colStrideUnion, A.LDim(),
-          B.Buffer(),                  1,              B.LDim() );
+        util::InterleaveMatrix(
+            localHeight, width,
+            A.LockedBuffer(colOffset,0), colStrideUnion, A.LDim(),
+            B.Buffer(),                  1,              B.LDim(),
+            syncInfoA);
     }
     else
     {
@@ -73,21 +77,23 @@ void PartialColFilter_impl
         T* sendBuf = buffer.data();
         T* recvBuf = buffer.data() + sendSize;
         // Pack
-        util::InterleaveMatrix<T,D>
-        ( localHeightSend, width,
-          A.LockedBuffer(sendColOffset,0), colStrideUnion, A.LDim(),
-          sendBuf,                         1,              localHeightSend );
+        util::InterleaveMatrix(
+            localHeightSend, width,
+            A.LockedBuffer(sendColOffset,0), colStrideUnion, A.LDim(),
+            sendBuf,                         1,              localHeightSend,
+            syncInfoA);
+
         // Change the column alignment
-        mpi::SendRecv
-        ( sendBuf, sendSize, sendColRankPart,
-          recvBuf, recvSize, recvColRankPart, B.PartialColComm() );
+        mpi::SendRecv(
+            sendBuf, sendSize, sendColRankPart,
+            recvBuf, recvSize, recvColRankPart, B.PartialColComm());
 
         // Unpack
         // ------
-        util::InterleaveMatrix<T,D>
-        ( localHeight, width,
-          recvBuf,    1, localHeight,
-          B.Buffer(), 1, B.LDim() );
+        util::InterleaveMatrix(
+            localHeight, width,
+            recvBuf,    1, localHeight,
+            B.Buffer(), 1, B.LDim(), syncInfoB);
     }
 }
 

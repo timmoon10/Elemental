@@ -27,21 +27,23 @@ void AllReduce(Matrix<T,D>& A, mpi::Comm comm, mpi::Op op)
     }
     else
     {
+        SyncInfo<D> syncInfoA(A);
+
         simple_buffer<T,D> buf(size);
 
         // Pack
-        copy::util::InterleaveMatrix<T,D>
-            (height, width,
-              A.LockedBuffer(), 1, A.LDim(),
-              buf.data(),       1, height);
+        copy::util::InterleaveMatrix(
+            height, width,
+            A.LockedBuffer(), 1, A.LDim(),
+            buf.data(),       1, height, syncInfoA);
 
         mpi::AllReduce(buf.data(), size, op, comm);
 
         // Unpack
-        copy::util::InterleaveMatrix<T,D>
-            (height,        width,
-             buf.data(), 1, height,
-             A.Buffer(), 1, A.LDim());
+        copy::util::InterleaveMatrix(
+            height,        width,
+            buf.data(), 1, height,
+            A.Buffer(), 1, A.LDim(), syncInfoA);
     }
 }
 

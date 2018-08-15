@@ -27,6 +27,8 @@ void AllGather
     B.SetGrid( A.Grid() );
     B.Resize( height, width );
 
+    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+
     if( A.Participating() )
     {
         if( A.DistSize() == 1 )
@@ -52,22 +54,23 @@ void AllGather
             T* recvBuf = recv_buffer.data();
 #endif
             // Pack
-            util::InterleaveMatrix<T,D>// D1
-            ( A.LocalHeight(), A.LocalWidth(),
-              A.LockedBuffer(), 1, A.LDim(),
-              sendBuf,          1, A.LocalHeight() );
+            util::InterleaveMatrix(
+                A.LocalHeight(), A.LocalWidth(),
+                A.LockedBuffer(), 1, A.LDim(),
+                sendBuf,          1, A.LocalHeight(),
+                syncInfoA);
 
             // Communicate
-            mpi::AllGather
-            ( sendBuf, portionSize, recvBuf, portionSize, A.DistComm() );
+            mpi::AllGather(
+                sendBuf, portionSize, recvBuf, portionSize, A.DistComm());
 
             // Unpack
-            util::StridedUnpack<T,D>// D2
-            ( height, width,
-              A.ColAlign(), colStride,
-              A.RowAlign(), rowStride,
-              recvBuf, portionSize,
-              B.Buffer(), B.LDim() );
+            util::StridedUnpack(
+                height, width,
+                A.ColAlign(), colStride,
+                A.RowAlign(), rowStride,
+                recvBuf, portionSize,
+                B.Buffer(), B.LDim(), syncInfoB);
         }
     }
     if( A.Grid().InGrid() && A.CrossComm() != mpi::COMM_SELF )

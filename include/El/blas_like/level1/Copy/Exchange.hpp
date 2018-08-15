@@ -12,7 +12,7 @@
 namespace El {
 namespace copy {
 
-template<typename T,Device D,typename=EnableIf<IsDeviceValidType<T,D>>>
+template<typename T, Device D,typename=EnableIf<IsDeviceValidType<T,D>>>
 void Exchange_impl
 ( const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,
@@ -20,7 +20,6 @@ void Exchange_impl
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(AssertSameGrids( A, B ))
-
 
     const int myRank = mpi::Rank( comm );
     EL_DEBUG_ONLY(
@@ -46,20 +45,23 @@ void Exchange_impl
     const bool contigA = ( A.LocalHeight() == A.LDim() );
     const bool contigB = ( B.LocalHeight() == B.LDim() );
 
+    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
     if( contigA && contigB )
     {
-        mpi::SendRecv
-        ( A.LockedBuffer(), sendSize, sendRank,
-          B.Buffer(),       recvSize, recvRank, comm );
+        mpi::SendRecv(
+            A.LockedBuffer(), sendSize, sendRank,
+            B.Buffer(),       recvSize, recvRank, comm );
     }
     else if( contigB )
     {
         // Pack A's data
         simple_buffer<T,D> buf(sendSize);
-        copy::util::InterleaveMatrix<T,D>
-        ( localHeightA, localWidthA,
-          A.LockedBuffer(), 1, A.LDim(),
-          buf.data(),       1, localHeightA );
+        copy::util::InterleaveMatrix(
+            localHeightA, localWidthA,
+            A.LockedBuffer(), 1, A.LDim(),
+            buf.data(),       1, localHeightA, syncInfoA);
 
         // Exchange with the partner
         mpi::SendRecv
@@ -70,36 +72,36 @@ void Exchange_impl
     {
         // Exchange with the partner
         simple_buffer<T,D> buf(recvSize);
-        mpi::SendRecv
-        ( A.LockedBuffer(), sendSize, sendRank,
-          buf.data(),       recvSize, recvRank, comm );
+        mpi::SendRecv(
+            A.LockedBuffer(), sendSize, sendRank,
+            buf.data(),       recvSize, recvRank, comm );
 
         // Unpack
-        copy::util::InterleaveMatrix<T,D>
-        ( localHeightB, localWidthB,
-          buf.data(), 1, localHeightB,
-          B.Buffer(), 1, B.LDim() );
+        copy::util::InterleaveMatrix(
+            localHeightB, localWidthB,
+            buf.data(), 1, localHeightB,
+            B.Buffer(), 1, B.LDim(), syncInfoB);
     }
     else
     {
         // Pack A's data
         simple_buffer<T,D> sendBuf(sendSize);
-        copy::util::InterleaveMatrix<T,D>
-        ( localHeightA, localWidthA,
-          A.LockedBuffer(), 1, A.LDim(),
-          sendBuf.data(),   1, localHeightA );
+        copy::util::InterleaveMatrix(
+            localHeightA, localWidthA,
+            A.LockedBuffer(), 1, A.LDim(),
+            sendBuf.data(),   1, localHeightA, syncInfoA);
 
         // Exchange with the partner
         simple_buffer<T,D> recvBuf(recvSize);
-        mpi::SendRecv
-        ( sendBuf.data(), sendSize, sendRank,
-          recvBuf.data(), recvSize, recvRank, comm );
+        mpi::SendRecv(
+            sendBuf.data(), sendSize, sendRank,
+            recvBuf.data(), recvSize, recvRank, comm );
 
         // Unpack
-        copy::util::InterleaveMatrix<T,D>
-        ( localHeightB, localWidthB,
-          recvBuf.data(), 1, localHeightB,
-          B.Buffer(),     1, B.LDim() );
+        copy::util::InterleaveMatrix(
+            localHeightB, localWidthB,
+            recvBuf.data(), 1, localHeightB,
+            B.Buffer(),     1, B.LDim(), syncInfoB);
     }
 }
 

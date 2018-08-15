@@ -36,13 +36,17 @@ void RowFilter_impl
     const Int localHeight = B.LocalHeight();
     const Int localWidth = B.LocalWidth();
 
+    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
     const Int colDiff = B.ColAlign() - A.ColAlign();
     if( colDiff == 0 )
     {
-        util::InterleaveMatrix<T,D>
-        ( localHeight, localWidth,
-          A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
-          B.Buffer(),                 1, B.LDim() );
+        util::InterleaveMatrix(
+            localHeight, localWidth,
+            A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
+            B.Buffer(),                 1, B.LDim(), syncInfoA);
+        // FIXME -- Need to Sync A and B here
     }
     else
     {
@@ -62,21 +66,21 @@ void RowFilter_impl
         T* recvBuf = buffer.data() + sendSize;
 
         // Pack
-        util::InterleaveMatrix<T,D>
-        ( localHeightA, localWidth,
-          A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
-          sendBuf,                    1, localHeightA );
+        util::InterleaveMatrix(
+            localHeightA, localWidth,
+            A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
+            sendBuf,                    1, localHeightA, syncInfoA);
 
         // Realign
-        mpi::SendRecv
-        ( sendBuf, sendSize, sendColRank,
-          recvBuf, recvSize, recvColRank, B.ColComm() );
+        mpi::SendRecv(
+            sendBuf, sendSize, sendColRank,
+            recvBuf, recvSize, recvColRank, B.ColComm());
 
         // Unpack
-        util::InterleaveMatrix<T,D>
-        ( localHeight, localWidth,
-          recvBuf,    1, localHeight,
-          B.Buffer(), 1, B.LDim() );
+        util::InterleaveMatrix(
+            localHeight, localWidth,
+            recvBuf,    1, localHeight,
+            B.Buffer(), 1, B.LDim(), syncInfoA);
     }
 }
 
@@ -185,7 +189,7 @@ void RowFilter
         util::InterleaveMatrix
         ( localHeight, localWidth,
           recvBuf,    1, localHeight,
-          B.Buffer(), 1, B.LDim() );
+          B.Buffer(), 1, B.LDim(), SyncInfo<Device::CPU>{} );
     }
 }
 

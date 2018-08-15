@@ -50,8 +50,6 @@ using SameDevice = EnumSame<Device,D1,D2>;
 // Basic inter-device memory operations
 template <Device SrcD, Device DestD> struct InterDeviceCopy;
 
-
-
 #ifdef HYDROGEN_HAVE_CUDA
 
 template <Device D1, Device D2>

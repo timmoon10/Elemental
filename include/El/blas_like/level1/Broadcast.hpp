@@ -11,8 +11,8 @@
 
 namespace El {
 
-template <Device D, typename T>
-void Broadcast_impl( AbstractMatrix<T>& A, mpi::Comm comm, int rank )
+template <typename T, Device D>
+void Broadcast_impl( Matrix<T,D>& A, mpi::Comm comm, int rank )
 {
     EL_DEBUG_CSE
     const int commSize = mpi::Size( comm );
@@ -29,23 +29,24 @@ void Broadcast_impl( AbstractMatrix<T>& A, mpi::Comm comm, int rank )
     }
     else
     {
+        SyncInfo<D> syncInfoA(A);
         simple_buffer<T,D> buf(size);
 
         // Pack
         if( commRank == rank )
-            copy::util::InterleaveMatrix<T,D>
-            ( height, width,
-              A.LockedBuffer(), 1, A.LDim(),
-              buf.data(),       1, height );
+            copy::util::InterleaveMatrix(
+                height, width,
+                A.LockedBuffer(), 1, A.LDim(),
+                buf.data(),       1, height, syncInfoA);
 
         mpi::Broadcast( buf.data(), size, rank, comm );
 
         // Unpack
         if( commRank != rank )
-            copy::util::InterleaveMatrix<T,D>
-            ( height,        width,
-              buf.data(), 1, height,
-              A.Buffer(), 1, A.LDim() );
+            copy::util::InterleaveMatrix(
+                height,        width,
+                buf.data(), 1, height,
+                A.Buffer(), 1, A.LDim(), syncInfoA);
     }
 }
 
@@ -55,11 +56,11 @@ void Broadcast( AbstractMatrix<T>& A, mpi::Comm comm, int rank )
     switch(A.GetDevice())
     {
     case Device::CPU:
-        Broadcast_impl<Device::CPU>(A, comm, rank);
+        Broadcast_impl(static_cast<Matrix<T,Device::CPU>&>(A), comm, rank);
         break;
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        Broadcast_impl<Device::GPU>(A, comm, rank);
+        Broadcast_impl(static_cast<Matrix<T,Device::GPU>&>(A), comm, rank);
         break;
 #endif // HYROGEN_HAVE_CUDA
     default:
@@ -87,24 +88,30 @@ void Broadcast( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank )
     }
     else
     {
+        if (A.GetLocalDevice() != Device::CPU)
+            LogicError("Broadcast(AbstractDistMatrix): "
+                       "Not supported for non-CPU device.");
+
         vector<T> buf;
         FastResize( buf, localSize );
 
         // Pack
         if( commRank == rank )
-            copy::util::InterleaveMatrix
-            ( localHeight, localWidth,
-              A.LockedBuffer(), 1, A.LDim(),
-              buf.data(),       1, localHeight );
+            copy::util::InterleaveMatrix(
+                localHeight, localWidth,
+                A.LockedBuffer(), 1, A.LDim(),
+                buf.data(),       1, localHeight,
+                SyncInfo<Device::CPU>{});
 
         mpi::Broadcast( buf.data(), localSize, rank, comm );
 
         // Unpack
         if( commRank != rank )
-            copy::util::InterleaveMatrix
-            ( localHeight, localWidth,
-              buf.data(), 1, localHeight,
-              A.Buffer(), 1, A.LDim() );
+            copy::util::InterleaveMatrix(
+                localHeight, localWidth,
+                buf.data(), 1, localHeight,
+                A.Buffer(), 1, A.LDim(),
+                SyncInfo<Device::CPU>{});
     }
 }
 

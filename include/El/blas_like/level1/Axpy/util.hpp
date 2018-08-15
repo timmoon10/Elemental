@@ -9,6 +9,8 @@
 #ifndef EL_BLAS_AXPY_UTIL_HPP
 #define EL_BLAS_AXPY_UTIL_HPP
 
+// FIXME DO THIS
+
 #ifdef HYDROGEN_HAVE_CUDA
 #include "../GPU/Axpy.hpp"
 #endif
