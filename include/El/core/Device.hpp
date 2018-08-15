@@ -79,32 +79,15 @@ template <>
 struct InterDeviceCopy<Device::CPU,Device::GPU>
 {
     template <typename T>
-    static void MemCopy1D(T * EL_RESTRICT const dest,
-                          T const* EL_RESTRICT const src,
-                          Int const size,
-                          cudaStream_t stream = GPUManager::Stream())
+    static void MemCopy1DAsync(T * EL_RESTRICT const dest,
+                               T const* EL_RESTRICT const src,
+                               Int const size,
+                               cudaStream_t stream = GPUManager::Stream())
     {
         EL_CHECK_CUDA(cudaMemcpyAsync(
                           dest, src, size*sizeof(T),
                           CUDAMemcpyKind<Device::CPU,Device::GPU>(),
                           stream));
-        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
-    }
-
-
-    template <typename T>
-    static void MemCopy2D(T * EL_RESTRICT const dest, Int const dest_ldim,
-                          T const* EL_RESTRICT const src, Int const src_ldim,
-                          Int const height, Int const width,
-                          cudaStream_t stream = GPUManager::Stream())
-    {
-        EL_CHECK_CUDA(cudaMemcpy2DAsync(
-            dest, dest_ldim*sizeof(T),
-            src, src_ldim*sizeof(T),
-            height*sizeof(T), width,
-            CUDAMemcpyKind<Device::CPU,Device::GPU>(),
-            stream));
-        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 
     template <typename T>
@@ -127,30 +110,14 @@ template <>
 struct InterDeviceCopy<Device::GPU,Device::CPU>
 {
     template <typename T>
-    static void MemCopy1D(T * EL_RESTRICT const dest,
-                          T const* EL_RESTRICT const src, Int const size,
-                          cudaStream_t stream = GPUManager::Stream())
+    static void MemCopy1DAsync(T * EL_RESTRICT const dest,
+                               T const* EL_RESTRICT const src, Int const size,
+                               cudaStream_t stream = GPUManager::Stream())
     {
         EL_CHECK_CUDA(cudaMemcpyAsync(
                           dest, src, size*sizeof(T),
                           CUDAMemcpyKind<Device::GPU,Device::CPU>(),
                           stream));
-        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
-    }
-
-    template <typename T>
-    static void MemCopy2D(T * EL_RESTRICT const dest, Int const dest_ldim,
-                          T const* EL_RESTRICT const src, Int const src_ldim,
-                          Int const height, Int const width,
-                          cudaStream_t stream = GPUManager::Stream())
-    {
-        EL_CHECK_CUDA(cudaMemcpy2DAsync(
-            dest, dest_ldim*sizeof(T),
-            src, src_ldim*sizeof(T),
-            height*sizeof(T), width,
-            CUDAMemcpyKind<Device::GPU,Device::CPU>(),
-            stream));
-        EL_CHECK_CUDA(cudaStreamSynchronize(stream));
     }
 
     template <typename T>

@@ -29,7 +29,10 @@ public:
         data_ = mem_.Require(other.size());
         size_ = other.size();
 
-        InterDeviceCopy<D2,D>::MemCopy1D(data_, other.data(), size_);
+        InterDeviceCopy<D2,D>::MemCopy1DAsync(data_, other.data(), size_);
+#ifdef HYDROGEN_HAVE_CUDA
+        EL_CHECK_CUDA(cudaStreamSynchronize(GPUManager::Stream()));
+#endif // HYDROGEN_HAVE_CUDA
     }
 
     size_t size() const noexcept;
