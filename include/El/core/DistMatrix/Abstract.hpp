@@ -303,6 +303,7 @@ public:
     (const El::Grid& grid=Grid::Default(), int root=0,
      Dist colDist=MC, Dist rowDist=MR, DistWrap wrap=ELEMENT,
      Device dev=Device::CPU);
+    static type* Instantiate(const El::DistData& data);
   
 private:
     // Member variables
