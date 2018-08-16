@@ -72,12 +72,11 @@ void PartialColScatter
         // Communicate
         mpi::ReduceScatter(buffer.data(), recvSize, B.PartialUnionColComm());
 
-        // FIXME
         // Unpack our received data
-        axpy::util::InterleaveMatrixUpdate<T,D>
-        ( alpha, localHeight, width,
-          buffer.data(), 1, localHeight,
-          B.Buffer(),    1, B.LDim() );
+        axpy::util::InterleaveMatrixUpdate(
+            alpha, localHeight, width,
+            buffer.data(), 1, localHeight,
+            B.Buffer(),    1, B.LDim(), syncInfoB);
     }
     else
         LogicError("Unaligned PartialColScatter not implemented");
@@ -128,12 +127,11 @@ void PartialRowScatter(
         // Communicate
         mpi::ReduceScatter( buffer.data(), recvSize, B.PartialUnionRowComm() );
 
-        // FIXME
         // Unpack our received data
-        axpy::util::InterleaveMatrixUpdate<T,D>
-        ( alpha, height, B.LocalWidth(),
-          buffer.data(), 1, height,
-          B.Buffer(),    1, B.LDim() );
+        axpy::util::InterleaveMatrixUpdate(
+            alpha, height, B.LocalWidth(),
+            buffer.data(), 1, height,
+            B.Buffer(),    1, B.LDim(), syncInfoB);
     }
     else
         LogicError("Unaligned PartialRowScatter not implemented");
@@ -203,12 +201,11 @@ void ColScatter
         // Communicate
         mpi::ReduceScatter( buffer.data(), recvSize, B.ColComm() );
 
-        // FIXME
         // Update with our received data
-        axpy::util::InterleaveMatrixUpdate<T,D>(
+        axpy::util::InterleaveMatrixUpdate(
             alpha, localHeight, localWidth,
             buffer.data(), 1, localHeight,
-            B.Buffer(),    1, B.LDim());
+            B.Buffer(),    1, B.LDim(), syncInfoB);
     }
     else
     {
@@ -245,12 +242,11 @@ void ColScatter
         ( firstBuf,  localHeight*localWidthA, sendCol,
           secondBuf, localHeight*localWidth,  recvCol, B.RowComm() );
 
-        // FIXME
         // Update with our received data
-        axpy::util::InterleaveMatrixUpdate<T,D>
-        ( alpha, localHeight, localWidth,
-          secondBuf,  1, localHeight,
-          B.Buffer(), 1, B.LDim() );
+        axpy::util::InterleaveMatrixUpdate(
+            alpha, localHeight, localWidth,
+            secondBuf,  1, localHeight,
+            B.Buffer(), 1, B.LDim(), syncInfoB);
     }
 }
 
@@ -291,11 +287,10 @@ void RowScatter
 
             if( B.RowRank() == rowAlign )
             {
-                // FIXME
-                axpy::util::InterleaveMatrixUpdate<T,D>
-                ( alpha, localHeight, 1,
-                  buffer.data(), 1, localHeight,
-                  B.Buffer(),    1, B.LDim() );
+                axpy::util::InterleaveMatrixUpdate(
+                    alpha, localHeight, 1,
+                    buffer.data(), 1, localHeight,
+                    B.Buffer(),    1, B.LDim(), syncInfoB);
             }
         }
         else
@@ -321,12 +316,11 @@ void RowScatter
             // Communicate
             mpi::ReduceScatter( buffer.data(), portionSize, B.RowComm() );
 
-            // FIXME
             // Update with our received data
-            axpy::util::InterleaveMatrixUpdate<T,D>
-            ( alpha, localHeight, localWidth,
-              buffer.data(), 1, localHeight,
-              B.Buffer(),    1, B.LDim() );
+            axpy::util::InterleaveMatrixUpdate(
+                alpha, localHeight, localWidth,
+                buffer.data(), 1, localHeight,
+                B.Buffer(),    1, B.LDim(), syncInfoB);
         }
     }
     else
@@ -359,15 +353,14 @@ void RowScatter
             if( B.RowRank() == rowAlign )
             {
                 // Perform the realignment
-                mpi::SendRecv
-                ( sendBuf, localHeightA, sendRow,
-                  recvBuf, localHeight,  recvRow, B.ColComm() );
+                mpi::SendRecv(
+                    sendBuf, localHeightA, sendRow,
+                    recvBuf, localHeight,  recvRow, B.ColComm());
 
-                // FIXME
-                axpy::util::InterleaveMatrixUpdate<T,D>
-                ( alpha, localHeight, 1,
-                  recvBuf,    1, localHeight,
-                  B.Buffer(), 1, B.LDim() );
+                axpy::util::InterleaveMatrixUpdate(
+                    alpha, localHeight, 1,
+                    recvBuf,    1, localHeight,
+                    B.Buffer(), 1, B.LDim(), syncInfoB);
             }
         }
         else
@@ -388,26 +381,25 @@ void RowScatter
             T* secondBuf = buffer.data() + recvSize_RS;
 
             // Pack
-            copy::util::RowStridedPack
-            ( localHeightA, width,
-              rowAlign, rowStride,
-              A.LockedBuffer(), A.LDim(),
-              secondBuf,        recvSize_RS, syncInfoA );
+            copy::util::RowStridedPack(
+                localHeightA, width,
+                rowAlign, rowStride,
+                A.LockedBuffer(), A.LDim(),
+                secondBuf,        recvSize_RS, syncInfoA );
 
             // Reduce-scatter over each process row
             mpi::ReduceScatter( secondBuf, firstBuf, recvSize_RS, B.RowComm() );
 
             // Trade reduced data with the appropriate process row
-            mpi::SendRecv
-            ( firstBuf,  localHeightA*localWidth, sendRow,
-              secondBuf, localHeight*localWidth,  recvRow, B.ColComm() );
+            mpi::SendRecv(
+                firstBuf,  localHeightA*localWidth, sendRow,
+                secondBuf, localHeight*localWidth,  recvRow, B.ColComm());
 
-            // FIXME
             // Update with our received data
-            axpy::util::InterleaveMatrixUpdate<T,D>
-            ( alpha, localHeight, localWidth,
-              secondBuf,  1, localHeight,
-              B.Buffer(), 1, B.LDim() );
+            axpy::util::InterleaveMatrixUpdate(
+                alpha, localHeight, localWidth,
+                secondBuf,  1, localHeight,
+                B.Buffer(), 1, B.LDim(), syncInfoB);
         }
     }
 }
@@ -458,12 +450,11 @@ void Scatter
     // Communicate
     mpi::ReduceScatter( buffer.data(), recvSize, B.DistComm() );
 
-    // FIXME
     // Unpack our received data
-    axpy::util::InterleaveMatrixUpdate<T,D>
-    ( alpha, localHeight, localWidth,
-      buffer.data(), 1, localHeight,
-      B.Buffer(),    1, B.LDim() );
+    axpy::util::InterleaveMatrixUpdate(
+        alpha, localHeight, localWidth,
+        buffer.data(), 1, localHeight,
+        B.Buffer(),    1, B.LDim(), syncInfoB);
 }
 
 } // namespace axpy_contract

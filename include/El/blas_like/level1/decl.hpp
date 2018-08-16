@@ -96,14 +96,24 @@ void Axpy
 namespace axpy {
 namespace util {
 
-template<typename Ring,Device=Device::CPU>
-void InterleaveMatrixUpdate
-( Ring alpha, Int localHeight, Int localWidth,
-  const Ring* A, Int colStrideA, Int rowStrideA,
-        Ring* B, Int colStrideB, Int rowStrideB );
-template<typename Ring,Device=Device::CPU>
-void UpdateWithLocalData
-( Ring alpha, const ElementalMatrix<Ring>& A, DistMatrix<Ring,STAR,STAR>& B );
+template<typename Ring>
+void InterleaveMatrixUpdate(
+    Ring alpha, Int localHeight, Int localWidth,
+    Ring const* A, Int colStrideA, Int rowStrideA,
+    Ring* B, Int colStrideB, Int rowStrideB,
+    SyncInfo<Device::CPU>);
+
+template<typename Ring>
+void InterleaveMatrixUpdate(
+    Ring alpha, Int localHeight, Int localWidth,
+    Ring const* A, Int colStrideA, Int rowStrideA,
+    Ring* B, Int colStrideB, Int rowStrideB,
+    SyncInfo<Device::GPU>);
+
+template<typename Ring, Device D=Device::CPU>
+void UpdateWithLocalData(
+    Ring alpha, ElementalMatrix<Ring> const& A,
+    DistMatrix<Ring,STAR,STAR,ELEMENT,D>& B );
 
 } // namespace util
 } // namespace axpy
