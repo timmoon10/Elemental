@@ -37,6 +37,7 @@ void InterleaveMatrixUpdate(
             &B[rowStrideB*j], colStrideB);
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <typename T>
 void InterleaveMatrixUpdate(
     T alpha, Int height, Int width,
@@ -48,7 +49,7 @@ void InterleaveMatrixUpdate(
                   A, colStrideA, rowStrideA,
                   B, colStrideB, rowStrideB, syncInfo.stream_);
 }
-
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename T, Device D>
 void UpdateWithLocalData(

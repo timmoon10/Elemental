@@ -54,24 +54,24 @@ struct SyncInfo<Device::GPU>
     cudaEvent_t event_;
 };// struct SyncInfo<Device::GPU>
 
-void AddSynchronizationPoint(SyncInfo<Device::GPU> syncInfo)
+inline void AddSynchronizationPoint(SyncInfo<Device::GPU> syncInfo)
 {
     EL_CHECK_CUDA(cudaEventRecord(syncInfo.event_, syncInfo.stream_));
 }
 
-void AddSynchronizationPoint(
+inline void AddSynchronizationPoint(
     SyncInfo<Device::CPU> A, SyncInfo<Device::GPU> B)
 {
     LogicError("I don't know what should happen here.");
 }
 
-void AddSynchronizationPoint(
+inline void AddSynchronizationPoint(
     SyncInfo<Device::GPU> A, SyncInfo<Device::CPU> B)
 {
     LogicError("I don't know what should happen here.");
 }
 
-void AddSynchronizationPoint(
+inline void AddSynchronizationPoint(
     SyncInfo<Device::GPU> A, SyncInfo<Device::GPU> B)
 {
     EL_CHECK_CUDA(cudaEventRecord(A.event_, A.stream_));

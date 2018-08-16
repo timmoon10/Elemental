@@ -103,12 +103,14 @@ void InterleaveMatrixUpdate(
     Ring* B, Int colStrideB, Int rowStrideB,
     SyncInfo<Device::CPU>);
 
+#ifdef HYDROGEN_HAVE_CUDA
 template<typename Ring>
 void InterleaveMatrixUpdate(
     Ring alpha, Int localHeight, Int localWidth,
     Ring const* A, Int colStrideA, Int rowStrideA,
     Ring* B, Int colStrideB, Int rowStrideB,
     SyncInfo<Device::GPU>);
+#endif // HYDROGEN_HAVE_CUDA
 
 template<typename Ring, Device D=Device::CPU>
 void UpdateWithLocalData(
