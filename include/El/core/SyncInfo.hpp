@@ -28,6 +28,14 @@ template <Device D> struct SyncInfo
 
 };// struct SyncInfo<D>
 
+template <Device D>
+void AddSynchronizationPoint(SyncInfo<D> syncInfo)
+{}
+
+template <Device D>
+void AddSynchronizationPoint(SyncInfo<D> A, SyncInfo<D> B)
+{}
+
 #ifdef HYDROGEN_HAVE_CUDA
 
 template <>
@@ -45,6 +53,30 @@ struct SyncInfo<Device::GPU>
     cudaStream_t stream_;
     cudaEvent_t event_;
 };// struct SyncInfo<Device::GPU>
+
+void AddSynchronizationPoint(SyncInfo<Device::GPU> syncInfo)
+{
+    EL_CHECK_CUDA(cudaEventRecord(syncInfo.event_, syncInfo.stream_));
+}
+
+void AddSynchronizationPoint(
+    SyncInfo<Device::CPU> A, SyncInfo<Device::GPU> B)
+{
+    LogicError("I don't know what should happen here.");
+}
+
+void AddSynchronizationPoint(
+    SyncInfo<Device::GPU> A, SyncInfo<Device::CPU> B)
+{
+    LogicError("I don't know what should happen here.");
+}
+
+void AddSynchronizationPoint(
+    SyncInfo<Device::GPU> A, SyncInfo<Device::GPU> B)
+{
+    EL_CHECK_CUDA(cudaEventRecord(A.event_, A.stream_));
+    EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
+}
 #endif // HYDROGEN_HAVE_CUDA
 
 }// namespace El
