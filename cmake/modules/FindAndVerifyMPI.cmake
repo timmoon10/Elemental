@@ -11,7 +11,6 @@ include(CheckCXXSourceCompiles)
 find_package(MPI)
 if (MPI_CXX_FOUND)
   if (NOT TARGET MPI::MPI_CXX)
-    message("\n\n\n\n\n\nTOM BUILDING MPI TARGET\n\n\n\n\n")
     add_library(MPI::MPI_CXX INTERFACE IMPORTED)
     if (MPI_CXX_COMPILE_FLAGS)
       separate_arguments(_MPI_CXX_COMPILE_OPTIONS UNIX_COMMAND
