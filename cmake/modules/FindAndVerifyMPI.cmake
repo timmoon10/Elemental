@@ -11,6 +11,7 @@ include(CheckCXXSourceCompiles)
 find_package(MPI)
 if (MPI_CXX_FOUND)
   if (NOT TARGET MPI::MPI_CXX)
+    message("\n\n\n\n\n\nTOM BUILDING MPI TARGET\n\n\n\n\n")
     add_library(MPI::MPI_CXX INTERFACE IMPORTED)
     if (MPI_CXX_COMPILE_FLAGS)
       separate_arguments(_MPI_CXX_COMPILE_OPTIONS UNIX_COMMAND
@@ -23,18 +24,35 @@ if (MPI_CXX_FOUND)
       separate_arguments(_MPI_CXX_LINK_LINE UNIX_COMMAND
         "${MPI_CXX_LINK_FLAGS}")
     endif()
-    list(APPEND _MPI_CXX_LINK_LINE "${MPI_CXX_LIBRARIES}")
 
-    set_property(TARGET MPI::MPI_CXX PROPERTY
-      INTERFACE_LINK_LIBRARIES "${_MPI_CXX_LINK_LINE}")
+    set_property(TARGET MPI::MPI_CXX APPEND PROPERTY
+      INTERFACE_LINK_LIBRARIES "${MPI_CXX_LIBRARIES}")
 
-    set_property(TARGET MPI::MPI_CXX PROPERTY
+    set_property(TARGET MPI::MPI_CXX APPEND PROPERTY
+      LINK_FLAGS "${_MPI_CXX_LINK_LINE}")
+
+    set_property(TARGET MPI::MPI_CXX APPEND PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
 
   endif (NOT TARGET MPI::MPI_CXX)
 else()
   message(FATAL_ERROR "MPI CXX compiler was not found and is required")
 endif()
+
+# Fix the imported target
+get_property(_TMP_MPI_LINK_LIBRARIES TARGET MPI::MPI_CXX
+  PROPERTY INTERFACE_LINK_LIBRARIES)
+foreach(lib IN LISTS _TMP_MPI_LINK_LIBRARIES)
+  if ("${lib}" MATCHES "-Wl*")
+    list(APPEND _MPI_LINK_FLAGS "${lib}")
+  else()
+    list(APPEND _MPI_LINK_LIBRARIES "${lib}")
+  endif ()
+endforeach()
+
+#set_property(TARGET MPI::MPI_CXX PROPERTY LINK_FLAGS ${_MPI_LINK_FLAGS})
+set_property(TARGET MPI::MPI_CXX
+  PROPERTY INTERFACE_LINK_LIBRARIES ${_MPI_LINK_LIBRARIES})
 
 # NOTE:
 # check_function_exists only supports cdecl calling conventions, despite the
