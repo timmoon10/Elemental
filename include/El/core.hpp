@@ -256,10 +256,6 @@ template<typename T> struct IsStdField<Complex<T>>
 
 #include <El/core/Device.hpp>
 
-#include <El/core/Memory.hpp>
-
-#include <El/core/SimpleBuffer.hpp>
-
 namespace El
 {
 
@@ -279,6 +275,8 @@ class DistMatrix;
 
 #include <El/core/SyncInfo.hpp>
 
+#include <El/core/Memory.hpp>
+#include <El/core/SimpleBuffer.hpp>
 #include <El/core/AbstractMatrix.hpp>
 #include <El/core/Matrix/decl.hpp>
 #include <El/core/DistMap/decl.hpp>

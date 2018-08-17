@@ -116,8 +116,7 @@ void Translate(
         if(crossRank == B.Root())
         {
             // FIXME
-            simple_buffer<T,D2> tmpbuffer;
-            tmpbuffer.shallowCopyIfPossible(buffer);
+            simple_buffer<T,D2> tmpbuffer(buffer.size());
 
             util::InterleaveMatrix(
                 localHeightB, localWidthB,

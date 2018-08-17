@@ -33,14 +33,14 @@ constexpr unsigned DefaultMemoryMode<Device::GPU>()
 }
 #endif // HYDROGEN_HAVE_CUB
 
-
 template<typename G, Device D=Device::CPU>
 class Memory
 {
 public:
-    Memory();
-    Memory(size_t size);
-    Memory(size_t size, unsigned int mode);
+    Memory(SyncInfo<D> const& syncInfo = SyncInfo<D>{});
+    Memory(size_t size, SyncInfo<D> const& syncInfo = SyncInfo<D>{});
+    Memory(size_t size, unsigned int mode,
+           SyncInfo<D> const& syncInfo = SyncInfo<D>{});
     ~Memory();
 
     Memory(Memory<G,D>&& mem);
@@ -56,6 +56,9 @@ public:
     void Release();
     void Empty();
 
+    void ResetSyncInfo(SyncInfo<D> const& syncInfo = SyncInfo<D>{});
+    SyncInfo<D> const& GetSyncInfo() const;
+
     void SetMode(unsigned int mode);
     unsigned int Mode() const;
 private:
@@ -63,6 +66,8 @@ private:
     G* rawBuffer_;
     G* buffer_;
     unsigned int mode_ = DefaultMemoryMode<D>();
+    SyncInfo<D> syncInfo_ = SyncInfo<D>{};
+
 };// class Memory
 
 } // namespace El
