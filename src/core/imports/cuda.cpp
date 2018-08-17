@@ -7,6 +7,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#include <nvml.h>
 
 #include <cstdlib>// getenv
 
@@ -20,12 +21,15 @@ std::unique_ptr<GPUManager> GPUManager::instance_ = nullptr;
 void InitializeCUDA(int argc, char* argv[])
 {
 
-    int numDevices = 0;
+    unsigned int numDevices = 0;
     int device = 0;
-    cudaDeviceProp deviceProp;
 
-    EL_FORCE_CHECK_CUDA_NOSYNC(
-        cudaGetDeviceCount(&numDevices));
+    nvmlReturn_t r = nvmlInit();
+    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    r = nvmlDeviceGetCount(&numDevices);
+    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    r = nvmlShutdown();
+    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
     switch (numDevices)
     {
     case 0: return;
@@ -34,7 +38,7 @@ void InitializeCUDA(int argc, char* argv[])
 
         // Get local rank (rank within compute node)
         int localRank = 0;
-        char* env=nullptr;
+        char* env = nullptr;
         if (!env) { env = std::getenv("SLURM_LOCALID"); }
         if (!env) { env = std::getenv("MV2_COMM_WORLD_LOCAL_RANK"); }
         if (!env) { env = std::getenv("OMPI_COMM_WORLD_LOCAL_RANK"); }
@@ -42,39 +46,6 @@ void InitializeCUDA(int argc, char* argv[])
 
         // Try assigning GPUs to local ranks in round-robin fashion
         device = localRank % numDevices;
-
-        // Check GPU compute mode
-        EL_FORCE_CHECK_CUDA_NOSYNC(
-            cudaGetDeviceProperties(&deviceProp, device));
-        switch (deviceProp.computeMode)
-        {
-        case cudaComputeModeExclusive:
-        case cudaComputeModeExclusiveProcess:
-            if (localRank >= numDevices)
-            {
-                cudaDeviceReset();
-                RuntimeError("CUDA device ",device," has a compute mode "
-                             "that does not permit sharing amongst ",
-                             "multiple MPI ranks");
-            }
-            else
-            {
-                // Let CUDA handle GPU assignments
-                EL_FORCE_CHECK_CUDA_NOSYNC(cudaGetDevice(&device));
-            }
-            break;
-        }
-
-    }
-
-    // Check GPU compute mode
-    EL_FORCE_CHECK_CUDA_NOSYNC(
-        cudaGetDeviceProperties(&deviceProp, device));
-    if (deviceProp.computeMode == cudaComputeModeProhibited)
-    {
-        cudaDeviceReset();
-        RuntimeError("CUDA Device ",device,
-                     " is set with ComputeModeProhibited");
     }
 
     // Instantiate CUDA manager
@@ -93,9 +64,13 @@ GPUManager::GPUManager(int device)
     : numDevices_{0}, device_{device}, stream_{nullptr}, cublasHandle_{nullptr}
 {
     // Check if device is valid
-    EL_FORCE_CHECK_CUDA_NOSYNC(
-        cudaGetDeviceCount(&numDevices_));
-    if (device_ < 0 || device_ >= numDevices_)
+    nvmlReturn_t r = nvmlInit();
+    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    r = nvmlDeviceGetCount(&numDevices_);
+    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    r = nvmlShutdown();
+    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    if (device_ < 0 || (unsigned int) device_ >= numDevices_)
     {
         RuntimeError("Attempted to set invalid CUDA device ",
                      "(requested device ",device_,", ",
@@ -103,6 +78,9 @@ GPUManager::GPUManager(int device)
     }
 
     // Initialize CUDA and cuBLAS objects
+    // Can use the runtime API without creating unneeded contexts now.
+    // This will fail with a CUDA error if device_ is in prohibited mode or
+    // if it is in process-exclusive mode and another process already has it.
     EL_FORCE_CHECK_CUDA_NOSYNC(cudaSetDevice(device_));
     EL_FORCE_CHECK_CUDA(cudaStreamCreate(&stream_));
     EL_FORCE_CHECK_CUDA(cudaEventCreate(&event_));
@@ -164,7 +142,7 @@ GPUManager* GPUManager::Instance()
     return instance_.get();
 }
 
-int GPUManager::NumDevices()
+Unsigned GPUManager::NumDevices()
 {
     return Instance()->numDevices_;
 }
