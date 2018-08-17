@@ -91,11 +91,10 @@ static void Gemm_impl(
     const Int n = C.Width();
     const Int k = (orientA == NORMAL ? A.Width() : A.Height());
 
-    EL_CHECK_CUDA(cudaEventRecord(A.Event(), A.Stream()));
-    EL_CHECK_CUDA(cudaEventRecord(B.Event(), B.Stream()));
+    SyncInfo<Device::GPU> syncInfoA(A), syncInfoB(B), syncInfoC(C);
 
-    EL_CHECK_CUDA(cudaStreamWaitEvent(C.Stream(), A.Event(), 0));
-    EL_CHECK_CUDA(cudaStreamWaitEvent(C.Stream(), B.Event(), 0));
+    AddSynchronizationPoint(syncInfoA, syncInfoC);
+    AddSynchronizationPoint(syncInfoB, syncInfoC);
 
     // Keep the old stream so we can restore it. I don't know if this
     // is necessary, but it might be good to keep the cuBLAS handle
@@ -111,15 +110,13 @@ static void Gemm_impl(
                  B.LockedBuffer(), B.LDim(),
                  beta, C.Buffer(), C.LDim());
 
+    // Restore the "default" stream
     EL_CHECK_CUBLAS(
         cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 
     // Place an event in the stream after the call to cuBLAS.
-    EL_CHECK_CUDA(cudaEventRecord(C.Event(), C.Stream()));
-
     // Make sure A and B are memory-safe until the GEMM has finished.
-    EL_CHECK_CUDA(cudaStreamWaitEvent(A.Stream(), C.Event(), 0));
-    EL_CHECK_CUDA(cudaStreamWaitEvent(B.Stream(), C.Event(), 0));
+    AddSynchronizationPoint(syncInfoC, syncInfoA, syncInfoB);
 }
 
 #endif // HYDROGEN_HAVE_CUDA

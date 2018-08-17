@@ -6,8 +6,7 @@ namespace El
 
 // Device-specific synchronization information. For CPUs, this is
 // empty since all CPU operations are synchronous with respect to the
-// host. For GPUs, this will be a stream and an associated event. It
-// might be sufficient to just be a stream. Unclear.
+// host. For GPUs, this will be a stream and an associated event.
 //
 // The use-case for this is to cope with the matrix-free part of the
 // interface. Many of the copy routines have the paradigm that they
@@ -18,7 +17,8 @@ namespace El
 // semantically, may not make sense).
 //
 // This also might be useful for interacting with
-// Aluminum/MPI/NCCL/whatever.
+// Aluminum/MPI/NCCL/whatever. It's essentially tagged dispatch, where
+// the tags possibly contain some device-specific helpers.
 template <Device D> struct SyncInfo
 {
     SyncInfo() {}
@@ -71,12 +71,23 @@ inline void AddSynchronizationPoint(
     LogicError("I don't know what should happen here.");
 }
 
+// This captures the work done on A and forces B to wait for completion
 inline void AddSynchronizationPoint(
     SyncInfo<Device::GPU> A, SyncInfo<Device::GPU> B)
 {
     EL_CHECK_CUDA(cudaEventRecord(A.event_, A.stream_));
     EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
 }
+
+// This captures the work done on A and forces B and C to wait for completion
+inline void AddSynchronizationPoint(
+    SyncInfo<Device::GPU> A, SyncInfo<Device::GPU> B, SyncInfo<Device::GPU> C)
+{
+    EL_CHECK_CUDA(cudaEventRecord(A.event_, A.stream_));
+    EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
+    EL_CHECK_CUDA(cudaStreamWaitEvent(C.stream_, A.event_, 0));
+}
+
 #endif // HYDROGEN_HAVE_CUDA
 
 }// namespace El
