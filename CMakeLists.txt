@@ -320,9 +320,11 @@ endif ()
 
 if (BUILD_SHARED_LIBS)
   if (APPLE)
-    target_link_libraries(${PROJECT_NAME} PUBLIC "-Wl,-undefined,error")
+    set_property(
+      TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_FLAGS "-Wl,-undefined,error")
   else ()
-    target_link_libraries(${PROJECT_NAME} PUBLIC "-Wl,-no-undefined")
+    set_property(
+      TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_FLAGS "-Wl,-no-undefined")
   endif ()
 endif ()
 
