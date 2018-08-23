@@ -33,19 +33,19 @@ struct MergeIndexSequences;
 template <size_t... Is1, size_t... Is2>
 struct MergeIndexSequences<IndexSequence<Is1...>, IndexSequence<Is2...>>
 {
-  using type = IndexSequence<Is1..., (Is2 + sizeof...(Is1))...>;
+    using type = IndexSequence<Is1..., (Is2 + sizeof...(Is1))...>;
 };
 
 template <size_t N>
 struct GenerateIndexSequence
-  : MergeIndexSequences<GenerateIndexSequence<N/2>,
-                        GenerateIndexSequence<N-N/2>>
+    : MergeIndexSequences<typename GenerateIndexSequence<N/2>::type,
+                          typename GenerateIndexSequence<N-N/2>::type>
 {};
 
 template <>
 struct GenerateIndexSequence<1>
 {
-  using type = IndexSequence<0>;
+    using type = IndexSequence<0>;
 };
 
 template <size_t N>
