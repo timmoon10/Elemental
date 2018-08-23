@@ -1009,83 +1009,89 @@ void Reduce( T* buf, int count, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
 
 // AllReduce
 // ---------
-template<typename T,
-         typename=EnableIf<IsAluminumTypeT<T>>>
-void AllReduce( const T* sbuf, T* rbuf, int count, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsAluminumTypeT<T>>,
-         typename=void>
-void AllReduce( const T* sbuf, T* rbuf, int count, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
 
-template<typename T,class OpClass,
-         typename=DisableIf<IsData<OpClass>>>
-void AllReduce
-( const T* sb, T* rb, int count, OpClass op, bool commutative,
-  Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
-    if( commutative )
-        AllReduce( sb, rb, count, UserCommOp<T>(), comm );
-    else
-        AllReduce( sb, rb, count, UserOp<T>(), comm );
-}
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumDeviceType<T,D>>>
+void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
+               SyncInfo<D> const&);
 
-// Default to SUM
-template<typename T>
-void AllReduce( const T* sbuf, T* rbuf, int count, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumDeviceType<T,D>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
+               SyncInfo<D> const& syncInfo);
 
-// If the message-length is one
-template<typename T>
-T AllReduce( T sb, Op op, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumDeviceType<T,D>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void AllReduce(Complex<T> const* sbuf, T* rbuf, int count, Op op, Comm comm,
+               SyncInfo<D> const& syncInfo);
 
-template<typename T,class OpClass,
-         typename=DisableIf<IsData<OpClass>>>
-T AllReduce
-( T sb, OpClass op, bool commutative, Comm comm ) EL_NO_RELEASE_EXCEPT
-{
-    SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
-    if( commutative )
-        return AllReduce( sb, UserCommOp<T>(), comm );
-    else
-        return AllReduce( sb, UserOp<T>(), comm );
-}
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumDeviceType<T,D>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
+               SyncInfo<D> const& syncInfo);
 
-// If the message-length is one (and default to SUM)
-template<typename T>
-T AllReduce( T sb, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumDeviceType<T,D>>>>,
+          typename=void, typename=void, typename=void>
+void AllReduce(T const*, T*, int, Op, Comm, SyncInfo<D> const&);
 
-// Single-buffer AllReduce
-// -----------------------
-template<typename T,
-         typename=EnableIf<IsAluminumTypeT<T>>>
-void AllReduce( T* buf, int count, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsAluminumTypeT<T>>,
-         typename=void>
-void AllReduce( T* buf, int count, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+//
+// The "IN_PLACE" allreduce
+//
 
-template<typename T,class OpClass,
-         typename=DisableIf<IsData<OpClass>>>
-void AllReduce
-( T* buf, int count, OpClass op, bool commutative, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
-    if( commutative )
-        AllReduce( buf, count, UserCommOp<T>(), comm );
-    else
-        AllReduce( buf, count, UserOp<T>(), comm );
-}
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumDeviceType<T,D>>>
+void AllReduce(T* buf, int count, Op op, Comm comm,
+               SyncInfo<D> const& /*syncInfo*/);
 
-// Default to SUM
-template<typename T>
-void AllReduce( T* buf, int count, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumDeviceType<T,D>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void AllReduce(T* buf, int count, Op op, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumDeviceType<T,D>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumDeviceType<T,D>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void AllReduce(T* buf, int count, Op op, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumDeviceType<T,D>>>>,
+          typename=void, typename=void, typename=void>
+void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&);
+
+template <typename T, Device D>
+void AllReduce(const T* sbuf, T* rbuf, int count, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D>
+T AllReduce(T sb, Op op, Comm comm, SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D>
+T AllReduce(T sb, Comm comm, SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D>
+void AllReduce(T* buf, int count, Comm comm, SyncInfo<D> const& syncInfo);
 
 // ReduceScatter
 // -------------

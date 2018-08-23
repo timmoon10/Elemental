@@ -60,6 +60,11 @@ Ring HilbertSchmidt
          A.BlockWidth() != B.BlockWidth())
       LogicError("A and B must have the same block size");
 
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("HilbertSchmidt: Only implemented for CPU matrices.");
+
+    auto const& Amat = A.LockedMatrix();
+
     Ring innerProd;
     if( A.Participating() )
     {
@@ -82,7 +87,10 @@ Ring HilbertSchmidt
                     localInnerProd += Conj(ABuf[iLoc+jLoc*ALDim])*
                                            BBuf[iLoc+jLoc*BLDim];
         }
-        innerProd = mpi::AllReduce( localInnerProd, A.DistComm() );
+        innerProd = mpi::AllReduce(
+            localInnerProd, A.DistComm(),
+            SyncInfo<Device::CPU>(
+                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
     }
     mpi::Broadcast( innerProd, A.Root(), A.CrossComm() );
     return innerProd;

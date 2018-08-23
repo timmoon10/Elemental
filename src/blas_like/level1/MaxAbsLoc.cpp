@@ -75,6 +75,10 @@ ValueInt<Base<Ring>> VectorMaxAbsLoc( const AbstractDistMatrix<Ring>& x )
         if( !x.Grid().InGrid() )
             LogicError("Viewing processes are not allowed");
     )
+    if (x.GetLocalDevice() != Device::CPU)
+        LogicError("VectorMaxAbsLoc: Only implemented for CPU matrices.");
+
+    auto const& Amat = x.LockedMatrix();
     ValueInt<RealRing> pivot;
     if( Min(m,n) == 0 )
     {
@@ -120,8 +124,10 @@ ValueInt<Base<Ring>> VectorMaxAbsLoc( const AbstractDistMatrix<Ring>& x )
                 }
             }
         }
-        pivot = mpi::AllReduce
-                ( localPivot, mpi::MaxLocOp<RealRing>(), x.DistComm() );
+        pivot = mpi::AllReduce(
+            localPivot, mpi::MaxLocOp<RealRing>(), x.DistComm(),
+            SyncInfo<Device::CPU>(
+                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
     }
     mpi::Broadcast( pivot, x.Root(), x.CrossComm() );
     return pivot;
@@ -171,7 +177,11 @@ Entry<Base<Ring>> MaxAbsLoc( const AbstractDistMatrix<Ring>& A )
       if( !A.Grid().InGrid() )
           LogicError("Viewing processes are not allowed");
     )
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("MaxAbsLoc: Only implemented for CPU matrices.");
+
     typedef Base<Ring> RealRing;
+    auto const& Amat = A.LockedMatrix();
     Entry<RealRing> pivot;
     if( A.Height() == 0 )
     {
@@ -207,8 +217,10 @@ Entry<Base<Ring>> MaxAbsLoc( const AbstractDistMatrix<Ring>& A )
         }
 
         // Compute and store the location of the new pivot
-        pivot = mpi::AllReduce
-                ( localPivot, mpi::MaxLocPairOp<RealRing>(), A.DistComm() );
+        pivot = mpi::AllReduce(
+            localPivot, mpi::MaxLocPairOp<RealRing>(), A.DistComm(),
+            SyncInfo<Device::CPU>(
+                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
     }
     mpi::Broadcast( pivot, A.Root(), A.CrossComm() );
     return pivot;
@@ -280,7 +292,11 @@ Entry<Base<Ring>> SymmetricMaxAbsLoc
       if( !A.Grid().InGrid() )
           LogicError("Viewing processes are not allowed");
     )
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("SymmetricMaxAbsLoc: Only implemented for CPU matrices.");
+
     typedef Base<Ring> RealRing;
+    auto const& Amat = A.LockedMatrix();
     const Int mLocal = A.LocalHeight();
     const Int nLocal = A.LocalWidth();
 
@@ -336,8 +352,10 @@ Entry<Base<Ring>> SymmetricMaxAbsLoc
         }
 
         // Compute and store the location of the new pivot
-        pivot = mpi::AllReduce
-                ( localPivot, mpi::MaxLocPairOp<RealRing>(), A.DistComm() );
+        pivot = mpi::AllReduce(
+            localPivot, mpi::MaxLocPairOp<RealRing>(), A.DistComm(),
+            SyncInfo<Device::CPU>(
+                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
     }
     mpi::Broadcast( pivot, A.Root(), A.CrossComm() );
     return pivot;

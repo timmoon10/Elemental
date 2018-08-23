@@ -35,19 +35,25 @@ Base<Ring> MaxAbs( const AbstractDistMatrix<Ring>& A )
       if( !A.Grid().InGrid() )
           LogicError("Viewing processes are not allowed");
     )
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("MaxAbs: Only implemented for CPU matrices.");
+
     Base<Ring> value = 0;
     if( A.Participating() )
     {
         // Store the index/value of the local pivot candidate
-        const Int mLocal = A.LocalHeight();
-        const Int nLocal = A.LocalWidth();
-        const Ring* ABuf = A.LockedBuffer();
-        const Int ALDim = A.LDim();
+        Int const mLocal = A.LocalHeight();
+        Int const nLocal = A.LocalWidth();
+        Ring const* ABuf = A.LockedBuffer();
+        Int const ALDim = A.LDim();
+        auto const& Amat = A.LockedMatrix();
         for( Int jLoc=0; jLoc<nLocal; ++jLoc )
             for( Int iLoc=0; iLoc<mLocal; ++iLoc )
                 value = Max(value,Abs(ABuf[iLoc+jLoc*ALDim]));
 
-        value = mpi::AllReduce( value, mpi::MAX, A.DistComm() );
+        value = mpi::AllReduce( value, mpi::MAX, A.DistComm(),
+            SyncInfo<Device::CPU>(
+                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
     }
     mpi::Broadcast( value, A.Root(), A.CrossComm() );
     return value;
@@ -93,13 +99,17 @@ Base<Ring> SymmetricMaxAbs
           LogicError("Viewing processes are not allowed");
     )
 
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("SymmetricMaxAbs: Only implemented for CPU matrices.");
+
     Base<Ring> value = 0;
     if( A.Participating() )
     {
-        const Int mLocal = A.LocalHeight();
-        const Int nLocal = A.LocalWidth();
-        const Ring* ABuf = A.LockedBuffer();
-        const Int ALDim = A.LDim();
+        Int const mLocal = A.LocalHeight();
+        Int const nLocal = A.LocalWidth();
+        Ring const* ABuf = A.LockedBuffer();
+        Int const ALDim = A.LDim();
+        auto const& Amat = A.LockedMatrix();
         if( uplo == LOWER )
         {
             for( Int jLoc=0; jLoc<nLocal; ++jLoc )
@@ -120,7 +130,9 @@ Base<Ring> SymmetricMaxAbs
                     value = Max(value,Abs(ABuf[iLoc+jLoc*ALDim]));
             }
         }
-        value = mpi::AllReduce( value, mpi::MAX, A.DistComm() );
+        value = mpi::AllReduce( value, mpi::MAX, A.DistComm(),
+            SyncInfo<Device::CPU>(
+                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
     }
     mpi::Broadcast( value, A.Root(), A.CrossComm() );
     return value;

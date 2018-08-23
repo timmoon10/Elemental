@@ -535,6 +535,71 @@ template <typename T> struct Not
     static constexpr bool value = !T::value;
 };
 
+// Basic typelist implementation
+template <typename... Ts> struct TypeList {};
+
+template <typename T> struct HeadT;
+
+template <typename T, typename... Ts>
+struct HeadT<TypeList<T,Ts...>>
+{
+    using type = T;
+};
+
+template <typename T> struct TailT;
+
+template <typename T, typename... Ts>
+struct TailT<TypeList<T, Ts...>>
+{
+    using type = TypeList<Ts...>;
+};
+
+// Convenience Head/Tail functions
+template <typename T> using Head = typename HeadT<T>::type;
+template <typename T> using Tail = typename TailT<T>::type;
+
+// Wrapper around std::conditional
+template <typename B, typename T, typename U>
+using Select = typename std::conditional<B::value, T, U>::type;
+
+// Metafunction that returns the first match in the list.
+//
+// - List is expected to be a TypeList.
+// - U is the test type
+// - Pred is a predicate class that takes Head<List> and U as arguments
+//
+// When Pred<U,Head<List>> returns TrueType, this function returns
+// Head<List>.
+template <typename List, typename U, template <class,class> class Pred>
+struct SelectFirstMatch
+    : Select<Pred<U,Head<List>>, HeadT<List>,
+             SelectFirstMatch<Tail<List>,U,Pred>>
+{};
+
+// Predicate that returns true if Pred<T, X> is true_type for any X in List.
+template <typename List, typename T, template <class, class> class Pred>
+struct IsTrueForAny;
+
+template <typename T, template <class, class> class Pred>
+struct IsTrueForAny<TypeList<>, T, Pred> : std::false_type {};
+
+template <typename List, typename T, template <class, class> class Pred>
+struct IsTrueForAny
+    : Or<Pred<T,Head<List>>, IsTrueForAny<Tail<List>,T,Pred>>
+{};
+
+// Predicate that returns true if Pred<T, X> is true_type for all X in List.
+template <typename List, typename T, template <class, class> class Pred>
+struct IsTrueForAll;
+
+template <typename T, template <class, class> class Pred>
+struct IsTrueForAll<TypeList<>, T, Pred> : std::true_type {};
+
+template <typename List, typename T, template <class, class> class Pred>
+struct IsTrueForAll
+    : And<Pred<T,Head<List>>, IsTrueForAll<Tail<List>,T,Pred>>
+{};
+
 // Metafunction for enum equality
 template <typename EnumT, EnumT A, EnumT B>
 struct EnumSame : std::false_type {};

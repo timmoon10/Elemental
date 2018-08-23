@@ -231,13 +231,7 @@ template<typename T> struct IsStdField<Complex<T>>
 
 #include <El/core/Element/decl.hpp>
 #include <El/core/Serialize.hpp>
-#include <El/core/imports/mpi.hpp>
-#include <El/core/imports/choice.hpp>
-#include <El/core/imports/mpi_choice.hpp>
-#include <El/core/environment/decl.hpp>
 
-#include <El/core/Timer.hpp>
-#include <El/core/indexing/decl.hpp>
 #include <El/core/imports/blas.hpp>
 #ifdef HYDROGEN_HAVE_CUDA
 #include <El/core/imports/cuda.hpp>
@@ -246,6 +240,23 @@ template<typename T> struct IsStdField<Complex<T>>
 #ifdef HYDROGEN_HAVE_CUB
 #include <El/core/imports/cub.hpp>
 #endif // HYDROGEN_HAVE_CUB
+
+#include <El/core/Device.hpp>
+
+// FIXME FIXME FIXME
+namespace El
+{
+template <Device D>
+struct SyncInfo;
+}
+
+#include <El/core/imports/mpi.hpp>
+#include <El/core/imports/choice.hpp>
+#include <El/core/imports/mpi_choice.hpp>
+#include <El/core/environment/decl.hpp>
+
+#include <El/core/Timer.hpp>
+#include <El/core/indexing/decl.hpp>
 #include <El/core/imports/lapack.hpp>
 #include <El/core/imports/flame.hpp>
 #include <El/core/imports/mkl.hpp>
@@ -253,8 +264,6 @@ template<typename T> struct IsStdField<Complex<T>>
 #include <El/core/imports/scalapack.hpp>
 
 #include <El/core/limits.hpp>
-
-#include <El/core/Device.hpp>
 
 namespace El
 {

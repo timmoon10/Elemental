@@ -95,7 +95,8 @@ Real NormFromScaledSquare
 (Real localScale, Real localScaledSquare, mpi::Comm comm)
 {
     // Find the maximum relative scale
-    const Real scale = mpi::AllReduce(localScale, mpi::MAX, comm);
+    const Real scale = mpi::AllReduce(localScale, mpi::MAX, comm,
+                                      SyncInfo<Device::CPU>());
 
     if (scale != Real(0))
     {
@@ -104,7 +105,8 @@ Real NormFromScaledSquare
         localScaledSquare *= relScale*relScale;
 
         // The scaled square is now the sum of the local contributions
-        const Real scaledSquare = mpi::AllReduce(localScaledSquare, comm);
+        const Real scaledSquare = mpi::AllReduce(localScaledSquare, comm,
+                                                 SyncInfo<Device::CPU>());
         return scale*Sqrt(scaledSquare);
     }
     else
