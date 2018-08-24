@@ -24,7 +24,6 @@
     {                                                                   \
        EL_CHECK_CUDA(cudaStreamSynchronize(GPUManager::Stream()));      \
        CheckMpi( mpi_call );                                            \
-       EL_CHECK_CUDA(cudaDeviceSynchronize());                          \
     }                                                                   \
     while( 0 )
 #else
