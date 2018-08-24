@@ -68,9 +68,9 @@ struct DelayCtorType {};
 struct Comm
 {
 #if defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
-    using aluminum_comm_type = GPUBackend::comm_type;
+    using aluminum_comm_type = Head<BackendsForDevice<Device::GPU>>::comm_type;
 #else
-    using aluminum_comm_type = CPUBackend::comm_type;
+    using aluminum_comm_type = Head<BackendsForDevice<Device::CPU>>::comm_type;
 #endif // defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
 
     // Hack to handle global objects, MPI_COMM could be int or void*...

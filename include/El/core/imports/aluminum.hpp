@@ -171,12 +171,12 @@ using BackendsForDevice = typename BackendsForDeviceT<D>::type;
 // for some BackendT in BackendsForDevice<D>.
 template <typename T, Device D>
 struct IsAluminumDeviceType
-    : IsTrueForAny<BackendsForDevice<D>, T, IsAlType>
+    : IsTrueForAny<BackendsForDevice<D>, T, IsAlTypeT>
 {};
 
 template <typename T, Device D>
 struct BestBackendT
-    : SelectFirstMatch<BackendsForDevice<D>,T,IsAlType>
+    : SelectFirstMatch<BackendsForDevice<D>,T,IsAlTypeT>
 {};
 
 template <typename T, Device D>
