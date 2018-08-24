@@ -82,8 +82,11 @@ inline void AddSynchronizationPoint(
 inline void AddSynchronizationPoint(
     SyncInfo<Device::GPU> const& A, SyncInfo<Device::GPU> const& B)
 {
-    EL_CHECK_CUDA(cudaEventRecord(A.event_, A.stream_));
-    EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
+    if (A.stream_ != B.stream_)
+    {
+        AddSynchronizationPoint(A);
+        EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
+    }
 }
 
 // This captures the work done on A and forces B and C to wait for completion
@@ -91,33 +94,40 @@ inline void AddSynchronizationPoint(
     SyncInfo<Device::GPU> const& A,
     SyncInfo<Device::GPU> const& B, SyncInfo<Device::GPU> const& C)
 {
-    EL_CHECK_CUDA(cudaEventRecord(A.event_, A.stream_));
-    EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
-    EL_CHECK_CUDA(cudaStreamWaitEvent(C.stream_, A.event_, 0));
-}
+    bool const ABdiff = (A.stream_ == B.stream_);
+    bool const ACdiff = (A.stream_ == C.stream_);
 
-inline void AllWaitOnMaster(
-    SyncInfo<Device::GPU> const& Master,
-    SyncInfo<Device::GPU> const& B, SyncInfo<Device::GPU> const& C)
-{
-    AddSynchronizationPoint(Master,B,C);
-}
+    if (ABdiff || ACdiff)
+        AddSynchronizationPoint(A);
 
-inline void MasterWaitOnAll(
-    SyncInfo<Device::GPU> const& Master, SyncInfo<Device::GPU> const& B)
-{
-    AddSynchronizationPoint(B, Master);
-}
+    if (ABdiff)
+        EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
 
-inline void MasterWaitOnAll(
-    SyncInfo<Device::GPU> const& Master,
-    SyncInfo<Device::GPU> const& B, SyncInfo<Device::GPU> const& C)
-{
-    AddSynchronizationPoint(B, Master);
-    AddSynchronizationPoint(C, Master);
+    if (ACdiff)
+        EL_CHECK_CUDA(cudaStreamWaitEvent(C.stream_, A.event_, 0));
 }
 
 #endif // HYDROGEN_HAVE_CUDA
+
+template <Device D, Device... Ds>
+void AllWaitOnMaster(
+    SyncInfo<D> const& Master, SyncInfo<Ds> const&... Others)
+{
+    AddSynchronizationPoint(Master, Others...);
+}
+
+template <Device D>
+void MasterWaitOnAll(SyncInfo<D> const& Master)
+{}
+
+template <Device D, Device D1, Device... Ds>
+void MasterWaitOnAll(
+    SyncInfo<D> const& Master, SyncInfo<D1> const& Other,
+    SyncInfo<Ds> const&... others)
+{
+    AddSynchronizationPoint(Other, Master);
+    MasterWaitOnAll(Master, others...);
+}
 
 /** \class MultiSync
  *  \brief RAII class to wrap a bunch of SyncInfo objects.

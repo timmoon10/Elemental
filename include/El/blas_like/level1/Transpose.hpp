@@ -163,13 +163,12 @@ template <typename T, typename>
 void Transpose(Matrix<T,Device::GPU> const& A,
                Matrix<T,Device::GPU>& B, bool conjugate )
 {
-    SyncInfo<Device::GPU> syncInfoA(A), syncInfoB(B);
     const Int m = A.Height(), n = A.Width();
-
     B.Resize(n,m);
 
-    // B waits on A's stream
-    AddSynchronizationPoint(syncInfoA, syncInfoB);
+    // Syncronize here.
+    auto SyncManager = MakeMultiSync(
+        SyncInfo<Device::GPU>(B), SyncInfo<Device::GPU>(A));
 
     // Reset cuBLAS stream to be B's stream (Recall: Prefer to use
     // non-const stream for non-const work!)
@@ -187,8 +186,6 @@ void Transpose(Matrix<T,Device::GPU> const& A,
     // Restore the "default" stream
     EL_CHECK_CUBLAS(
         cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
-
-    AddSynchronizationPoint(syncInfoB, syncInfoA);
 }
 
 template <typename T, typename, typename>
