@@ -43,6 +43,10 @@ template <Device D>
 void AddSynchronizationPoint(SyncInfo<D> A, SyncInfo<D> B)
 {}
 
+template <Device D>
+void Synchronize(SyncInfo<D> const&)
+{}
+
 #ifdef HYDROGEN_HAVE_CUDA
 
 template <>
@@ -105,6 +109,11 @@ inline void AddSynchronizationPoint(
 
     if (ACdiff)
         EL_CHECK_CUDA(cudaStreamWaitEvent(C.stream_, A.event_, 0));
+}
+
+void Synchronize(SyncInfo<Device::GPU> const& syncInfo)
+{
+    EL_CHECK_CUDA(cudaStreamSynchronize(syncInfo.stream_));
 }
 
 #endif // HYDROGEN_HAVE_CUDA
