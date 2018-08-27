@@ -52,6 +52,8 @@ void PartialRowAllGather_impl
                 A.LockedBuffer(), 1, A.LDim(),
                 firstBuf,         1, height, syncInfoA );
 
+            Synchronize(syncInfoA);
+
             // Communicate
             mpi::AllGather(
                 firstBuf, portionSize, secondBuf, portionSize,
@@ -82,6 +84,8 @@ void PartialRowAllGather_impl
             height, A.LocalWidth(),
             A.LockedBuffer(), 1, A.LDim(),
             secondBuf,        1, height, syncInfoA);
+
+        Synchronize(syncInfoA);
 
         const Int sendRowRank = Mod( A.RowRank()+rowDiff, rowStride );
         const Int recvRowRank = Mod( A.RowRank()-rowDiff, rowStride );

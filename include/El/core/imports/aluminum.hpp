@@ -8,11 +8,27 @@
 namespace El
 {
 
+// FIXME: This is a lame shortcut to save some
+// metaprogramming. Deadlines are the worst.
+enum class Collective
+{
+    ALLGATHER,
+    ALLREDUCE,
+    ALLTOALL,
+    BROADCAST,
+    GATHER,
+    REDUCE,
+    REDUCESCATTER,
+    SCATTER
+};// enum class Collective
+
 #ifndef HYDROGEN_HAVE_ALUMINUM
 
 template <typename T> struct IsAluminumTypeT : std::false_type {};
 template <typename T, Device D>
 struct IsAluminumDeviceType : std::false_type {};
+template <Collective C, typename BackendT>
+struct IsBackendSupported : std::false_type {};
 
 #else
 
@@ -183,20 +199,6 @@ struct BestBackendT
 template <typename T, Device D>
 using BestBackend = typename BestBackendT<T,D>::type;
 
-// FIXME: This is a lame shortcut to save some
-// metaprogramming. Deadlines are the worst.
-enum class Collective
-{
-    ALLGATHER,
-    ALLREDUCE,
-    ALLTOALL,
-    BROADCAST,
-    GATHER,
-    REDUCE,
-    REDUCESCATTER,
-    SCATTER
-};// enum class Collective
-
 template <Collective C, typename BackendT>
 struct IsBackendSupported : std::false_type {};
 
@@ -205,6 +207,7 @@ template <>
 struct IsBackendSupported<Collective::ALLREDUCE, Al::MPIBackend>
     : std::true_type {};
 
+#ifdef HYDROGEN_HAVE_NCCL2
 // NCCL backend supports these
 template <>
 struct IsBackendSupported<Collective::ALLGATHER, Al::NCCLBackend>
@@ -221,11 +224,14 @@ struct IsBackendSupported<Collective::REDUCE, Al::NCCLBackend>
 template <>
 struct IsBackendSupported<Collective::REDUCESCATTER, Al::NCCLBackend>
     : std::true_type {};
+#endif // HYDROGEN_HAVE_NCCL2
 
+#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
 // MPICUDA backend only supports AllReduce
 template <>
 struct IsBackendSupported<Collective::ALLREDUCE, Al::MPICUDABackend>
     : std::true_type {};
+#endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
 template <Collective C, typename BackendList>
 struct IsBackendSupportedByAny
