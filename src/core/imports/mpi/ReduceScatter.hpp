@@ -15,11 +15,33 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 {
     EL_DEBUG_CSE
 
-    // FIXME: Synchronize stuff
+        std::cerr << "\n\n\n AHHH BAD CALL \n\n\n" << std::endl;
 
     Al::Reduce_scatter<BestBackend<T,D>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
+}
+
+template <typename T,
+          typename/*=EnableIf<IsAluminumSupported<T,D,
+                                  Collectives::REDUCESCATTER>>*/>
+void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
+                   SyncInfo<Device::GPU> const& syncInfo)
+{
+    EL_DEBUG_CSE
+    if (count == 0)
+        return;
+
+    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
+                                     syncInfo.event_);
+
+    AddSynchronizationPoint(syncInfo, alSyncInfo);
+
+    Al::Reduce_scatter<BestBackend<T,Device::GPU>>(
+        sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
+        *comm.aluminum_comm);
+
+    AddSynchronizationPoint(alSyncInfo, syncInfo);
 }
 #endif // HYDROGEN_HAVE_ALUMINUM
 

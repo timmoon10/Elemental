@@ -1102,6 +1102,10 @@ template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
 void ReduceScatter( T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
                     SyncInfo<D> const& syncInfo );
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void ReduceScatter( T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
+                    SyncInfo<Device::GPU> const& syncInfo );
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template<typename T, Device D,
