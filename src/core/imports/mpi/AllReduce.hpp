@@ -24,6 +24,29 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename/*=EnableIf<IsAluminumDeviceType<T,D>>*/>
+void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
+               SyncInfo<Device::GPU> const& syncInfo)
+{
+    EL_DEBUG_CSE
+    if (count == 0)
+        return;
+
+    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
+                                     syncInfo.event_);
+
+    AddSynchronizationPoint(syncInfo, alSyncInfo);
+
+    Al::Allreduce<BestBackend<T,Device::GPU>>(
+        sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
+        *comm.aluminum_comm);
+
+    AddSynchronizationPoint(alSyncInfo, syncInfo);
+}
+#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template <typename T, Device D,
@@ -130,11 +153,35 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
+    std::cout << "\n\n\n NEED TO SYNCHRONIZE IN-PLACE \n\n\n" << std::endl;
 
     Al::Allreduce<BestBackend<T,D>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename/*=EnableIf<IsAluminumDeviceType<T,D>>*/>
+void AllReduce(T* buf, int count, Op op, Comm comm,
+               SyncInfo<Device::GPU> const& syncInfo)
+{
+    EL_DEBUG_CSE
+    if (count == 0)
+        return;
+
+    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
+                                     syncInfo.event_);
+
+    AddSynchronizationPoint(syncInfo, alSyncInfo);
+
+    Al::Allreduce<BestBackend<T,Device::GPU>>(
+        buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
+        *comm.aluminum_comm);
+
+    AddSynchronizationPoint(alSyncInfo, syncInfo);
+}
+#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template <typename T, Device D,

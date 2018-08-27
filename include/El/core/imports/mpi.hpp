@@ -1015,6 +1015,13 @@ template <typename T, Device D,
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<D> const&);
 
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumDeviceType<T,Device::GPU>>>
+void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
+               SyncInfo<Device::GPU> const&);
+#endif // HYDROGEN_HAVE_CUDA
+
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
                                 Not<IsAluminumDeviceType<T,D>>>>,
@@ -1051,6 +1058,12 @@ template <typename T, Device D,
           typename=EnableIf<IsAluminumDeviceType<T,D>>>
 void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& /*syncInfo*/);
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumDeviceType<T,Device::GPU>>>
+void AllReduce(T* buf, int count, Op op, Comm comm,
+               SyncInfo<Device::GPU> const& /*syncInfo*/);
+#endif // HYDROGEN_HAVE_CUDA
 
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
@@ -1102,10 +1115,12 @@ template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
 void ReduceScatter( T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
                     SyncInfo<D> const& syncInfo );
+#ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
           typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
 void ReduceScatter( T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
                     SyncInfo<Device::GPU> const& syncInfo );
+#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template<typename T, Device D,
@@ -1165,6 +1180,12 @@ template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
 void ReduceScatter(T* buf, int count, Op op, Comm comm,
                    SyncInfo<D> const& syncInfo);
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void ReduceScatter( T* buf, int count, Op op, Comm comm,
+                    SyncInfo<Device::GPU> const& syncInfo );
+#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template <typename T, Device D,
