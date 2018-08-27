@@ -111,7 +111,7 @@ inline void AddSynchronizationPoint(
         EL_CHECK_CUDA(cudaStreamWaitEvent(C.stream_, A.event_, 0));
 }
 
-void Synchronize(SyncInfo<Device::GPU> const& syncInfo)
+inline void Synchronize(SyncInfo<Device::GPU> const& syncInfo)
 {
     EL_CHECK_CUDA(cudaStreamSynchronize(syncInfo.stream_));
 }
