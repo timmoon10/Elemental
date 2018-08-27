@@ -3,15 +3,6 @@ namespace El
 namespace mpi
 {
 
-template <Device D>
-void Synchronize(SyncInfo<D> const&)
-{}
-
-void Synchronize(SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_CHECK_CUDA(cudaStreamSynchronize(syncInfo.stream_));
-}
-
 //
 // The "normal" allreduce (not "IN_PLACE").
 //
