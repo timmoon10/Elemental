@@ -1095,26 +1095,51 @@ void AllReduce(T* buf, int count, Comm comm, SyncInfo<D> const& syncInfo);
 
 // ReduceScatter
 // -------------
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void ReduceScatter( Real* sbuf, Real* rbuf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void ReduceScatter
-( Complex<Real>* sbuf, Complex<Real>* rbuf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void ReduceScatter( T* sbuf, T* rbuf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+#define COLL Collective::REDUCESCATTER
 
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void ReduceScatter( T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
+                    SyncInfo<D> const& syncInfo );
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template<typename T, Device D,
+         typename=EnableIf<And<IsDeviceValidType<T,D>,
+                               Not<IsAluminumSupported<T,D,COLL>>>>,
+         typename=EnableIf<IsPacked<T>>>
+void ReduceScatter(
+    T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
+    SyncInfo<D> const& syncInfo );
+
+template<typename T, Device D,
+         typename=EnableIf<And<IsDeviceValidType<T,D>,
+                               Not<IsAluminumSupported<T,D,COLL>>>>,
+         typename=EnableIf<IsPacked<T>>>
+void ReduceScatter(
+    Complex<T> const* sbuf, Complex<T>* rbuf, int rc, Op op, Comm comm,
+    SyncInfo<D> const& syncInfo );
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void ReduceScatter(
+    T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
+    SyncInfo<D> const& syncInfo );
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void ReduceScatter(T const*, T*, int, Op, Comm, SyncInfo<D> const&);
+
+// FIXME: WHAT TO DO HERE??
 template<typename T,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
 void ReduceScatter
 ( const T* sb, T* rb, int count, OpClass op, bool commutative, Comm comm )
-EL_NO_RELEASE_EXCEPT
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
     if( commutative )
@@ -1124,31 +1149,53 @@ EL_NO_RELEASE_EXCEPT
 }
 
 // Default to SUM
-template<typename T>
-void ReduceScatter( T* sbuf, T* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+void ReduceScatter( T const* sbuf, T* rbuf, int rc, Comm comm,
+                    SyncInfo<D> const& syncInfo);
 
 // Single-buffer ReduceScatter
 // ---------------------------
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void ReduceScatter( Real* buf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void ReduceScatter( Complex<Real>* buf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void ReduceScatter( T* buf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT;
 
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void ReduceScatter(T* buf, int count, Op op, Comm comm,
+                   SyncInfo<D> const& syncInfo);
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void ReduceScatter(T* buf, int count, Op op, Comm comm,
+                   SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
+                   SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void ReduceScatter(T* buf, int count, Op op, Comm comm,
+                   SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void ReduceScatter(T*, int, Op, Comm, SyncInfo<D> const&);
+
+// FIXME: WHAT TO DO HERE??
 template<typename T,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
 void ReduceScatter
 ( T* buf, int count, OpClass op, bool commutative, Comm comm )
-EL_NO_RELEASE_EXCEPT
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
     if( commutative )
@@ -1158,8 +1205,10 @@ EL_NO_RELEASE_EXCEPT
 }
 
 // Default to SUM
-template<typename T>
-void ReduceScatter( T* buf, int rc, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+void ReduceScatter(T* buf, int rc, Comm comm, SyncInfo<D> const& syncInfo);
+
+#undef COLL // Collectives::REDUCESCATTER
 
 // Variable-length ReduceScatter
 // -----------------------------

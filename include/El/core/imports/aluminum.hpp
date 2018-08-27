@@ -174,6 +174,7 @@ struct IsAluminumDeviceType
     : IsTrueForAny<BackendsForDevice<D>, T, IsAlTypeT>
 {};
 
+// TODO: Need to incorporate collective information
 template <typename T, Device D>
 struct BestBackendT
     : SelectFirstMatch<BackendsForDevice<D>,T,IsAlTypeT>
@@ -181,6 +182,66 @@ struct BestBackendT
 
 template <typename T, Device D>
 using BestBackend = typename BestBackendT<T,D>::type;
+
+// FIXME: This is a lame shortcut to save some
+// metaprogramming. Deadlines are the worst.
+enum class Collective
+{
+    ALLGATHER,
+    ALLREDUCE,
+    ALLTOALL,
+    BROADCAST,
+    GATHER,
+    REDUCE,
+    REDUCESCATTER,
+    SCATTER
+};// enum class Collective
+
+template <Collective C, typename BackendT>
+struct IsBackendSupported : std::false_type {};
+
+// MPI backend only supports AllReduce
+template <>
+struct IsBackendSupported<Collective::ALLREDUCE, Al::MPIBackend>
+    : std::true_type {};
+
+// NCCL backend supports these
+template <>
+struct IsBackendSupported<Collective::ALLGATHER, Al::NCCLBackend>
+    : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::ALLREDUCE, Al::NCCLBackend>
+    : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::BROADCAST, Al::NCCLBackend>
+    : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::REDUCE, Al::NCCLBackend>
+    : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::REDUCESCATTER, Al::NCCLBackend>
+    : std::true_type {};
+
+// MPICUDA backend only supports AllReduce
+template <>
+struct IsBackendSupported<Collective::ALLREDUCE, Al::MPICUDABackend>
+    : std::true_type {};
+
+template <Collective C, typename BackendList>
+struct IsBackendSupportedByAny
+    : Or<IsBackendSupported<C,Head<BackendList>>,
+         IsBackendSupportedByAny<C,Tail<BackendList>>>
+{};
+
+template <Collective C>
+struct IsBackendSupportedByAny<C,TypeList<>>
+    : std::false_type {};
+
+template <typename T, Device D, Collective C>
+struct IsAluminumSupported
+    : And<IsBackendSupportedByAny<C,BackendsForDevice<D>>,
+          IsAluminumDeviceType<T,D>>
+{};
 
 #endif // ndefined(HYDROGEN_HAVE_ALUMINUM)
 
