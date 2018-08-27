@@ -49,7 +49,7 @@ template <typename T, Device D,
           typename/*=EnableIf<And<IsDeviceValidType<T,D>,
                                   Not<IsAluminumSupported<T,D>>>>*/,
           typename/*=EnableIf<IsPacked<T>>*/>
- void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
+void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                     SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE

@@ -35,13 +35,13 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
 #endif
     B.AlignRowsAndResize(A.RowAlign(), height, width, false, false);
 
+    // FIXME (trb): Actually sync properly after calls that use these!
+    SyncInfo<D>
+        syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
     if (A.Participating())
     {
-        // FIXME (trb): Actually sync properly after calls that use these!
-        SyncInfo<D>
-            syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-            syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
-
         const Int rowDiff = B.RowAlign()-A.RowAlign();
         if (rowDiff == 0)
         {
@@ -122,9 +122,13 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                     bcastBuf = buffer.data();
                 }
 
+                // B waits on A
+                AddSynchronizationPoint(syncInfoA, syncInfoB);
+
                 // Communicate
                 mpi::Broadcast(
-                    bcastBuf, localWidthB, A.ColAlign(), A.ColComm());
+                    bcastBuf, localWidthB, A.ColAlign(), A.ColComm(),
+                    syncInfoB);
 
                 util::DeviceStridedMemCopy(
                     B.Buffer(), B.LDim(), bcastBuf, 1, localWidthB,

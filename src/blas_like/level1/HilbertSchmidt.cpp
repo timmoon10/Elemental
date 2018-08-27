@@ -63,7 +63,10 @@ Ring HilbertSchmidt
     if (A.GetLocalDevice() != Device::CPU)
         LogicError("HilbertSchmidt: Only implemented for CPU matrices.");
 
-    auto const& Amat = A.LockedMatrix();
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Ring,Device::CPU> const&>(
+                A.LockedMatrix()));
 
     Ring innerProd;
     if( A.Participating() )
@@ -88,11 +91,9 @@ Ring HilbertSchmidt
                                            BBuf[iLoc+jLoc*BLDim];
         }
         innerProd = mpi::AllReduce(
-            localInnerProd, A.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
+            localInnerProd, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( innerProd, A.Root(), A.CrossComm() );
+    mpi::Broadcast(innerProd, A.Root(), A.CrossComm(), syncInfoA);
     return innerProd;
 }
 

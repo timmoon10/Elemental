@@ -43,7 +43,7 @@ Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op)
 
 //#include "mpi/AllGather.hpp"
 #include "mpi/AllReduce.hpp"
-//#include "mpi/Broadcast.hpp"
+#include "mpi/Broadcast.hpp"
 //#include "mpi/Reduce.hpp"
 #include "mpi/ReduceScatter.hpp"
 

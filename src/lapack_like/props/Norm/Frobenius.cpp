@@ -137,7 +137,7 @@ Base<Field> FrobeniusNorm(const AbstractDistMatrix<Field>& A)
         norm = NormFromScaledSquare
             (localScale, localScaledSquare, A.DistComm());
     }
-    mpi::Broadcast(norm, A.Root(), A.CrossComm());
+    mpi::Broadcast(norm, A.Root(), A.CrossComm(), SyncInfo<Device::CPU>{});
     return norm;
 }
 
@@ -197,7 +197,7 @@ Base<Field> HermitianFrobeniusNorm
         norm = NormFromScaledSquare
           (localScale, localScaledSquare, A.DistComm());
     }
-    mpi::Broadcast(norm, A.Root(), A.CrossComm());
+    mpi::Broadcast(norm, A.Root(), A.CrossComm(), SyncInfo<Device::CPU>{});
     return norm;
 }
 

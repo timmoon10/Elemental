@@ -341,7 +341,8 @@ void TranslateBetweenGrids
             mpi::Recv(bcastBuffer.data(), height*width, sendRank, activeCommB);
         }
 
-        mpi::Broadcast(bcastBuffer.data(), height*width, 0, B.RedundantComm());
+        mpi::Broadcast(bcastBuffer.data(), height*width, 0, B.RedundantComm(),
+                       syncInfoB);
 
         util::InterleaveMatrix(
             height, width,

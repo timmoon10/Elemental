@@ -20,8 +20,10 @@
 
 typedef unsigned char* UCP;
 
-namespace El {
-namespace mpi {
+namespace El
+{
+namespace mpi
+{
 
 const int ANY_SOURCE = MPI_ANY_SOURCE;
 const int ANY_TAG = MPI_ANY_TAG;
@@ -1094,53 +1096,6 @@ template<typename T>
 void SendRecv( T* buf, int count, int to, int from, Comm comm )
 EL_NO_RELEASE_EXCEPT
 { TaggedSendRecv( buf, count, to, 0, from, ANY_TAG, comm ); }
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Broadcast( Real* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( Size(comm) == 1 || count == 0 )
-        return;
-    EL_CHECK_MPI( MPI_Bcast( buf, count, TypeMap<Real>(), root, comm.comm ) );
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Broadcast( Complex<Real>* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( Size(comm) == 1 )
-        return;
-#ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI( MPI_Bcast( buf, 2*count, TypeMap<Real>(), root, comm.comm ) );
-#else
-    EL_CHECK_MPI( MPI_Bcast( buf, count, TypeMap<Complex<Real>>(), root, comm.comm ) );
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void Broadcast( T* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( Size(comm) == 1 || count == 0 )
-        return;
-    std::vector<byte> packedBuf;
-    Serialize( count, buf, packedBuf );
-    EL_CHECK_MPI(
-      MPI_Bcast( packedBuf.data(), count, TypeMap<T>(), root, comm.comm )
-    );
-    Deserialize( count, packedBuf, buf );
-}
-
-template<typename T>
-void Broadcast( T& b, int root, Comm comm ) EL_NO_RELEASE_EXCEPT
-{ Broadcast( &b, 1, root, comm ); }
 
 template<typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
@@ -2584,10 +2539,6 @@ EL_NO_RELEASE_EXCEPT
   EL_NO_RELEASE_EXCEPT; \
   template void SendRecv \
   ( T* buf, int count, int to, int from, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Broadcast( T* buf, int count, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Broadcast( T& b, int root, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
   template void IBroadcast \
   ( T* buf, int count, int root, Comm comm, Request<T>& request ); \

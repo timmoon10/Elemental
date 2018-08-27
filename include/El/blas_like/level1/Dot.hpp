@@ -82,10 +82,12 @@ T Dotu( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B )
     if ((A.GetLocalDevice() != Device::CPU)
         || (B.GetLocalDevice() != Device::CPU))
     {
-        LogicError("MinLoc: Only implemented for CPU matrices.");
+        LogicError("Dotu: Only implemented for CPU matrices.");
     }
 
-    auto const& Amat = A.LockedMatrix();
+    SyncInfo<Device::CPU> syncInfoA(
+        static_cast<Matrix<T,Device::CPU> const&>(
+            A.LockedMatrix()));
 
     T innerProd;
     if( A.Participating() )
@@ -99,11 +101,9 @@ T Dotu( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B )
             for( Int iLoc=0; iLoc<localHeight; ++iLoc )
                 localInnerProd += ALoc(iLoc,jLoc)*BLoc(iLoc,jLoc);
         innerProd = mpi::AllReduce(
-            localInnerProd, A.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<T,Device::CPU> const&>(Amat)) );
+            localInnerProd, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( innerProd, A.Root(), A.CrossComm() );
+    mpi::Broadcast(innerProd, A.Root(), A.CrossComm(), syncInfoA);
     return innerProd;
 }
 

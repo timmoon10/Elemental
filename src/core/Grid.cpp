@@ -232,8 +232,10 @@ void Grid::SetUpGrid()
     // Translate the rank of the root process of the owningGroup so that we can
     // broadcast data
     int owningRoot = mpi::Translate( owningGroup_, 0, viewingGroup_ );
-    mpi::Broadcast( vcToViewing_.data(), size_, owningRoot, viewingComm_ );
-    mpi::Broadcast( diagsAndRanks_.data(), 2*size_, owningRoot, viewingComm_ );
+    mpi::Broadcast(vcToViewing_.data(), size_, owningRoot, viewingComm_,
+                   SyncInfo<Device::CPU>{} );
+    mpi::Broadcast(diagsAndRanks_.data(), 2*size_, owningRoot, viewingComm_,
+                   SyncInfo<Device::CPU>{} );
 
 #ifdef EL_HAVE_SCALAPACK
     blacsVCHandle_ = blacs::Handle( vcComm_.comm );

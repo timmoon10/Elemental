@@ -38,6 +38,11 @@ Base<Ring> MaxAbs( const AbstractDistMatrix<Ring>& A )
     if (A.GetLocalDevice() != Device::CPU)
         LogicError("MaxAbs: Only implemented for CPU matrices.");
 
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Ring,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Base<Ring> value = 0;
     if( A.Participating() )
     {
@@ -46,16 +51,13 @@ Base<Ring> MaxAbs( const AbstractDistMatrix<Ring>& A )
         Int const nLocal = A.LocalWidth();
         Ring const* ABuf = A.LockedBuffer();
         Int const ALDim = A.LDim();
-        auto const& Amat = A.LockedMatrix();
         for( Int jLoc=0; jLoc<nLocal; ++jLoc )
             for( Int iLoc=0; iLoc<mLocal; ++iLoc )
                 value = Max(value,Abs(ABuf[iLoc+jLoc*ALDim]));
 
-        value = mpi::AllReduce( value, mpi::MAX, A.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
+        value = mpi::AllReduce(value, mpi::MAX, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( value, A.Root(), A.CrossComm() );
+    mpi::Broadcast(value, A.Root(), A.CrossComm(), syncInfoA);
     return value;
 }
 
@@ -102,6 +104,11 @@ Base<Ring> SymmetricMaxAbs
     if (A.GetLocalDevice() != Device::CPU)
         LogicError("SymmetricMaxAbs: Only implemented for CPU matrices.");
 
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Ring,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Base<Ring> value = 0;
     if( A.Participating() )
     {
@@ -109,7 +116,6 @@ Base<Ring> SymmetricMaxAbs
         Int const nLocal = A.LocalWidth();
         Ring const* ABuf = A.LockedBuffer();
         Int const ALDim = A.LDim();
-        auto const& Amat = A.LockedMatrix();
         if( uplo == LOWER )
         {
             for( Int jLoc=0; jLoc<nLocal; ++jLoc )
@@ -130,11 +136,9 @@ Base<Ring> SymmetricMaxAbs
                     value = Max(value,Abs(ABuf[iLoc+jLoc*ALDim]));
             }
         }
-        value = mpi::AllReduce( value, mpi::MAX, A.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<Ring,Device::CPU> const&>(Amat)) );
+        value = mpi::AllReduce(value, mpi::MAX, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( value, A.Root(), A.CrossComm() );
+    mpi::Broadcast(value, A.Root(), A.CrossComm(), syncInfoA);
     return value;
 }
 

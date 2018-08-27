@@ -41,6 +41,11 @@ Real Max( const AbstractDistMatrix<Real>& A )
     if (A.GetLocalDevice() != Device::CPU)
         LogicError("Max: Only implemented for CPU matrices.");
 
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Real value = limits::Lowest<Real>();
     if( A.Participating() )
     {
@@ -48,7 +53,6 @@ Real Max( const AbstractDistMatrix<Real>& A )
         const Int mLocal = A.LocalHeight();
         const Int nLocal = A.LocalWidth();
         const Real* ABuf = A.LockedBuffer();
-        auto const& Amat = A.LockedMatrix();
 
         const Int ALDim = A.LDim();
         for( Int jLoc=0; jLoc<nLocal; ++jLoc )
@@ -56,11 +60,9 @@ Real Max( const AbstractDistMatrix<Real>& A )
                 value = Max(value,ABuf[iLoc+jLoc*ALDim]);
 
         value = mpi::AllReduce(
-            value, mpi::MAX, A.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<Real,Device::CPU> const&>(Amat)) );
+            value, mpi::MAX, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( value, A.Root(), A.CrossComm() );
+    mpi::Broadcast(value, A.Root(), A.CrossComm(), syncInfoA);
     return value;
 }
 
@@ -107,6 +109,11 @@ Real SymmetricMax( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
     if (A.GetLocalDevice() != Device::CPU)
         LogicError("SymmetricMax: Only implemented for CPU matrices.");
 
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Real value = limits::Lowest<Real>();
     if( A.Participating() )
     {
@@ -114,7 +121,6 @@ Real SymmetricMax( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
         const Int nLocal = A.LocalWidth();
         const Real* ABuf = A.LockedBuffer();
         const Int ALDim = A.LDim();
-        auto const& Amat = A.LockedMatrix();
 
         if( uplo == LOWER )
         {
@@ -136,11 +142,9 @@ Real SymmetricMax( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
                     value = Max(value,ABuf[iLoc+jLoc*ALDim]);
             }
         }
-        value = mpi::AllReduce( value, mpi::MAX, A.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<Real,Device::CPU> const&>(Amat)) );
+        value = mpi::AllReduce(value, mpi::MAX, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( value, A.Root(), A.CrossComm() );
+    mpi::Broadcast(value, A.Root(), A.CrossComm(), syncInfoA);
     return value;
 }
 

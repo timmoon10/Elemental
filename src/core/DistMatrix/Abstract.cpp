@@ -120,11 +120,42 @@ AbstractDistMatrix<T>::MakeSizeConsistent(bool includingViewers)
     if(!grid.InGrid() && !includingViewers)
         LogicError("Non-participating process called MakeSizeConsistent");
     if(grid.InGrid())
-        mpi::Broadcast(message, msgSize, Root(), CrossComm());
+    {
+        if (this->GetLocalDevice() == Device::CPU)
+            mpi::Broadcast(message, msgSize, Root(), CrossComm(),
+                           SyncInfo<Device::CPU>{});
+#ifdef HYDROGEN_HAVE_CUDA
+        else if (this->GetLocalDevice() == Device::GPU)
+        {
+            SyncInfo<Device::GPU> syncInfoA(
+                static_cast<::El::Matrix<T,Device::GPU> const&>(
+                    this->LockedMatrix()));
+            mpi::Broadcast(message, msgSize, Root(), CrossComm(),
+                           syncInfoA);
+        }
+#endif // HYDROGEN_HAVE_CUDA
+        else
+            LogicError("AbstractMatrix: Bad Device!");
+    }
     if(includingViewers)
     {
         const Int vcRoot = grid.VCToViewing(0);
-        mpi::Broadcast(message, msgSize, vcRoot, grid.ViewingComm());
+        if (this->GetLocalDevice() == Device::CPU)
+            mpi::Broadcast(message, msgSize, vcRoot, grid.ViewingComm(),
+                           SyncInfo<Device::CPU>{});
+#ifdef HYDROGEN_HAVE_CUDA
+        else if (this->GetLocalDevice() == Device::GPU)
+        {
+            SyncInfo<Device::GPU> syncInfoA(
+                static_cast<::El::Matrix<T,Device::GPU> const&>(
+                    this->LockedMatrix()));
+            mpi::Broadcast(message, msgSize, vcRoot, grid.ViewingComm(),
+                           syncInfoA);
+        }
+#endif // HYDROGEN_HAVE_CUDA
+        else
+            LogicError("AbstractMatrix: Bad Device!");
+
     }
     const Int newHeight = message[0];
     const Int newWidth  = message[1];

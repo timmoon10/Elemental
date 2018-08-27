@@ -37,8 +37,9 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
             {
                 if (A.RowRank() == A.RowAlign())
                     B.Matrix() = A.LockedMatrix();
-                mpi::Broadcast
-                (B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm());
+                mpi::Broadcast(
+                    B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm(),
+                    syncInfoB);
             }
             else
             {
@@ -89,7 +90,8 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
 
                 // Perform the row broadcast
                 mpi::Broadcast(
-                    B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm());
+                    B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm(),
+                    syncInfoB);
             }
             else
             {

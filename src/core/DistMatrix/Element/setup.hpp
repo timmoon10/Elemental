@@ -453,15 +453,17 @@ EL_NO_RELEASE_EXCEPT
       if (!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
+    SyncInfo<D> syncInfoA(matrix_);
+
     T value;
     if (CrossRank() == this->Root())
     {
         const int owner = this->Owner(i, j);
         if (owner == DistRank())
             value = GetLocal(this->LocalRow(i), this->LocalCol(j));
-        mpi::Broadcast(value, owner, DistComm());
+        mpi::Broadcast(value, owner, DistComm(), syncInfoA);
     }
-    mpi::Broadcast(value, this->Root(), CrossComm());
+    mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
     return value;
 }
 
@@ -475,15 +477,16 @@ EL_NO_RELEASE_EXCEPT
       if (!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
+    SyncInfo<D> syncInfoA(matrix_);
     Base<T> value;
     if (CrossRank() == this->Root())
     {
         const int owner = this->Owner(i, j);
         if (owner == DistRank())
             value = GetLocalRealPart(this->LocalRow(i), this->LocalCol(j));
-        mpi::Broadcast(value, owner, DistComm());
+        mpi::Broadcast(value, owner, DistComm(), syncInfoA);
     }
-    mpi::Broadcast(value, this->Root(), CrossComm());
+    mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
     return value;
 }
 
@@ -497,6 +500,7 @@ EL_NO_RELEASE_EXCEPT
     if (!this->Grid().InGrid())
         LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
+    SyncInfo<D> syncInfoA(matrix_);
     Base<T> value;
     if (IsComplex<T>::value)
     {
@@ -505,9 +509,9 @@ EL_NO_RELEASE_EXCEPT
             const int owner = this->Owner(i, j);
             if (owner == DistRank())
                 value = GetLocalRealPart(this->LocalRow(i), this->LocalCol(j));
-            mpi::Broadcast(value, owner, DistComm());
+            mpi::Broadcast(value, owner, DistComm(), syncInfoA);
         }
-        mpi::Broadcast(value, this->Root(), CrossComm());
+        mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
     }
     else
         value = 0;
@@ -666,6 +670,7 @@ void DM::ProcessQueues(bool includeViewers)
 
     // We will first push to redundant rank 0
     const int redundantRoot = 0;
+    SyncInfo<D> syncInfoA(matrix_);
 
     // Compute the metadata
     // ====================
@@ -717,10 +722,10 @@ void DM::ProcessQueues(bool includeViewers)
     // ============================
     auto recvBuf = mpi::AllToAll(sendBuf, sendCounts, sendOffs, comm);
     Int recvBufSize = recvBuf.size();
-    mpi::Broadcast(recvBufSize, redundantRoot, RedundantComm());
+    mpi::Broadcast(recvBufSize, redundantRoot, RedundantComm(), syncInfoA);
     recvBuf.resize(recvBufSize);
-    mpi::Broadcast
-    (recvBuf.data(), recvBufSize, redundantRoot, RedundantComm());
+    mpi::Broadcast(
+        recvBuf.data(), recvBufSize, redundantRoot, RedundantComm(), syncInfoA);
     // TODO: Make this loop faster
     for(const auto& entry : recvBuf)
         UpdateLocal(this->LocalRow(entry.i), this->LocalCol(entry.j), entry.value);

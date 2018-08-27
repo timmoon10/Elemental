@@ -672,23 +672,54 @@ EL_NO_RELEASE_EXCEPT;
 
 // Broadcast
 // ---------
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void Broadcast( Real* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void Broadcast( Complex<Real>* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void Broadcast( T* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+#define COLL Collective::BROADCAST
+
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void Broadcast(T* buffer, int count, int root, Comm comm, SyncInfo<D> const&);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void Broadcast(T* buffer, int count, int root, Comm comm,
+               SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Broadcast(T* buffer, int count, int root, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void Broadcast(T* buffer, int count, int root, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void Broadcast(T*, int, int, Comm, SyncInfo<D> const&);
 
 // If the message length is one
-template<typename T>
-void Broadcast( T& b, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template<typename T, Device D>
+void Broadcast( T& b, int root, Comm comm, SyncInfo<D> const& );
+
+#undef COLL // Collective::BROADCAST
 
 // Non-blocking broadcast
 // ----------------------

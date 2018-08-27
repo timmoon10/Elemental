@@ -68,7 +68,11 @@ ValueInt<Real> VectorMinLoc( const AbstractDistMatrix<Real>& x )
     if (x.GetLocalDevice() != Device::CPU)
         LogicError("VectorMinLoc: Only implemented for CPU matrices.");
 
-    auto const& Amat = x.LockedMatrix();
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                x.LockedMatrix()));
+
     ValueInt<Real> pivot;
     pivot.index = -1;
     pivot.value = limits::Max<Real>();
@@ -107,11 +111,9 @@ ValueInt<Real> VectorMinLoc( const AbstractDistMatrix<Real>& x )
             }
         }
         pivot = mpi::AllReduce(
-            pivot, mpi::MinLocOp<Real>(), x.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<Real,Device::CPU> const&>(Amat)) );
+            pivot, mpi::MinLocOp<Real>(), x.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( pivot, x.Root(), x.CrossComm() );
+    mpi::Broadcast(pivot, x.Root(), x.CrossComm(), syncInfoA);
     return pivot;
 }
 
@@ -157,7 +159,11 @@ Entry<Real> MinLoc( const AbstractDistMatrix<Real>& A )
     if (A.GetLocalDevice() != Device::CPU)
         LogicError("MinLoc: Only implemented for CPU matrices.");
 
-    auto const& Amat = A.LockedMatrix();
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     const Real* ABuf = A.LockedBuffer();
     const Int ALDim = A.LDim();
 
@@ -187,11 +193,9 @@ Entry<Real> MinLoc( const AbstractDistMatrix<Real>& A )
         }
         // Compute and store the location of the new pivot
         pivot = mpi::AllReduce(
-            pivot, mpi::MinLocPairOp<Real>(), A.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<Real,Device::CPU> const&>(Amat)) );
+            pivot, mpi::MinLocPairOp<Real>(), A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( pivot, A.Root(), A.CrossComm() );
+    mpi::Broadcast(pivot, A.Root(), A.CrossComm(), syncInfoA);
     return pivot;
 }
 
@@ -262,7 +266,11 @@ SymmetricMinLoc( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
     if (A.GetLocalDevice() != Device::CPU)
         LogicError("SymmetricMinLoc: Only implemented for CPU matrices.");
 
-    auto const& Amat = A.LockedMatrix();
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Entry<Real> pivot;
     pivot.i = -1;
     pivot.j = -1;
@@ -311,11 +319,9 @@ SymmetricMinLoc( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
         }
         // Compute and store the location of the new pivot
         pivot = mpi::AllReduce(
-            pivot, mpi::MinLocPairOp<Real>(), A.DistComm(),
-            SyncInfo<Device::CPU>(
-                static_cast<Matrix<Real,Device::CPU> const&>(Amat)) );
-}
-    mpi::Broadcast( pivot, A.Root(), A.CrossComm() );
+            pivot, mpi::MinLocPairOp<Real>(), A.DistComm(), syncInfoA);
+    }
+    mpi::Broadcast(pivot, A.Root(), A.CrossComm(), syncInfoA);
     return pivot;
 }
 
