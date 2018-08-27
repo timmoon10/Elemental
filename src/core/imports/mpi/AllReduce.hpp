@@ -18,6 +18,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
+    std::cout << "\n\n\n NEED TO SYNCHRONIZE \n\n\n" << std::endl;
 
     Al::Allreduce<BestBackend<T,D>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),

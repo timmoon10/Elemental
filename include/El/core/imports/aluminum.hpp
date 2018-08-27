@@ -27,8 +27,8 @@ enum class Collective
 template <typename T> struct IsAluminumTypeT : std::false_type {};
 template <typename T, Device D>
 struct IsAluminumDeviceType : std::false_type {};
-template <Collective C, typename BackendT>
-struct IsBackendSupported : std::false_type {};
+template <typename T, Device D, Collective C>
+struct IsAluminumSupported : std::false_type {};
 
 #else
 
