@@ -68,7 +68,8 @@ void PartialColAllGather
         }
         else
         {
-            simple_buffer<T,D> buffer((colStrideUnion+1)*portionSize);
+            simple_buffer<T,D> buffer(
+                (colStrideUnion+1)*portionSize, syncInfoB);
             T* firstBuf = buffer.data();
             T* secondBuf = buffer.data() + portionSize;
 
@@ -99,7 +100,7 @@ void PartialColAllGather
         if( A.Grid().Rank() == 0 )
             cerr << "Unaligned PartialColAllGather" << endl;
 #endif
-        simple_buffer<T,D> buffer((colStrideUnion+1)*portionSize);
+        simple_buffer<T,D> buffer((colStrideUnion+1)*portionSize, syncInfoB);
         T* firstBuf = buffer.data();
         T* secondBuf = buffer.data() + portionSize;
 
@@ -120,7 +121,7 @@ void PartialColAllGather
         // Use the SendRecv as an input to the partial union AllGather
         mpi::AllGather(
             firstBuf,  portionSize,
-            secondBuf, portionSize, A.PartialUnionColComm(), syncInfoB );
+            secondBuf, portionSize, A.PartialUnionColComm(), syncInfoB);
 
         // Unpack
         util::PartialColStridedUnpack(

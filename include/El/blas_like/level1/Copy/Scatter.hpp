@@ -49,13 +49,15 @@ void Scatter
     SyncInfo<D> syncInfoA(A.LockedMatrix()),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if (B.DistSize() == 1)
     {
         Copy(A.LockedMatrix(), B.Matrix());
         return;
     }
 
-    simple_buffer<T,D> buffer;
+    simple_buffer<T,D> buffer(0, syncInfoB);
     T* recvBuf=0; // some compilers (falsely) warn otherwise
     if (A.CrossRank() == root)
     {
@@ -69,7 +71,9 @@ void Scatter
             B.ColAlign(), colStride,
             B.RowAlign(), rowStride,
             A.LockedBuffer(), A.LDim(),
-            sendBuf,          pkgSize, syncInfoA);
+            sendBuf,          pkgSize, syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Scatter from the root
         mpi::Scatter(
@@ -80,6 +84,7 @@ void Scatter
         buffer.allocate(recvSize);
         recvBuf = buffer.data();
 
+        Synchronize(syncInfoB);
         // Perform the receiving portion of the scatter from the non-root
         mpi::Scatter(
             static_cast<T*>(0), pkgSize,

@@ -42,6 +42,8 @@ void RowAllToAllPromote
 
     SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( rowDiff == 0 )
     {
         if( A.PartialUnionRowStride() == 1 )
@@ -50,7 +52,7 @@ void RowAllToAllPromote
         }
         else
         {
-            simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize);
+            simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize, syncInfoB);
             T* firstBuf  = buffer.data();
             T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
@@ -59,7 +61,9 @@ void RowAllToAllPromote
                 height, A.LocalWidth(),
                 B.ColAlign(), rowStrideUnion,
                 A.LockedBuffer(), A.LDim(),
-                firstBuf,         portionSize, syncInfoA);
+                firstBuf,         portionSize, syncInfoB);
+
+            Synchronize(syncInfoB);
 
             // Simultaneously Gather in rows and Scatter in columns
             mpi::AllToAll(
@@ -85,7 +89,7 @@ void RowAllToAllPromote
         const Int sendRowRankPart = Mod( rowRankPart+rowDiff, rowStridePart );
         const Int recvRowRankPart = Mod( rowRankPart-rowDiff, rowStridePart );
 
-        simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize);
+        simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize, syncInfoB);
         T* firstBuf  = buffer.data();
         T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
@@ -94,7 +98,9 @@ void RowAllToAllPromote
             height, A.LocalWidth(),
             B.ColAlign(), rowStrideUnion,
             A.LockedBuffer(), A.LDim(),
-            secondBuf,        portionSize, syncInfoA);
+            secondBuf,        portionSize, syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Realign the input
         mpi::SendRecv(

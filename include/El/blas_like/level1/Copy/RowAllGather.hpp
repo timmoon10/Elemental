@@ -51,7 +51,7 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 const Int maxLocalWidth = MaxLength(width,rowStride);
 
                 const Int portionSize = mpi::Pad(localHeight*maxLocalWidth);
-                simple_buffer<T,D> buffer((rowStride+1)*portionSize);
+                simple_buffer<T,D> buffer((rowStride+1)*portionSize, syncInfoB);
                 T* sendBuf = buffer.data();
                 T* recvBuf = buffer.data() + portionSize;
 
@@ -109,7 +109,7 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 const Int maxLocalWidth = MaxLength(width,rowStride);
 
                 const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
-                simple_buffer<T,D> buffer((rowStride+1)*portionSize);
+                simple_buffer<T,D> buffer((rowStride+1)*portionSize, syncInfoB);
                 T* firstBuf = buffer.data();
                 T* secondBuf = buffer.data() + portionSize;
 

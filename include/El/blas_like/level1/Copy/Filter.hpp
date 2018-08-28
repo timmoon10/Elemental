@@ -24,7 +24,8 @@ void Filter
     if( !B.Participating() )
         return;
 
-    SyncInfo<D> syncInfoA(A.LockedMatrix());
+    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     const Int colShift = B.ColShift();
     const Int rowShift = B.RowShift();
@@ -32,7 +33,7 @@ void Filter
         B.LocalHeight(), B.LocalWidth(),
         A.LockedBuffer(colShift,rowShift), B.ColStride(), B.RowStride()*A.LDim(),
         B.Buffer(),                        1,             B.LDim(),
-        syncInfoA);
+        syncInfoB);
     // FIXME: Need to sync A and B here
 }
 

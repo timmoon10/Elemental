@@ -44,6 +44,8 @@ void PartialColFilter_impl
     SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( colDiff == 0 )
     {
         const Int colShift = B.ColShift();
@@ -52,7 +54,7 @@ void PartialColFilter_impl
             localHeight, width,
             A.LockedBuffer(colOffset,0), colStrideUnion, A.LDim(),
             B.Buffer(),                  1,              B.LDim(),
-            syncInfoA);
+            syncInfoB);
     }
     else
     {
@@ -73,7 +75,7 @@ void PartialColFilter_impl
         const Int localHeightSend = Length( height, sendColShift, colStride );
         const Int sendSize = localHeightSend*width;
         const Int recvSize = localHeight    *width;
-        simple_buffer<T,D> buffer(sendSize+recvSize);
+        simple_buffer<T,D> buffer(sendSize+recvSize, syncInfoB);
         T* sendBuf = buffer.data();
         T* recvBuf = buffer.data() + sendSize;
         // Pack
@@ -81,7 +83,9 @@ void PartialColFilter_impl
             localHeightSend, width,
             A.LockedBuffer(sendColOffset,0), colStrideUnion, A.LDim(),
             sendBuf,                         1,              localHeightSend,
-            syncInfoA);
+            syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Change the column alignment
         mpi::SendRecv(

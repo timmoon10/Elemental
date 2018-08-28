@@ -39,6 +39,8 @@ void ColAllToAllPromote
     const Int portionSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
 
     SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(A.LockedMatrix());
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( colDiff == 0 )
     {
         if( A.PartialUnionColStride() == 1 )
@@ -47,7 +49,7 @@ void ColAllToAllPromote
         }
         else
         {
-            simple_buffer<T,D> buffer(2*colStrideUnion*portionSize);
+            simple_buffer<T,D> buffer(2*colStrideUnion*portionSize, syncInfoB);
             T* firstBuf  = buffer.data();
             T* secondBuf = buffer.data() + colStrideUnion*portionSize;
 
@@ -56,7 +58,9 @@ void ColAllToAllPromote
                 A.LocalHeight(), width,
                 B.RowAlign(), colStrideUnion,
                 A.LockedBuffer(), A.LDim(),
-                firstBuf,         portionSize, syncInfoA);
+                firstBuf,         portionSize, syncInfoB);
+
+            Synchronize(syncInfoB);
 
             // Simultaneously Gather in columns and Scatter in rows
             mpi::AllToAll(
@@ -82,7 +86,7 @@ void ColAllToAllPromote
         const Int sendColRankPart = Mod( colRankPart+colDiff, colStridePart );
         const Int recvColRankPart = Mod( colRankPart-colDiff, colStridePart );
 
-        simple_buffer<T,D> buffer(2*colStrideUnion*portionSize);
+        simple_buffer<T,D> buffer(2*colStrideUnion*portionSize, syncInfoB);
         T* firstBuf  = buffer.data();
         T* secondBuf = buffer.data() + colStrideUnion*portionSize;
 
@@ -91,13 +95,15 @@ void ColAllToAllPromote
             A.LocalHeight(), width,
             B.RowAlign(), colStrideUnion,
             A.LockedBuffer(), A.LDim(),
-            secondBuf,        portionSize, syncInfoA);
+            secondBuf,        portionSize, syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Realign the input
         mpi::SendRecv(
             secondBuf, colStrideUnion*portionSize, sendColRankPart,
             firstBuf,  colStrideUnion*portionSize, recvColRankPart,
-            A.PartialColComm() );
+            A.PartialColComm());
 
         // Simultaneously Scatter in columns and Gather in rows
         mpi::AllToAll(

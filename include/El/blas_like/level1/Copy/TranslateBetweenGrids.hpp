@@ -124,11 +124,11 @@ void TranslateBetweenGrids
     if(inBGrid)
         requiredMemory += maxSendSize;
 
-    simple_buffer<T,D1> send_buf(inAGrid ? maxSendSize : 0);
-    simple_buffer<T,D2> recv_buf(inBGrid ? maxSendSize : 0);
-
     SyncInfo<D1> syncInfoA(A.LockedMatrix());
     SyncInfo<D2> syncInfoB(B.LockedMatrix());
+
+    simple_buffer<T,D1> send_buf(inAGrid ? maxSendSize : 0, syncInfoA);
+    simple_buffer<T,D2> recv_buf(inBGrid ? maxSendSize : 0, syncInfoB);
 
     T* sendBuf = send_buf.data();
     T* recvBuf = recv_buf.data();
@@ -155,6 +155,9 @@ void TranslateBetweenGrids
                     A.LockedBuffer(colSend,rowSend),
                     numColSends, numRowSends*A.LDim(),
                     sendBuf, 1, sendHeight, syncInfoA);
+
+                Synchronize(syncInfoA);
+
                 // Send data
                 const Int recvVCRank = recvRow + recvCol*colStride;
                 const Int recvViewingRank = B.Grid().VCToViewing(recvVCRank);

@@ -45,7 +45,7 @@ void AllGather
             const Int maxLocalHeight = MaxLength(height,colStride);
             const Int maxLocalWidth = MaxLength(width,rowStride);
             const Int portionSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
-            simple_buffer<T,D> buf((distStride+1)*portionSize);
+            simple_buffer<T,D> buf((distStride+1)*portionSize, syncInfoB);
             T* sendBuf = buf.data();
             T* recvBuf = buf.data() + portionSize;
 
@@ -64,7 +64,8 @@ void AllGather
 
             // Communicate
             mpi::AllGather(
-                sendBuf, portionSize, recvBuf, portionSize, A.DistComm(), syncInfoB);
+                sendBuf, portionSize, recvBuf, portionSize, A.DistComm(),
+                syncInfoB);
 
             // Unpack
             util::StridedUnpack(

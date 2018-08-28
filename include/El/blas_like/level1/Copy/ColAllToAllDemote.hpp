@@ -45,6 +45,8 @@ void ColAllToAllDemote
 
     SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( colDiff == 0 )
     {
         if( B.PartialUnionColStride() == 1 )
@@ -53,7 +55,7 @@ void ColAllToAllDemote
         }
         else
         {
-            simple_buffer<T,D> buffer(2*colStrideUnion*portionSize);
+            simple_buffer<T,D> buffer(2*colStrideUnion*portionSize, syncInfoB);
             T* firstBuf  = buffer.data();
             T* secondBuf = buffer.data() + colStrideUnion*portionSize;
 
@@ -64,12 +66,14 @@ void ColAllToAllDemote
                  colStrideUnion, colStridePart, colRankPart,
                  colShiftA,
                  A.LockedBuffer(), A.LDim(),
-                 firstBuf,         portionSize, syncInfoA);
+                 firstBuf,         portionSize, syncInfoB);
+
+            Synchronize(syncInfoB);
 
             // Simultaneously Scatter in columns and Gather in rows
-            mpi::AllToAll
-            ( firstBuf,  portionSize,
-              secondBuf, portionSize, B.PartialUnionColComm() );
+            mpi::AllToAll(
+                firstBuf,  portionSize,
+                secondBuf, portionSize, B.PartialUnionColComm() );
 
             // Unpack
             util::RowStridedUnpack(
@@ -88,7 +92,7 @@ void ColAllToAllDemote
         const Int sendColRankPart = Mod( colRankPart+colDiff, colStridePart );
         const Int recvColRankPart = Mod( colRankPart-colDiff, colStridePart );
 
-        simple_buffer<T,D> buffer(2*colStrideUnion*portionSize);
+        simple_buffer<T,D> buffer(2*colStrideUnion*portionSize, syncInfoB);
         T* firstBuf  = buffer.data();
         T* secondBuf = buffer.data() + colStrideUnion*portionSize;
 
@@ -99,7 +103,9 @@ void ColAllToAllDemote
             colStrideUnion, colStridePart, sendColRankPart,
             colShiftA,
             A.LockedBuffer(), A.LDim(),
-            secondBuf,        portionSize, syncInfoA);
+            secondBuf,        portionSize, syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Simultaneously Scatter in columns and Gather in rows
         mpi::AllToAll(

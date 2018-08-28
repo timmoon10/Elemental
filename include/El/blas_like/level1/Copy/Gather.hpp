@@ -60,12 +60,15 @@ void Gather
 
     SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(B.LockedMatrix());
-    simple_buffer<T,D> sendBuf(totalSend), recvBuf(totalRecv);
+    simple_buffer<T,D> sendBuf(totalSend, syncInfoB),
+        recvBuf(totalRecv, syncInfoB);
     if (!irrelevant)
         copy::util::InterleaveMatrix(
             A.LocalHeight(), A.LocalWidth(),
             A.LockedBuffer(), 1, A.LDim(),
-            sendBuf.data(),   1, A.LocalHeight(), syncInfoA);
+            sendBuf.data(),   1, A.LocalHeight(), syncInfoB);
+
+    Synchronize(syncInfoB);
     mpi::Gather(
         sendBuf.data(), totalSend,
         recvBuf.data(), recvCounts.data(), recvOffsets.data(),

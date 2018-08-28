@@ -15,8 +15,6 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 {
     EL_DEBUG_CSE
 
-        std::cerr << "\n\n\n AHHH BAD CALL \n\n\n" << std::endl;
-
     Al::Reduce_scatter<BestBackend<T,D>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
@@ -182,8 +180,6 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-        std::cerr << "\n\n\n AHHH BAD CALL IN-PLACE \n\n\n" << std::endl;
-
     Al::Reduce_scatter<BestBackend<T,D>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
@@ -202,13 +198,11 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
                                      syncInfo.event_);
 
-    AddSynchronizationPoint(syncInfo, alSyncInfo);
+    auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
     Al::Reduce_scatter<BestBackend<T,Device::GPU>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
-
-    AddSynchronizationPoint(alSyncInfo, syncInfo);
 }
 #endif // HYDROGEN_HAVE_ALUMINUM
 
@@ -222,6 +216,8 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     EL_DEBUG_CSE
     if (count == 0 || Size(comm) == 1)
         return;
+
+    Synchronize(syncInfo);
 
 #ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
     LogicError("ReduceScatter: Let Tom know if you go down this code path.");
@@ -253,6 +249,8 @@ void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
     EL_DEBUG_CSE
     if (count == 0 || Size(comm) == 1)
         return;
+
+    Synchronize(syncInfo);
 
 #ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
     LogicError("ReduceScatter: Let Tom know if you go down this code path.");
@@ -296,6 +294,8 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     const int commSize = mpi::Size(comm);
     const int totalSend = count*commSize;
     const int totalRecv = count;
+
+    Synchronize(syncInfo);
 
     // TODO(poulson): Add AllReduce approach via
     // EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE

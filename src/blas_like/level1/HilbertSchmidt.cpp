@@ -14,7 +14,8 @@ namespace El {
 // TODO(poulson): Think about using a more stable accumulation algorithm?
 
 template <typename Ring>
-Ring HilbertSchmidt( const AbstractMatrix<Ring>& A, const AbstractMatrix<Ring>& B )
+Ring HilbertSchmidt(
+    const AbstractMatrix<Ring>& A, const AbstractMatrix<Ring>& B )
 {
     EL_DEBUG_CSE
     if( A.Height() != B.Height() || A.Width() != B.Width() )

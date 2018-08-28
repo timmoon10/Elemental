@@ -64,7 +64,7 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 const Int localWidth = A.LocalWidth();
                 const Int portionSize = mpi::Pad(maxLocalHeight*localWidth);
 
-                simple_buffer<T,D> buffer((colStride+1)*portionSize);
+                simple_buffer<T,D> buffer((colStride+1)*portionSize, syncInfoB);
                 T* sendBuf = buffer.data();
                 T* recvBuf = buffer.data() + portionSize;
 
@@ -75,9 +75,9 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                     sendBuf,          1, A.LocalHeight(), syncInfoB);
 
                 // Communicate
-                mpi::AllGather
-                    (sendBuf, portionSize, recvBuf, portionSize, A.ColComm(),
-                     syncInfoB);
+                mpi::AllGather(
+                    sendBuf, portionSize, recvBuf, portionSize, A.ColComm(),
+                    syncInfoB);
 
                 // Unpack
                 util::ColStridedUnpack(
@@ -99,7 +99,7 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
             if (height == 1)
             {
                 const Int localWidthB = B.LocalWidth();
-                simple_buffer<T,D> buffer;
+                simple_buffer<T,D> buffer(0, syncInfoB);
                 T* bcastBuf;
 
                 if (A.ColRank() == A.ColAlign())
@@ -144,7 +144,7 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 const Int portionSize =
                     mpi::Pad(maxLocalHeight*maxLocalWidth);
 
-                simple_buffer<T,D> buffer((colStride+1)*portionSize);
+                simple_buffer<T,D> buffer((colStride+1)*portionSize, syncInfoB);
                 T* firstBuf  = buffer.data();
                 T* secondBuf = buffer.data() + portionSize;
 
@@ -163,9 +163,9 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                   firstBuf,  portionSize, recvRowRank, A.RowComm());
 
                 // AllGather the aligned data
-                mpi::AllGather
-                (firstBuf,  portionSize,
-                 secondBuf, portionSize, A.ColComm(), syncInfoB);
+                mpi::AllGather(
+                    firstBuf,  portionSize,
+                    secondBuf, portionSize, A.ColComm(), syncInfoB);
 
                 // Unpack the contents of each member of the column team
                 util::ColStridedUnpack(

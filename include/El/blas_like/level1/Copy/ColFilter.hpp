@@ -40,13 +40,15 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
     SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( rowDiff == 0 )
     {
         util::InterleaveMatrix(
             localHeight, localWidth,
             A.LockedBuffer(colShift,0), colStride, A.LDim(),
             B.Buffer(),                 1,         B.LDim(),
-            syncInfoA);
+            syncInfoB);
         // FIXME: need to sync A and B
     }
     else
@@ -61,7 +63,7 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
         const Int localWidthA = A.LocalWidth();
         const Int sendSize = localHeight*localWidthA;
         const Int recvSize = localHeight*localWidth;
-        simple_buffer<T,D> buffer(sendSize+recvSize);
+        simple_buffer<T,D> buffer(sendSize+recvSize, syncInfoB);
         T* sendBuf = buffer.data();
         T* recvBuf = buffer.data() + sendSize;
 
@@ -70,7 +72,9 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
             localHeight, localWidthA,
             A.LockedBuffer(colShift,0), colStride, A.LDim(),
             sendBuf,                    1,         localHeight,
-            syncInfoA);
+            syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Realign
         mpi::SendRecv

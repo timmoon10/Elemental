@@ -39,14 +39,15 @@ void RowFilter_impl
     SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     const Int colDiff = B.ColAlign() - A.ColAlign();
     if( colDiff == 0 )
     {
         util::InterleaveMatrix(
             localHeight, localWidth,
             A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
-            B.Buffer(),                 1, B.LDim(), syncInfoA);
-        // FIXME -- Need to Sync A and B here
+            B.Buffer(),                 1, B.LDim(), syncInfoB);
     }
     else
     {
@@ -61,7 +62,7 @@ void RowFilter_impl
         const Int sendSize = localHeightA*localWidth;
         const Int recvSize = localHeight *localWidth;
 
-        simple_buffer<T,D> buffer(sendSize+recvSize);
+        simple_buffer<T,D> buffer(sendSize+recvSize, syncInfoB);
         T* sendBuf = buffer.data();
         T* recvBuf = buffer.data() + sendSize;
 
@@ -69,7 +70,9 @@ void RowFilter_impl
         util::InterleaveMatrix(
             localHeightA, localWidth,
             A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
-            sendBuf,                    1, localHeightA, syncInfoA);
+            sendBuf,                    1, localHeightA, syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Realign
         mpi::SendRecv(
@@ -80,7 +83,7 @@ void RowFilter_impl
         util::InterleaveMatrix(
             localHeight, localWidth,
             recvBuf,    1, localHeight,
-            B.Buffer(), 1, B.LDim(), syncInfoA);
+            B.Buffer(), 1, B.LDim(), syncInfoB);
     }
 }
 
