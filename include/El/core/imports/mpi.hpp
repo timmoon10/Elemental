@@ -1077,8 +1077,10 @@ void Reduce( T* buf, int count, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
 // AllReduce
 // ---------
 
+#define COLL Collective::ALLREDUCE
+
 template <typename T, Device D,
-          typename=EnableIf<IsAluminumDeviceType<T,D>>>
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<D> const&);
 
@@ -1091,21 +1093,21 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=EnableIf<IsPacked<T>>>
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo);
 
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=EnableIf<IsPacked<T>>>
 void AllReduce(Complex<T> const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo);
 
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=DisableIf<IsPacked<T>>,
           typename=void>
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
@@ -1113,7 +1115,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
 template <typename T, Device D,
           typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumDeviceType<T,D>>>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=void, typename=void, typename=void>
 void AllReduce(T const*, T*, int, Op, Comm, SyncInfo<D> const&);
 
@@ -1122,7 +1124,7 @@ void AllReduce(T const*, T*, int, Op, Comm, SyncInfo<D> const&);
 //
 
 template <typename T, Device D,
-          typename=EnableIf<IsAluminumDeviceType<T,D>>>
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
 void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& /*syncInfo*/);
 #ifdef HYDROGEN_HAVE_CUDA
@@ -1134,21 +1136,21 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
 
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=EnableIf<IsPacked<T>>>
 void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo);
 
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=EnableIf<IsPacked<T>>>
 void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo);
 
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=DisableIf<IsPacked<T>>,
           typename=void>
 void AllReduce(T* buf, int count, Op op, Comm comm,
@@ -1156,7 +1158,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
 
 template <typename T, Device D,
           typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumDeviceType<T,D>>>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=void, typename=void, typename=void>
 void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&);
 
@@ -1172,6 +1174,8 @@ T AllReduce(T sb, Comm comm, SyncInfo<D> const& syncInfo);
 
 template <typename T, Device D>
 void AllReduce(T* buf, int count, Comm comm, SyncInfo<D> const& syncInfo);
+
+#undef COLL // Collective::ALLREDUCE
 
 // ReduceScatter
 // -------------

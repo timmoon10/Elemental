@@ -18,8 +18,6 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-    std::cout << "\n\n\n NEED TO SYNCHRONIZE \n\n\n" << std::endl;
-
     Al::Allreduce<BestBackend<T,D>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
@@ -153,8 +151,6 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-    std::cout << "\n\n\n NEED TO SYNCHRONIZE IN-PLACE \n\n\n" << std::endl;
-
     Al::Allreduce<BestBackend<T,D>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
@@ -173,13 +169,11 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
     SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
                                      syncInfo.event_);
 
-    AddSynchronizationPoint(syncInfo, alSyncInfo);
+    auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
     Al::Allreduce<BestBackend<T,Device::GPU>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
-
-    AddSynchronizationPoint(alSyncInfo, syncInfo);
 }
 #endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
