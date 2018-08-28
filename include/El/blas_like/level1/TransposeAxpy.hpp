@@ -140,7 +140,7 @@ void TransposeAxpy(S alphaS,
     EL_CHECK_CUBLAS(
         cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
     EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), C.Stream()));
+        cublasSetStream(GPUManager::cuBLASHandle(), syncInfoB.stream_));
 
 
     // If X and Y are vectors, we can allow one to be a column and the other
