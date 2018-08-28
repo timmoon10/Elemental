@@ -12,10 +12,10 @@
 namespace El {
 namespace copy {
 
-template<typename T,Dist U,Dist V, Device D>
-void RowAllToAllDemote
-(DistMatrix<T,PartialUnionCol<U,V>(),Partial<V>(),ELEMENT,D> const& A,
-  DistMatrix<T,U,V,ELEMENT,D>& B)
+template <typename T, Dist U, Dist V, Device D>
+void RowAllToAllDemote(
+    DistMatrix<T,PartialUnionCol<U,V>(),Partial<V>(),ELEMENT,D> const& A,
+    DistMatrix<T,U,V,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
     AssertSameGrids(A, B);
@@ -39,6 +39,9 @@ void RowAllToAllDemote
     const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
 
     SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if(rowDiff == 0)
     {
         if(B.PartialUnionRowStride() == 1)
@@ -47,7 +50,9 @@ void RowAllToAllDemote
         }
         else
         {
-            simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize);
+            simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize,
+                                      DefaultMemoryMode<D>(),
+                                      syncInfoB);
             T* firstBuf  = buffer.data();
             T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
@@ -58,7 +63,10 @@ void RowAllToAllDemote
                 rowStrideUnion, rowStridePart, rowRankPart,
                 A.RowShift(),
                 A.LockedBuffer(), A.LDim(),
-                firstBuf,         portionSize, syncInfoA);
+                firstBuf,         portionSize, syncInfoB);
+
+            // Sync before the AllToAll
+            Synchronize(syncInfoB);
 
             // Simultaneously Scatter in rows and Gather in columns
             mpi::AllToAll(
@@ -82,7 +90,9 @@ void RowAllToAllDemote
         const Int sendRowRankPart = Mod(rowRankPart+rowDiff, rowStridePart);
         const Int recvRowRankPart = Mod(rowRankPart-rowDiff, rowStridePart);
 
-        simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize);
+        simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize,
+                                  DefaultMemoryMode<D>(),
+                                  syncInfoB);
         T* firstBuf  = buffer.data();
         T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
 
@@ -94,7 +104,10 @@ void RowAllToAllDemote
             A.RowShift(),
             A.LockedBuffer(), A.LDim(),
             secondBuf,        portionSize,
-            syncInfoA);
+            syncInfoB);
+
+        // Sync before AllToAll
+        Synchronize(syncInfoB);
 
         // Simultaneously Scatter in rows and Gather in columns
         mpi::AllToAll(
@@ -116,10 +129,10 @@ void RowAllToAllDemote
     }
 }
 
-template<typename T,Dist U,Dist V>
-void RowAllToAllDemote
-  (const DistMatrix<T,PartialUnionCol<U,V>(),Partial<V>(),BLOCK>& A,
-          DistMatrix<T,                U,             V   ,BLOCK>& B)
+template<typename T, Dist U, Dist V>
+void RowAllToAllDemote(
+    DistMatrix<T,PartialUnionCol<U,V>(),Partial<V>(),BLOCK> const& A,
+    DistMatrix<T,U,V,BLOCK>& B)
 {
     EL_DEBUG_CSE
     AssertSameGrids(A, B);

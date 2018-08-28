@@ -124,9 +124,8 @@ void Copy(const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B)
     const T* ABuf = A.LockedBuffer();
     T* BBuf = B.Buffer();
 
-    // Make sure A is completely written before launching the copy
-    EL_CHECK_CUDA(cudaEventRecord(A.Event(), A.Stream()));
-    EL_CHECK_CUDA(cudaStreamWaitEvent(B.Stream(), A.Event(), 0));
+    SyncInfo<Device::GPU> syncInfoA(A), syncInfoB(B);
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     // Launch the copy
     EL_CHECK_CUDA(
@@ -134,11 +133,7 @@ void Copy(const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B)
                           ABuf, ldA*sizeof(T),
                           height*sizeof(T), width,
                           cudaMemcpyDeviceToDevice,
-                          B.Stream()));
-
-    // Ensure A cannot be modified until the copy to B is complete.
-    EL_CHECK_CUDA(cudaEventRecord(B.Event(), B.Stream()));
-    EL_CHECK_CUDA(cudaStreamWaitEvent(A.Stream(), B.Event(), 0));
+                          syncInfoB));
 }
 
 // These inter-device copy functions are SYNCHRONOUS with respect to
@@ -155,9 +150,10 @@ void Copy(Matrix<T,Device::CPU> const& A, Matrix<T,Device::GPU>& B)
     const T* EL_RESTRICT ABuf = A.LockedBuffer();
     T* EL_RESTRICT BBuf = B.Buffer();
 
+    SyncInfo<Device::GPU> syncInfoB(B);
     InterDeviceCopy<Device::CPU,Device::GPU>::MemCopy2DAsync(
-        BBuf, ldB, ABuf, ldA, height, width, B.Stream());
-    EL_CHECK_CUDA(cudaStreamSynchronize(B.Stream()));
+        BBuf, ldB, ABuf, ldA, height, width, syncInfoB.stream_);
+    Synchronize(syncInfoB); // Is this necessary??
 }
 
 template <typename T>
@@ -172,9 +168,10 @@ void Copy(Matrix<T,Device::GPU> const& A, Matrix<T,Device::CPU>& B)
     const T* EL_RESTRICT ABuf = A.LockedBuffer();
     T* EL_RESTRICT BBuf = B.Buffer();
 
+    SyncInfo<Device::GPU> syncInfoA(A);
     InterDeviceCopy<Device::GPU,Device::CPU>::MemCopy2DAsync(
-        BBuf, ldB, ABuf, ldA, height, width, A.Stream());
-    EL_CHECK_CUDA(cudaStreamSynchronize(A.Stream()));
+        BBuf, ldB, ABuf, ldA, height, width, syncInfoA.stream_);
+    Synchronize(syncInfoA); // Is this necessary??
 }
 
 // These inter-device copy functions are ASYNCHRONOUS with respect to
