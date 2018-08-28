@@ -1405,86 +1405,6 @@ template<typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void AllGather
 ( const Real* sbuf, int sc,
-        Real* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-#ifdef EL_USE_BYTE_ALLGATHERS
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( reinterpret_cast<UCP>(const_cast<Real*>(sbuf)),
-        sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
-        reinterpret_cast<UCP>(rbuf),
-        sizeof(Real)*rc, MPI_UNSIGNED_CHAR,
-        comm.comm ) );
-#else
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
-        rbuf,                    rc, TypeMap<Real>(), comm.comm ) );
-#endif
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllGather
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-#ifdef EL_USE_BYTE_ALLGATHERS
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( reinterpret_cast<UCP>(const_cast<Complex<Real>*>(sbuf)),
-        2*sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
-        reinterpret_cast<UCP>(rbuf),
-        2*sizeof(Real)*rc, MPI_UNSIGNED_CHAR,
-        comm.comm ) );
-#else
- #ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
-        rbuf,                             2*rc, TypeMap<Real>(),
-        comm.comm ) );
- #else
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( const_cast<Complex<Real>*>(sbuf), sc, TypeMap<Complex<Real>>(),
-        rbuf,                             rc, TypeMap<Complex<Real>>(),
-        comm.comm ) );
- #endif
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void AllGather
-( const T* sbuf, int sc,
-        T* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    const int commSize = mpi::Size(comm);
-    const int totalRecv = rc*commSize;
-
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( sc, sbuf, packedSend );
-
-    ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( packedSend.data(), sc, TypeMap<T>(),
-        packedRecv.data(), rc, TypeMap<T>(), comm.comm ) );
-    Deserialize( totalRecv, packedRecv, rbuf );
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllGather
-( const Real* sbuf, int sc,
         Real* rbuf, const int* rcs, const int* rds, Comm comm )
 EL_NO_RELEASE_EXCEPT
 {
@@ -2554,8 +2474,6 @@ EL_NO_RELEASE_EXCEPT
   template void Gather \
   ( const T* sbuf, int sc, \
           T* rbuf, const int* rcs, const int* rds, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllGather( const T* sbuf, int sc, T* rbuf, int rc, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
   template void AllGather \
   ( const T* sbuf, int sc, \

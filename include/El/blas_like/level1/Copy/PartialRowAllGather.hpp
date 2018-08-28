@@ -34,6 +34,8 @@ void PartialRowAllGather_impl
     SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( rowDiff == 0 )
     {
         if( A.PartialUnionRowStride() == 1 )
@@ -50,14 +52,14 @@ void PartialRowAllGather_impl
             util::InterleaveMatrix(
                 height, A.LocalWidth(),
                 A.LockedBuffer(), 1, A.LDim(),
-                firstBuf,         1, height, syncInfoA );
+                firstBuf,         1, height, syncInfoB );
 
             Synchronize(syncInfoA);
 
             // Communicate
             mpi::AllGather(
                 firstBuf, portionSize, secondBuf, portionSize,
-                A.PartialUnionRowComm());
+                A.PartialUnionRowComm(), syncInfoB);
 
             // Unpack
             util::PartialRowStridedUnpack(
@@ -89,6 +91,7 @@ void PartialRowAllGather_impl
 
         const Int sendRowRank = Mod( A.RowRank()+rowDiff, rowStride );
         const Int recvRowRank = Mod( A.RowRank()-rowDiff, rowStride );
+
         mpi::SendRecv(
             secondBuf, portionSize, sendRowRank,
             firstBuf,  portionSize, recvRowRank, A.RowComm() );
@@ -96,7 +99,7 @@ void PartialRowAllGather_impl
         // Use the SendRecv as an input to the partial union AllGather
         mpi::AllGather(
             firstBuf,  portionSize,
-            secondBuf, portionSize, A.PartialUnionRowComm() );
+            secondBuf, portionSize, A.PartialUnionRowComm(), syncInfoB);
 
         // Unpack
         util::PartialRowStridedUnpack(
@@ -105,7 +108,7 @@ void PartialRowAllGather_impl
             rowStrideUnion, rowStridePart, rowRankPart,
             B.RowShift(),
             secondBuf, portionSize,
-            B.Buffer(), B.LDim(), syncInfoB );
+            B.Buffer(), B.LDim(), syncInfoB);
     }
 }
 

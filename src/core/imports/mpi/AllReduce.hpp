@@ -62,7 +62,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
     Synchronize(syncInfo);
 
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Allreduce(
             const_cast<T*>(sbuf), rbuf,
             count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
@@ -84,20 +84,20 @@ void AllReduce(Complex<T> const* sbuf, T* rbuf, int count, Op op, Comm comm,
 #ifdef EL_AVOID_COMPLEX_MPI
     if (op == SUM)
     {
-        EL_CHECK_MPI(
+        CheckMpi(
             MPI_Allreduce(
                 const_cast<Complex<T>*>(sbuf), rbuf, 2*count,
                 TypeMap<T>(), NativeOp<T>(op), comm.comm));
     }
     else
     {
-        EL_CHECK_MPI(
+        CheckMpi(
             MPI_Allreduce(
                 const_cast<Complex<T>*>(sbuf), rbuf, count,
                 TypeMap<Complex<T>>(), NativeOp<Complex<T>>(op), comm.comm));
     }
 #else
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Allreduce(
             const_cast<Complex<T>*>(sbuf), rbuf, count,
             TypeMap<Complex<T>>(), NativeOp<Complex<T>>(op), comm.comm));
@@ -122,7 +122,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     Serialize(count, sbuf, packedSend);
 
     ReserveSerialized(count, rbuf, packedRecv);
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Allreduce(
             packedSend.data(), packedRecv.data(),
             count, TypeMap<T>(), opC, comm.comm));
@@ -197,7 +197,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
 
     Synchronize(syncInfo);
 
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Allreduce(
             MPI_IN_PLACE, buf,
             count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
@@ -214,23 +214,25 @@ void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
+    Synchronize(syncInfo);
+
 #ifdef EL_AVOID_COMPLEX_MPI
     if (op == SUM)
     {
-        EL_CHECK_MPI(
+        CheckMpi(
             MPI_Allreduce(
                 MPI_IN_PLACE, buf, 2*count,
                 TypeMap<T>(), NativeOp<T>(op), comm.comm));
     }
     else
     {
-        EL_CHECK_MPI(
+        CheckMpi(
             MPI_Allreduce(
                 MPI_IN_PLACE, buf, count, TypeMap<Complex<T>>(),
                 NativeOp<Complex<T>>(op), comm.comm));
     }
 #else
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Allreduce(
             MPI_IN_PLACE, buf, count,
             TypeMap<Complex<T>>(), NativeOp<Complex<T>>(op),
@@ -250,12 +252,14 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
+    Synchronize(syncInfo);
+
     MPI_Op opC = NativeOp<T>(op);
     std::vector<byte> packedSend, packedRecv;
     Serialize(count, buf, packedSend);
 
     ReserveSerialized(count, buf, packedRecv);
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Allreduce(
             packedSend.data(), packedRecv.data(),
             count, TypeMap<T>(), opC, comm.comm));

@@ -58,6 +58,8 @@ void PartialColAllGather
     const Int portionSize = mpi::Pad( maxLocalHeight*width );
 
     SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( colDiff == 0 )
     {
         if( A.PartialUnionColStride() == 1 )
@@ -74,12 +76,12 @@ void PartialColAllGather
             util::InterleaveMatrix(
                 A.LocalHeight(), width,
                 A.LockedBuffer(), 1, A.LDim(),
-                firstBuf,         1, A.LocalHeight(), syncInfoA);
+                firstBuf,         1, A.LocalHeight(), syncInfoB);
 
             // Communicate
             mpi::AllGather(
                 firstBuf, portionSize, secondBuf, portionSize,
-                A.PartialUnionColComm() );
+                A.PartialUnionColComm(), syncInfoB);
 
             // Unpack
             util::PartialColStridedUnpack(
@@ -105,9 +107,12 @@ void PartialColAllGather
         util::InterleaveMatrix(
             A.LocalHeight(), width,
             A.LockedBuffer(), 1, A.LDim(),
-            secondBuf,        1, A.LocalHeight(), syncInfoA);
+            secondBuf,        1, A.LocalHeight(), syncInfoB);
         const Int sendColRank = Mod( A.ColRank()+colDiff, A.ColStride() );
         const Int recvColRank = Mod( A.ColRank()-colDiff, A.ColStride() );
+
+        Synchronize(syncInfoB);
+
         mpi::SendRecv(
             secondBuf, portionSize, sendColRank,
             firstBuf,  portionSize, recvColRank, A.ColComm() );
@@ -115,7 +120,7 @@ void PartialColAllGather
         // Use the SendRecv as an input to the partial union AllGather
         mpi::AllGather(
             firstBuf,  portionSize,
-            secondBuf, portionSize, A.PartialUnionColComm() );
+            secondBuf, portionSize, A.PartialUnionColComm(), syncInfoB );
 
         // Unpack
         util::PartialColStridedUnpack(

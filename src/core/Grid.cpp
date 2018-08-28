@@ -197,7 +197,7 @@ void Grid::SetUpGrid()
         }
         mpi::AllGather
         ( myDiagAndRank.data(),  2,
-          diagsAndRanks_.data(), 2, vcComm_ );
+          diagsAndRanks_.data(), 2, vcComm_, SyncInfo<Device::CPU>{} );
 
         mpi::Split( cartComm_, mdPerpRank_, mdRank_,     mdComm_     );
         mpi::Split( cartComm_, mdRank_,     mdPerpRank_, mdPerpComm_ );

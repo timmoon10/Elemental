@@ -29,6 +29,8 @@ void AllGather
 
     SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( A.Participating() )
     {
         if( A.DistSize() == 1 )
@@ -58,11 +60,11 @@ void AllGather
                 A.LocalHeight(), A.LocalWidth(),
                 A.LockedBuffer(), 1, A.LDim(),
                 sendBuf,          1, A.LocalHeight(),
-                syncInfoA);
+                syncInfoB);
 
             // Communicate
             mpi::AllGather(
-                sendBuf, portionSize, recvBuf, portionSize, A.DistComm());
+                sendBuf, portionSize, recvBuf, portionSize, A.DistComm(), syncInfoB);
 
             // Unpack
             util::StridedUnpack(

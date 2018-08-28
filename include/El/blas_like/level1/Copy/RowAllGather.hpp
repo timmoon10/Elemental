@@ -24,6 +24,9 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
 
     SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if (A.Participating())
     {
         const Int colDiff = B.ColAlign() - A.ColAlign();
@@ -57,11 +60,12 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                     localHeight, A.LocalWidth(),
                     A.LockedBuffer(), 1, A.LDim(),
                     sendBuf,          1, localHeight,
-                    syncInfoA);
+                    syncInfoB);
 
                 // Communicate
-                mpi::AllGather
-                (sendBuf, portionSize, recvBuf, portionSize, A.RowComm());
+                mpi::AllGather(
+                    sendBuf, portionSize, recvBuf, portionSize, A.RowComm(),
+                    syncInfoB);
 
                 // Unpack
                 util::RowStridedUnpack(
@@ -83,11 +87,13 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
             if (width == 1)
             {
                 if (A.RowRank() == A.RowAlign())
+                {
+                    Synchronize(syncInfoB);
                     mpi::SendRecv(
                         A.LockedBuffer(), A.LocalHeight(), sendColRank,
                         B.Buffer(),       B.LocalHeight(), recvColRank,
                         A.ColComm());
-
+                }
                 // Perform the row broadcast
                 mpi::Broadcast(
                     B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm(),
@@ -111,7 +117,9 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 util::InterleaveMatrix(
                     localHeight, localWidthA,
                     A.LockedBuffer(), 1, A.LDim(),
-                    secondBuf,        1, localHeight, syncInfoA);
+                    secondBuf,        1, localHeight, syncInfoB);
+
+                Synchronize(syncInfoB);
 
                 // Realign
                 mpi::SendRecv(
@@ -121,7 +129,7 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 // Perform the row AllGather
                 mpi::AllGather(
                     firstBuf,  portionSize,
-                    secondBuf, portionSize, A.RowComm());
+                    secondBuf, portionSize, A.RowComm(), syncInfoB);
 
                 // Unpack
                 util::RowStridedUnpack(
@@ -236,7 +244,8 @@ void RowAllGather(const BlockMatrix<T>& A, BlockMatrix<T>& B)
 
                 // Communicate
                 mpi::AllGather(
-                    sendBuf, portionSize, recvBuf, portionSize, A.RowComm());
+                    sendBuf, portionSize, recvBuf, portionSize, A.RowComm(),
+                    SyncInfo<Device::CPU>{});
 
                 // Unpack
                 util::BlockedRowStridedUnpack(
@@ -295,7 +304,8 @@ void RowAllGather(const BlockMatrix<T>& A, BlockMatrix<T>& B)
                 // Perform the row AllGather
                 mpi::AllGather(
                     firstBuf,  portionSize,
-                    secondBuf, portionSize, A.RowComm());
+                    secondBuf, portionSize, A.RowComm(),
+                    SyncInfo<Device::CPU>{});
 
                 // Unpack
                 util::BlockedRowStridedUnpack(
