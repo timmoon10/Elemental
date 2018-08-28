@@ -63,13 +63,14 @@ void UpdateWithLocalData(
 
     SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(B.LockedMatrix());
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     InterleaveMatrixUpdate(
         alpha, A.LocalHeight(), A.LocalWidth(),
         A.LockedBuffer(),
         1,             A.LDim(),
         B.Buffer(A.ColShift(),A.RowShift()),
-        A.ColStride(), A.RowStride()*B.LDim(), syncInfoA);
+        A.ColStride(), A.RowStride()*B.LDim(), syncInfoB);
     // FIXME: Need to synchronize A and B
 }
 

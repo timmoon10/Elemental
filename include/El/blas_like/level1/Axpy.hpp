@@ -106,18 +106,30 @@ void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
 
 template<typename T,typename S,
          typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
-void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
+void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
 {
     EL_DEBUG_CSE;
 
-    const T alpha = T(alphaS);
-    const Int mX = X.Height();
-    const Int nX = X.Width();
-    const Int nY = Y.Width();
-    const Int ldX = X.LDim();
-    const Int ldY = Y.LDim();
-    const T* XBuf = X.LockedBuffer();
-          T* YBuf = Y.Buffer();
+    T const alpha = T(alphaS);
+    Int const mX = X.Height();
+    Int const nX = X.Width();
+    Int const nY = Y.Width();
+    Int const ldX = X.LDim();
+    Int const ldY = Y.LDim();
+    T const* XBuf = X.LockedBuffer();
+    T* YBuf = Y.Buffer();
+
+    SyncInfo<Device::GPU> syncInfoA(X), syncInfoB(Y);
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
+    // Keep the old stream so we can restore it. I don't know if this
+    // is necessary, but it might be good to keep the cuBLAS handle
+    // "looking const" outside this function.
+    cudaStream_t old_stream;
+    EL_CHECK_CUBLAS(
+        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
+    EL_CHECK_CUBLAS(
+        cublasSetStream(GPUManager::cuBLASHandle(), syncInfoB.stream_));
 
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
@@ -140,6 +152,9 @@ void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
                      alpha, XBuf, ldX,
                      T(1), YBuf, ldY, YBuf, ldY);
     }
+    // Restore the "default" stream
+    EL_CHECK_CUBLAS(
+        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 }
 #endif // HYDROGEN_HAVE_CUDA
 

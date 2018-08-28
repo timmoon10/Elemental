@@ -31,7 +31,7 @@ void Broadcast_impl( Matrix<T,D>& A, mpi::Comm comm, int rank )
     }
     else
     {
-        simple_buffer<T,D> buf(size);
+        simple_buffer<T,D> buf(size, syncInfoA);
 
         // Pack
         if( commRank == rank )
@@ -96,7 +96,7 @@ void Broadcast_impl( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank )
     }
     else
     {
-        simple_buffer<T,D> buf(localSize);
+        simple_buffer<T,D> buf(localSize, syncInfoA);
 
         // Pack
         if( commRank == rank )

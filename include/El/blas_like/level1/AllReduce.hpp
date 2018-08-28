@@ -29,7 +29,7 @@ void AllReduce(Matrix<T,D>& A, mpi::Comm comm, mpi::Op op)
     {
         SyncInfo<D> syncInfoA(A);
 
-        simple_buffer<T,D> buf(size);
+        simple_buffer<T,D> buf(size, syncInfoA);
 
         // Pack
         copy::util::InterleaveMatrix(

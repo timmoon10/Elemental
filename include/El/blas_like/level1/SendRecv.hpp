@@ -55,16 +55,20 @@ void SendRecv
 
     SyncInfo<D> syncInfoA(A), syncInfoB(B);
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if (heightA == A.LDim() && heightB == B.LDim())
     {
+        Synchronize(syncInfoB);
         mpi::SendRecv(
             A.LockedBuffer(), sizeA, sendRank,
             B.Buffer(),       sizeB, recvRank, comm);
     }
     else if( heightA == A.LDim() )
     {
-        simple_buffer<T,D> recvBuf(sizeB);
+        simple_buffer<T,D> recvBuf(sizeB, syncInfoB);
 
+        Synchronize(syncInfoB);
         mpi::SendRecv(
              A.LockedBuffer(), sizeA, sendRank,
              recvBuf.data(),   sizeB, recvRank, comm);
@@ -76,14 +80,16 @@ void SendRecv
     }
     else
     {
-        simple_buffer<T,D> sendBuf(sizeA);
+        simple_buffer<T,D> sendBuf(sizeA, syncInfoB);
 
         copy::util::InterleaveMatrix(
             heightA, widthA,
             A.LockedBuffer(), 1, A.LDim(),
-            sendBuf.data(),   1, heightA, syncInfoA);
+            sendBuf.data(),   1, heightA, syncInfoB);
 
-        simple_buffer<T,D> recvBuf(sizeB);
+        simple_buffer<T,D> recvBuf(sizeB, syncInfoB);
+
+        Synchronize(syncInfoB);
 
         mpi::SendRecv(
             sendBuf.data(), sizeA, sendRank,
