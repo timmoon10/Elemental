@@ -42,6 +42,8 @@ void PartialColScatter
             syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
             syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+        auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
         const Int colStride = B.ColStride();
         const Int colStridePart = B.PartialColStride();
         const Int colStrideUnion = B.PartialUnionColStride();
@@ -67,14 +69,11 @@ void PartialColScatter
             colStrideUnion, colStridePart, colRankPart,
             A.ColShift(),
             A.LockedBuffer(), A.LDim(),
-            buffer.data(), recvSize, syncInfoA);
+            buffer.data(), recvSize, syncInfoB);
 
         // Communicate
         mpi::ReduceScatter(buffer.data(), recvSize, B.PartialUnionColComm(),
-                           syncInfoA);
-
-        // B needs to wait for A to finish up.
-        AddSynchronizationPoint(syncInfoA, syncInfoB);
+                           syncInfoB);
 
         // Unpack our received data
         axpy::util::InterleaveMatrixUpdate(
@@ -106,6 +105,8 @@ void PartialRowScatter(
             syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
             syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+        auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
         const Int rowStride = B.RowStride();
         const Int rowStridePart = B.PartialRowStride();
         const Int rowStrideUnion = B.PartialUnionRowStride();
@@ -126,14 +127,11 @@ void PartialRowScatter(
             rowStrideUnion, rowStridePart, rowRankPart,
             A.RowShift(),
             A.LockedBuffer(), A.LDim(),
-            buffer.data(),    recvSize, syncInfoA);
+            buffer.data(),    recvSize, syncInfoB);
 
         // Communicate
         mpi::ReduceScatter(buffer.data(), recvSize, B.PartialUnionRowComm(),
-                           syncInfoA);
-
-        // B needs to wait for A to finish up.
-        AddSynchronizationPoint(syncInfoA, syncInfoB);
+                           syncInfoB);
 
         // Unpack our received data
         axpy::util::InterleaveMatrixUpdate(
@@ -190,6 +188,8 @@ void ColScatter
         syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     // TODO: Allow for modular equivalence if possible
     if( rowDiff == 0 )
     {
@@ -204,14 +204,11 @@ void ColScatter
             height, localWidth,
             colAlign, colStride,
             A.LockedBuffer(), A.LDim(),
-            buffer.data(),    recvSize, syncInfoA);
+            buffer.data(),    recvSize, syncInfoB);
 
         // Communicate
         mpi::ReduceScatter(buffer.data(), recvSize, B.ColComm(),
-                           syncInfoA);
-
-        // B needs to wait for A to finish up.
-        AddSynchronizationPoint(syncInfoA, syncInfoB);
+                           syncInfoB);
 
         // Update with our received data
         axpy::util::InterleaveMatrixUpdate(
@@ -242,14 +239,14 @@ void ColScatter
             height, localWidth,
             colAlign, colStride,
             A.LockedBuffer(), A.LDim(),
-            secondBuf,        recvSize_RS, syncInfoA);
+            secondBuf,        recvSize_RS, syncInfoB);
 
         // Reduce-scatter over each col
         mpi::ReduceScatter(secondBuf, firstBuf, recvSize_RS, B.ColComm(),
-                           syncInfoA);
+                           syncInfoB);
 
         // FIXME: Until we have SendRecv through Aluminum, need to full sync here!
-        Synchronize(syncInfoA);
+        Synchronize(syncInfoB);
 
         // Trade reduced data with the appropriate col
         const Int sendCol = Mod( B.RowRank()+rowDiff, B.RowStride() );
@@ -257,9 +254,6 @@ void ColScatter
         mpi::SendRecv(
             firstBuf,  localHeight*localWidthA, sendCol,
             secondBuf, localHeight*localWidth,  recvCol, B.RowComm());
-
-        // B needs to wait for A to finish up.
-        AddSynchronizationPoint(syncInfoA, syncInfoB);
 
         // Update with our received data
         axpy::util::InterleaveMatrixUpdate(
@@ -290,6 +284,8 @@ void RowScatter
         syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( colDiff == 0 )
     {
         if( width == 1 )
@@ -302,7 +298,7 @@ void RowScatter
             const Int rowAlign = B.RowAlign();
             mpi::Reduce(
                 A.LockedBuffer(), buffer.data(), portionSize,
-                rowAlign, B.RowComm());
+                rowAlign, B.RowComm(), syncInfoB);
 
             if( B.RowRank() == rowAlign )
             {
@@ -330,14 +326,11 @@ void RowScatter
                 localHeight, width,
                 rowAlign, rowStride,
                 A.LockedBuffer(), A.LDim(),
-                buffer.data(), portionSize, syncInfoA);
+                buffer.data(), portionSize, syncInfoB);
 
             // Communicate
             mpi::ReduceScatter(buffer.data(), portionSize, B.RowComm(),
-                               syncInfoA);
-
-            // B needs to wait for A to finish up.
-            AddSynchronizationPoint(syncInfoA, syncInfoB);
+                               syncInfoB);
 
             // Update with our received data
             axpy::util::InterleaveMatrixUpdate(
@@ -371,10 +364,13 @@ void RowScatter
             // Reduce to rowAlign
             const Int rowAlign = B.RowAlign();
             mpi::Reduce(
-                A.LockedBuffer(), sendBuf, localHeightA, rowAlign, B.RowComm());
+                A.LockedBuffer(), sendBuf, localHeightA, rowAlign, B.RowComm(),
+                syncInfoB);
 
             if( B.RowRank() == rowAlign )
             {
+                Synchronize(syncInfoB);
+
                 // Perform the realignment
                 mpi::SendRecv(
                     sendBuf, localHeightA, sendRow,
@@ -408,22 +404,19 @@ void RowScatter
                 localHeightA, width,
                 rowAlign, rowStride,
                 A.LockedBuffer(), A.LDim(),
-                secondBuf,        recvSize_RS, syncInfoA );
+                secondBuf,        recvSize_RS, syncInfoB);
 
             // Reduce-scatter over each process row
             mpi::ReduceScatter(secondBuf, firstBuf, recvSize_RS, B.RowComm(),
-                               syncInfoA);
+                               syncInfoB);
 
             // FIXME: Need to full sync here
-            Synchronize(syncInfoA);
+            Synchronize(syncInfoB);
 
             // Trade reduced data with the appropriate process row
             mpi::SendRecv(
                 firstBuf,  localHeightA*localWidth, sendRow,
                 secondBuf, localHeight*localWidth,  recvRow, B.ColComm());
-
-            // B needs to wait for A to finish up.
-            AddSynchronizationPoint(syncInfoA, syncInfoB);
 
             // Update with our received data
             axpy::util::InterleaveMatrixUpdate(
@@ -469,20 +462,19 @@ void Scatter
         syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     // Pack
     copy::util::StridedPack(
         height, width,
         colAlign, colStride,
         rowAlign, rowStride,
         A.LockedBuffer(), A.LDim(),
-        buffer.data(),    recvSize, syncInfoA);
+        buffer.data(),    recvSize, syncInfoB);
 
     // Communicate
     mpi::ReduceScatter(buffer.data(), recvSize, B.DistComm(),
-                       syncInfoA);
-
-    // B needs to wait for A to finish up.
-    AddSynchronizationPoint(syncInfoA, syncInfoB);
+                       syncInfoB);
 
     // Unpack our received data
     axpy::util::InterleaveMatrixUpdate(

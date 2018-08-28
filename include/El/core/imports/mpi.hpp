@@ -984,22 +984,49 @@ vector<T> AllToAll
 
 // Reduce
 // ------
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void Reduce
-( const Real* sbuf, Real* rbuf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void Reduce
-( const Complex<Real>* sbuf, Complex<Real>* rbuf, int count, Op op,
-  int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void Reduce
-( const T* sbuf, T* rbuf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+#define COLL Collective::REDUCE
+
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void Reduce(T const* sbuf, T* rbuf, int count, Op op,
+            int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void Reduce(T const* sbuf, T* rbuf, int count, Op op,
+            int root, Comm comm, SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Reduce(T const* sbuf, T* rbuf, int count, Op op,
+            int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Reduce(const Complex<T>* sbuf, Complex<T>* rbuf, int count, Op op,
+            int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void Reduce(T const* sbuf, T* rbuf, int count, Op op,
+            int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void Reduce(T const*, T*, int, Op, int, Comm, SyncInfo<D> const&);
 
 template<typename T,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
@@ -1016,13 +1043,15 @@ EL_NO_RELEASE_EXCEPT
 }
 
 // Default to SUM
-template<typename T>
-void Reduce( const T* sbuf, T* rbuf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+void Reduce(
+    const T* sbuf, T* rbuf, int count, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
 
 // With a message-size of one
-template<typename T>
-T Reduce( T sb, Op op, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+T Reduce( T sb, Op op, int root, Comm comm,
+          SyncInfo<D> const& syncInfo );
 
 template<typename T,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
@@ -1038,24 +1067,53 @@ EL_NO_RELEASE_EXCEPT
 }
 
 // With a message-size of one and default to SUM
-template<typename T>
-T Reduce( T sb, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+T Reduce( T sb, int root, Comm comm, SyncInfo<D> const& syncInfo );
 
 // Single-buffer reduce
 // --------------------
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void Reduce( Real* buf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void Reduce( Complex<Real>* buf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void Reduce( T* buf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void Reduce(T* buf, int count, Op op,
+            int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void Reduce(T* buf, int count, Op op,
+            int root, Comm comm, SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Reduce(T* buf, int count, Op op,
+            int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Reduce(Complex<T>* buf, int count, Op op,
+            int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void Reduce(T* buf, int count, Op op,
+            int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void Reduce(T*, int, Op, int, Comm, SyncInfo<D> const&);
 
 template<typename T,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
@@ -1071,8 +1129,11 @@ EL_NO_RELEASE_EXCEPT
 }
 
 // Default to SUM
-template<typename T>
-void Reduce( T* buf, int count, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+void Reduce( T* buf, int count, int root, Comm comm,
+             SyncInfo<D> const& syncInfo );
+
+#undef COLL // Collective::REDUCE
 
 // AllReduce
 // ---------

@@ -22,6 +22,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
         *comm.aluminum_comm);
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
           typename/*=EnableIf<IsAluminumSupported<T,D,
                                   Collectives::REDUCESCATTER>>*/>
@@ -35,14 +36,13 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
                                      syncInfo.event_);
 
-    AddSynchronizationPoint(syncInfo, alSyncInfo);
+    auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
     Al::Reduce_scatter<BestBackend<T,Device::GPU>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
-
-    AddSynchronizationPoint(alSyncInfo, syncInfo);
 }
+#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template <typename T, Device D,
