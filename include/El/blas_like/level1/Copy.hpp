@@ -133,7 +133,7 @@ void Copy(const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B)
                           ABuf, ldA*sizeof(T),
                           height*sizeof(T), width,
                           cudaMemcpyDeviceToDevice,
-                          syncInfoB));
+                          syncInfoB.stream_));
 }
 
 // These inter-device copy functions are SYNCHRONOUS with respect to
