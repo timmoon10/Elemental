@@ -185,6 +185,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
         *comm.aluminum_comm);
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
           typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,
                                   Collectives::REDUCESCATTER>>*/>
@@ -204,6 +205,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }
+#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template <typename T, Device D,

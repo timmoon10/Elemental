@@ -71,7 +71,6 @@ void UpdateWithLocalData(
         1,             A.LDim(),
         B.Buffer(A.ColShift(),A.RowShift()),
         A.ColStride(), A.RowStride()*B.LDim(), syncInfoB);
-    // FIXME: Need to synchronize A and B
 }
 
 } // namespace util
