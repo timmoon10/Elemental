@@ -11,11 +11,11 @@ class simple_buffer
 public:
     simple_buffer() = default;
     explicit simple_buffer(size_t size,
-                           unsigned int mode = DefaultMemoryMode<D>(),
-                           SyncInfo<D> const& = SyncInfo<D>{});
+                           SyncInfo<D> const& = SyncInfo<D>{},
+                           unsigned int mode = DefaultMemoryMode<D>());
     explicit simple_buffer(size_t size, T const& value,
-                           unsigned int mode = DefaultMemoryMode<D>(),
-                           SyncInfo<D> const& = SyncInfo<D>{});
+                           SyncInfo<D> const& = SyncInfo<D>{},
+                           unsigned int mode = DefaultMemoryMode<D>());
 
     void allocate(size_t size);
 
@@ -67,7 +67,7 @@ void setBufferToValue(T* buffer, size_t size, T const& value,
 
 template <typename T, Device D>
 simple_buffer<T,D>::simple_buffer(
-    size_t size, unsigned int mode, SyncInfo<D> const& syncInfo)
+    size_t size, SyncInfo<D> const& syncInfo, unsigned int mode)
     : mem_{size, mode, syncInfo},
       data_{mem_.Buffer()},
       size_{mem_.Size()}
@@ -75,7 +75,7 @@ simple_buffer<T,D>::simple_buffer(
 
 template <typename T, Device D>
 simple_buffer<T,D>::simple_buffer(
-    size_t size, T const& value, unsigned mode, SyncInfo<D> const& syncInfo)
+    size_t size, T const& value, SyncInfo<D> const& syncInfo, unsigned mode)
     : simple_buffer{size, mode, syncInfo}
 {
     details::setBufferToValue(this->data(), size, value, syncInfo);

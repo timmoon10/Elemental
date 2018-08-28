@@ -51,7 +51,6 @@ void RowAllToAllDemote(
         else
         {
             simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize,
-                                      DefaultMemoryMode<D>(),
                                       syncInfoB);
             T* firstBuf  = buffer.data();
             T* secondBuf = buffer.data() + rowStrideUnion*portionSize;
@@ -91,7 +90,6 @@ void RowAllToAllDemote(
         const Int recvRowRankPart = Mod(rowRankPart-rowDiff, rowStridePart);
 
         simple_buffer<T,D> buffer(2*rowStrideUnion*portionSize,
-                                  DefaultMemoryMode<D>(),
                                   syncInfoB);
         T* firstBuf  = buffer.data();
         T* secondBuf = buffer.data() + rowStrideUnion*portionSize;

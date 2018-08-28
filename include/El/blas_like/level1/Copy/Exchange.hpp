@@ -48,8 +48,11 @@ void Exchange_impl
     SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( contigA && contigB )
     {
+        Synchronize(syncInfoB);
         mpi::SendRecv(
             A.LockedBuffer(), sendSize, sendRank,
             B.Buffer(),       recvSize, recvRank, comm );
@@ -57,11 +60,13 @@ void Exchange_impl
     else if( contigB )
     {
         // Pack A's data
-        simple_buffer<T,D> buf(sendSize);
+        simple_buffer<T,D> buf(sendSize, syncInfoB);
         copy::util::InterleaveMatrix(
             localHeightA, localWidthA,
             A.LockedBuffer(), 1, A.LDim(),
-            buf.data(),       1, localHeightA, syncInfoA);
+            buf.data(),       1, localHeightA, syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Exchange with the partner
         mpi::SendRecv
@@ -71,7 +76,10 @@ void Exchange_impl
     else if( contigA )
     {
         // Exchange with the partner
-        simple_buffer<T,D> buf(recvSize);
+        simple_buffer<T,D> buf(recvSize, syncInfoB);
+
+        Synchronize(syncInfoB);
+
         mpi::SendRecv(
             A.LockedBuffer(), sendSize, sendRank,
             buf.data(),       recvSize, recvRank, comm );
@@ -85,14 +93,16 @@ void Exchange_impl
     else
     {
         // Pack A's data
-        simple_buffer<T,D> sendBuf(sendSize);
+        simple_buffer<T,D> sendBuf(sendSize, syncInfoB);
         copy::util::InterleaveMatrix(
             localHeightA, localWidthA,
             A.LockedBuffer(), 1, A.LDim(),
-            sendBuf.data(),   1, localHeightA, syncInfoA);
+            sendBuf.data(),   1, localHeightA, syncInfoB);
 
         // Exchange with the partner
-        simple_buffer<T,D> recvBuf(recvSize);
+        simple_buffer<T,D> recvBuf(recvSize, syncInfoB);
+
+        Synchronize(syncInfoB);
         mpi::SendRecv(
             sendBuf.data(), sendSize, sendRank,
             recvBuf.data(), recvSize, recvRank, comm );

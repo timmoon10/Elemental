@@ -60,7 +60,7 @@ void PartialColScatter
         // We explicitly zero-initialize rather than calling FastResize to avoid
         // inadvertently causing a floating-point exception in the reduction of
         // the padding entries.
-        simple_buffer<T,D> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
 
         // Pack
         copy::util::PartialColStridedPack(
@@ -118,7 +118,7 @@ void PartialRowScatter(
         const Int recvSize = mpi::Pad( height*maxLocalWidth );
         const Int sendSize = rowStrideUnion*recvSize;
 
-        simple_buffer<T,D> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
 
         // Pack
         copy::util::PartialRowStridedPack(
@@ -197,7 +197,7 @@ void ColScatter
 
         const Int recvSize = mpi::Pad( maxLocalHeight*localWidth );
         const Int sendSize = colStride*recvSize;
-        simple_buffer<T,D> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
 
         // Pack
         copy::util::ColStridedPack(
@@ -230,7 +230,7 @@ void ColScatter
         const Int recvSize_SR = localHeight*localWidth;
 
         simple_buffer<T,D> buffer(
-            recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0));
+            recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0), syncInfoB);
         T* firstBuf = buffer.data();
         T* secondBuf = buffer.data() + recvSize_RS;
 
@@ -245,7 +245,8 @@ void ColScatter
         mpi::ReduceScatter(secondBuf, firstBuf, recvSize_RS, B.ColComm(),
                            syncInfoB);
 
-        // FIXME: Until we have SendRecv through Aluminum, need to full sync here!
+        // FIXME: Until we have SendRecv through Aluminum, need to
+        // full sync here!
         Synchronize(syncInfoB);
 
         // Trade reduced data with the appropriate col
@@ -292,7 +293,7 @@ void RowScatter
         {
             const Int localHeight = B.LocalHeight();
             const Int portionSize = mpi::Pad( localHeight );
-            simple_buffer<T,D> buffer(portionSize, T(0));
+            simple_buffer<T,D> buffer(portionSize, T(0), syncInfoB);
 
             // Reduce to rowAlign
             const Int rowAlign = B.RowAlign();
@@ -321,7 +322,7 @@ void RowScatter
             const Int sendSize = rowStride*portionSize;
 
             // Pack
-            simple_buffer<T,D> buffer(sendSize, T(0));
+            simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
             copy::util::RowStridedPack(
                 localHeight, width,
                 rowAlign, rowStride,
@@ -357,7 +358,7 @@ void RowScatter
         if( width == 1 )
         {
             simple_buffer<T,D> buffer(
-                localHeight + localHeightA, T(0));
+                localHeight + localHeightA, T(0), syncInfoB);
             T* sendBuf = buffer.data();
             T* recvBuf = buffer.data() + localHeightA;
 
@@ -395,7 +396,7 @@ void RowScatter
             const Int recvSize_SR = localHeight * localWidth;
 
             simple_buffer<T,D> buffer(
-                recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0));
+                recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0), syncInfoB);
             T* firstBuf = buffer.data();
             T* secondBuf = buffer.data() + recvSize_RS;
 
@@ -456,13 +457,13 @@ void Scatter
     const Int recvSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
     const Int sendSize = colStride*rowStride*recvSize;
 
-    simple_buffer<T,D> buffer(sendSize, T(0));
-
     SyncInfo<D>
         syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
         syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
+    simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
 
     // Pack
     copy::util::StridedPack(

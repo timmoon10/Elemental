@@ -44,7 +44,8 @@ void PartialRowAllGather_impl
         }
         else
         {
-            simple_buffer<T,D> buffer((rowStrideUnion+1)*portionSize);
+            simple_buffer<T,D> buffer((rowStrideUnion+1)*portionSize,
+                                      syncInfoB);
             T* firstBuf = buffer.data();
             T* secondBuf = buffer.data() + portionSize;
 
@@ -53,8 +54,6 @@ void PartialRowAllGather_impl
                 height, A.LocalWidth(),
                 A.LockedBuffer(), 1, A.LDim(),
                 firstBuf,         1, height, syncInfoB );
-
-            Synchronize(syncInfoA);
 
             // Communicate
             mpi::AllGather(
@@ -77,7 +76,8 @@ void PartialRowAllGather_impl
         if( A.Grid().Rank() == 0 )
             cerr << "Unaligned PartialRowAllGather" << endl;
 #endif
-        simple_buffer<T,D> buffer((rowStrideUnion+1)*portionSize);
+        simple_buffer<T,D> buffer((rowStrideUnion+1)*portionSize,
+                                  syncInfoB);
         T* firstBuf = buffer.data();
         T* secondBuf = buffer.data() + portionSize;
 
@@ -85,16 +85,16 @@ void PartialRowAllGather_impl
         util::InterleaveMatrix(
             height, A.LocalWidth(),
             A.LockedBuffer(), 1, A.LDim(),
-            secondBuf,        1, height, syncInfoA);
-
-        Synchronize(syncInfoA);
+            secondBuf,        1, height, syncInfoB);
 
         const Int sendRowRank = Mod( A.RowRank()+rowDiff, rowStride );
         const Int recvRowRank = Mod( A.RowRank()-rowDiff, rowStride );
 
+        Synchronize(syncInfoA);
+
         mpi::SendRecv(
             secondBuf, portionSize, sendRowRank,
-            firstBuf,  portionSize, recvRowRank, A.RowComm() );
+            firstBuf,  portionSize, recvRowRank, A.RowComm());
 
         // Use the SendRecv as an input to the partial union AllGather
         mpi::AllGather(
