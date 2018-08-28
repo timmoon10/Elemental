@@ -76,7 +76,7 @@ simple_buffer<T,D>::simple_buffer(
 template <typename T, Device D>
 simple_buffer<T,D>::simple_buffer(
     size_t size, T const& value, SyncInfo<D> const& syncInfo, unsigned mode)
-    : simple_buffer{size, mode, syncInfo}
+    : simple_buffer{size, syncInfo, mode}
 {
     details::setBufferToValue(this->data(), size, value, syncInfo);
 }
