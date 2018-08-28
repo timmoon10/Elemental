@@ -27,7 +27,9 @@ public:
     bool Viewing() const EL_NO_EXCEPT;
     bool FixedSize() const EL_NO_EXCEPT;
     bool Locked() const EL_NO_EXCEPT;
-
+    bool IsEmpty() const EL_NO_EXCEPT;
+    bool Contiguous() const EL_NO_EXCEPT;
+  
     void FixSize() EL_NO_EXCEPT;
 
     void Empty(bool freeMemory=true);
@@ -198,6 +200,14 @@ inline bool AbstractMatrix<T>::FixedSize() const EL_NO_EXCEPT
 template <typename T>
 inline bool AbstractMatrix<T>::Locked() const EL_NO_EXCEPT
 { return IsLocked(viewType_); }
+
+template <typename T>
+inline bool AbstractMatrix<T>::IsEmpty() const EL_NO_EXCEPT
+{ return height_ < 1 || width_ < 1; }
+
+template <typename T>
+inline bool AbstractMatrix<T>::Contiguous() const EL_NO_EXCEPT
+{ return height_ == leadingDimension_ || width_ == 1 || IsEmpty(); }
 
 template <typename T>
 inline void AbstractMatrix<T>::SetViewType(El::ViewType viewType) EL_NO_EXCEPT
