@@ -45,6 +45,7 @@ void InterleaveMatrixUpdate(
     T* B, Int colStrideB, Int rowStrideB,
     SyncInfo<Device::GPU> syncInfo)
 {
+    EL_DEBUG_CSE
     Axpy_GPU_impl(height, width, alpha,
                   A, colStrideA, rowStrideA,
                   B, colStrideB, rowStrideB, syncInfo.stream_);

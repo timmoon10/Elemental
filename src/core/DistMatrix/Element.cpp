@@ -107,11 +107,11 @@ ElementalMatrix<T>::MakeConsistent( bool includingViewers )
 #ifdef HYDROGEN_HAVE_CUDA
         else if (this->GetLocalDevice() == Device::GPU)
         {
-            SyncInfo<Device::GPU> syncInfoA(
+            SyncInfo<Device::GPU> syncInfo(
                 static_cast<Matrix<T,Device::GPU> const&>(
                     this->LockedMatrix()));
             mpi::Broadcast(message, msgLength, this->Root(), this->CrossComm(),
-                           syncInfoA);
+                           syncInfo);
         }
 #endif // HYDROGEN_HAVE_CUDA
         else
@@ -126,11 +126,11 @@ ElementalMatrix<T>::MakeConsistent( bool includingViewers )
 #ifdef HYDROGEN_HAVE_CUDA
         else if (this->GetLocalDevice() == Device::GPU)
         {
-            SyncInfo<Device::GPU> syncInfoA(
+            SyncInfo<Device::GPU> syncInfo(
                 static_cast<Matrix<T,Device::GPU> const&>(
                     this->LockedMatrix()));
             mpi::Broadcast(message, msgLength, vcRoot, grid.ViewingComm(),
-                           syncInfoA);
+                           syncInfo);
         }
 #endif // HYDROGEN_HAVE_CUDA
         else

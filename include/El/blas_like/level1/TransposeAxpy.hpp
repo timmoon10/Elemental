@@ -142,7 +142,6 @@ void TransposeAxpy(S alphaS,
     EL_CHECK_CUBLAS(
         cublasSetStream(GPUManager::cuBLASHandle(), syncInfoB.stream_));
 
-
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
     if( mX == 1 || nX == 1 )
@@ -158,7 +157,6 @@ void TransposeAxpy(S alphaS,
 #endif // !EL_RELEASE
 
         cublas::Axpy( lengthX, alpha, XBuf, incX, YBuf, incY );
-
     }
     else
     {

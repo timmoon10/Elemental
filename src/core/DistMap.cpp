@@ -56,6 +56,8 @@ void DistMap::Translate
     const int commSize = grid_->Size();
     const int commRank = grid_->Rank();
 
+    LogicError("Error");
+
     // Count how many indices we need each process to map
     // Avoid unncessary branching within the loop by avoiding RowToProcess
     vector<int> requestSizes( commSize, 0 );
@@ -251,6 +253,8 @@ void InvertMap( const DistMap& map, DistMap& inverseMap )
     const Int numLocalSources = map.NumLocalSources();
     const vector<Int>& localMap = map.Map();
     const Int firstLocalSource = map.FirstLocalSource();
+
+    LogicError("Error");
 
     // TODO(poulson): Allow this to be cached?
     vector<int> owners(numLocalSources);
