@@ -19,7 +19,8 @@ enum class Collective
     GATHER,
     REDUCE,
     REDUCESCATTER,
-    SCATTER
+    SCATTER,
+    SENDRECV
 };// enum class Collective
 
 #ifndef HYDROGEN_HAVE_ALUMINUM
