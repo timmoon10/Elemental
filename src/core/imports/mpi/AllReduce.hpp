@@ -299,9 +299,14 @@ EL_NO_RELEASE_EXCEPT
     template void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&);     \
     template void AllReduce(T*, int, Comm, SyncInfo<D> const&);
 
+#ifndef HYDROGEN_HAVE_CUDA
+#define MPI_ALLREDUCE_PROTO(T)             \
+    MPI_ALLREDUCE_PROTO_DEV(T,Device::CPU)
+#else
 #define MPI_ALLREDUCE_PROTO(T)             \
     MPI_ALLREDUCE_PROTO_DEV(T,Device::CPU) \
     MPI_ALLREDUCE_PROTO_DEV(T,Device::GPU)
+#endif // HYDROGEN_HAVE_CUDA
 
 MPI_ALLREDUCE_PROTO(byte)
 MPI_ALLREDUCE_PROTO(int)

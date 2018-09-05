@@ -367,10 +367,14 @@ void ReduceScatter(T* buf, int rc, Comm comm, SyncInfo<D> const& syncInfo)
     template void ReduceScatter(T*, int, Op, Comm, SyncInfo<D> const&); \
     template void ReduceScatter(T*, int, Comm, SyncInfo<D> const&);
 
+#ifndef HYDROGEN_HAVE_CUDA
+#define MPI_REDUCESCATTER_PROTO(T)             \
+    MPI_REDUCESCATTER_PROTO_DEV(T,Device::CPU)
+#else
 #define MPI_REDUCESCATTER_PROTO(T)             \
     MPI_REDUCESCATTER_PROTO_DEV(T,Device::CPU) \
     MPI_REDUCESCATTER_PROTO_DEV(T,Device::GPU)
-
+#endif // HYDROGEN_HAVE_CUDA
 MPI_REDUCESCATTER_PROTO(byte)
 MPI_REDUCESCATTER_PROTO(int)
 MPI_REDUCESCATTER_PROTO(unsigned)
