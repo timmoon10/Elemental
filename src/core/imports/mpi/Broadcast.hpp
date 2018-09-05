@@ -83,6 +83,9 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     EL_DEBUG_CSE
     if (Size(comm) == 1 || count == 0)
         return;
+
+    Synchronize(syncInfo);
+
     std::vector<byte> packedBuf;
     Serialize(count, buffer, packedBuf);
     CheckMpi(MPI_Bcast(packedBuf.data(), count, TypeMap<T>(), root, comm.comm));
