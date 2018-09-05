@@ -57,6 +57,8 @@ struct Comm
     inline int Rank() const EL_NO_RELEASE_EXCEPT;
     inline int Size() const EL_NO_RELEASE_EXCEPT;
 
+    inline void Reinit() const EL_NO_EXCEPT {}
+    inline void Reset() const EL_NO_EXCEPT {}
 };
 
 #else
@@ -91,6 +93,10 @@ struct Comm
     inline int Rank() const EL_NO_RELEASE_EXCEPT;
     inline int Size() const EL_NO_RELEASE_EXCEPT;
 
+    // Re-sync the Aluminum comm with the MPI comm
+    inline void Reinit();
+    inline void Reset() EL_NO_EXCEPT { aluminum_comm.reset(); }
+
     MPI_Comm comm;
     std::shared_ptr<aluminum_comm_type> aluminum_comm;
 };
@@ -112,6 +118,15 @@ Comm::Comm(MPI_Comm mpiComm) EL_NO_EXCEPT
         )}
 {}
 
+inline void Comm::Reinit()
+{
+    aluminum_comm = std::make_shared<aluminum_comm_type>(
+        comm
+#if defined(HYDROGEN_HAVE_NCCL2) || defined(HYDROGEN_HAVE_AL_MPI_CUDA)
+        , GPUManager::Stream()
+#endif
+        );
+}
 
 #endif // HYDROGEN_HAVE_ALUMINUM
 

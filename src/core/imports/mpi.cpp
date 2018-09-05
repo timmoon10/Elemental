@@ -199,24 +199,28 @@ EL_NO_RELEASE_EXCEPT
     EL_CHECK_MPI_NO_DATA(
         MPI_Comm_create( parentComm.comm, subsetGroup.group, &subsetComm.comm )
     );
+    subsetComm.Reinit();
 }
 
 void Dup( Comm original, Comm& duplicate ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_CHECK_MPI_NO_DATA( MPI_Comm_dup( original.comm, &duplicate.comm ) );
+    duplicate.Reinit();
 }
 
 void Split( Comm comm, int color, int key, Comm& newComm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_CHECK_MPI_NO_DATA( MPI_Comm_split( comm.comm, color, key, &newComm.comm ) );
+    newComm.Reinit();
 }
 
 void Free( Comm& comm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_CHECK_MPI_NO_DATA( MPI_Comm_free( &comm.comm ) );
+    comm.Reset();
 }
 
 bool Congruent( Comm comm1, Comm comm2 ) EL_NO_RELEASE_EXCEPT
@@ -250,6 +254,7 @@ void CartCreate
     ( MPI_Cart_create
       ( comm.comm, numDims, const_cast<int*>(dimensions),
         const_cast<int*>(periods), reorder, &cartComm.comm ) );
+    cartComm.Reinit();
 }
 
 void CartSub( Comm comm, const int* remainingDims, Comm& subComm )
@@ -260,6 +265,7 @@ EL_NO_RELEASE_EXCEPT
       MPI_Cart_sub
       ( comm.comm, const_cast<int*>(remainingDims), &subComm.comm )
     );
+    subComm.Reinit();
 }
 
 // Group manipulation
