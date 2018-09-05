@@ -59,12 +59,14 @@ public:
     Int DiagonalLength(Int offset=0) const EL_NO_EXCEPT;
     bool Viewing() const EL_NO_EXCEPT;
     bool Locked() const EL_NO_EXCEPT;
+    bool IsEmpty() const EL_NO_EXCEPT;
 
     // Local matrix information
     // ------------------------
     Int LocalHeight() const EL_NO_EXCEPT;
     Int LocalWidth() const EL_NO_EXCEPT;
     Int LDim() const EL_NO_EXCEPT;
+    bool Contiguous() const EL_NO_EXCEPT;
 
     size_t AllocatedMemory() const EL_NO_EXCEPT;
 

@@ -247,6 +247,9 @@ bool AbstractDistMatrix<T>::Viewing() const EL_NO_EXCEPT
 template<typename T>
 bool AbstractDistMatrix<T>::Locked() const EL_NO_EXCEPT
 { return IsLocked(viewType_); }
+template<typename T>
+bool AbstractDistMatrix<T>::IsEmpty() const EL_NO_EXCEPT
+{ return height_ < 1 || width_ < 1; }
 
 // Local matrix information
 // ------------------------
@@ -260,6 +263,9 @@ Int AbstractDistMatrix<T>::LocalWidth() const EL_NO_EXCEPT
 template<typename T>
 Int AbstractDistMatrix<T>::LDim() const EL_NO_EXCEPT
 { return LockedMatrix().LDim(); }
+template<typename T>
+bool AbstractDistMatrix<T>::Contiguous() const EL_NO_EXCEPT
+{ return LockedMatrix().Contiguous(); }
 
 template<typename T>
 size_t
