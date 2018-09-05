@@ -1670,67 +1670,6 @@ EL_NO_RELEASE_EXCEPT
     Deserialize( rc, packedRecv, buf );
 }
 
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllToAll
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    EL_CHECK_MPI
-    ( MPI_Alltoall
-      ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
-        rbuf,                    rc, TypeMap<Real>(), comm.comm ) );
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllToAll
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-#ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Alltoall
-      ( const_cast<Complex<Real>*>(sbuf),
-        2*sc, TypeMap<Real>(),
-        rbuf,
-        2*rc, TypeMap<Real>(), comm.comm ) );
-#else
-    EL_CHECK_MPI
-    ( MPI_Alltoall
-      ( const_cast<Complex<Real>*>(sbuf),
-        sc, TypeMap<Complex<Real>>(),
-        rbuf,
-        rc, TypeMap<Complex<Real>>(), comm.comm ) );
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void AllToAll
-( const T* sbuf, int sc,
-        T* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    const int commSize = mpi::Size( comm );
-    const int totalSend = sc*commSize;
-    const int totalRecv = rc*commSize;
-
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( totalSend, sbuf, packedSend );
-    ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Alltoall
-      ( packedSend.data(), sc, TypeMap<T>(),
-        packedRecv.data(), rc, TypeMap<T>(), comm.comm ) );
-    Deserialize( totalRecv, packedRecv, rbuf );
-}
 
 template<typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
@@ -1827,9 +1766,12 @@ vector<T> AllToAll
   Comm comm )
 EL_NO_RELEASE_EXCEPT
 {
+    LogicError("AllToAll: Is this used? Tell Tom if so.");
+
+    SyncInfo<Device::CPU> syncInfo;
     const int commSize = Size( comm );
     vector<int> recvCounts(commSize);
-    AllToAll( sendCounts.data(), 1, recvCounts.data(), 1, comm );
+    AllToAll( sendCounts.data(), 1, recvCounts.data(), 1, comm, syncInfo );
     vector<int> recvOffs;
     const int totalRecv = El::Scan( recvCounts, recvOffs );
     vector<T> recvBuf(totalRecv);
@@ -1931,11 +1873,12 @@ void VerifySendsAndRecvs
   const vector<int>& recvCounts, Comm comm )
 {
     EL_DEBUG_CSE
+    LogicError("VerifySendsAndRecvs: Is this used? Tell Tom if so.");
     const int commSize = Size( comm );
     vector<int> actualRecvCounts(commSize);
     AllToAll
     ( sendCounts.data(),       1,
-      actualRecvCounts.data(), 1, comm );
+      actualRecvCounts.data(), 1, comm, SyncInfo<Device::CPU>{} );
     for( int q=0; q<commSize; ++q )
         if( actualRecvCounts[q] != recvCounts[q] )
             LogicError
@@ -2266,10 +2209,6 @@ EL_NO_RELEASE_EXCEPT
           T* rbuf, int rc, int root, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
   template void Scatter( T* buf, int sc, int rc, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllToAll \
-  ( const T* sbuf, int sc, \
-          T* rbuf, int rc, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
   template void AllToAll \
   ( const T* sbuf, const int* scs, const int* sds, \

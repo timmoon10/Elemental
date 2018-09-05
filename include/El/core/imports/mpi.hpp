@@ -949,23 +949,52 @@ EL_NO_RELEASE_EXCEPT;
 // AllToAll
 // --------
 // NOTE: See the corresponding note on std::bad_alloc for Gather
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void AllToAll
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, Comm comm ) EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void AllToAll
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void AllToAll
-( const T* sbuf, int sc,
-        T* rbuf, int rc, Comm comm ) EL_NO_RELEASE_EXCEPT;
+#define COLL Collective::ALLTOALL
+
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
+              SyncInfo<D> const&);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
+              SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void AllToAll(Complex<T> const* sbuf,
+              int sc, Complex<T>* rbuf, int rc, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void AllToAll(T const*, int, T*, int, Comm, SyncInfo<D> const&);
+
+#undef COLL // Collective::ALLTOALL
 
 // AllToAll with non-uniform send/recv sizes
 // -----------------------------------------
