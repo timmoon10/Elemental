@@ -688,10 +688,12 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
             ++recvCounts[owner];
         }
     }
+    SyncInfo<D> syncInfoA(matrix_);
+
     vector<int> recvOffs;
     Scan(recvCounts, recvOffs);
     vector<int> sendCounts(commSize);
-    mpi::AllToAll(recvCounts.data(), 1, sendCounts.data(), 1, comm);
+    mpi::AllToAll(recvCounts.data(), 1, sendCounts.data(), 1, comm, syncInfoA);
     vector<int> sendOffs;
     const int totalSend = Scan(sendCounts, sendOffs);
 
@@ -700,9 +702,9 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     for(Int k=0; k<totalRecv; ++k)
         recvCoords[offs[owners[k]]++] = remotePulls_[k];
     vector<ValueInt<Int>> sendCoords(totalSend);
-    mpi::AllToAll
-    (recvCoords.data(), recvCounts.data(), recvOffs.data(),
-      sendCoords.data(), sendCounts.data(), sendOffs.data(), comm);
+    mpi::AllToAll(
+        recvCoords.data(), recvCounts.data(), recvOffs.data(),
+        sendCoords.data(), sendCounts.data(), sendOffs.data(), comm);
 
     // Pack the data
     // =============
@@ -719,9 +721,9 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     // ============================
     vector<T> recvBuf;
     FastResize(recvBuf, totalRecv);
-    mpi::AllToAll
-    (sendBuf.data(), sendCounts.data(), sendOffs.data(),
-      recvBuf.data(), recvCounts.data(), recvOffs.data(), comm);
+    mpi::AllToAll(
+        sendBuf.data(), sendCounts.data(), sendOffs.data(),
+        recvBuf.data(), recvCounts.data(), recvOffs.data(), comm);
     offs = recvOffs;
     for(Int k=0; k<totalRecv; ++k)
         pullBuf[k] = recvBuf[offs[owners[k]]++];

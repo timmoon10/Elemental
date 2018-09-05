@@ -68,12 +68,11 @@ void ColAllToAllDemote
                  A.LockedBuffer(), A.LDim(),
                  firstBuf,         portionSize, syncInfoB);
 
-            Synchronize(syncInfoB);
-
             // Simultaneously Scatter in columns and Gather in rows
             mpi::AllToAll(
                 firstBuf,  portionSize,
-                secondBuf, portionSize, B.PartialUnionColComm() );
+                secondBuf, portionSize, B.PartialUnionColComm(),
+                syncInfoB);
 
             // Unpack
             util::RowStridedUnpack(
@@ -105,12 +104,13 @@ void ColAllToAllDemote
             A.LockedBuffer(), A.LDim(),
             secondBuf,        portionSize, syncInfoB);
 
-        Synchronize(syncInfoB);
-
         // Simultaneously Scatter in columns and Gather in rows
         mpi::AllToAll(
             secondBuf, portionSize,
-            firstBuf,  portionSize, B.PartialUnionColComm());
+            firstBuf,  portionSize, B.PartialUnionColComm(),
+            syncInfoB);
+
+        Synchronize(syncInfoB);
 
         // Realign the result
         mpi::SendRecv(

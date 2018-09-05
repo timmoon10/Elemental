@@ -804,7 +804,8 @@ void DM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     vector<int> recvOffs;
     Scan(recvCounts, recvOffs);
     vector<int> sendCounts(commSize);
-    mpi::AllToAll(recvCounts.data(), 1, sendCounts.data(), 1, comm);
+    mpi::AllToAll(recvCounts.data(), 1, sendCounts.data(), 1, comm,
+                  SyncInfo<Device::CPU>{});
     vector<int> sendOffs;
     const int totalSend = Scan(sendCounts, sendOffs);
 

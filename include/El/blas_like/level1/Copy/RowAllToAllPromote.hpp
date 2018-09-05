@@ -63,12 +63,11 @@ void RowAllToAllPromote
                 A.LockedBuffer(), A.LDim(),
                 firstBuf,         portionSize, syncInfoB);
 
-            Synchronize(syncInfoB);
-
             // Simultaneously Gather in rows and Scatter in columns
             mpi::AllToAll(
                 firstBuf,  portionSize,
-                secondBuf, portionSize, A.PartialUnionRowComm());
+                secondBuf, portionSize, A.PartialUnionRowComm(),
+                syncInfoB);
 
             // Unpack
             util::PartialRowStridedUnpack(
@@ -111,7 +110,8 @@ void RowAllToAllPromote
         // Simultaneously Scatter in rows and Gather in columns
         mpi::AllToAll(
             firstBuf,  portionSize,
-            secondBuf, portionSize, A.PartialUnionRowComm());
+            secondBuf, portionSize, A.PartialUnionRowComm(),
+            syncInfoB);
 
         // Unpack
         util::PartialRowStridedUnpack(

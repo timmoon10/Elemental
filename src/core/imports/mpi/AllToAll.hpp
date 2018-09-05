@@ -37,7 +37,7 @@ void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
 {
     EL_DEBUG_CSE
 
-        Synchronize(syncInfo);
+    Synchronize(syncInfo);
     CheckMpi(
         MPI_Alltoall(
             const_cast<T*>(sbuf), sc, TypeMap<T>(),
