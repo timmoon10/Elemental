@@ -486,28 +486,18 @@ AbstractDistMatrix<T>::AssertSameSize(Int height, Int width) const
 namespace
 {
 
-template<typename T, DistWrap wrap, Device dev>
+template<typename T>
 AbstractDistMatrix<T>*
-Instantiate_(const El::Grid& grid, int root, Dist colDist, Dist rowDist)
+Instantiate_
+(const El::Grid& grid, int root,
+ Dist colDist, Dist rowDist, DistWrap wrap, Device dev)
 {
-#define EL_DISTMATRIX_INSTANTIATE(U, V)                         \
-    if(colDist == U && rowDist == V)                            \
-        return new DistMatrix<T,U,V,wrap,dev>(grid, root);
-    EL_DISTMATRIX_INSTANTIATE(CIRC, CIRC)
-    EL_DISTMATRIX_INSTANTIATE(MC,   MR)
-    EL_DISTMATRIX_INSTANTIATE(MC,   STAR)
-    EL_DISTMATRIX_INSTANTIATE(MD,   STAR)
-    EL_DISTMATRIX_INSTANTIATE(MR,   MC)
-    EL_DISTMATRIX_INSTANTIATE(MR,   STAR)
-    EL_DISTMATRIX_INSTANTIATE(STAR, MC)
-    EL_DISTMATRIX_INSTANTIATE(STAR, MD)
-    EL_DISTMATRIX_INSTANTIATE(STAR, MR)
-    EL_DISTMATRIX_INSTANTIATE(STAR, STAR)
-    EL_DISTMATRIX_INSTANTIATE(STAR, VC)
-    EL_DISTMATRIX_INSTANTIATE(STAR, VR)
-    EL_DISTMATRIX_INSTANTIATE(VC,   STAR)
-    EL_DISTMATRIX_INSTANTIATE(VR,   STAR)
-#undef EL_DISTMATRIX_INSTANTIATE
+#define GUARD(CDIST,RDIST,WRAP,DEVICE)                          \
+    (colDist == CDIST) && (rowDist == RDIST) && (wrap == WRAP)  \
+        && (dev == DEVICE)
+#define PAYLOAD(CDIST,RDIST,WRAP,DEVICE)                                \
+    return new DistMatrix<T,CDIST,RDIST,WRAP,DEVICE>(grid, root);
+#include "El/macros/DeviceGuardAndPayload.h"
     LogicError
     ("Invalid template arguments for DistMatrix "
      "(colDist=",Int(colDist),", rowDist=",Int(rowDist),", "
@@ -523,16 +513,7 @@ AbstractDistMatrix<T>::Instantiate
 (const El::Grid& grid, int root,
  Dist colDist, Dist rowDist, DistWrap wrap, Device dev)
 {
-#define EL_DISTMATRIX_INSTANTIATE(TWrap, TDev)                          \
-    if(wrap == TWrap && dev == TDev)                                    \
-        return Instantiate_<T,TWrap,TDev>(grid, root, colDist, rowDist);
-    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::CPU)
-    EL_DISTMATRIX_INSTANTIATE(BLOCK,   Device::CPU)
-#undef EL_DISTMATRIX_INSTANTIATE
-    LogicError
-    ("Invalid template arguments for DistMatrix "
-     "(colDist=",Int(colDist),", rowDist=",Int(rowDist),", "
-     "wrap=",Int(wrap),", dev=",Int(dev),")");
+    LogicError("Invalid type for DistMatrix");
     return nullptr;
 }
 
@@ -542,20 +523,7 @@ AbstractDistMatrix<float>::Instantiate
 (const El::Grid& grid, int root,
  Dist colDist, Dist rowDist, DistWrap wrap, Device dev)
 {
-#define EL_DISTMATRIX_INSTANTIATE(TWrap, TDev)                          \
-    if(wrap == TWrap && dev == TDev)                                    \
-        return Instantiate_<float,TWrap,TDev>(grid, root, colDist, rowDist);
-    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::CPU)
-    EL_DISTMATRIX_INSTANTIATE(BLOCK,   Device::CPU)
-#ifdef HYDROGEN_HAVE_CUDA
-    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::GPU)
-#endif // HYDROGEN_HAVE_CUDA
-#undef EL_DISTMATRIX_INSTANTIATE
-    LogicError
-    ("Invalid template arguments for DistMatrix "
-     "(colDist=",Int(colDist),", rowDist=",Int(rowDist),", "
-     "wrap=",Int(wrap),", dev=",Int(dev),")");
-    return nullptr;
+    return Instantiate_<float>(grid, root, colDist, rowDist, wrap, dev);
 }
 
 template<>
@@ -564,20 +532,19 @@ AbstractDistMatrix<double>::Instantiate
 (const El::Grid& grid, int root,
  Dist colDist, Dist rowDist, DistWrap wrap, Device dev)
 {
-#define EL_DISTMATRIX_INSTANTIATE(TWrap, TDev)                          \
-    if(wrap == TWrap && dev == TDev)                                    \
-        return Instantiate_<double,TWrap,TDev>(grid, root, colDist, rowDist);
-    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::CPU)
-    EL_DISTMATRIX_INSTANTIATE(BLOCK,   Device::CPU)
-#ifdef HYDROGEN_HAVE_CUDA
-    EL_DISTMATRIX_INSTANTIATE(ELEMENT, Device::GPU)
-#endif // HYDROGEN_HAVE_CUDA
-#undef EL_DISTMATRIX_INSTANTIATE
-    LogicError
-    ("Invalid template arguments for DistMatrix "
-     "(colDist=",Int(colDist),", rowDist=",Int(rowDist),", "
-     "wrap=",Int(wrap),", dev=",Int(dev),")");
-    return nullptr;
+    return Instantiate_<double>(grid, root, colDist, rowDist, wrap, dev);
+}
+
+template<typename T>
+AbstractDistMatrix<T>*
+AbstractDistMatrix<T>::Instantiate(const El::DistData& data)
+{
+    const DistWrap wrap = ((data.blockHeight == 1
+                            && data.blockWidth == 1) ?
+                           ELEMENT : BLOCK);
+    return AbstractDistMatrix<T>::Instantiate
+           (*data.grid, data.root,
+            data.colDist, data.rowDist, wrap, data.device);
 }
 
 // Private section
