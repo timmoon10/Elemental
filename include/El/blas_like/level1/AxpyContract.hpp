@@ -37,6 +37,13 @@ void PartialColScatter
 #endif
     if( B.ColAlign() % A.ColStride() == A.ColAlign() )
     {
+
+        SyncInfo<D>
+            syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+            syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
+        auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
         const Int colStride = B.ColStride();
         const Int colStridePart = B.PartialColStride();
         const Int colStrideUnion = B.PartialUnionColStride();
@@ -53,26 +60,26 @@ void PartialColScatter
         // We explicitly zero-initialize rather than calling FastResize to avoid
         // inadvertently causing a floating-point exception in the reduction of
         // the padding entries.
-        simple_buffer<T,D> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
 
         // Pack
-        copy::util::PartialColStridedPack<T,D>
-        ( height, width,
-          colAlign, colStride,
-          colStrideUnion, colStridePart, colRankPart,
-          A.ColShift(),
-          A.LockedBuffer(), A.LDim(),
-          buffer.data(),    recvSize );
+        copy::util::PartialColStridedPack(
+            height, width,
+            colAlign, colStride,
+            colStrideUnion, colStridePart, colRankPart,
+            A.ColShift(),
+            A.LockedBuffer(), A.LDim(),
+            buffer.data(), recvSize, syncInfoB);
 
         // Communicate
-        mpi::ReduceScatter( buffer.data(), recvSize, B.PartialUnionColComm() );
+        mpi::ReduceScatter(buffer.data(), recvSize, B.PartialUnionColComm(),
+                           syncInfoB);
 
-        // FIXME
         // Unpack our received data
-        axpy::util::InterleaveMatrixUpdate<T,D>
-        ( alpha, localHeight, width,
-          buffer.data(), 1, localHeight,
-          B.Buffer(),    1, B.LDim() );
+        axpy::util::InterleaveMatrixUpdate(
+            alpha, localHeight, width,
+            buffer.data(), 1, localHeight,
+            B.Buffer(),    1, B.LDim(), syncInfoB);
     }
     else
         LogicError("Unaligned PartialColScatter not implemented");
@@ -80,10 +87,10 @@ void PartialColScatter
 
 // (U,Partial(V)) -> (U,V)
 template<typename T, Device D>
-void PartialRowScatter
-( T alpha,
-  const ElementalMatrix<T>& A,
-        ElementalMatrix<T>& B )
+void PartialRowScatter(
+    T alpha,
+    ElementalMatrix<T> const& A,
+    ElementalMatrix<T>& B )
 {
     EL_DEBUG_CSE
     AssertSameGrids( A, B );
@@ -94,6 +101,12 @@ void PartialRowScatter
 
     if( B.RowAlign() % A.RowStride() == A.RowAlign() )
     {
+        SyncInfo<D>
+            syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+            syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
+        auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
         const Int rowStride = B.RowStride();
         const Int rowStridePart = B.PartialRowStride();
         const Int rowStrideUnion = B.PartialUnionRowStride();
@@ -105,25 +118,26 @@ void PartialRowScatter
         const Int recvSize = mpi::Pad( height*maxLocalWidth );
         const Int sendSize = rowStrideUnion*recvSize;
 
-        simple_buffer<T,D> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
 
         // Pack
-        copy::util::PartialRowStridedPack<T,D>
-        ( height, width,
-          B.RowAlign(), rowStride,
-          rowStrideUnion, rowStridePart, rowRankPart,
-          A.RowShift(),
-          A.LockedBuffer(), A.LDim(),
-          buffer.data(),    recvSize );
+        copy::util::PartialRowStridedPack(
+            height, width,
+            B.RowAlign(), rowStride,
+            rowStrideUnion, rowStridePart, rowRankPart,
+            A.RowShift(),
+            A.LockedBuffer(), A.LDim(),
+            buffer.data(),    recvSize, syncInfoB);
 
         // Communicate
-        mpi::ReduceScatter( buffer.data(), recvSize, B.PartialUnionRowComm() );
+        mpi::ReduceScatter(buffer.data(), recvSize, B.PartialUnionRowComm(),
+                           syncInfoB);
 
         // Unpack our received data
-        axpy::util::InterleaveMatrixUpdate<T,D>
-        ( alpha, height, B.LocalWidth(),
-          buffer.data(), 1, height,
-          B.Buffer(),    1, B.LDim() );
+        axpy::util::InterleaveMatrixUpdate(
+            alpha, height, B.LocalWidth(),
+            buffer.data(), 1, height,
+            B.Buffer(),    1, B.LDim(), syncInfoB);
     }
     else
         LogicError("Unaligned PartialRowScatter not implemented");
@@ -169,6 +183,13 @@ void ColScatter
     const Int colStride = B.ColStride();
 
     const Int rowDiff = B.RowAlign()-A.RowAlign();
+
+    SyncInfo<D>
+        syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     // TODO: Allow for modular equivalence if possible
     if( rowDiff == 0 )
     {
@@ -176,23 +197,24 @@ void ColScatter
 
         const Int recvSize = mpi::Pad( maxLocalHeight*localWidth );
         const Int sendSize = colStride*recvSize;
-        simple_buffer<T,D> buffer(sendSize, T(0));
+        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
 
         // Pack
-        copy::util::ColStridedPack<T,D>
-        ( height, localWidth,
-          colAlign, colStride,
-          A.LockedBuffer(), A.LDim(),
-          buffer.data(),    recvSize );
+        copy::util::ColStridedPack(
+            height, localWidth,
+            colAlign, colStride,
+            A.LockedBuffer(), A.LDim(),
+            buffer.data(),    recvSize, syncInfoB);
 
         // Communicate
-        mpi::ReduceScatter( buffer.data(), recvSize, B.ColComm() );
+        mpi::ReduceScatter(buffer.data(), recvSize, B.ColComm(),
+                           syncInfoB);
 
         // Update with our received data
-        axpy::util::InterleaveMatrixUpdate<T,D>
-        ( alpha, localHeight, localWidth,
-          buffer.data(), 1, localHeight,
-          B.Buffer(),    1, B.LDim() );
+        axpy::util::InterleaveMatrixUpdate(
+            alpha, localHeight, localWidth,
+            buffer.data(), 1, localHeight,
+            B.Buffer(),    1, B.LDim(), syncInfoB);
     }
     else
     {
@@ -208,32 +230,37 @@ void ColScatter
         const Int recvSize_SR = localHeight*localWidth;
 
         simple_buffer<T,D> buffer(
-            recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0));
+            recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0), syncInfoB);
         T* firstBuf = buffer.data();
         T* secondBuf = buffer.data() + recvSize_RS;
 
         // Pack
-        copy::util::ColStridedPack<T,D>
-        ( height, localWidth,
-          colAlign, colStride,
-          A.LockedBuffer(), A.LDim(),
-          secondBuf,        recvSize_RS );
+        copy::util::ColStridedPack(
+            height, localWidth,
+            colAlign, colStride,
+            A.LockedBuffer(), A.LDim(),
+            secondBuf,        recvSize_RS, syncInfoB);
 
         // Reduce-scatter over each col
-        mpi::ReduceScatter( secondBuf, firstBuf, recvSize_RS, B.ColComm() );
+        mpi::ReduceScatter(secondBuf, firstBuf, recvSize_RS, B.ColComm(),
+                           syncInfoB);
+
+        // FIXME: Until we have SendRecv through Aluminum, need to
+        // full sync here!
+        Synchronize(syncInfoB);
 
         // Trade reduced data with the appropriate col
         const Int sendCol = Mod( B.RowRank()+rowDiff, B.RowStride() );
         const Int recvCol = Mod( B.RowRank()-rowDiff, B.RowStride() );
-        mpi::SendRecv
-        ( firstBuf,  localHeight*localWidthA, sendCol,
-          secondBuf, localHeight*localWidth,  recvCol, B.RowComm() );
+        mpi::SendRecv(
+            firstBuf,  localHeight*localWidthA, sendCol,
+            secondBuf, localHeight*localWidth,  recvCol, B.RowComm());
 
         // Update with our received data
-        axpy::util::InterleaveMatrixUpdate<T,D>
-        ( alpha, localHeight, localWidth,
-          secondBuf,  1, localHeight,
-          B.Buffer(), 1, B.LDim() );
+        axpy::util::InterleaveMatrixUpdate(
+            alpha, localHeight, localWidth,
+            secondBuf,  1, localHeight,
+            B.Buffer(), 1, B.LDim(), syncInfoB);
     }
 }
 
@@ -253,26 +280,33 @@ void RowScatter
 
     const Int width = B.Width();
     const Int colDiff = B.ColAlign()-A.ColAlign();
+
+    SyncInfo<D>
+        syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( colDiff == 0 )
     {
         if( width == 1 )
         {
             const Int localHeight = B.LocalHeight();
             const Int portionSize = mpi::Pad( localHeight );
-            simple_buffer<T,D> buffer(portionSize, T(0));
+            simple_buffer<T,D> buffer(portionSize, T(0), syncInfoB);
 
             // Reduce to rowAlign
             const Int rowAlign = B.RowAlign();
-            mpi::Reduce
-            ( A.LockedBuffer(), buffer.data(), portionSize,
-              rowAlign, B.RowComm() );
+            mpi::Reduce(
+                A.LockedBuffer(), buffer.data(), portionSize,
+                rowAlign, B.RowComm(), syncInfoB);
 
             if( B.RowRank() == rowAlign )
             {
-                axpy::util::InterleaveMatrixUpdate<T,D>
-                ( alpha, localHeight, 1,
-                  buffer.data(), 1, localHeight,
-                  B.Buffer(),    1, B.LDim() );
+                axpy::util::InterleaveMatrixUpdate(
+                    alpha, localHeight, 1,
+                    buffer.data(), 1, localHeight,
+                    B.Buffer(),    1, B.LDim(), syncInfoB);
             }
         }
         else
@@ -288,21 +322,22 @@ void RowScatter
             const Int sendSize = rowStride*portionSize;
 
             // Pack
-            simple_buffer<T,D> buffer(sendSize, T(0));
-            copy::util::RowStridedPack<T,D>
-            ( localHeight, width,
-              rowAlign, rowStride,
-              A.LockedBuffer(), A.LDim(),
-              buffer.data(), portionSize );
+            simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
+            copy::util::RowStridedPack(
+                localHeight, width,
+                rowAlign, rowStride,
+                A.LockedBuffer(), A.LDim(),
+                buffer.data(), portionSize, syncInfoB);
 
             // Communicate
-            mpi::ReduceScatter( buffer.data(), portionSize, B.RowComm() );
+            mpi::ReduceScatter(buffer.data(), portionSize, B.RowComm(),
+                               syncInfoB);
 
             // Update with our received data
-            axpy::util::InterleaveMatrixUpdate<T,D>
-            ( alpha, localHeight, localWidth,
-              buffer.data(), 1, localHeight,
-              B.Buffer(),    1, B.LDim() );
+            axpy::util::InterleaveMatrixUpdate(
+                alpha, localHeight, localWidth,
+                buffer.data(), 1, localHeight,
+                B.Buffer(),    1, B.LDim(), syncInfoB);
         }
     }
     else
@@ -323,26 +358,29 @@ void RowScatter
         if( width == 1 )
         {
             simple_buffer<T,D> buffer(
-                localHeight + localHeightA, T(0));
+                localHeight + localHeightA, T(0), syncInfoB);
             T* sendBuf = buffer.data();
             T* recvBuf = buffer.data() + localHeightA;
 
             // Reduce to rowAlign
             const Int rowAlign = B.RowAlign();
-            mpi::Reduce
-            ( A.LockedBuffer(), sendBuf, localHeightA, rowAlign, B.RowComm() );
+            mpi::Reduce(
+                A.LockedBuffer(), sendBuf, localHeightA, rowAlign, B.RowComm(),
+                syncInfoB);
 
             if( B.RowRank() == rowAlign )
             {
-                // Perform the realignment
-                mpi::SendRecv
-                ( sendBuf, localHeightA, sendRow,
-                  recvBuf, localHeight,  recvRow, B.ColComm() );
+                Synchronize(syncInfoB);
 
-                axpy::util::InterleaveMatrixUpdate<T,D>
-                ( alpha, localHeight, 1,
-                  recvBuf,    1, localHeight,
-                  B.Buffer(), 1, B.LDim() );
+                // Perform the realignment
+                mpi::SendRecv(
+                    sendBuf, localHeightA, sendRow,
+                    recvBuf, localHeight,  recvRow, B.ColComm());
+
+                axpy::util::InterleaveMatrixUpdate(
+                    alpha, localHeight, 1,
+                    recvBuf,    1, localHeight,
+                    B.Buffer(), 1, B.LDim(), syncInfoB);
             }
         }
         else
@@ -358,30 +396,34 @@ void RowScatter
             const Int recvSize_SR = localHeight * localWidth;
 
             simple_buffer<T,D> buffer(
-                recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0));
+                recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0), syncInfoB);
             T* firstBuf = buffer.data();
             T* secondBuf = buffer.data() + recvSize_RS;
 
             // Pack
-            copy::util::RowStridedPack<T,D>
-            ( localHeightA, width,
-              rowAlign, rowStride,
-              A.LockedBuffer(), A.LDim(),
-              secondBuf,        recvSize_RS );
+            copy::util::RowStridedPack(
+                localHeightA, width,
+                rowAlign, rowStride,
+                A.LockedBuffer(), A.LDim(),
+                secondBuf,        recvSize_RS, syncInfoB);
 
             // Reduce-scatter over each process row
-            mpi::ReduceScatter( secondBuf, firstBuf, recvSize_RS, B.RowComm() );
+            mpi::ReduceScatter(secondBuf, firstBuf, recvSize_RS, B.RowComm(),
+                               syncInfoB);
+
+            // FIXME: Need to full sync here
+            Synchronize(syncInfoB);
 
             // Trade reduced data with the appropriate process row
-            mpi::SendRecv
-            ( firstBuf,  localHeightA*localWidth, sendRow,
-              secondBuf, localHeight*localWidth,  recvRow, B.ColComm() );
+            mpi::SendRecv(
+                firstBuf,  localHeightA*localWidth, sendRow,
+                secondBuf, localHeight*localWidth,  recvRow, B.ColComm());
 
             // Update with our received data
-            axpy::util::InterleaveMatrixUpdate<T,D>
-            ( alpha, localHeight, localWidth,
-              secondBuf,  1, localHeight,
-              B.Buffer(), 1, B.LDim() );
+            axpy::util::InterleaveMatrixUpdate(
+                alpha, localHeight, localWidth,
+                secondBuf,  1, localHeight,
+                B.Buffer(), 1, B.LDim(), syncInfoB);
         }
     }
 }
@@ -415,24 +457,31 @@ void Scatter
     const Int recvSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
     const Int sendSize = colStride*rowStride*recvSize;
 
-    simple_buffer<T,D> buffer(sendSize, T(0));
+    SyncInfo<D>
+        syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
+    simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
 
     // Pack
-    copy::util::StridedPack<T,D>
-    ( height, width,
-      colAlign, colStride,
-      rowAlign, rowStride,
-      A.LockedBuffer(), A.LDim(),
-      buffer.data(),    recvSize );
+    copy::util::StridedPack(
+        height, width,
+        colAlign, colStride,
+        rowAlign, rowStride,
+        A.LockedBuffer(), A.LDim(),
+        buffer.data(),    recvSize, syncInfoB);
 
     // Communicate
-    mpi::ReduceScatter( buffer.data(), recvSize, B.DistComm() );
+    mpi::ReduceScatter(buffer.data(), recvSize, B.DistComm(),
+                       syncInfoB);
 
     // Unpack our received data
-    axpy::util::InterleaveMatrixUpdate<T,D>
-    ( alpha, localHeight, localWidth,
-      buffer.data(), 1, localHeight,
-      B.Buffer(),    1, B.LDim() );
+    axpy::util::InterleaveMatrixUpdate(
+        alpha, localHeight, localWidth,
+        buffer.data(), 1, localHeight,
+        B.Buffer(),    1, B.LDim(), syncInfoB);
 }
 
 } // namespace axpy_contract

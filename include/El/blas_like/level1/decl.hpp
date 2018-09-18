@@ -96,14 +96,26 @@ void Axpy
 namespace axpy {
 namespace util {
 
-template<typename Ring,Device=Device::CPU>
-void InterleaveMatrixUpdate
-( Ring alpha, Int localHeight, Int localWidth,
-  const Ring* A, Int colStrideA, Int rowStrideA,
-        Ring* B, Int colStrideB, Int rowStrideB );
-template<typename Ring,Device=Device::CPU>
-void UpdateWithLocalData
-( Ring alpha, const ElementalMatrix<Ring>& A, DistMatrix<Ring,STAR,STAR>& B );
+template<typename Ring>
+void InterleaveMatrixUpdate(
+    Ring alpha, Int localHeight, Int localWidth,
+    Ring const* A, Int colStrideA, Int rowStrideA,
+    Ring* B, Int colStrideB, Int rowStrideB,
+    SyncInfo<Device::CPU>);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template<typename Ring>
+void InterleaveMatrixUpdate(
+    Ring alpha, Int localHeight, Int localWidth,
+    Ring const* A, Int colStrideA, Int rowStrideA,
+    Ring* B, Int colStrideB, Int rowStrideB,
+    SyncInfo<Device::GPU>);
+#endif // HYDROGEN_HAVE_CUDA
+
+template<typename Ring, Device D=Device::CPU>
+void UpdateWithLocalData(
+    Ring alpha, ElementalMatrix<Ring> const& A,
+    DistMatrix<Ring,STAR,STAR,ELEMENT,D>& B );
 
 } // namespace util
 } // namespace axpy
@@ -359,11 +371,16 @@ template<typename S,typename T,
          typename=EnableIf<CanCast<S,T>>>
 void Copy( const Matrix<S>& A, Matrix<T>& B );
 
-template <typename T, Device D1, Device D2,
-          typename = typename std::enable_if<(D1!=D2)>::type>
-void Copy(Matrix<T,D1> const&, Matrix<T,D2>&);
-template <typename T, Device D1, Device D2>
-void CopyAsync(Matrix<T,D1> const&, Matrix<T,D2>&);
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T>
+void Copy(Matrix<T,Device::CPU> const&, Matrix<T,Device::GPU>&);
+template <typename T>
+void Copy(Matrix<T,Device::GPU> const&, Matrix<T,Device::CPU>&);
+template <typename T>
+void CopyAsync(Matrix<T,Device::CPU> const&, Matrix<T,Device::GPU>&);
+template <typename T>
+void CopyAsync(Matrix<T,Device::GPU> const&, Matrix<T,Device::CPU>&);
+#endif // HYDROGEN_HAVE_CUDA
 
 template <typename T>
 void CopyAsync(ElementalMatrix<T> const& A, ElementalMatrix<T>& B);
@@ -404,106 +421,244 @@ void CopyFromNonRoot( DistMatrix<T,CIRC,CIRC,BLOCK>& B,
 namespace copy {
 namespace util {
 
-template<typename T, Device D=Device::CPU>
-void InterleaveMatrix
-( Int height, Int width,
-  const T* A, Int colStrideA, Int rowStrideA,
-        T* B, Int colStrideB, Int rowStrideB );
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+void InterleaveMatrix(
+    Int height, Int width,
+    T const* A, Int colStrideA, Int rowStrideA,
+    T* B, Int colStrideB, Int rowStrideB,
+    SyncInfo<Device::CPU>);
 
-template<typename T,Device=Device::CPU>
-void ColStridedPack
-( Int height, Int width,
-  Int colAlign, Int colStride,
-  const T* A,         Int ALDim,
-        T* BPortions, Int portionSize );
-template<typename T>
-void ColStridedColumnPack
-( Int height,
-  Int colAlign, Int colStride,
-  const T* A,
-        T* BPortions, Int portionSize );
-template<typename T,Device=Device::CPU>
-void ColStridedUnpack
-( Int height, Int width,
-  Int colAlign, Int colStride,
-  const T* APortions, Int portionSize,
-        T* B,         Int BLDim );
-template<typename T, Device = Device::CPU>
-void PartialColStridedPack
-( Int height, Int width,
-  Int colAlign, Int colStride,
-  Int colStrideUnion, Int colStridePart, Int colRankPart,
-  Int colShiftA,
-  const T* A,         Int ALDim,
-        T* BPortions, Int portionSize );
-template<typename T>
-void PartialColStridedColumnPack
-( Int height,
-  Int colAlign, Int colStride,
-  Int colStrideUnion, Int colStridePart, Int colRankPart,
-  Int colShiftA,
-  const T* A,
-        T* BPortions, Int portionSize );
-template<typename T,Device=Device::CPU>
-void PartialColStridedUnpack
-( Int height, Int width,
-  Int colAlign, Int colStride,
-  Int colStrideUnion, Int colStridePart, Int colRankPart,
-  Int colShiftB,
-  const T* APortions, Int portionSize,
-        T* B,         Int BLDim );
-template<typename T>
-void PartialColStridedColumnUnpack
-( Int height,
-  Int colAlign, Int colStride,
-  Int colStrideUnion, Int colStridePart, Int colRankPart,
-  Int colShiftB,
-  const T* APortions, Int portionSize,
-        T* B );
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+void RowStridedPack(
+    Int height, Int width,
+    Int rowAlign, Int rowStride,
+    const T* A, Int ALDim,
+    T* BPortions, Int portionSize,
+    SyncInfo<Device::CPU> );
 
-template<typename T,Device = Device::CPU>
-void RowStridedPack
-( Int height, Int width,
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+void RowStridedUnpack(
+ Int height, Int width,
   Int rowAlign, Int rowStride,
-  const T* A,         Int ALDim,
-        T* BPortions, Int portionSize );
-template<typename T,Device = Device::CPU>
-void RowStridedUnpack
-( Int height, Int width,
-  Int rowAlign, Int rowStride,
-  const T* APortions, Int portionSize,
-        T* B,         Int BLDim );
-template<typename T,Device = Device::CPU>
-void PartialRowStridedPack
-( Int height, Int width,
-  Int rowAlign, Int rowStride,
-  Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
-  Int rowShiftA,
-  const T* A,         Int ALDim,
-        T* BPortions, Int portionSize );
-template<typename T,Device = Device::CPU>
-void PartialRowStridedUnpack
-( Int height, Int width,
-  Int rowAlign, Int rowStride,
-  Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
-  Int rowShiftB,
-  const T* APortions, Int portionSize,
-        T* B,         Int BLDim );
+  T const* APortions, Int portionSize,
+        T* B, Int BLDim,
+  SyncInfo<Device::CPU> );
 
-template<typename T,Device=Device::CPU>
-void StridedPack
-( Int height, Int width,
-  Int colAlign, Int colStride,
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+void PartialRowStridedPack(
+    Int height, Int width,
+    Int rowAlign, Int rowStride,
+    Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
+    Int rowShiftA,
+    T const* A, Int ALDim,
+    T* BPortions, Int portionSize,
+    SyncInfo<Device::CPU> );
+
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+void PartialRowStridedUnpack(
+    Int height, Int width,
+    Int rowAlign, Int rowStride,
+    Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
+    Int rowShiftB,
+    const T* APortions, Int portionSize,
+    T* B, Int BLDim,
+    SyncInfo<Device::CPU> );
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void InterleaveMatrix(
+    Int height, Int width,
+    T const* A, Int colStrideA, Int rowStrideA,
+    T* B, Int colStrideB, Int rowStrideB,
+    SyncInfo<Device::GPU>);
+
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void RowStridedPack(
+    Int height, Int width,
+    Int rowAlign, Int rowStride,
+    const T* A, Int ALDim,
+    T* BPortions, Int portionSize,
+    SyncInfo<Device::GPU> );
+
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void RowStridedUnpack(
+ Int height, Int width,
   Int rowAlign, Int rowStride,
-  const T* A,         Int ALDim,
-        T* BPortions, Int portionSize );
-template<typename T,Device=Device::CPU>
-void StridedUnpack
-( Int height, Int width,
-  Int colAlign, Int colStride,
-  Int rowAlign, Int rowStride,
-  const T* APortions, Int portionSize,
-        T* B,         Int BLDim );
+  T const* APortions, Int portionSize,
+        T* B, Int BLDim,
+  SyncInfo<Device::GPU> );
+
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void PartialRowStridedPack(
+    Int height, Int width,
+    Int rowAlign, Int rowStride,
+    Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
+    Int rowShiftA,
+    T const* A, Int ALDim,
+    T* BPortions, Int portionSize,
+    SyncInfo<Device::GPU> );
+
+template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+void PartialRowStridedUnpack(
+    Int height, Int width,
+    Int rowAlign, Int rowStride,
+    Int rowStrideUnion, Int rowStridePart, Int rowRankPart,
+    Int rowShiftB,
+    const T* APortions, Int portionSize,
+    T* B, Int BLDim,
+    SyncInfo<Device::GPU> );
+
+#endif // HYDROGEN_HAVE_CUDA
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void InterleaveMatrix(
+    Int const&, Int const&,
+    T const*, Int const&, Int const&,
+    T const*, Int const&, Int const&,
+    SyncInfo<D> const&);
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void RowStridedPack(
+    Int const&, Int const&, Int const&, Int const&,
+    T const*, Int const&, T const*, Int const&,
+    SyncInfo<D> const&);
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void RowStridedUnpack(
+    Int const&, Int const&, Int const&, Int const&,
+    T const*, Int const&, T const*, Int const&,
+    SyncInfo<D> const&);
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void PartialRowStridedPack(
+    Int const&, Int const&, Int const&, Int const&,
+    Int const&, Int const&, Int const&, Int const&,
+    T const*, Int const&, T const*, Int const&,
+    SyncInfo<D> const&);
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+void PartialRowStridedUnpack(
+    Int const&, Int const&, Int const&, Int const&,
+    Int const&, Int const&, Int const&, Int const&,
+    T const*, Int const&, T const*, Int const&,
+    SyncInfo<D> const&);
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=void>
+void PartialColStridedColumnPack(
+    Int const&, Int const&, Int const&,
+    Int const&, Int const&, Int const&, Int const&,
+    T const*, T const*, Int const&,
+    SyncInfo<D> const&);
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=void>
+void ColStridedPack(
+    Int const&, Int const&, Int const&, Int const&,
+    T const*, Int const&, T const*, Int const&, SyncInfo<D> const&);
+
+template <typename T, Device D,
+          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=void>
+void ColStridedUnpack(
+    Int const&, Int const&, Int const&, Int const&,
+    T const*, Int const&, T const*, Int const&, SyncInfo<D> const&);
+
+template <typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
+void ColStridedPack(
+    Int height, Int width,
+    Int colAlign, Int colStride,
+    T const* A, Int ALDim,
+    T* BPortions, Int portionSize,
+    SyncInfo<D>);
+
+template <typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
+void ColStridedColumnPack(
+    Int height,
+    Int colAlign, Int colStride,
+    T const* A,
+    T* BPortions, Int portionSize,
+    SyncInfo<D> );
+
+template<typename T, Device D=Device::CPU,
+         typename=EnableIf<IsDeviceValidType<T,D>>>
+void ColStridedUnpack(
+    Int height, Int width,
+    Int colAlign, Int colStride,
+    T const* APortions, Int portionSize,
+    T* B, Int BLDim,
+    SyncInfo<D> );
+
+template <typename T, Device D=Device::CPU,
+         typename=EnableIf<IsDeviceValidType<T,D>>>
+void PartialColStridedPack(
+    Int height, Int width,
+    Int colAlign, Int colStride,
+    Int colStrideUnion, Int colStridePart, Int colRankPart,
+    Int colShiftA,
+    T const* A, Int ALDim,
+    T* BPortions, Int portionSize,
+    SyncInfo<D> );
+
+template <typename T, Device D=Device::CPU,
+          typename=EnableIf<IsDeviceValidType<T,D>>>
+void PartialColStridedUnpack(
+    Int height, Int width,
+    Int colAlign, Int colStride,
+    Int colStrideUnion, Int colStridePart, Int colRankPart,
+    Int colShiftB,
+    T const* APortions, Int portionSize,
+    T* B, Int BLDim,
+    SyncInfo<D> );
+
+template <typename T, Device D,
+          typename=EnableIf<IsDeviceValidType<T,D>>>
+void PartialColStridedColumnPack(
+    Int height,
+    Int colAlign, Int colStride,
+    Int colStrideUnion, Int colStridePart, Int colRankPart,
+    Int colShiftA,
+    T const* A,
+    T* BPortions, Int portionSize,
+    SyncInfo<D>);
+
+template <typename T, Device D,
+          typename=EnableIf<IsDeviceValidType<T,D>>>
+void PartialColStridedColumnUnpack(
+    Int height,
+    Int colAlign, Int colStride,
+    Int colStrideUnion, Int colStridePart, Int colRankPart,
+    Int colShiftB,
+    T const* APortions, Int portionSize,
+    T* B, SyncInfo<D> );
+
+template<typename T, Device D,
+         typename=EnableIf<IsDeviceValidType<T,D>>>
+void StridedPack(
+    Int height, Int width,
+    Int colAlign, Int colStride,
+    Int rowAlign, Int rowStride,
+    T const* A, Int ALDim,
+    T* BPortions, Int portionSize,
+    SyncInfo<D> );
+
+template<typename T, Device D,
+         typename=EnableIf<IsDeviceValidType<T,D>>>
+void StridedUnpack(
+    Int height, Int width,
+    Int colAlign, Int colStride,
+    Int rowAlign, Int rowStride,
+    T const* APortions, Int portionSize,
+    T* B, Int BLDim,
+    SyncInfo<D> );
+
 
 } // namespace util
 } // namespace copy

@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El-lite.hpp>
@@ -37,6 +37,13 @@ Real Min( const AbstractDistMatrix<Real>& A )
       if( !A.Grid().InGrid() )
           LogicError("Viewing processes are not allowed");
     )
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("Min: Only implemented for CPU matrices.");
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Real value = limits::Max<Real>();
     if( A.Participating() )
     {
@@ -49,9 +56,9 @@ Real Min( const AbstractDistMatrix<Real>& A )
             for( Int iLoc=0; iLoc<mLocal; ++iLoc )
                 value = Min(value,ABuf[iLoc+jLoc*ALDim]);
 
-        value = mpi::AllReduce( value, mpi::MIN, A.DistComm() );
+        value = mpi::AllReduce(value, mpi::MIN, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( value, A.Root(), A.CrossComm() );
+    mpi::Broadcast(value, A.Root(), A.CrossComm(), syncInfoA);
     return value;
 }
 
@@ -77,7 +84,7 @@ Real SymmetricMin( UpperOrLower uplo, const Matrix<Real>& A )
     }
     else
     {
-        for( Int j=0; j<n; ++j ) 
+        for( Int j=0; j<n; ++j )
             for( Int i=0; i<=j; ++i )
                 value = Min(value,ABuf[i+j*ALDim]);
     }
@@ -96,6 +103,14 @@ Real SymmetricMin( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
           LogicError("Viewing processes are not allowed");
     )
 
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("SymmetricMin: Only implemented for CPU matrices.");
+
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Real value = limits::Max<Real>();
     if( A.Participating() )
     {
@@ -103,6 +118,7 @@ Real SymmetricMin( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
         const Int nLocal = A.LocalWidth();
         const Real* ABuf = A.LockedBuffer();
         const Int ALDim = A.LDim();
+
         if( uplo == LOWER )
         {
             for( Int jLoc=0; jLoc<nLocal; ++jLoc )
@@ -123,9 +139,9 @@ Real SymmetricMin( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
                     value = Min(value,ABuf[iLoc+jLoc*ALDim]);
             }
         }
-        value = mpi::AllReduce( value, mpi::MIN, A.DistComm() );
+        value = mpi::AllReduce(value, mpi::MIN, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( value, A.Root(), A.CrossComm() );
+    mpi::Broadcast(value, A.Root(), A.CrossComm(), syncInfoA);
     return value;
 }
 

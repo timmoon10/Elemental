@@ -157,6 +157,7 @@ void Transpose( const Matrix<T>& A, Matrix<T>& B, bool conjugate )
 #endif
 }
 
+
 #ifdef HYDROGEN_HAVE_CUDA
 template <typename T, typename>
 void Transpose(Matrix<T,Device::GPU> const& A,
@@ -164,10 +165,27 @@ void Transpose(Matrix<T,Device::GPU> const& A,
 {
     const Int m = A.Height(), n = A.Width();
     B.Resize(n,m);
+
+    // Syncronize here.
+    auto SyncManager = MakeMultiSync(
+        SyncInfo<Device::GPU>(B), SyncInfo<Device::GPU>(A));
+
+    // Reset cuBLAS stream to be B's stream (Recall: Prefer to use
+    // non-const stream for non-const work!)
+    cudaStream_t old_stream;
+    EL_CHECK_CUBLAS(
+        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
+    EL_CHECK_CUBLAS(
+        cublasSetStream(GPUManager::cuBLASHandle(), B.Stream()));
+
     cublas::Geam(conjugate ? 'C' : 'T', 'N', n, m,
                  T(1), A.LockedBuffer(), A.LDim(),
                  T(0), B.LockedBuffer(), B.LDim(),
                  B.Buffer(), B.LDim());
+
+    // Restore the "default" stream
+    EL_CHECK_CUBLAS(
+        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 }
 
 template <typename T, typename, typename>

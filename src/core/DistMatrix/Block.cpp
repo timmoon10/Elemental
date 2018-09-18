@@ -257,12 +257,15 @@ void BlockMatrix<T>::MakeConsistent( bool includingViewers )
     {
         // TODO(poulson): Ensure roots are consistent within each cross
         // communicator
-        mpi::Broadcast( message, msgLength, this->Root(), this->CrossComm() );
+        // FIXME: SyncInfo hack
+        mpi::Broadcast(message, msgLength, this->Root(), this->CrossComm(),
+                       SyncInfo<Device::CPU>{});
     }
     if( includingViewers )
     {
         const Int vcRoot = grid.VCToViewing(0);
-        mpi::Broadcast( message, msgLength, vcRoot, grid.ViewingComm() );
+        mpi::Broadcast( message, msgLength, vcRoot, grid.ViewingComm(),
+                        SyncInfo<Device::CPU>{});
     }
     const ViewType newViewType    = static_cast<ViewType>(message[0]);
     const Int newHeight           = message[ 1];

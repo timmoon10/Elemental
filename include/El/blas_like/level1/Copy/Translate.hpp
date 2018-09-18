@@ -44,6 +44,9 @@ void Translate(
     if(!g.InGrid())
         return;
 
+    SyncInfo<D1> syncInfoA(A.LockedMatrix());
+    SyncInfo<D2> syncInfoB(B.LockedMatrix());
+
     const bool aligned = colAlign == B.ColAlign() && rowAlign == B.RowAlign();
     if(aligned && root == B.Root())
     {
@@ -78,10 +81,10 @@ void Translate(
         if(crossRank == root)
         {
             // Pack the local data -- Data kept local to D1
-            util::InterleaveMatrix<T,D1>
-            (A.LocalHeight(), A.LocalWidth(),
-              A.LockedBuffer(), 1, A.LDim(),
-              buffer.data(),    1, A.LocalHeight());
+            util::InterleaveMatrix(
+                A.LocalHeight(), A.LocalWidth(),
+                A.LockedBuffer(), 1, A.LDim(),
+                buffer.data(),    1, A.LocalHeight(), syncInfoA);
 
             if(!aligned)
             {
@@ -97,8 +100,8 @@ void Translate(
                 const Int fromCol = Mod(rowRank-rowDiff,rowStride);
                 const Int fromRank = fromRow + fromCol*colStride;
 
-                mpi::SendRecv
-                (buffer.data(), pkgSize, toRank, fromRank, A.DistComm());
+                mpi::SendRecv(
+                    buffer.data(), pkgSize, toRank, fromRank, A.DistComm());
             }
         }
         if(root != B.Root())
@@ -113,13 +116,12 @@ void Translate(
         if(crossRank == B.Root())
         {
             // FIXME
-            simple_buffer<T,D2> tmpbuffer;
-            tmpbuffer.shallowCopyIfPossible(buffer);
+            simple_buffer<T,D2> tmpbuffer(buffer.size());
 
-            util::InterleaveMatrix<T,D2>
-            (localHeightB, localWidthB,
-             tmpbuffer.data(), 1, localHeightB,
-             B.Buffer(),    1, B.LDim());
+            util::InterleaveMatrix(
+                localHeightB, localWidthB,
+                tmpbuffer.data(), 1, localHeightB,
+                B.Buffer(),    1, B.LDim(), syncInfoB);
         }
     }
 }
@@ -127,7 +129,7 @@ void Translate(
 template<typename T,Dist U,Dist V>
 void Translate
 (const DistMatrix<T,U,V,BLOCK>& A,
-        DistMatrix<T,U,V,BLOCK>& B)
+ DistMatrix<T,U,V,BLOCK>& B)
 {
     EL_DEBUG_CSE
     const Int height = A.Height();

@@ -25,146 +25,145 @@ namespace El
 namespace
 {
 
-// Partially specializable object
-template <typename G, Device D>
-struct MemHelper;
+template <typename G>
+G* New(size_t size, unsigned int mode, SyncInfo<Device::CPU> const&)
+{
+    G* ptr = nullptr;
+    switch (mode) {
+    case 0: ptr = new G[size]; break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case 1:
+    {
+        // Pinned memory
+        auto error = cudaMallocHost(&ptr, size * sizeof(G));
+        if (error != cudaSuccess)
+        {
+            RuntimeError("Failed to allocate pinned memory with message: ",
+                         "\"", cudaGetErrorString(error), "\"");
+        }
+    }
+    break;
+#endif // HYDROGEN_HAVE_CUDA
+    default: RuntimeError("Invalid CPU memory allocation mode");
+    }
+    return ptr;
+}
 
 template <typename G>
-struct MemHelper<G,Device::CPU>
+void Delete( G*& ptr, unsigned int mode, SyncInfo<Device::CPU> const& )
 {
-    static G* New( size_t size, unsigned int mode )
-    {
-        G* ptr = nullptr;
-        switch (mode) {
-        case 0: ptr = new G[size]; break;
+    switch (mode) {
+    case 0: delete[] ptr; break;
 #ifdef HYDROGEN_HAVE_CUDA
-        case 1:
-        {
-            // Pinned memory
-            auto error = cudaMallocHost(&ptr, size * sizeof(G));
-            if (error != cudaSuccess)
-            {
-                RuntimeError("Failed to allocate pinned memory with message: ",
-                             "\"", cudaGetErrorString(error), "\"");
-            }
-        }
-        break;
-#endif // HYDROGEN_HAVE_CUDA
-        default: RuntimeError("Invalid CPU memory allocation mode");
-        }
-        return ptr;
-    }
-    static void Delete( G*& ptr, unsigned int mode )
+    case 1:
     {
-        switch (mode) {
-        case 0: delete[] ptr; break;
-#ifdef HYDROGEN_HAVE_CUDA
-        case 1:
+        // Pinned memory
+        auto error = cudaFreeHost(ptr);
+        if (error != cudaSuccess)
         {
-            // Pinned memory
-            auto error = cudaFreeHost(ptr);
-            if (error != cudaSuccess)
-            {
-                RuntimeError("Failed to free pinned memory with message: ",
-                             "\"", cudaGetErrorString(error), "\"");
-            }
+            RuntimeError("Failed to free pinned memory with message: ",
+                         "\"", cudaGetErrorString(error), "\"");
         }
-        break;
+    }
+    break;
 #endif // HYDROGEN_HAVE_CUDA
-        default: RuntimeError("Invalid CPU memory deallocation mode");
-        }
-        ptr = nullptr;
+    default: RuntimeError("Invalid CPU memory deallocation mode");
     }
-    static void MemZero( G* buffer, size_t numEntries, unsigned int mode )
-    {
-        MemZero(buffer, numEntries);
-    }
-};
+    ptr = nullptr;
+}
+
+template <typename G>
+void MemZero( G* buffer, size_t numEntries, unsigned int mode,
+              SyncInfo<Device::CPU> const& )
+{
+    MemZero(buffer, numEntries);
+}
 
 #ifdef HYDROGEN_HAVE_CUDA
 
 template <typename G>
-struct MemHelper<G,Device::GPU>
+G* New( size_t size, unsigned int mode, SyncInfo<Device::GPU> const& syncInfo_ )
 {
-    static G* New( size_t size, unsigned int mode )
-    {
-
-        // Allocate memory
-        G* ptr = nullptr;
-        cudaError_t status = cudaSuccess;
-        switch (mode) {
-        case 0: status = cudaMalloc(&ptr, size * sizeof(G)); break;
+    // Allocate memory
+    G* ptr = nullptr;
+    cudaError_t status = cudaSuccess;
+    switch (mode) {
+    case 0: status = cudaMalloc(&ptr, size * sizeof(G)); break;
 #ifdef HYDROGEN_HAVE_CUB
-        case 1:
-            status = cub::MemoryPool().DeviceAllocate(reinterpret_cast<void**>(&ptr),
-                                                      size * sizeof(G),
-                                                      GPUManager::Stream());
-            break;
+    case 1:
+        status = cub::MemoryPool().DeviceAllocate(
+            reinterpret_cast<void**>(&ptr),
+            size * sizeof(G),
+            syncInfo_.stream_);
+        break;
 #endif // HYDROGEN_HAVE_CUB
-        default: RuntimeError("Invalid GPU memory allocation mode");
-        }
-
-        // Check for errors
-        if (status != cudaSuccess)
-        {
-            size_t freeMemory = 0;
-            size_t totalMemory = 0;
-            cudaMemGetInfo(&freeMemory, &totalMemory);
-            RuntimeError("Failed to allocate GPU memory with message: ",
-                         "\"", cudaGetErrorString(status), "\" ",
-                         "(",size*sizeof(G)," bytes requested, ",
-                         freeMemory," bytes available, ",
-                         totalMemory," bytes total)");
-        }
-
-        return ptr;
+    default: RuntimeError("Invalid GPU memory allocation mode");
     }
 
-    static void Delete( G*& ptr, unsigned int mode )
+    // Check for errors
+    if (status != cudaSuccess)
     {
-        switch (mode) {
-        case 0: EL_CHECK_CUDA(cudaFree(ptr)); break;
+        size_t freeMemory = 0;
+        size_t totalMemory = 0;
+        cudaMemGetInfo(&freeMemory, &totalMemory);
+        RuntimeError("Failed to allocate GPU memory with message: ",
+                     "\"", cudaGetErrorString(status), "\" ",
+                     "(",size*sizeof(G)," bytes requested, ",
+                     freeMemory," bytes available, ",
+                     totalMemory," bytes total)");
+    }
+
+    return ptr;
+}
+
+template <typename G>
+void Delete( G*& ptr, unsigned int mode, SyncInfo<Device::GPU> const& )
+{
+    switch (mode) {
+    case 0: EL_CHECK_CUDA(cudaFree(ptr)); break;
 #ifdef HYDROGEN_HAVE_CUB
-        case 1:
-            EL_CHECK_CUDA(cub::MemoryPool().DeviceFree(reinterpret_cast<void*>(ptr)));
-            break;
+    case 1:
+        EL_CHECK_CUDA(
+            cub::MemoryPool().DeviceFree(reinterpret_cast<void*>(ptr)));
+        break;
 #endif // HYDROGEN_HAVE_CUB
-        default: RuntimeError("Invalid GPU memory deallocation mode");
-        }
-        ptr = nullptr;
+    default: RuntimeError("Invalid GPU memory deallocation mode");
     }
+    ptr = nullptr;
+}
 
-    static void MemZero( G* buffer, size_t numEntries, unsigned int mode )
-    {
-        EL_CHECK_CUDA(cudaMemsetAsync(buffer, 0x0,
-                                      numEntries * sizeof(G),
-                                      GPUManager::Stream()));
-    }
-
-};
+template <typename G>
+void MemZero( G* buffer, size_t numEntries, unsigned int mode,
+                     SyncInfo<Device::GPU> const& syncInfo_ )
+{
+    EL_CHECK_CUDA(
+        cudaMemsetAsync(buffer, 0x0, numEntries * sizeof(G),
+                        syncInfo_.stream_));
+}
 
 #endif // HYDROGEN_HAVE_CUDA
 
 } // namespace <anonymous>
 
 template<typename G, Device D>
-Memory<G,D>::Memory()
-    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}
+Memory<G,D>::Memory(SyncInfo<D> const& syncInfo)
+    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}, syncInfo_{syncInfo}
 { }
 
 template<typename G, Device D>
-Memory<G,D>::Memory(size_t size)
-    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}
+Memory<G,D>::Memory(size_t size, SyncInfo<D> const& syncInfo)
+    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}, syncInfo_{syncInfo}
 { Require(size); }
 
 template<typename G, Device D>
-Memory<G,D>::Memory(size_t size, unsigned int mode)
-    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}, mode_{mode}
+Memory<G,D>::Memory(size_t size, unsigned int mode, SyncInfo<D> const& syncInfo)
+    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}, mode_{mode},
+      syncInfo_{syncInfo}
 { Require(size); }
 
 template<typename G, Device D>
 Memory<G,D>::Memory(Memory<G,D>&& mem)
-    : size_{mem.size_}, rawBuffer_{nullptr}, buffer_{nullptr}, mode_{mem.mode_}
+    : size_{0}, rawBuffer_{nullptr}, buffer_{nullptr}
 { ShallowSwap(mem); }
 
 template<typename G, Device D>
@@ -174,10 +173,11 @@ Memory<G,D>& Memory<G,D>::operator=(Memory<G,D>&& mem)
 template<typename G, Device D>
 void Memory<G,D>::ShallowSwap(Memory<G,D>& mem)
 {
-    std::swap(size_,mem.size_);
-    std::swap(rawBuffer_,mem.rawBuffer_);
-    std::swap(buffer_,mem.buffer_);
-    std::swap(mode_,mem.mode_);
+    std::swap(size_, mem.size_);
+    std::swap(rawBuffer_, mem.rawBuffer_);
+    std::swap(buffer_, mem.buffer_);
+    std::swap(mode_, mem.mode_);
+    std::swap(syncInfo_, mem.syncInfo_);
 }
 
 template<typename G, Device D>
@@ -201,7 +201,7 @@ G* Memory<G,D>::Require(size_t size)
         {
 #endif
             // TODO: Optionally overallocate to force alignment of buffer_
-            rawBuffer_ = MemHelper<G,D>::New(size, mode_);
+            rawBuffer_ = New<G>(size, mode_, syncInfo_);
             buffer_ = rawBuffer_;
             size_ = size;
 #ifndef EL_RELEASE
@@ -217,10 +217,10 @@ G* Memory<G,D>::Require(size_t size)
         }
 #endif
 #ifdef EL_ZERO_INIT
-        MemHelper<G,D>::MemZero(buffer_, size_, mode_);
+        MemZero(buffer_, size_, mode_, syncInfo_);
 #elif defined(EL_HAVE_VALGRIND)
         if(EL_RUNNING_ON_VALGRIND)
-            MemHelper<G,D>::MemZero(buffer_, size_, mode_);
+            MemZero(buffer_, size_, mode_, syncInfo_);
 #endif
     }
     return buffer_;
@@ -235,10 +235,32 @@ void Memory<G,D>::Empty()
 {
     if(rawBuffer_ != nullptr)
     {
-        MemHelper<G,D>::Delete(rawBuffer_, mode_);
+        Delete(rawBuffer_, mode_, syncInfo_);
     }
     buffer_ = nullptr;
     size_ = 0;
+}
+
+template <typename G, Device D>
+void Memory<G,D>::ResetSyncInfo(SyncInfo<D> const& syncInfo)
+{
+#ifdef HYDROGEN_HAVE_CUDA
+    // FIXME: This treats this case as an error. Alternatively, this
+    // could reallocate memory. See SetMode() below.
+    if ((size_ > 0) && (D == Device::GPU) && (mode_ == 1))
+    {
+        LogicError("Cannot assign new SyncInfo object to "
+                   "already-allocated CUB memory.");
+    }
+#endif // HYDROGEN_HAVE_CUDA
+
+    syncInfo_ = syncInfo;
+}
+
+template <typename G, Device D>
+SyncInfo<D> const& Memory<G,D>::GetSyncInfo() const
+{
+    return syncInfo_;
 }
 
 template<typename G, Device D>
@@ -246,8 +268,8 @@ void Memory<G,D>::SetMode(unsigned int mode)
 {
     if (size_ > 0 && mode_ != mode)
     {
-        MemHelper<G,D>::Delete(rawBuffer_, mode_);
-        rawBuffer_ = MemHelper<G,D>::New(size_, mode);
+        Delete(rawBuffer_, mode_, syncInfo_);
+        rawBuffer_ = New<G>(size_, mode, syncInfo_);
         buffer_ = rawBuffer_;
     }
     mode_ = mode;

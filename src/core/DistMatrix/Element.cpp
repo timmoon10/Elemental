@@ -101,12 +101,40 @@ ElementalMatrix<T>::MakeConsistent( bool includingViewers )
     {
         // TODO(poulson): Ensure roots are consistent within each cross
         // communicator
-        mpi::Broadcast( message, msgLength, this->Root(), this->CrossComm() );
+        if (this->GetLocalDevice() == Device::CPU)
+            mpi::Broadcast(message, msgLength, this->Root(), this->CrossComm(),
+                           SyncInfo<Device::CPU>{});
+#ifdef HYDROGEN_HAVE_CUDA
+        else if (this->GetLocalDevice() == Device::GPU)
+        {
+            SyncInfo<Device::GPU> syncInfo(
+                static_cast<Matrix<T,Device::GPU> const&>(
+                    this->LockedMatrix()));
+            mpi::Broadcast(message, msgLength, this->Root(), this->CrossComm(),
+                           syncInfo);
+        }
+#endif // HYDROGEN_HAVE_CUDA
+        else
+            LogicError("ElementalMatrix: Bad Device!");
     }
     if( includingViewers )
     {
         const Int vcRoot = grid.VCToViewing(0);
-        mpi::Broadcast( message, msgLength, vcRoot, grid.ViewingComm() );
+        if (this->GetLocalDevice() == Device::CPU)
+            mpi::Broadcast(message, msgLength, vcRoot, grid.ViewingComm(),
+                           SyncInfo<Device::CPU>{});
+#ifdef HYDROGEN_HAVE_CUDA
+        else if (this->GetLocalDevice() == Device::GPU)
+        {
+            SyncInfo<Device::GPU> syncInfo(
+                static_cast<Matrix<T,Device::GPU> const&>(
+                    this->LockedMatrix()));
+            mpi::Broadcast(message, msgLength, vcRoot, grid.ViewingComm(),
+                           syncInfo);
+        }
+#endif // HYDROGEN_HAVE_CUDA
+        else
+            LogicError("ElementalMatrix: Bad Device!");
     }
     const ViewType newViewType    = static_cast<ViewType>(message[0]);
     const Int newHeight           = message[1];

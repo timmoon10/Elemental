@@ -344,16 +344,18 @@ EL_NO_RELEASE_EXCEPT
     EL_DEBUG_ONLY(
        if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
-   )
+    )
+    SyncInfo<D> syncInfoA(matrix_);
+
     T value;
     if(CrossRank() == this->Root())
     {
         const int owner = this->Owner(i, j);
         if(owner == DistRank())
             value = GetLocal(this->LocalRow(i), this->LocalCol(j));
-        mpi::Broadcast(value, owner, DistComm());
+        mpi::Broadcast(value, owner, DistComm(), syncInfoA);
     }
-    mpi::Broadcast(value, this->Root(), CrossComm());
+    mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
     return value;
 }
 
@@ -367,15 +369,16 @@ EL_NO_RELEASE_EXCEPT
       if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
    )
+    SyncInfo<D> syncInfoA(matrix_);
     Base<T> value;
     if(CrossRank() == this->Root())
     {
         const int owner = this->Owner(i, j);
         if(owner == DistRank())
             value = GetLocalRealPart(this->LocalRow(i), this->LocalCol(j));
-        mpi::Broadcast(value, owner, DistComm());
+        mpi::Broadcast(value, owner, DistComm(), syncInfoA);
     }
-    mpi::Broadcast(value, this->Root(), CrossComm());
+    mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
     return value;
 }
 
@@ -389,6 +392,7 @@ EL_NO_RELEASE_EXCEPT
       if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
    )
+    SyncInfo<D> syncInfoA(matrix_);
     Base<T> value;
     if(IsComplex<T>::value)
     {
@@ -397,9 +401,9 @@ EL_NO_RELEASE_EXCEPT
             const int owner = this->Owner(i, j);
             if(owner == DistRank())
                 value = GetLocalRealPart(this->LocalRow(i), this->LocalCol(j));
-            mpi::Broadcast(value, owner, DistComm());
+            mpi::Broadcast(value, owner, DistComm(), syncInfoA);
         }
-        mpi::Broadcast(value, this->Root(), CrossComm());
+        mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
     }
     else
         value = 0;
@@ -607,12 +611,14 @@ void BDM::ProcessQueues(bool includeViewers)
 
     // Exchange and unpack the data
     // ============================
+    SyncInfo<D> syncInfoA(matrix_);
+
     auto recvBuf = mpi::AllToAll(sendBuf, sendCounts, sendOffs, comm);
     Int recvBufSize = recvBuf.size();
-    mpi::Broadcast(recvBufSize, redundantRoot, RedundantComm());
+    mpi::Broadcast(recvBufSize, redundantRoot, RedundantComm(), syncInfoA);
     recvBuf.resize(recvBufSize);
     mpi::Broadcast
-    (recvBuf.data(), recvBufSize, redundantRoot, RedundantComm());
+        (recvBuf.data(), recvBufSize, redundantRoot, RedundantComm(), syncInfoA);
     // TODO: Make this loop faster
     for(const auto& entry : recvBuf)
         UpdateLocal(this->LocalRow(entry.i), this->LocalCol(entry.j), entry.value);
@@ -682,10 +688,12 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
             ++recvCounts[owner];
         }
     }
+    SyncInfo<D> syncInfoA(matrix_);
+
     vector<int> recvOffs;
     Scan(recvCounts, recvOffs);
     vector<int> sendCounts(commSize);
-    mpi::AllToAll(recvCounts.data(), 1, sendCounts.data(), 1, comm);
+    mpi::AllToAll(recvCounts.data(), 1, sendCounts.data(), 1, comm, syncInfoA);
     vector<int> sendOffs;
     const int totalSend = Scan(sendCounts, sendOffs);
 
@@ -694,9 +702,9 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     for(Int k=0; k<totalRecv; ++k)
         recvCoords[offs[owners[k]]++] = remotePulls_[k];
     vector<ValueInt<Int>> sendCoords(totalSend);
-    mpi::AllToAll
-    (recvCoords.data(), recvCounts.data(), recvOffs.data(),
-      sendCoords.data(), sendCounts.data(), sendOffs.data(), comm);
+    mpi::AllToAll(
+        recvCoords.data(), recvCounts.data(), recvOffs.data(),
+        sendCoords.data(), sendCounts.data(), sendOffs.data(), comm);
 
     // Pack the data
     // =============
@@ -713,9 +721,9 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     // ============================
     vector<T> recvBuf;
     FastResize(recvBuf, totalRecv);
-    mpi::AllToAll
-    (sendBuf.data(), sendCounts.data(), sendOffs.data(),
-      recvBuf.data(), recvCounts.data(), recvOffs.data(), comm);
+    mpi::AllToAll(
+        sendBuf.data(), sendCounts.data(), sendOffs.data(),
+        recvBuf.data(), recvCounts.data(), recvOffs.data(), comm);
     offs = recvOffs;
     for(Int k=0; k<totalRecv; ++k)
         pullBuf[k] = recvBuf[offs[owners[k]]++];

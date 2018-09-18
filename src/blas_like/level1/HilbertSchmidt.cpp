@@ -14,7 +14,8 @@ namespace El {
 // TODO(poulson): Think about using a more stable accumulation algorithm?
 
 template <typename Ring>
-Ring HilbertSchmidt( const AbstractMatrix<Ring>& A, const AbstractMatrix<Ring>& B )
+Ring HilbertSchmidt(
+    const AbstractMatrix<Ring>& A, const AbstractMatrix<Ring>& B )
 {
     EL_DEBUG_CSE
     if( A.Height() != B.Height() || A.Width() != B.Width() )
@@ -60,6 +61,14 @@ Ring HilbertSchmidt
          A.BlockWidth() != B.BlockWidth())
       LogicError("A and B must have the same block size");
 
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("HilbertSchmidt: Only implemented for CPU matrices.");
+
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Ring,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Ring innerProd;
     if( A.Participating() )
     {
@@ -82,9 +91,10 @@ Ring HilbertSchmidt
                     localInnerProd += Conj(ABuf[iLoc+jLoc*ALDim])*
                                            BBuf[iLoc+jLoc*BLDim];
         }
-        innerProd = mpi::AllReduce( localInnerProd, A.DistComm() );
+        innerProd = mpi::AllReduce(
+            localInnerProd, A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( innerProd, A.Root(), A.CrossComm() );
+    mpi::Broadcast(innerProd, A.Root(), A.CrossComm(), syncInfoA);
     return innerProd;
 }
 

@@ -130,6 +130,18 @@ void TransposeAxpy(S alphaS,
                   << "  However, the type should be real anyway." << std::endl;
 #endif // !EL_RELEASE
 
+    SyncInfo<Device::GPU> syncInfoA(X), syncInfoB(Y);
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
+    // Keep the old stream so we can restore it. I don't know if this
+    // is necessary, but it might be good to keep the cuBLAS handle
+    // "looking const" outside this function.
+    cudaStream_t old_stream;
+    EL_CHECK_CUBLAS(
+        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
+    EL_CHECK_CUBLAS(
+        cublasSetStream(GPUManager::cuBLASHandle(), syncInfoB.stream_));
+
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
     if( mX == 1 || nX == 1 )
@@ -157,6 +169,9 @@ void TransposeAxpy(S alphaS,
                      alpha, XBuf, ldX,
                      T(1), YBuf, ldY, YBuf, ldY);
     }
+    // Restore the "default" stream
+    EL_CHECK_CUBLAS(
+        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 }
 
 template <typename T, typename S,

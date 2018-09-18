@@ -39,14 +39,20 @@ void PartialRowFilter_impl
 
     const Int localWidth = B.LocalWidth();
 
+    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( rowDiff == 0 )
     {
         const Int rowShift = B.RowShift();
         const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
-        util::InterleaveMatrix<T,D>
-        ( height, localWidth,
-          A.LockedBuffer(0,rowOffset), 1, rowStrideUnion*A.LDim(),
-          B.Buffer(),                  1, B.LDim() );
+        util::InterleaveMatrix(
+            height, localWidth,
+            A.LockedBuffer(0,rowOffset), 1, rowStrideUnion*A.LDim(),
+            B.Buffer(),                  1, B.LDim(),
+            syncInfoB);
     }
     else
     {
@@ -67,26 +73,30 @@ void PartialRowFilter_impl
         const Int localWidthSend = Length( width, sendRowShift, rowStride );
         const Int sendSize = height*localWidthSend;
         const Int recvSize = height*localWidth;
-        simple_buffer<T,D> buffer(sendSize+recvSize);
+        simple_buffer<T,D> buffer(sendSize+recvSize, syncInfoB);
         T* sendBuf = buffer.data();
         T* recvBuf = buffer.data() + sendSize;
 
         // Pack
-        util::InterleaveMatrix<T,D>
-        ( height, localWidthSend,
-          A.LockedBuffer(0,sendRowOffset), 1, rowStrideUnion*A.LDim(),
-          sendBuf,                         1, height );
+        util::InterleaveMatrix(
+            height, localWidthSend,
+            A.LockedBuffer(0,sendRowOffset), 1, rowStrideUnion*A.LDim(),
+            sendBuf,                         1, height,
+            syncInfoB);
+
+        Synchronize(syncInfoB);
+
         // Change the column alignment
-        mpi::SendRecv
-        ( sendBuf, sendSize, sendRowRankPart,
-          recvBuf, recvSize, recvRowRankPart, B.PartialRowComm() );
+        mpi::SendRecv(
+            sendBuf, sendSize, sendRowRankPart,
+            recvBuf, recvSize, recvRowRankPart, B.PartialRowComm());
 
         // Unpack
         // ------
-        util::InterleaveMatrix<T,D>
-        ( height, localWidth,
-          recvBuf,    1, height,
-          B.Buffer(), 1, B.LDim() );
+        util::InterleaveMatrix(
+            height, localWidth,
+            recvBuf,    1, height,
+            B.Buffer(), 1, B.LDim(), syncInfoB);
     }
 }
 

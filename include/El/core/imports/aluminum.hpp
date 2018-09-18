@@ -8,8 +8,28 @@
 namespace El
 {
 
+// FIXME: This is a lame shortcut to save some
+// metaprogramming. Deadlines are the worst.
+enum class Collective
+{
+    ALLGATHER,
+    ALLREDUCE,
+    ALLTOALL,
+    BROADCAST,
+    GATHER,
+    REDUCE,
+    REDUCESCATTER,
+    SCATTER,
+    SENDRECV
+};// enum class Collective
+
 #ifndef HYDROGEN_HAVE_ALUMINUM
+
 template <typename T> struct IsAluminumTypeT : std::false_type {};
+template <typename T, Device D>
+struct IsAluminumDeviceType : std::false_type {};
+template <typename T, Device D, Collective C>
+struct IsAluminumSupported : std::false_type {};
 
 #else
 
@@ -20,36 +40,35 @@ template <typename T, typename BackendT>
 struct IsAlTypeT : std::false_type {};
 
 template <>
-struct IsAlTypeT<int, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<          int, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<unsigned int, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT< unsigned int, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<long int, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<     long int, Al::MPIBackend> : std::true_type {};
 template <>
 struct IsAlTypeT<long long int, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<float, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<        float, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<double, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<       double, Al::MPIBackend> : std::true_type {};
 
 #ifdef HYDROGEN_HAVE_NCCL2
 template <>
-struct IsAlTypeT<char, Al::NCCLBackend> : std::true_type {};
+struct IsAlTypeT<                  char, Al::NCCLBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<unsigned char, Al::NCCLBackend> : std::true_type {};
+struct IsAlTypeT<         unsigned char, Al::NCCLBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<int, Al::NCCLBackend> : std::true_type {};
+struct IsAlTypeT<                   int, Al::NCCLBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<unsigned int, Al::NCCLBackend> : std::true_type {};
+struct IsAlTypeT<          unsigned int, Al::NCCLBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<long long int, Al::NCCLBackend> : std::true_type {};
+struct IsAlTypeT<         long long int, Al::NCCLBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<unsigned long long int, Al::NCCLBackend>
-    : std::true_type {};
+struct IsAlTypeT<unsigned long long int, Al::NCCLBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<float, Al::NCCLBackend> : std::true_type {};
+struct IsAlTypeT<                 float, Al::NCCLBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<double, Al::NCCLBackend> : std::true_type {};
+struct IsAlTypeT<                double, Al::NCCLBackend> : std::true_type {};
 #endif // HYDROGEN_HAVE_NCCL2
 
 #ifdef HYDROGEN_HAVE_AL_MPI_CUDA
@@ -127,20 +146,109 @@ constexpr bool IsGPUMemCompatible()
 // FIXME: We need to account for the fact that CUDA might be enabled
 // in Hydrogen but Aluminum might not have a GPU backend enabled.
 
-using CPUBackend = Al::MPIBackend;
+template <Device D>
+struct BackendsForDeviceT;
+
+template <>
+struct BackendsForDeviceT<Device::CPU>
+{
+    using type = TypeList<Al::MPIBackend>;
+};// struct BackendsForDeviceT<Device::CPU>
 
 // Prefer the NCCL2 backend
 #ifdef HYDROGEN_HAVE_CUDA
+template <>
+struct BackendsForDeviceT<Device::GPU>
+{
+    using type = TypeList<
 #ifdef HYDROGEN_HAVE_NCCL2
-using GPUBackend = Al::NCCLBackend;
-#else
+        Al::NCCLBackend
 #ifdef HYDROGEN_HAVE_AL_MPI_CUDA
-using GPUBackend = Al::MPICUDABackend;
-#else
-static_assert(false, "No GPU backend available.");
+        ,
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
 #endif // HYDROGEN_HAVE_NCCL2
+#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
+        Al::MPICUDABackend
+#endif // HYDROGEN_HAVE_AL_MPI_CUDA
+        >;
+};// struct BackendsForDeviceT<Device::GPU>
 #endif // HYDROGEN_HAVE_CUDA
+
+// Helper using statement
+template <Device D>
+using BackendsForDevice = typename BackendsForDeviceT<D>::type;
+
+//
+// Aluminum-specific predicates/metafunctions
+//
+
+// Predicate for checking if T is a valid Aluminum type on Device D
+//
+// A type T is a valid Aluminum type iff IsAlType<T,BackendT> is true
+// for some BackendT in BackendsForDevice<D>.
+template <typename T, Device D>
+struct IsAluminumDeviceType
+    : IsTrueForAny<BackendsForDevice<D>, T, IsAlTypeT>
+{};
+
+// TODO: Need to incorporate collective information
+template <typename T, Device D>
+struct BestBackendT
+    : SelectFirstMatch<BackendsForDevice<D>,T,IsAlTypeT>
+{};
+
+template <typename T, Device D>
+using BestBackend = typename BestBackendT<T,D>::type;
+
+template <Collective C, typename BackendT>
+struct IsBackendSupported : std::false_type {};
+
+// MPI backend only supports AllReduce
+template <>
+struct IsBackendSupported<Collective::ALLREDUCE, Al::MPIBackend>
+    : std::true_type {};
+
+#ifdef HYDROGEN_HAVE_NCCL2
+// NCCL backend supports these
+template <>
+struct IsBackendSupported<Collective::ALLGATHER, Al::NCCLBackend>
+    : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::ALLREDUCE, Al::NCCLBackend>
+    : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::BROADCAST, Al::NCCLBackend>
+    : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::REDUCE, Al::NCCLBackend>
+    : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::REDUCESCATTER, Al::NCCLBackend>
+    : std::true_type {};
+#endif // HYDROGEN_HAVE_NCCL2
+
+#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
+// MPICUDA backend only supports AllReduce
+template <>
+struct IsBackendSupported<Collective::ALLREDUCE, Al::MPICUDABackend>
+    : std::true_type {};
+#endif // HYDROGEN_HAVE_AL_MPI_CUDA
+
+template <Collective C, typename BackendList>
+struct IsBackendSupportedByAny
+    : Or<IsBackendSupported<C,Head<BackendList>>,
+         IsBackendSupportedByAny<C,Tail<BackendList>>>
+{};
+
+template <Collective C>
+struct IsBackendSupportedByAny<C,TypeList<>>
+    : std::false_type {};
+
+template <typename T, Device D, Collective C>
+struct IsAluminumSupported
+    : And<IsBackendSupportedByAny<C,BackendsForDevice<D>>,
+          IsAluminumDeviceType<T,D>>
+{};
 
 #endif // ndefined(HYDROGEN_HAVE_ALUMINUM)
 

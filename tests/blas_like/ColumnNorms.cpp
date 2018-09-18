@@ -31,7 +31,8 @@ void TestColumnTwoNorms(Int m, Int n, const Grid& g, bool print)
       T val = A.GetLocal(i, j);
       expected += val * val;
     }
-    expected = mpi::AllReduce(expected, g.ColComm());
+    expected = mpi::AllReduce(expected, g.ColComm(),
+                              SyncInfo<Device::CPU>(A.LockedMatrix()));
     expected = Sqrt(expected);
     // Compute max(expected, 1) to use relative bound.
     // (std::max and El::Max don't support BigFloat.
@@ -64,7 +65,8 @@ void TestColumnMaxNorms(Int m, Int n, const Grid& g, bool print)
     for (Int i = 0; i < A.LocalHeight(); ++i)
       expected = Max(expected, Abs(A.GetLocal(i, j)));
     T r;
-    mpi::AllReduce(&expected, &r, 1, mpi::MAX, g.ColComm());
+    mpi::AllReduce(&expected, &r, 1, mpi::MAX, g.ColComm(),
+                   SyncInfo<Device::CPU>(A.LockedMatrix()));
     expected = r;
     if (got != expected)
     {

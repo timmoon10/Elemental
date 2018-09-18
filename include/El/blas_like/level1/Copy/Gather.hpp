@@ -58,16 +58,21 @@ void Gather
     mpi::Gather(&totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm());
     int totalRecv = Scan(recvCounts, recvOffsets);
 
-    simple_buffer<T,D> sendBuf(totalSend), recvBuf(totalRecv);
-    if(!irrelevant)
-        copy::util::InterleaveMatrix<T,D>
-        (A.LocalHeight(), A.LocalWidth(),
-          A.LockedBuffer(), 1, A.LDim(),
-          sendBuf.data(),   1, A.LocalHeight());
-    mpi::Gather
-    (sendBuf.data(), totalSend,
-      recvBuf.data(), recvCounts.data(), recvOffsets.data(),
-      B.Root(), B.CrossComm());
+    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(B.LockedMatrix());
+    simple_buffer<T,D> sendBuf(totalSend, syncInfoB),
+        recvBuf(totalRecv, syncInfoB);
+    if (!irrelevant)
+        copy::util::InterleaveMatrix(
+            A.LocalHeight(), A.LocalWidth(),
+            A.LockedBuffer(), 1, A.LDim(),
+            sendBuf.data(),   1, A.LocalHeight(), syncInfoB);
+
+    Synchronize(syncInfoB);
+    mpi::Gather(
+        sendBuf.data(), totalSend,
+        recvBuf.data(), recvCounts.data(), recvOffsets.data(),
+        B.Root(), B.CrossComm());
 
     // Unpack
     // ======
@@ -83,10 +88,11 @@ void Gather
             const Int rowStride = A.RowStride();
             const Int localHeight = Length(height, colShift, colStride);
             const Int localWidth = Length(width, rowShift, rowStride);
-            copy::util::InterleaveMatrix<T,D>
-            (localHeight, localWidth,
-             recvBuf.data()+recvOffsets[q],    1,         localHeight,
-              B.Buffer(colShift,rowShift), colStride, rowStride*B.LDim());
+            copy::util::InterleaveMatrix(
+                localHeight, localWidth,
+                recvBuf.data()+recvOffsets[q], 1, localHeight,
+                B.Buffer(colShift,rowShift), colStride, rowStride*B.LDim(),
+                syncInfoB);
         }
     }
 }
@@ -135,14 +141,15 @@ void Gather
     FastResize(sendBuf, totalSend);
     FastResize(recvBuf, totalRecv);
     if(!irrelevant)
-        copy::util::InterleaveMatrix
-        (A.LocalHeight(), A.LocalWidth(),
-          A.LockedBuffer(), 1, A.LDim(),
-          sendBuf.data(),   1, A.LocalHeight());
-    mpi::Gather
-    (sendBuf.data(), totalSend,
-      recvBuf.data(), recvCounts.data(), recvOffsets.data(),
-      B.Root(), B.CrossComm());
+        copy::util::InterleaveMatrix(
+            A.LocalHeight(), A.LocalWidth(),
+            A.LockedBuffer(), 1, A.LDim(),
+            sendBuf.data(),   1, A.LocalHeight(),
+            SyncInfo<Device::CPU>{});
+    mpi::Gather(
+        sendBuf.data(), totalSend,
+        recvBuf.data(), recvCounts.data(), recvOffsets.data(),
+        B.Root(), B.CrossComm());
 
     // Unpack
     // ======

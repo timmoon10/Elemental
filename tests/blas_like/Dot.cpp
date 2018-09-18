@@ -32,7 +32,8 @@ void TestDot(Int m, Int n, const Grid& g, bool print)
   for (Int j = 0; j < A.LocalWidth(); ++j)
     for (Int i = 0; i < B.LocalHeight(); ++i)
       expected += Conj(A.GetLocal(i, j)) * B.GetLocal(i, j);
-  expected = mpi::AllReduce(expected, g.Comm());
+  expected = mpi::AllReduce(expected, g.Comm(),
+                            SyncInfo<Device::CPU>(A.LockedMatrix()));
   // The constant here is large because this is not an especially stable way
   // to compute the dot product, but it provides a dumb implementation baseline.
   if (Abs(got - expected) > 700 * limits::Epsilon<El::Base<T>>())

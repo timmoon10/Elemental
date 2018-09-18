@@ -27,6 +27,10 @@ void AllGather
     B.SetGrid( A.Grid() );
     B.Resize( height, width );
 
+    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if( A.Participating() )
     {
         if( A.DistSize() == 1 )
@@ -41,7 +45,7 @@ void AllGather
             const Int maxLocalHeight = MaxLength(height,colStride);
             const Int maxLocalWidth = MaxLength(width,rowStride);
             const Int portionSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
-            simple_buffer<T,D> buf((distStride+1)*portionSize);
+            simple_buffer<T,D> buf((distStride+1)*portionSize, syncInfoB);
             T* sendBuf = buf.data();
             T* recvBuf = buf.data() + portionSize;
 
@@ -52,22 +56,24 @@ void AllGather
             T* recvBuf = recv_buffer.data();
 #endif
             // Pack
-            util::InterleaveMatrix<T,D>// D1
-            ( A.LocalHeight(), A.LocalWidth(),
-              A.LockedBuffer(), 1, A.LDim(),
-              sendBuf,          1, A.LocalHeight() );
+            util::InterleaveMatrix(
+                A.LocalHeight(), A.LocalWidth(),
+                A.LockedBuffer(), 1, A.LDim(),
+                sendBuf,          1, A.LocalHeight(),
+                syncInfoB);
 
             // Communicate
-            mpi::AllGather
-            ( sendBuf, portionSize, recvBuf, portionSize, A.DistComm() );
+            mpi::AllGather(
+                sendBuf, portionSize, recvBuf, portionSize, A.DistComm(),
+                syncInfoB);
 
             // Unpack
-            util::StridedUnpack<T,D>// D2
-            ( height, width,
-              A.ColAlign(), colStride,
-              A.RowAlign(), rowStride,
-              recvBuf, portionSize,
-              B.Buffer(), B.LDim() );
+            util::StridedUnpack(
+                height, width,
+                A.ColAlign(), colStride,
+                A.RowAlign(), rowStride,
+                recvBuf, portionSize,
+                B.Buffer(), B.LDim(), syncInfoB);
         }
     }
     if( A.Grid().InGrid() && A.CrossComm() != mpi::COMM_SELF )

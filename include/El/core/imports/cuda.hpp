@@ -158,6 +158,8 @@ public:
     static void SetDevice( int device );
     /** Get CUDA stream. */
     static cudaStream_t Stream();
+    /** Get CUDA event. */
+    static cudaEvent_t Event();
     /** Synchronize CUDA stream. */
     static void SynchronizeStream();
     /** Synchronize CUDA device.
@@ -179,6 +181,8 @@ private:
     int device_;
     /** CUDA stream. */
     cudaStream_t stream_;
+    /** CUDA event. */
+    cudaEvent_t event_;
     /** cuBLAS handle */
     cublasHandle_t cublasHandle_;
 

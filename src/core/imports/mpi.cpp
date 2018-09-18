@@ -15,13 +15,14 @@
 #include <El-lite.hpp>
 #include "mpi_utils.hpp"
 
-/// Only AllReduce is kept in collectives.hpp
 #include "mpi_collectives.hpp"
 
 typedef unsigned char* UCP;
 
-namespace El {
-namespace mpi {
+namespace El
+{
+namespace mpi
+{
 
 const int ANY_SOURCE = MPI_ANY_SOURCE;
 const int ANY_TAG = MPI_ANY_TAG;
@@ -198,24 +199,28 @@ EL_NO_RELEASE_EXCEPT
     EL_CHECK_MPI_NO_DATA(
         MPI_Comm_create( parentComm.comm, subsetGroup.group, &subsetComm.comm )
     );
+    subsetComm.Reinit();
 }
 
 void Dup( Comm original, Comm& duplicate ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_CHECK_MPI_NO_DATA( MPI_Comm_dup( original.comm, &duplicate.comm ) );
+    duplicate.Reinit();
 }
 
 void Split( Comm comm, int color, int key, Comm& newComm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_CHECK_MPI_NO_DATA( MPI_Comm_split( comm.comm, color, key, &newComm.comm ) );
+    newComm.Reinit();
 }
 
 void Free( Comm& comm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     EL_CHECK_MPI_NO_DATA( MPI_Comm_free( &comm.comm ) );
+    comm.Reset();
 }
 
 bool Congruent( Comm comm1, Comm comm2 ) EL_NO_RELEASE_EXCEPT
@@ -249,6 +254,7 @@ void CartCreate
     ( MPI_Cart_create
       ( comm.comm, numDims, const_cast<int*>(dimensions),
         const_cast<int*>(periods), reorder, &cartComm.comm ) );
+    cartComm.Reinit();
 }
 
 void CartSub( Comm comm, const int* remainingDims, Comm& subComm )
@@ -259,6 +265,7 @@ EL_NO_RELEASE_EXCEPT
       MPI_Cart_sub
       ( comm.comm, const_cast<int*>(remainingDims), &subComm.comm )
     );
+    subComm.Reinit();
 }
 
 // Group manipulation
@@ -1097,53 +1104,6 @@ EL_NO_RELEASE_EXCEPT
 
 template<typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Broadcast( Real* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( Size(comm) == 1 || count == 0 )
-        return;
-    EL_CHECK_MPI( MPI_Bcast( buf, count, TypeMap<Real>(), root, comm.comm ) );
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Broadcast( Complex<Real>* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( Size(comm) == 1 )
-        return;
-#ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI( MPI_Bcast( buf, 2*count, TypeMap<Real>(), root, comm.comm ) );
-#else
-    EL_CHECK_MPI( MPI_Bcast( buf, count, TypeMap<Complex<Real>>(), root, comm.comm ) );
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void Broadcast( T* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( Size(comm) == 1 || count == 0 )
-        return;
-    std::vector<byte> packedBuf;
-    Serialize( count, buf, packedBuf );
-    EL_CHECK_MPI(
-      MPI_Bcast( packedBuf.data(), count, TypeMap<T>(), root, comm.comm )
-    );
-    Deserialize( count, packedBuf, buf );
-}
-
-template<typename T>
-void Broadcast( T& b, int root, Comm comm ) EL_NO_RELEASE_EXCEPT
-{ Broadcast( &b, 1, root, comm ); }
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
 void IBroadcast
 ( Real* buf, int count, int root, Comm comm, Request<Real>& request )
 {
@@ -1450,86 +1410,6 @@ template<typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void AllGather
 ( const Real* sbuf, int sc,
-        Real* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-#ifdef EL_USE_BYTE_ALLGATHERS
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( reinterpret_cast<UCP>(const_cast<Real*>(sbuf)),
-        sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
-        reinterpret_cast<UCP>(rbuf),
-        sizeof(Real)*rc, MPI_UNSIGNED_CHAR,
-        comm.comm ) );
-#else
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
-        rbuf,                    rc, TypeMap<Real>(), comm.comm ) );
-#endif
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllGather
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-#ifdef EL_USE_BYTE_ALLGATHERS
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( reinterpret_cast<UCP>(const_cast<Complex<Real>*>(sbuf)),
-        2*sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
-        reinterpret_cast<UCP>(rbuf),
-        2*sizeof(Real)*rc, MPI_UNSIGNED_CHAR,
-        comm.comm ) );
-#else
- #ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
-        rbuf,                             2*rc, TypeMap<Real>(),
-        comm.comm ) );
- #else
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( const_cast<Complex<Real>*>(sbuf), sc, TypeMap<Complex<Real>>(),
-        rbuf,                             rc, TypeMap<Complex<Real>>(),
-        comm.comm ) );
- #endif
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void AllGather
-( const T* sbuf, int sc,
-        T* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    const int commSize = mpi::Size(comm);
-    const int totalRecv = rc*commSize;
-
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( sc, sbuf, packedSend );
-
-    ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Allgather
-      ( packedSend.data(), sc, TypeMap<T>(),
-        packedRecv.data(), rc, TypeMap<T>(), comm.comm ) );
-    Deserialize( totalRecv, packedRecv, rbuf );
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllGather
-( const Real* sbuf, int sc,
         Real* rbuf, const int* rcs, const int* rds, Comm comm )
 EL_NO_RELEASE_EXCEPT
 {
@@ -1790,67 +1670,6 @@ EL_NO_RELEASE_EXCEPT
     Deserialize( rc, packedRecv, buf );
 }
 
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllToAll
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    EL_CHECK_MPI
-    ( MPI_Alltoall
-      ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
-        rbuf,                    rc, TypeMap<Real>(), comm.comm ) );
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllToAll
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-#ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Alltoall
-      ( const_cast<Complex<Real>*>(sbuf),
-        2*sc, TypeMap<Real>(),
-        rbuf,
-        2*rc, TypeMap<Real>(), comm.comm ) );
-#else
-    EL_CHECK_MPI
-    ( MPI_Alltoall
-      ( const_cast<Complex<Real>*>(sbuf),
-        sc, TypeMap<Complex<Real>>(),
-        rbuf,
-        rc, TypeMap<Complex<Real>>(), comm.comm ) );
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void AllToAll
-( const T* sbuf, int sc,
-        T* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    const int commSize = mpi::Size( comm );
-    const int totalSend = sc*commSize;
-    const int totalRecv = rc*commSize;
-
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( totalSend, sbuf, packedSend );
-    ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Alltoall
-      ( packedSend.data(), sc, TypeMap<T>(),
-        packedRecv.data(), rc, TypeMap<T>(), comm.comm ) );
-    Deserialize( totalRecv, packedRecv, rbuf );
-}
 
 template<typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
@@ -1947,9 +1766,12 @@ vector<T> AllToAll
   Comm comm )
 EL_NO_RELEASE_EXCEPT
 {
+    LogicError("AllToAll: Is this used? Tell Tom if so.");
+
+    SyncInfo<Device::CPU> syncInfo;
     const int commSize = Size( comm );
     vector<int> recvCounts(commSize);
-    AllToAll( sendCounts.data(), 1, recvCounts.data(), 1, comm );
+    AllToAll( sendCounts.data(), 1, recvCounts.data(), 1, comm, syncInfo );
     vector<int> recvOffs;
     const int totalRecv = El::Scan( recvCounts, recvOffs );
     vector<T> recvBuf(totalRecv);
@@ -1959,435 +1781,6 @@ EL_NO_RELEASE_EXCEPT
     return recvBuf;
 }
 
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Reduce
-( const Real* sbuf, Real* rbuf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( count == 0 )
-        return;
-
-    MPI_Op opC = NativeOp<Real>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce
-      ( const_cast<Real*>(sbuf), rbuf, count, TypeMap<Real>(),
-        opC, root, comm.comm ) );
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Reduce
-( const Complex<Real>* sbuf,
-        Complex<Real>* rbuf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( count == 0 )
-        return;
-
-#ifdef EL_AVOID_COMPLEX_MPI
-    if( op == SUM )
-    {
-        MPI_Op opC = NativeOp<Real>( op );
-        EL_CHECK_MPI
-        ( MPI_Reduce
-          ( const_cast<Complex<Real>*>(sbuf),
-            rbuf, 2*count, TypeMap<Real>(), opC,
-            root, comm.comm ) );
-    }
-    else
-    {
-        MPI_Op opC = NativeOp<Complex<Real>>( op );
-        EL_CHECK_MPI
-        ( MPI_Reduce
-          ( const_cast<Complex<Real>*>(sbuf),
-            rbuf, count, TypeMap<Complex<Real>>(), opC, root, comm.comm ) );
-    }
-#else
-    MPI_Op opC = NativeOp<Complex<Real>>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce
-      ( const_cast<Complex<Real>*>(sbuf),
-        rbuf, count, TypeMap<Complex<Real>>(), opC, root, comm.comm ) );
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void Reduce
-( const T* sbuf, T* rbuf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( count == 0 )
-        return;
-
-    MPI_Op opC = NativeOp<T>( op );
-
-    const int commRank = mpi::Rank(comm);
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( count, sbuf, packedSend );
-
-    if( commRank == root )
-        ReserveSerialized( count, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Reduce
-      ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
-        opC, root, comm.comm ) );
-    if( commRank == root )
-        Deserialize( count, packedRecv, rbuf );
-}
-
-template<typename T>
-void Reduce( const T* sbuf, T* rbuf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ Reduce( sbuf, rbuf, count, SUM, root, comm ); }
-
-template<typename T>
-T Reduce( T sb, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    T rb;
-    Reduce( &sb, &rb, 1, op, root, comm );
-    return rb;
-}
-
-template<typename T>
-T Reduce( T sb, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    T rb;
-    Reduce( &sb, &rb, 1, SUM, root, comm );
-    return rb;
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Reduce( Real* buf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( count == 0 || Size(comm) == 1 )
-        return;
-
-    MPI_Op opC = NativeOp<Real>( op );
-
-    const int commRank = Rank( comm );
-    if( commRank == root )
-    {
-        EL_CHECK_MPI
-        ( MPI_Reduce
-          ( MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, root,
-            comm.comm ) );
-    }
-    else
-        EL_CHECK_MPI
-        ( MPI_Reduce
-          ( buf, 0, count, TypeMap<Real>(), opC, root, comm.comm ) );
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Reduce( Complex<Real>* buf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( Size(comm) == 1 )
-        return;
-    if( count != 0 )
-    {
-        const int commRank = Rank( comm );
-#ifdef EL_AVOID_COMPLEX_MPI
-        if( op == SUM )
-        {
-            MPI_Op opC = NativeOp<Real>( op );
-            if( commRank == root )
-            {
-                EL_CHECK_MPI
-                ( MPI_Reduce
-                  ( MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC,
-                    root, comm.comm ) );
-            }
-            else
-                EL_CHECK_MPI
-                ( MPI_Reduce
-                  ( buf, 0, 2*count, TypeMap<Real>(), opC, root, comm.comm ) );
-        }
-        else
-        {
-            MPI_Op opC = NativeOp<Complex<Real>>( op );
-            if( commRank == root )
-            {
-                EL_CHECK_MPI
-                ( MPI_Reduce
-                  ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
-                    root, comm.comm ) );
-            }
-            else
-                EL_CHECK_MPI
-                ( MPI_Reduce
-                  ( buf, 0, count, TypeMap<Complex<Real>>(), opC,
-                    root, comm.comm ) );
-        }
-#else
-        MPI_Op opC = NativeOp<Complex<Real>>( op );
-        if( commRank == root )
-        {
-            EL_CHECK_MPI
-            ( MPI_Reduce
-              ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
-                root, comm.comm ) );
-        }
-        else
-            EL_CHECK_MPI
-            ( MPI_Reduce
-              ( buf, 0, count, TypeMap<Complex<Real>>(), opC, root,
-                comm.comm ) );
-#endif
-    }
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void Reduce( T* buf, int count, Op op, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( count == 0 )
-        return;
-
-    MPI_Op opC = NativeOp<T>( op );
-
-    // TODO(poulson): Use in-place option?
-
-    const int commRank = mpi::Rank(comm);
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( count, buf, packedSend );
-
-    if( commRank == root )
-        ReserveSerialized( count, buf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Reduce
-      ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
-        opC, root, comm.comm ) );
-    if( commRank == root )
-        Deserialize( count, packedRecv, buf );
-}
-
-template<typename T>
-void Reduce( T* buf, int count, int root, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ Reduce( buf, count, SUM, root, comm ); }
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void ReduceScatter( Real* sbuf, Real* rbuf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( rc == 0 )
-        return;
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-    const int commSize = Size( comm );
-    const int commRank = Rank( comm );
-    AllReduce( sbuf, rc*commSize, op, comm );
-    MemCopy( rbuf, &sbuf[commRank*rc], rc );
-#elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
-    MPI_Op opC = NativeOp<Real>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter_block
-      ( sbuf, rbuf, rc, TypeMap<Real>(), opC, comm.comm ) );
-#else
-    const int commSize = Size( comm );
-    Reduce( sbuf, rc*commSize, op, 0, comm );
-    Scatter( sbuf, rc, rbuf, rc, 0, comm );
-#endif
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void ReduceScatter
-( Complex<Real>* sbuf, Complex<Real>* rbuf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( rc == 0 )
-        return;
-
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-    const int commSize = Size( comm );
-    const int commRank = Rank( comm );
-    AllReduce( sbuf, rc*commSize, op, comm );
-    MemCopy( rbuf, &sbuf[commRank*rc], rc );
-#elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
-# ifdef EL_AVOID_COMPLEX_MPI
-    MPI_Op opC = NativeOp<Real>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter_block
-      ( sbuf, rbuf, 2*rc, TypeMap<Real>(), opC, comm.comm ) );
-# else
-    MPI_Op opC = NativeOp<Complex<Real>>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter_block
-      ( sbuf, rbuf, rc, TypeMap<Complex<Real>>(), opC, comm.comm ) );
-# endif
-#else
-    const int commSize = Size( comm );
-    Reduce( sbuf, rc*commSize, op, 0, comm );
-    Scatter( sbuf, rc, rbuf, rc, 0, comm );
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void ReduceScatter( T* sbuf, T* rbuf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( rc == 0 )
-        return;
-    const int commSize = mpi::Size(comm);
-    const int totalSend = rc*commSize;
-    const int totalRecv = rc;
-
-    // TODO(poulson): Add AllReduce approach via
-    // EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-#if defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
-    MPI_Op opC = NativeOp<T>( op );
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( totalSend, sbuf, packedSend );
-
-    ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter_block
-      ( packedSend.data(), packedRecv.data(), rc, TypeMap<T>(),
-        opC, comm.comm ) );
-
-    Deserialize( totalRecv, packedRecv, rbuf );
-#else
-    Reduce( sbuf, totalSend, op, 0, comm );
-    Scatter( sbuf, rc, rbuf, rc, 0, comm );
-#endif
-}
-
-template<typename T>
-void ReduceScatter( T* sbuf, T* rbuf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ ReduceScatter( sbuf, rbuf, rc, SUM, comm ); }
-
-template<typename T>
-T ReduceScatter( T sb, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ T rb; ReduceScatter( &sb, &rb, 1, op, comm ); return rb; }
-
-template<typename T>
-T ReduceScatter( T sb, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ return ReduceScatter( sb, SUM, comm ); }
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void ReduceScatter( Real* buf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( rc == 0 || Size(comm) == 1 )
-        return;
-
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-    const int commSize = Size( comm );
-    const int commRank = Rank( comm );
-    AllReduce( buf, rc*commSize, op, comm );
-    if( commRank != 0 )
-        MemCopy( buf, &buf[commRank*rc], rc );
-#elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
-    MPI_Op opC = NativeOp<Real>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter_block
-      ( MPI_IN_PLACE, buf, rc, TypeMap<Real>(), opC, comm.comm ) );
-#else
-    const int commSize = Size( comm );
-    Reduce( buf, rc*commSize, op, 0, comm );
-    Scatter( buf, rc, rc, 0, comm );
-#endif
-}
-
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void ReduceScatter( Complex<Real>* buf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( rc == 0 || Size(comm) == 1 )
-        return;
-
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-    const int commSize = Size( comm );
-    const int commRank = Rank( comm );
-    AllReduce( buf, rc*commSize, op, comm );
-    if( commRank != 0 )
-        MemCopy( buf, &buf[commRank*rc], rc );
-#elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
-# ifdef EL_AVOID_COMPLEX_MPI
-    MPI_Op opC = NativeOp<Real>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter_block
-      ( MPI_IN_PLACE, buf, 2*rc, TypeMap<Real>(), opC, comm.comm ) );
-# else
-    MPI_Op opC = NativeOp<Complex<Real>>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter_block
-      ( MPI_IN_PLACE, buf, rc, TypeMap<Complex<Real>>(), opC, comm.comm ) );
-# endif
-#else
-    const int commSize = Size( comm );
-    Reduce( buf, rc*commSize, op, 0, comm );
-    Scatter( buf, rc, rc, 0, comm );
-#endif
-}
-
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void ReduceScatter( T* buf, int rc, Op op, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-    if( rc == 0 )
-        return;
-    const int commSize = mpi::Size(comm);
-    const int totalSend = rc*commSize;
-    const int totalRecv = rc;
-
-    // TODO(poulson): Add AllReduce approach via
-    // EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-#if defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
-    MPI_Op opC = NativeOp<T>( op );
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( totalSend, buf, packedSend );
-
-    ReserveSerialized( totalRecv, buf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter_block
-      ( packedSend.data(), packedRecv.data(), rc, TypeMap<T>(),
-        opC, comm.comm ) );
-
-    Deserialize( totalRecv, packedRecv, buf );
-#else
-    Reduce( buf, totalSend, op, 0, comm );
-    Scatter( buf, rc, rc, 0, comm );
-#endif
-}
-
-template<typename T>
-void ReduceScatter( T* buf, int rc, Comm comm )
-EL_NO_RELEASE_EXCEPT
-{ ReduceScatter( buf, rc, SUM, comm ); }
 
 template<typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
@@ -2480,11 +1873,12 @@ void VerifySendsAndRecvs
   const vector<int>& recvCounts, Comm comm )
 {
     EL_DEBUG_CSE
+    LogicError("VerifySendsAndRecvs: Is this used? Tell Tom if so.");
     const int commSize = Size( comm );
     vector<int> actualRecvCounts(commSize);
     AllToAll
     ( sendCounts.data(),       1,
-      actualRecvCounts.data(), 1, comm );
+      actualRecvCounts.data(), 1, comm, SyncInfo<Device::CPU>{} );
     for( int q=0; q<commSize; ++q )
         if( actualRecvCounts[q] != recvCounts[q] )
             LogicError
@@ -2791,10 +2185,6 @@ EL_NO_RELEASE_EXCEPT
   template void SendRecv \
   ( T* buf, int count, int to, int from, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
-  template void Broadcast( T* buf, int count, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Broadcast( T& b, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
   template void IBroadcast \
   ( T* buf, int count, int root, Comm comm, Request<T>& request ); \
   template void IBroadcast \
@@ -2810,8 +2200,6 @@ EL_NO_RELEASE_EXCEPT
   ( const T* sbuf, int sc, \
           T* rbuf, const int* rcs, const int* rds, int root, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
-  template void AllGather( const T* sbuf, int sc, T* rbuf, int rc, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
   template void AllGather \
   ( const T* sbuf, int sc, \
           T* rbuf, const int* rcs, const int* rds, Comm comm ) \
@@ -2823,10 +2211,6 @@ EL_NO_RELEASE_EXCEPT
   template void Scatter( T* buf, int sc, int rc, int root, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
   template void AllToAll \
-  ( const T* sbuf, int sc, \
-          T* rbuf, int rc, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllToAll \
   ( const T* sbuf, const int* scs, const int* sds, \
           T* rbuf, const int* rcs, const int* rds, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
@@ -2835,32 +2219,6 @@ EL_NO_RELEASE_EXCEPT
     const vector<int>& sendCounts, \
     const vector<int>& sendOffs, \
     Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Reduce \
-  ( const T* sbuf, T* rbuf, int count, Op op, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Reduce \
-  ( const T* sbuf, T* rbuf, int count, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T Reduce( T sb, Op op, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T Reduce( T sb, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Reduce( T* buf, int count, Op op, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Reduce( T* buf, int count, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ReduceScatter( T* sbuf, T* rbuf, int rc, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ReduceScatter( T* sbuf, T* rbuf, int rc, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T ReduceScatter( T sb, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T ReduceScatter( T sb, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ReduceScatter( T* buf, int rc, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ReduceScatter( T* buf, int rc, Comm comm ) \
   EL_NO_RELEASE_EXCEPT; \
   template void ReduceScatter \
   ( const T* sbuf, T* rbuf, const int* rcs, Op op, Comm comm ) \

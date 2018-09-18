@@ -63,38 +63,6 @@ void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
     }
 }
 
-template<typename T, Device SrcD, Device DestD, typename>
-void Copy(const Matrix<T,SrcD>& A, Matrix<T,DestD>& B)
-{
-    EL_DEBUG_CSE
-    const Int height = A.Height();
-    const Int width = A.Width();
-    B.Resize(height, width);
-    const Int ldA = A.LDim();
-    const Int ldB = B.LDim();
-    const T* EL_RESTRICT ABuf = A.LockedBuffer();
-    T* EL_RESTRICT BBuf = B.Buffer();
-
-    copy::util::InterDeviceMemCopy2D<SrcD,DestD>(
-        BBuf, ldB, ABuf, ldA, height, width);
-}
-
-template<typename T, Device SrcD, Device DestD>
-void CopyAsync(const Matrix<T,SrcD>& A, Matrix<T,DestD>& B)
-{
-    EL_DEBUG_CSE
-    const Int height = A.Height();
-    const Int width = A.Width();
-    B.Resize(height, width);
-    const Int ldA = A.LDim();
-    const Int ldB = B.LDim();
-    const T* EL_RESTRICT ABuf = A.LockedBuffer();
-    T* EL_RESTRICT BBuf = B.Buffer();
-
-    copy::util::InterDeviceMemCopy2DAsync<SrcD,DestD>(
-        BBuf, ldB, ABuf, ldA, height, width);
-}
-
 template<typename T>
 void Copy( const Matrix<T>& A, Matrix<T>& B )
 {
@@ -143,30 +111,109 @@ void Copy( const Matrix<T>& A, Matrix<T>& B )
 
 #ifdef HYDROGEN_HAVE_CUDA
 template<typename T>
-void Copy( const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B )
+void Copy(const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B)
 {
     EL_DEBUG_CSE
     const Int height = A.Height();
     const Int width = A.Width();
-    B.Resize( height, width );
+    B.Resize(height, width);
     const Int ldA = A.LDim();
     const Int ldB = B.LDim();
     const T* ABuf = A.LockedBuffer();
     T* BBuf = B.Buffer();
-    EL_CHECK_CUDA(cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
-                                    ABuf, ldA*sizeof(T),
-                                    height*sizeof(T), width,
-                                    cudaMemcpyDeviceToDevice,
-                                    GPUManager::Stream()));
+
+    SyncInfo<Device::GPU> syncInfoA(A), syncInfoB(B);
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
+    // Launch the copy
+    EL_CHECK_CUDA(
+        cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
+                          ABuf, ldA*sizeof(T),
+                          height*sizeof(T), width,
+                          cudaMemcpyDeviceToDevice,
+                          syncInfoB.stream_));
 }
+
+// These inter-device copy functions are SYNCHRONOUS with respect to
+// the host.
+template <typename T>
+void Copy(Matrix<T,Device::CPU> const& A, Matrix<T,Device::GPU>& B)
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize(height, width);
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* EL_RESTRICT ABuf = A.LockedBuffer();
+    T* EL_RESTRICT BBuf = B.Buffer();
+
+    SyncInfo<Device::GPU> syncInfoB(B);
+    InterDeviceCopy<Device::CPU,Device::GPU>::MemCopy2DAsync(
+        BBuf, ldB, ABuf, ldA, height, width, syncInfoB.stream_);
+    Synchronize(syncInfoB); // Is this necessary??
+}
+
+template <typename T>
+void Copy(Matrix<T,Device::GPU> const& A, Matrix<T,Device::CPU>& B)
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize(height, width);
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* EL_RESTRICT ABuf = A.LockedBuffer();
+    T* EL_RESTRICT BBuf = B.Buffer();
+
+    SyncInfo<Device::GPU> syncInfoA(A);
+    InterDeviceCopy<Device::GPU,Device::CPU>::MemCopy2DAsync(
+        BBuf, ldB, ABuf, ldA, height, width, syncInfoA.stream_);
+    Synchronize(syncInfoA); // Is this necessary??
+}
+
+// These inter-device copy functions are ASYNCHRONOUS with respect to
+// the host.
+template <typename T>
+void CopyAsync(Matrix<T,Device::CPU> const& A, Matrix<T,Device::GPU>& B)
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize(height, width);
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* EL_RESTRICT ABuf = A.LockedBuffer();
+    T* EL_RESTRICT BBuf = B.Buffer();
+
+    InterDeviceCopy<Device::CPU, Device::GPU>::MemCopy2DAsync(
+        BBuf, ldB, ABuf, ldA, height, width, B.Stream());
+}
+
+template <typename T>
+void CopyAsync(Matrix<T,Device::GPU> const& A, Matrix<T,Device::CPU>& B)
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    B.Resize(height, width);
+    const Int ldA = A.LDim();
+    const Int ldB = B.LDim();
+    const T* EL_RESTRICT ABuf = A.LockedBuffer();
+    T* EL_RESTRICT BBuf = B.Buffer();
+
+    InterDeviceCopy<Device::GPU, Device::CPU>::MemCopy2DAsync(
+        BBuf, ldB, ABuf, ldA, height, width, A.Stream());
+}
+
 #endif // HYDROGEN_HAVE_CUDA
 
 template<typename S,typename T,
          typename/*=EnableIf<CanCast<S,T>>*/>
-void Copy( const Matrix<S>& A, Matrix<T>& B )
+void Copy(const Matrix<S>& A, Matrix<T>& B)
 {
     EL_DEBUG_CSE
-    EntrywiseMap( A, B, MakeFunction(Caster<S,T>::Cast) );
+    EntrywiseMap(A, B, MakeFunction(Caster<S,T>::Cast));
 }
 
 template<typename T,Dist U,Dist V,Device D,
@@ -425,7 +472,8 @@ void Copy( const BlockMatrix<S>& A, BlockMatrix<T>& B )
 {
     EL_DEBUG_CSE
     #define GUARD(CDIST,RDIST,WRAP) \
-        B.ColDist() == CDIST && B.RowDist() == RDIST && B.Wrap() == WRAP && B.GetLocalDevice() == Device::CPU
+        B.ColDist() == CDIST && B.RowDist() == RDIST && B.Wrap() == WRAP \
+            && B.GetLocalDevice() == Device::CPU
     #define PAYLOAD(CDIST,RDIST,WRAP) \
       auto& BCast = static_cast<DistMatrix<T,CDIST,RDIST,BLOCK>&>(B); \
       Copy( A, BCast );

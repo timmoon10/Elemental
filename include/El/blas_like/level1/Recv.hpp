@@ -30,10 +30,10 @@ void Recv( Matrix<T>& A, mpi::Comm comm, int source )
         mpi::Recv( buf.data(), size, source, comm );
 
         // Unpack
-        copy::util::InterleaveMatrix
-        ( height,        width,
-          buf.data(), 1, height,
-          A.Buffer(), 1, A.LDim() );
+        copy::util::InterleaveMatrix(
+            height,        width,
+            buf.data(), 1, height,
+            A.Buffer(), 1, A.LDim(), SyncInfo<Device::CPU>{});
     }
 }
 

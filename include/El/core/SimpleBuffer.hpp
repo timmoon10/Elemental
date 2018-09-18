@@ -11,26 +11,13 @@ class simple_buffer
 public:
     simple_buffer() = default;
     explicit simple_buffer(size_t size,
+                           SyncInfo<D> const& = SyncInfo<D>{},
                            unsigned int mode = DefaultMemoryMode<D>());
     explicit simple_buffer(size_t size, T const& value,
+                           SyncInfo<D> const& = SyncInfo<D>{},
                            unsigned int mode = DefaultMemoryMode<D>());
 
     void allocate(size_t size);
-
-    void shallowCopyIfPossible(simple_buffer<T,D>& other)
-    {
-        data_ = other.data();
-        size_ = other.size();
-    }
-
-    template <Device D2>
-    void shallowCopyIfPossible(simple_buffer<T,D2>& other)
-    {
-        data_ = mem_.Require(other.size());
-        size_ = other.size();
-
-        InterDeviceCopy<D2,D>::MemCopy1D(data_, other.data(), size_);
-    }
 
     size_t size() const noexcept;
     T* data() noexcept;
@@ -45,56 +32,53 @@ private:
 
 namespace details
 {
-template <Device D> struct MemorySetter;
 
-template <>
-struct MemorySetter<Device::CPU>
+template <typename T>
+void setBufferToValue(T* buffer, size_t size, T const& value,
+                      SyncInfo<Device::CPU> const& = SyncInfo<Device::CPU>{})
 {
-    template <typename T>
-    static void setBufferToValue(T* buffer, size_t size, T const& value)
-    {
-        std::fill_n(buffer, size, value);
-    }
-};// struct MemorySetter<Device::CPU>
+    std::fill_n(buffer, size, value);
+}
 
 #ifdef HYDROGEN_HAVE_CUDA
-template <>
-struct MemorySetter<Device::GPU>
+template <typename T>
+void setBufferToValue(T* buffer, size_t size, T const& value,
+                      SyncInfo<Device::GPU> syncInfo = SyncInfo<Device::GPU>{})
 {
-    template<typename T>
-    static void setBufferToValue(T* buffer, size_t size, T const& value)
+    if( value == T(0) )
     {
-        if( value == T(0) )
-        {
-            EL_CHECK_CUDA(cudaMemsetAsync(buffer, 0x0, size*sizeof(T),
-                                          GPUManager::Stream()));
-        }
-        else
-        {
-            std::vector<T> tmp(size, value);
-            EL_CHECK_CUDA(cudaMemcpyAsync(
-                              buffer, tmp.data(), size*sizeof(T),
-                              CUDAMemcpyKind<Device::CPU,Device::GPU>(),
-                              GPUManager::Stream()));
-        }
+        EL_CHECK_CUDA(cudaMemsetAsync(buffer, 0x0, size*sizeof(T),
+                                      syncInfo.stream_));
     }
-};// struct MemorySetter<Device::GPU>
+    else
+    {
+        std::vector<T> tmp(size, value);
+        EL_CHECK_CUDA(
+            cudaMemcpyAsync(
+                buffer, tmp.data(), size*sizeof(T),
+                CUDAMemcpyKind<Device::CPU,Device::GPU>(),
+                syncInfo.stream_));
+    }
+    AddSynchronizationPoint(syncInfo);
+}
 #endif // HYDROGEN_HAVE_CUDA
 }// namespace details
 
 
 template <typename T, Device D>
-simple_buffer<T,D>::simple_buffer(size_t size, unsigned int mode)
-    : mem_{size, mode},
+simple_buffer<T,D>::simple_buffer(
+    size_t size, SyncInfo<D> const& syncInfo, unsigned int mode)
+    : mem_{size, mode, syncInfo},
       data_{mem_.Buffer()},
       size_{mem_.Size()}
 {}
 
 template <typename T, Device D>
-simple_buffer<T,D>::simple_buffer(size_t size, T const& value, unsigned mode)
-    : simple_buffer{size, mode}
+simple_buffer<T,D>::simple_buffer(
+    size_t size, T const& value, SyncInfo<D> const& syncInfo, unsigned mode)
+    : simple_buffer{size, syncInfo, mode}
 {
-    details::MemorySetter<D>::setBufferToValue(this->data(), size, value);
+    details::setBufferToValue(this->data(), size, value, syncInfo);
 }
 
 template <typename T, Device D>

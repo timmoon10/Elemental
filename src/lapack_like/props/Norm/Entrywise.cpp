@@ -95,10 +95,11 @@ Base<Field> EntrywiseNorm( const AbstractDistMatrix<Field>& A, Base<Field> p )
         for( Int jLoc=0; jLoc<localWidth; ++jLoc )
             for( Int iLoc=0; iLoc<localHeight; ++iLoc )
                 localSum += Pow( Abs(ALoc(iLoc,jLoc)), p );
-        const Real sum = mpi::AllReduce( localSum, A.DistComm() );
+        const Real sum = mpi::AllReduce( localSum, A.DistComm(),
+                                         SyncInfo<Device::CPU>{} );
         norm = Pow( sum, 1/p );
     }
-    mpi::Broadcast( norm, A.Root(), A.CrossComm() );
+    mpi::Broadcast( norm, A.Root(), A.CrossComm(), SyncInfo<Device::CPU>{} );
     return norm;
 }
 
@@ -152,9 +153,10 @@ Base<Field> HermitianEntrywiseNorm
                 }
             }
         }
-        sum = mpi::AllReduce( localSum, A.DistComm() );
+        sum = mpi::AllReduce(
+            localSum, A.DistComm(), SyncInfo<Device::CPU>{} );
     }
-    mpi::Broadcast( sum, A.Root(), A.CrossComm() );
+    mpi::Broadcast( sum, A.Root(), A.CrossComm(), SyncInfo<Device::CPU>{} );
     return Pow( sum, 1/p );
 }
 

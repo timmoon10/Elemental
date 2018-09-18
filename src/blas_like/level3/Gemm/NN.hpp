@@ -206,8 +206,8 @@ void SUMMA_NNB_impl
 
         // D1^T[MR,* ] := alpha B^T[MR,MC] A1^T[MC,* ]
         A1_STAR_MC = A1;
-        LocalGemm
-        (TRANSPOSE, TRANSPOSE, alpha, B, A1_STAR_MC, D1Trans_MR_STAR);
+        LocalGemm(
+            TRANSPOSE, TRANSPOSE, alpha, B, A1_STAR_MC, D1Trans_MR_STAR);
 
         TransposeAxpyContract(T(1), D1Trans_MR_STAR, C1);
     }

@@ -65,6 +65,14 @@ ValueInt<Real> VectorMaxLoc( const AbstractDistMatrix<Real>& x )
       if( !x.Grid().InGrid() )
           LogicError("viewing processes are not allowed");
     )
+    if (x.GetLocalDevice() != Device::CPU)
+        LogicError("VectorMaxLoc: Only implemented for CPU matrices.");
+
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                x.LockedMatrix()));
+
     ValueInt<Real> pivot;
     pivot.index = -1;
     pivot.value = limits::Lowest<Real>();
@@ -102,9 +110,10 @@ ValueInt<Real> VectorMaxLoc( const AbstractDistMatrix<Real>& x )
                 }
             }
         }
-        pivot = mpi::AllReduce( pivot, mpi::MaxLocOp<Real>(), x.DistComm() );
+        pivot = mpi::AllReduce(
+            pivot, mpi::MaxLocOp<Real>(), x.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( pivot, x.Root(), x.CrossComm() );
+    mpi::Broadcast(pivot, x.Root(), x.CrossComm(), syncInfoA);
     return pivot;
 }
 
@@ -148,6 +157,14 @@ Entry<Real> MaxLoc( const AbstractDistMatrix<Real>& A )
       if( !A.Grid().InGrid() )
           LogicError("Viewing processes are not allowed");
     )
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("MaxLoc: Only implemented for CPU matrices.");
+
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     const Real* ABuf = A.LockedBuffer();
     const Int ALDim = A.LDim();
 
@@ -176,10 +193,10 @@ Entry<Real> MaxLoc( const AbstractDistMatrix<Real>& A )
             }
         }
         // Compute and store the location of the new pivot
-        pivot = mpi::AllReduce
-                ( pivot, mpi::MaxLocPairOp<Real>(), A.DistComm() );
+        pivot = mpi::AllReduce(
+            pivot, mpi::MaxLocPairOp<Real>(), A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( pivot, A.Root(), A.CrossComm() );
+    mpi::Broadcast(pivot, A.Root(), A.CrossComm(), syncInfoA);
     return pivot;
 }
 
@@ -247,6 +264,14 @@ SymmetricMaxLoc( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
       if( !A.Grid().InGrid() )
           LogicError("Viewing processes are not allowed");
     )
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("SymmetricMaxLoc: Only implemented for CPU matrices.");
+
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Real,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     Entry<Real> pivot;
     pivot.i = -1;
     pivot.j = -1;
@@ -294,10 +319,10 @@ SymmetricMaxLoc( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
             }
         }
         // Compute and store the location of the new pivot
-        pivot = mpi::AllReduce
-                ( pivot, mpi::MaxLocPairOp<Real>(), A.DistComm() );
+        pivot = mpi::AllReduce(
+            pivot, mpi::MaxLocPairOp<Real>(), A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( pivot, A.Root(), A.CrossComm() );
+    mpi::Broadcast(pivot, A.Root(), A.CrossComm(), syncInfoA);
     return pivot;
 }
 

@@ -74,6 +74,14 @@ ValueInt<Base<Ring>> VectorMinAbsLoc( const AbstractDistMatrix<Ring>& x )
       if( !x.Grid().InGrid() )
           LogicError("viewing processes are not allowed");
     )
+    if (x.GetLocalDevice() != Device::CPU)
+        LogicError("VectorMinAbsLoc: Only implemented for CPU matrices.");
+
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Ring,Device::CPU> const&>(
+                x.LockedMatrix()));
+
     ValueInt<Real> pivot;
     if( Min(m,n) == 0 )
     {
@@ -119,10 +127,10 @@ ValueInt<Base<Ring>> VectorMinAbsLoc( const AbstractDistMatrix<Ring>& x )
                 }
             }
         }
-        pivot = mpi::AllReduce
-                ( localPivot, mpi::MinLocOp<Real>(), x.DistComm() );
+        pivot = mpi::AllReduce(
+            localPivot, mpi::MinLocOp<Real>(), x.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( pivot, x.Root(), x.CrossComm() );
+    mpi::Broadcast(pivot, x.Root(), x.CrossComm(), syncInfoA);
     return pivot;
 }
 
@@ -170,6 +178,14 @@ Entry<Base<Ring>> MinAbsLoc( const AbstractDistMatrix<Ring>& A )
       if( !A.Grid().InGrid() )
           LogicError("Viewing processes are not allowed");
     )
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("MinAbsLoc: Only implemented for CPU matrices.");
+
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Ring,Device::CPU> const&>(
+                A.LockedMatrix()));
+
     typedef Base<Ring> Real;
     Entry<Real> pivot;
     if( Min(A.Height(),A.Width()) == 0 )
@@ -206,10 +222,10 @@ Entry<Base<Ring>> MinAbsLoc( const AbstractDistMatrix<Ring>& A )
         }
 
         // Compute and store the location of the new pivot
-        pivot = mpi::AllReduce
-                ( localPivot, mpi::MinLocPairOp<Real>(), A.DistComm() );
+        pivot = mpi::AllReduce(
+            localPivot, mpi::MinLocPairOp<Real>(), A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( pivot, A.Root(), A.CrossComm() );
+    mpi::Broadcast(pivot, A.Root(), A.CrossComm(), syncInfoA);
     return pivot;
 }
 
@@ -282,9 +298,16 @@ SymmetricMinAbsLoc( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A )
       if( !A.Grid().InGrid() )
           LogicError("Viewing processes are not allowed");
     )
+    if (A.GetLocalDevice() != Device::CPU)
+        LogicError("SymmetricMinAbsLoc: Only implemented for CPU matrices.");
+
     typedef Base<Ring> Real;
     const Int mLocal = A.LocalHeight();
     const Int nLocal = A.LocalWidth();
+    auto syncInfoA =
+        SyncInfo<Device::CPU>(
+            static_cast<Matrix<Ring,Device::CPU> const&>(
+                A.LockedMatrix()));
 
     Entry<Real> pivot;
     if( A.Height() == 0 )
@@ -341,10 +364,10 @@ SymmetricMinAbsLoc( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A )
         }
 
         // Compute and store the location of the new pivot
-        pivot = mpi::AllReduce
-                ( localPivot, mpi::MinLocPairOp<Real>(), A.DistComm() );
+        pivot = mpi::AllReduce(
+            localPivot, mpi::MinLocPairOp<Real>(), A.DistComm(), syncInfoA);
     }
-    mpi::Broadcast( pivot, A.Root(), A.CrossComm() );
+    mpi::Broadcast(pivot, A.Root(), A.CrossComm(), syncInfoA);
     return pivot;
 }
 

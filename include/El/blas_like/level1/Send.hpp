@@ -28,10 +28,10 @@ void Send( const Matrix<T>& A, mpi::Comm comm, int destination )
         FastResize( buf, size );
 
         // Pack
-        copy::util::InterleaveMatrix
-        ( height, width,
-          A.LockedBuffer(), 1, A.LDim(),
-          buf.data(),       1, height );
+        copy::util::InterleaveMatrix(
+            height, width,
+            A.LockedBuffer(), 1, A.LDim(),
+            buf.data(),       1, height, SyncInfo<Device::CPU>{} );
 
         mpi::Send( buf.data(), size, destination, comm );
     }

@@ -23,25 +23,27 @@ void AllReduce(Matrix<T,D>& A, mpi::Comm comm, mpi::Op op)
     const Int size = height*width;
     if(height == A.LDim())
     {
-        mpi::AllReduce(A.Buffer(), size, op, comm);
+        mpi::AllReduce(A.Buffer(), size, op, comm, SyncInfo<D>(A));
     }
     else
     {
-        simple_buffer<T,D> buf(size);
+        SyncInfo<D> syncInfoA(A);
+
+        simple_buffer<T,D> buf(size, syncInfoA);
 
         // Pack
-        copy::util::InterleaveMatrix<T,D>
-            (height, width,
-              A.LockedBuffer(), 1, A.LDim(),
-              buf.data(),       1, height);
+        copy::util::InterleaveMatrix(
+            height, width,
+            A.LockedBuffer(), 1, A.LDim(),
+            buf.data(),       1, height, syncInfoA);
 
-        mpi::AllReduce(buf.data(), size, op, comm);
+        mpi::AllReduce(buf.data(), size, op, comm, syncInfoA);
 
         // Unpack
-        copy::util::InterleaveMatrix<T,D>
-            (height,        width,
-             buf.data(), 1, height,
-             A.Buffer(), 1, A.LDim());
+        copy::util::InterleaveMatrix(
+            height,        width,
+            buf.data(), 1, height,
+            A.Buffer(), 1, A.LDim(), syncInfoA);
     }
 }
 

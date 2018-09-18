@@ -22,6 +22,11 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
     const Int width = A.Width();
     B.AlignColsAndResize(A.ColAlign(), height, width, false, false);
 
+    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+
     if (A.Participating())
     {
         const Int colDiff = B.ColAlign() - A.ColAlign();
@@ -35,8 +40,9 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
             {
                 if (A.RowRank() == A.RowAlign())
                     B.Matrix() = A.LockedMatrix();
-                mpi::Broadcast
-                (B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm());
+                mpi::Broadcast(
+                    B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm(),
+                    syncInfoB);
             }
             else
             {
@@ -45,25 +51,28 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 const Int maxLocalWidth = MaxLength(width,rowStride);
 
                 const Int portionSize = mpi::Pad(localHeight*maxLocalWidth);
-                simple_buffer<T,D> buffer((rowStride+1)*portionSize);
+                simple_buffer<T,D> buffer((rowStride+1)*portionSize, syncInfoB);
                 T* sendBuf = buffer.data();
                 T* recvBuf = buffer.data() + portionSize;
 
                 // Pack
-                util::InterleaveMatrix<T,D>
-                (localHeight, A.LocalWidth(),
-                  A.LockedBuffer(), 1, A.LDim(),
-                  sendBuf,          1, localHeight);
+                util::InterleaveMatrix(
+                    localHeight, A.LocalWidth(),
+                    A.LockedBuffer(), 1, A.LDim(),
+                    sendBuf,          1, localHeight,
+                    syncInfoB);
 
                 // Communicate
-                mpi::AllGather
-                (sendBuf, portionSize, recvBuf, portionSize, A.RowComm());
+                mpi::AllGather(
+                    sendBuf, portionSize, recvBuf, portionSize, A.RowComm(),
+                    syncInfoB);
 
                 // Unpack
-                util::RowStridedUnpack<T,D>
-                (localHeight, width, A.RowAlign(), rowStride,
-                  recvBuf, portionSize,
-                  B.Buffer(), B.LDim());
+                util::RowStridedUnpack(
+                    localHeight, width, A.RowAlign(), rowStride,
+                    recvBuf, portionSize,
+                    B.Buffer(), B.LDim(),
+                    syncInfoB);
             }
         }
         else
@@ -78,14 +87,17 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
             if (width == 1)
             {
                 if (A.RowRank() == A.RowAlign())
-                    mpi::SendRecv
-                    (A.LockedBuffer(), A.LocalHeight(), sendColRank,
-                      B.Buffer(),       B.LocalHeight(), recvColRank,
-                      A.ColComm());
-
+                {
+                    Synchronize(syncInfoB);
+                    mpi::SendRecv(
+                        A.LockedBuffer(), A.LocalHeight(), sendColRank,
+                        B.Buffer(),       B.LocalHeight(), recvColRank,
+                        A.ColComm());
+                }
                 // Perform the row broadcast
-                mpi::Broadcast
-                (B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm());
+                mpi::Broadcast(
+                    B.Buffer(), B.LocalHeight(), A.RowAlign(), A.RowComm(),
+                    syncInfoB);
             }
             else
             {
@@ -97,31 +109,33 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                 const Int maxLocalWidth = MaxLength(width,rowStride);
 
                 const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
-                simple_buffer<T,D> buffer((rowStride+1)*portionSize);
+                simple_buffer<T,D> buffer((rowStride+1)*portionSize, syncInfoB);
                 T* firstBuf = buffer.data();
                 T* secondBuf = buffer.data() + portionSize;
 
                 // Pack
-                util::InterleaveMatrix<T,D>
-                (localHeight, localWidthA,
-                  A.LockedBuffer(), 1, A.LDim(),
-                  secondBuf,        1, localHeight);
+                util::InterleaveMatrix(
+                    localHeight, localWidthA,
+                    A.LockedBuffer(), 1, A.LDim(),
+                    secondBuf,        1, localHeight, syncInfoB);
+
+                Synchronize(syncInfoB);
 
                 // Realign
-                mpi::SendRecv
-                (secondBuf, portionSize, sendColRank,
-                  firstBuf,  portionSize, recvColRank, A.ColComm());
+                mpi::SendRecv(
+                    secondBuf, portionSize, sendColRank,
+                    firstBuf,  portionSize, recvColRank, A.ColComm());
 
                 // Perform the row AllGather
-                mpi::AllGather
-                (firstBuf,  portionSize,
-                  secondBuf, portionSize, A.RowComm());
+                mpi::AllGather(
+                    firstBuf,  portionSize,
+                    secondBuf, portionSize, A.RowComm(), syncInfoB);
 
                 // Unpack
-                util::RowStridedUnpack<T,D>
-                (localHeightB, width, A.RowAlign(), rowStride,
-                  secondBuf, portionSize,
-                  B.Buffer(), B.LDim());
+                util::RowStridedUnpack(
+                    localHeightB, width, A.RowAlign(), rowStride,
+                    secondBuf, portionSize,
+                    B.Buffer(), B.LDim(), syncInfoB);
             }
         }
     }
@@ -223,21 +237,22 @@ void RowAllGather(const BlockMatrix<T>& A, BlockMatrix<T>& B)
                 T* recvBuf = &buffer[portionSize];
 
                 // Pack
-                util::InterleaveMatrix
-                (localHeight, A.LocalWidth(),
-                  A.LockedBuffer(), 1, A.LDim(),
-                  sendBuf,          1, localHeight);
+                util::InterleaveMatrix(
+                    localHeight, A.LocalWidth(),
+                    A.LockedBuffer(), 1, A.LDim(),
+                    sendBuf,          1, localHeight, SyncInfo<Device::CPU>{});
 
                 // Communicate
-                mpi::AllGather
-                (sendBuf, portionSize, recvBuf, portionSize, A.RowComm());
+                mpi::AllGather(
+                    sendBuf, portionSize, recvBuf, portionSize, A.RowComm(),
+                    SyncInfo<Device::CPU>{});
 
                 // Unpack
-                util::BlockedRowStridedUnpack
-                (localHeight, width, A.RowAlign(), rowStride,
-                  A.BlockWidth(), A.RowCut(),
-                  recvBuf, portionSize,
-                  B.Buffer(), B.LDim());
+                util::BlockedRowStridedUnpack(
+                    localHeight, width, A.RowAlign(), rowStride,
+                    A.BlockWidth(), A.RowCut(),
+                    recvBuf, portionSize,
+                    B.Buffer(), B.LDim());
             }
         }
         else
@@ -275,26 +290,28 @@ void RowAllGather(const BlockMatrix<T>& A, BlockMatrix<T>& B)
                 T* secondBuf = &buffer[portionSize];
 
                 // Pack
-                util::InterleaveMatrix
-                (localHeight, localWidthA,
-                  A.LockedBuffer(), 1, A.LDim(),
-                  secondBuf,        1, localHeight);
+                util::InterleaveMatrix(
+                    localHeight, localWidthA,
+                    A.LockedBuffer(), 1, A.LDim(),
+                    secondBuf,        1, localHeight,
+                    SyncInfo<Device::CPU>{});
 
                 // Realign
-                mpi::SendRecv
-                (secondBuf, portionSize, sendColRank,
-                  firstBuf,  portionSize, recvColRank, A.ColComm());
+                mpi::SendRecv(
+                    secondBuf, portionSize, sendColRank,
+                    firstBuf,  portionSize, recvColRank, A.ColComm());
 
                 // Perform the row AllGather
-                mpi::AllGather
-                (firstBuf,  portionSize,
-                  secondBuf, portionSize, A.RowComm());
+                mpi::AllGather(
+                    firstBuf,  portionSize,
+                    secondBuf, portionSize, A.RowComm(),
+                    SyncInfo<Device::CPU>{});
 
                 // Unpack
-                util::BlockedRowStridedUnpack
-                (localHeightB, width, A.RowAlign(), rowStride,
-                  blockWidth, rowCut, secondBuf, portionSize,
-                  B.Buffer(), B.LDim());
+                util::BlockedRowStridedUnpack(
+                    localHeightB, width, A.RowAlign(), rowStride,
+                    blockWidth, rowCut, secondBuf, portionSize,
+                    B.Buffer(), B.LDim());
             }
         }
     }

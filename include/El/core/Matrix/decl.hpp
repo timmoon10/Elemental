@@ -344,6 +344,12 @@ public:
     inline Ring& Ref(Int i, Int j=0) override;
     inline Ring& operator()(Int i, Int j=0) override;
 
+    cudaStream_t Stream() const;
+    cudaEvent_t Event() const;
+
+    void SetStream(cudaStream_t stream) EL_NO_EXCEPT;
+    void SetEvent(cudaEvent_t event) EL_NO_EXCEPT;
+
 private:
 
     Int do_get_memory_size_() const EL_NO_EXCEPT override;
@@ -371,6 +377,9 @@ private:
     Memory<Ring,Device::GPU> memory_;
 
     DevicePtr<Ring> data_=nullptr;
+
+    cudaStream_t stream_ = GPUManager::Stream();
+    cudaEvent_t event_ = GPUManager::Event();
 
 };// class Matrix<Ring,Device::GPU>
 #endif // HYDROGEN_HAVE_CUDA
