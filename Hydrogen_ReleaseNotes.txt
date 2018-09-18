@@ -1,0 +1,10 @@
+Notes for v1.0:
+
+- Added the notion of multiple "Devices" for matrices.
+
+- Added GPU support throughout the library. Support is still "as
+  needed". Please report gaps to Tom Benson31.
+
+- Using distributed objects with GPU memory requires CUDA-aware MPI.
+
+- Added preliminary Aluminum integration (https://github.com/llnl/aluminum).
