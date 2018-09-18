@@ -22,8 +22,6 @@ namespace El {
 template <typename T>
 void Copy(AbstractMatrix<T> const& A, AbstractMatrix<T>& B)
 {
-    if (A.GetDevice() != B.GetDevice())
-        LogicError("Copy: A and B must be on same device for now.");
     switch (A.GetDevice())
     {
     case Device::CPU:
