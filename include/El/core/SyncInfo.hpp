@@ -47,6 +47,10 @@ template <Device D>
 void Synchronize(SyncInfo<D> const&)
 {}
 
+template <typename T, Device D>
+void SetSyncInfo(Matrix<T,D>&, SyncInfo<D> const&)
+{}
+
 #ifdef HYDROGEN_HAVE_CUDA
 
 template <>
@@ -64,6 +68,16 @@ struct SyncInfo<Device::GPU>
     cudaStream_t stream_;
     cudaEvent_t event_;
 };// struct SyncInfo<Device::GPU>
+
+template <typename T>
+void SetSyncInfo(
+    Matrix<T,Device::GPU>& mat, SyncInfo<Device::GPU> const& syncInfo)
+{
+    if (syncInfo.stream_ != nullptr)
+        mat.SetStream(syncInfo.stream_);
+    if (syncInfo.event_ != nullptr)
+        mat.SetEvent(syncInfo.event_);
+}
 
 inline void AddSynchronizationPoint(SyncInfo<Device::GPU> const& syncInfo)
 {
