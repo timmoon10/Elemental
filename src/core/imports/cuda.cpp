@@ -136,9 +136,6 @@ GPUManager* GPUManager::Instance()
 {
     if (!instance_)
         Create();
-
-    EL_CHECK_CUDA(
-        cudaSetDevice(instance_->device_));
     return instance_.get();
 }
 
@@ -197,13 +194,7 @@ void GPUManager::SynchronizeDevice( bool checkError )
 
 cublasHandle_t GPUManager::cuBLASHandle()
 {
-    auto* instance = Instance();
-    auto handle = instance->cublasHandle_;
-    EL_CHECK_CUBLAS(
-        cublasSetStream(handle, instance->stream_));
-    EL_CHECK_CUBLAS(
-        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
-    return handle;
+    return Instance()->cublasHandle_;
 }
 
 } // namespace El
